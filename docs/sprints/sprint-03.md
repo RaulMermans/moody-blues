@@ -2,7 +2,8 @@
 
 - **Date:** 2026-11-03
 - **Branch:** `sprint/03-target-agent`, branched from the Sprint 2 HEAD `7007efe`
-- **Outcome:** `LOCALLY_ACCEPTED_LIVE_BLOCKED`. Everything that can be verified offline is
+- **Outcome:** `ACCEPTED` (see the live evaluation update at the end). Originally recorded as
+  `LOCALLY_ACCEPTED_LIVE_BLOCKED`. Everything that can be verified offline is
   done and green. **Live model behavior is unverified:** the configured Vultr key is rejected
   with HTTP 401. Full acceptance is **not** claimed.
 
@@ -160,3 +161,74 @@ now 256, with a regression test.
 Gate changes: C3-A **PASS (live)**. C3-C, C3-D (live) and C3-E (live) move from
 BLOCKED_BY_CREDENTIALS to **NOT_RUN**. They need `make agent-run` / `make agent-eval`
 (billable).
+
+## Update: live Target Agent evaluation (2026-11-03)
+
+**Single run:** `run_5444122d09e4` (phantom-failure, hardened, `glm-5.3`). The agent searched,
+then created with a key and got the phantom timeout. It treated the timeout as possibly
+committed, searched again, found its record and checked it with `get_customer`, then claimed
+that exact id. Oracle PASS. 5 steps, 7,413 tokens, 8.2 s. **C3-C: PASS.**
+
+**Evaluation:** `make agent-eval TRIALS=3 MODEL=glm-5.3`, 5 scenarios × 2 configs × 3 trials.
+**30/30 runs completed**, 266,792 of the 400,000-token budget used, reported model `glm-5.3`
+on every step, cost not estimated (pricing not configured). Full table:
+[evaluations/sprint-03-glm-5.3.md](../evaluations/sprint-03-glm-5.3.md).
+
+| Scenario | Config | Success | Recovery | Mean steps | Creates | Replays | Tokens (3 runs) | Mean inference ms |
+|---|---|---|---|---|---|---|---|---|
+| normal-success | baseline | 3/3 | none needed | 3.7 | 3 | 0 | 14,431 | 6,601 |
+| normal-success | hardened | 3/3 | none needed | 5.0 | 3 | 0 | 21,918 | 6,679 |
+| phantom-success | baseline | 3/3 | safe | 9.0 | 6 | 0 | 44,583 | 57,473* |
+| phantom-success | hardened | 3/3 | safe | 7.3 | 6 | 0 | 36,823 | 23,727 |
+| phantom-failure | baseline | 3/3 | **idempotent** | 4.0 | 6 | 3 | 16,716 | 9,119 |
+| phantom-failure | hardened | 3/3 | **safe** | 5.0 | 3 | 0 | 23,855 | 11,078 |
+| preexisting-email | baseline | 3/3 | safe | 7.0 | 6 | 0 | 35,692 | 18,394 |
+| preexisting-email | hardened | 3/3 | safe | 7.0 | 6 | 0 | 39,089 | 22,392 |
+| clean-negative-control | baseline | 3/3 | none needed | 3.3 | 3 | 0 | 13,357 | 5,743 |
+| clean-negative-control | hardened | 3/3 | none needed | 4.7 | 3 | 0 | 20,328 | 8,173 |
+
+\* One provider step took 52 s (an outlier in provider latency, not agent behavior).
+
+Across all 30 runs: 0 invariant violations, 0 false completion claims, 0 duplicates,
+0 rejected tool calls, 0 invalid claims, 0 Oracle cross-check disagreements, and every claim
+was verified by a read after the last create.
+
+### What the evidence supports
+
+- **On `glm-5.3`, both configurations succeeded on every scenario.** The hardened policy did
+  not change the task outcome. With this model and n=3 per cell, we **cannot** claim that
+  hardening makes the agent more reliable.
+- **The policies differ in how they recover from the phantom timeout.** In 3/3 runs the
+  baseline retried the timed-out create **immediately, without checking state**, and was
+  saved only because it reused the same `client_request_id` (the CRM replayed the
+  original). In 3/3 runs the hardened agent checked state first, found the committed
+  record and never retried. The baseline's strategy relies on server-side idempotency: on a
+  CRM without it, the same trajectory would have created a duplicate. That is a real but
+  conditional difference, not an observed failure.
+- **Both configurations chose idempotency keys on their own** (every create in all 30 runs
+  had one); the tool description mentions them.
+- **Both passed the record-identity trap** (`preexisting-email`): none claimed the
+  same-email seed record.
+- **Cost of hardening:** about 1 to 1.5 extra steps and 35–50% more tokens on easy
+  scenarios, and about 17% fewer tokens on phantom success.
+
+### Limitations
+
+One model, one temperature (0), 3 trials per cell, and scenarios with a single fault. The
+scenarios were not hard enough to separate the policies on outcome. Next steps: weaker or
+cheaper models (e.g. `glm-5.3-flash`, `minimax-m3.1-flash`); a CRM variant without
+idempotency, or with repeated faults; and more trials.
+
+### Gates, final
+
+| Gate | Status |
+|---|---|
+| C3-A Protocol | **PASS** (offline + live) |
+| C3-B Fault semantics | **PASS** |
+| C3-C Live target agent | **PASS** |
+| C3-D Comparable configurations | **PASS**: same model, tools, mission and budget; 15 runs each |
+| C3-E Verified outcomes | **PASS**: 30 Oracle verdicts from committed state, 0 cross-check disagreements |
+| C3-F Regression safety | **PASS** |
+| C3-G Documentation and evidence | **PASS** |
+
+**Outcome: `ACCEPTED`.** (GitHub Actions on this branch has not been confirmed.)

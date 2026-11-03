@@ -10,8 +10,8 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 > **Status: Sprint 3, Target Agent.** Built so far: the backend, the sandbox, the Vultr
 > adapter, a status page, a synthetic CRM with controlled reality distortions and an
 > independent Truth Oracle, and a real multi-turn tool-using LLM Target Agent (baseline and
-> hardened policies). **Live model behavior is not yet verified:** the configured Vultr key
-> is rejected (HTTP 401). Not built yet: the Investigator. See
+> hardened policies), evaluated live on Vultr `glm-5.3` (30/30 Oracle-verified successes).
+> Not built yet: the Investigator. See
 > [docs/sprints/sprint-03.md](docs/sprints/sprint-03.md).
 
 ## What works today
@@ -26,8 +26,8 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Truth Oracle: `PASS` / `VIOLATION` / `INCONCLUSIVE` from authoritative state only | Implemented and tested, including tamper resistance |
 | `make world-demo`: 10 reference cases (deterministic scripts, **not** LLM agents) | Real runs; offline; free |
 | Multi-turn tool-calling contracts (tool-call ids preserved, `role=tool` results) | Implemented and tested offline (fixtures) |
-| Target Agent: bounded LLM tool loop, baseline/hardened policies, Oracle-evaluated run reports | Implemented and tested offline with labeled provider fixtures. **Live runs BLOCKED_BY_CREDENTIALS (key rejected, 401).** |
-| `make agent-run` / `make agent-eval`: live single runs and baseline-vs-hardened evaluation | Implemented; exercised live up to the 401 |
+| Target Agent: bounded LLM tool loop, baseline/hardened policies, Oracle-evaluated run reports | Implemented; tested offline with labeled fixtures; **verified live on `glm-5.3`** ([results](docs/evaluations/sprint-03-glm-5.3.md)) |
+| `make agent-run` / `make agent-eval`: live single runs and baseline-vs-hardened evaluation | Implemented and run live |
 
 ## Prerequisites
 

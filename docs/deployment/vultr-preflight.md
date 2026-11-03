@@ -14,7 +14,7 @@ approval.
 | `make vultr-models` (live catalog) | Returns 35 models, but `GET /models` is **unauthenticated**, so this proves nothing about the key |
 | `MOODY_VULTR_MODEL=kimi-k2-instruct` in the catalog | **No**: choose a listed model |
 | `make vultr-smoke` on `glm-5.3` (basic, tool calling, tool round trip) | **PASS** ×3. Reported model `glm-5.3`; latency 0.6–1.1 s; 69 / 249 / 258 tokens. |
-| `make agent-run` / `make agent-eval` | NOT_RUN (unblocked; awaiting approval for billable runs) |
+| `make agent-run` / `make agent-eval` on `glm-5.3` | **PASS**: 1 + 30 live runs, all Oracle-verified successes, 266,792 eval tokens |
 | Vultr VM deployment | Out of scope |
 
 The 401 was resolved by replacing the key in `.env`. The diagnosis guide below is kept
