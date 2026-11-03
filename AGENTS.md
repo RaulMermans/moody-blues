@@ -13,9 +13,11 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/contracts/` | Pydantic contracts shared across layers |
 | `backend/moody_blues/inference/` | Model provider adapters (Vultr) + live smoke checks |
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models` |
+| `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
+| `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -52,6 +54,17 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   pass host env into a sandbox.
 - No API endpoint accepts arbitrary code until authentication exists.
 - No live provider calls at import, startup or in default test runs.
+
+**World Engine truth boundaries**
+- Executors and agents get only a `ToolPort`. They never touch the store, the DB file or
+  the evidence trail.
+- The Truth Oracle reads only through `ReadOnlyWorldView`. Its verdict must never depend on
+  delivered tool responses, agent claims taken at face value, or fault events. Any change
+  to the Oracle keeps the tamper-resistance tests passing.
+- Faults are deterministic and scoped to one world. There are no random faults, and no
+  fault may modify rows other than the targeted call's own staged write.
+- Expected verdicts live in `tests/world`, never in scenario files.
+- Reference executors are scripts. Never describe their results as LLM agent behavior.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

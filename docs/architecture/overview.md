@@ -1,6 +1,6 @@
 # Architecture overview
 
-_Last updated: Sprint 1 (2026-11-03). Covers only what is implemented; planned components are
+_Last updated: Sprint 2 (2026-11-03). Covers only what is implemented; planned components are
 marked as planned._
 
 ## Shape
@@ -16,11 +16,17 @@ builds those deterministic foundations and the contracts between them.
                                                                 ├─ services/  health/readiness logic
                                                                 ├─ contracts/ Pydantic types shared by all layers
                                                                 ├─ inference/ VultrInferenceClient ──► api.vultrinference.com/v1
-                                                                └─ sandbox/   SandboxRunner ──► Docker daemon ──► disposable container
+                                                                ├─ sandbox/   SandboxRunner ──► Docker daemon ──► disposable container
+                                                                └─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
+ CLI (moody-blues world-demo | world-run) ──► services/world_runner ──► world/
 ```
 
-Planned (not built): Investigator loop, synthetic CRM world engine, fault injection,
-truth oracle, replay and evaluation.
+Built in Sprint 2: the synthetic CRM World Engine, controlled fault injection
+(Phantom Success, Phantom Failure), the independent Truth Oracle, versioned scenarios and
+deterministic world replay. See [world-engine.md](world-engine.md).
+
+Planned (not built): the Investigator loop, LLM target agents, a coordinator between
+sandboxes and the world, and evaluation across experiments.
 
 ## Components
 
@@ -105,6 +111,18 @@ proof of containment. Remaining risks:
 
 Candidate hardening for later sprints: gVisor (`runsc`), a custom seccomp profile, digest
 pinning, rootless Docker.
+
+### World Engine (`world/`, `services/world_runner.py`)
+
+These are three separate layers:
+
+- **Actual world:** a per-world SQLite file.
+- **Agent-perceived world:** `ToolResponse` objects from `ToolGateway`, which may be
+  distorted.
+- **Verified truth:** `TruthOracle`, reading through a SQLite-enforced read-only connection.
+
+There is no HTTP surface yet. Full design: [world-engine.md](world-engine.md) and
+[ADR 0002](../adr/0002-world-engine.md).
 
 ### Frontend (`frontend/`)
 

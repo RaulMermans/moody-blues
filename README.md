@@ -7,9 +7,10 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 1, foundation.** Built so far: the backend, the sandbox, the Vultr
-> adapter and a status page. Not built yet: the Investigator, the synthetic world engine and
-> the truth oracle. See [docs/sprints/sprint-01.md](docs/sprints/sprint-01.md).
+> **Status: Sprint 2, World Engine.** Built so far: the backend, the sandbox, the Vultr
+> adapter, a status page, and a deterministic synthetic CRM with controlled reality
+> distortions and an independent Truth Oracle. Not built yet: the Investigator and real LLM
+> target agents. See [docs/sprints/sprint-02.md](docs/sprints/sprint-02.md).
 
 ## What works today
 
@@ -19,6 +20,9 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Docker sandbox: no network, non-root, read-only, resource-limited, auto-cleanup | Implemented and verified against a real daemon |
 | Vultr Serverless Inference adapter (OpenAI SDK) | Implemented and tested offline. **Live verification pending credentials.** |
 | Next.js status page connected to the backend | Implemented and verified with Playwright |
+| World Engine: per-world SQLite CRM, tool gateway, Phantom Success and Phantom Failure faults | Implemented and tested against real SQLite (`tests/world`) |
+| Truth Oracle: `PASS` / `VIOLATION` / `INCONCLUSIVE` from authoritative state only | Implemented and tested, including tamper resistance |
+| `make world-demo`: 8 reference cases (deterministic scripts, **not** LLM agents) | Real runs; offline; free |
 
 ## Prerequisites
 
@@ -46,7 +50,8 @@ Open http://localhost:3000.
 | `make lint` | `ruff format --check`, `ruff check`, ESLint |
 | `make format` | Auto-format and auto-fix Python |
 | `make typecheck` | Pyright (strict) and `tsc` |
-| `make test` | Unit tests (offline: no Docker, no network) |
+| `make test` | Unit and World Engine tests (offline: real SQLite, no Docker, no network) |
+| `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
 | `make build` | Production frontend build |
 | `make test-e2e` | Build, then Playwright against the real backend and frontend |
@@ -58,6 +63,8 @@ Open http://localhost:3000.
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
 
+`make world-demo` writes JSON run reports to `.artifacts/world-demo/`. To run a single case,
+use `uv run moody-blues world-run --scenario phantom-failure --executor blind_retry [--json]`.
 Live smoke output is written to `.artifacts/` (git-ignored). Without a key, the live commands
 exit `2` with `BLOCKED_BY_CREDENTIALS`.
 
@@ -68,8 +75,9 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 
 ## Documentation
 
-- [Architecture overview](docs/architecture/overview.md) · [ADR 0001](docs/adr/0001-architecture.md)
-- [Sprint 1 record](docs/sprints/sprint-01.md) · [Validation](docs/testing/validation.md)
+- [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md)
+- [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md)
+- [Sprint 1 record](docs/sprints/sprint-01.md) · [Sprint 2 record](docs/sprints/sprint-02.md) · [Validation](docs/testing/validation.md)
 - [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
