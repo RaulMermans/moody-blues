@@ -43,8 +43,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit + World Engine tests (offline; real SQLite; no Docker, no network)
-	$(PYTEST) tests/unit tests/world
+test: ## Unit + World Engine + Target Agent tests (offline; real SQLite; provider fixtures; no network)
+	$(PYTEST) tests/unit tests/world tests/agent
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker

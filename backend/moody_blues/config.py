@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     vultr_model: str = DEFAULT_VULTR_MODEL
     vultr_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
     vultr_max_retries: int = Field(default=2, ge=0, le=5)
+    # Optional, for cost estimates only. Unset means "unknown"; nothing guesses a price.
+    vultr_price_per_million_tokens_usd: float | None = Field(default=None, ge=0, le=1_000)
 
     # Sandbox
     docker_host: str | None = None
