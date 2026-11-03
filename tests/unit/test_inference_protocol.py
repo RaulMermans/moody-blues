@@ -244,3 +244,54 @@ def test_assistant_tool_call_message_needs_at_least_one_call() -> None:
 def test_tool_call_id_must_not_be_empty() -> None:
     with pytest.raises(ValidationError):
         ToolCall(id="", name="x", arguments_json="{}")
+
+
+# --- the live round-trip smoke check, against HTTP FIXTURES ---------------------------------------
+
+
+def test_tool_round_trip_smoke_sends_result_under_original_id() -> None:
+    from moody_blues.inference import smoke
+
+    responses = [
+        httpx2.Response(
+            200,
+            json=fixture_completion(
+                tool_calls=[
+                    {
+                        "id": "rt_1",
+                        "type": "function",
+                        "function": {"name": "add_numbers", "arguments": '{"a": 17, "b": 25}'},
+                    }
+                ]
+            ),
+        ),
+        httpx2.Response(200, json=fixture_completion(content="17 + 25 = 42")),
+    ]
+    client, rec = make_client(lambda _: responses.pop(0))
+    report = smoke.tool_round_trip(client)
+    assert report["status"] == smoke.SmokeStatus.PASS
+    second = rec.body(1)["messages"]
+    assert second[2]["tool_calls"][0]["id"] == "rt_1"
+    assert second[3] == {"role": "tool", "tool_call_id": "rt_1", "content": '{"sum": 42}'}
+
+
+def test_tool_round_trip_smoke_fails_when_the_result_is_ignored() -> None:
+    from moody_blues.inference import smoke
+
+    responses = [
+        httpx2.Response(
+            200,
+            json=fixture_completion(
+                tool_calls=[
+                    {
+                        "id": "rt_1",
+                        "type": "function",
+                        "function": {"name": "add_numbers", "arguments": '{"a": 17, "b": 25}'},
+                    }
+                ]
+            ),
+        ),
+        httpx2.Response(200, json=fixture_completion(content="I am not sure.")),
+    ]
+    client, _ = make_client(lambda _: responses.pop(0))
+    assert smoke.tool_round_trip(client)["status"] == smoke.SmokeStatus.FAIL

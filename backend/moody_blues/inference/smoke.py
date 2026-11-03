@@ -14,7 +14,13 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from moody_blues.config import Settings
-from moody_blues.contracts.inference import ChatMessage, InferenceRequest, ToolSpec
+from moody_blues.contracts.inference import (
+    AssistantToolCallMessage,
+    ChatMessage,
+    InferenceRequest,
+    ToolResultMessage,
+    ToolSpec,
+)
 from moody_blues.inference.vultr import InferenceError, VultrInferenceClient
 
 
@@ -90,18 +96,72 @@ def tool_calling(client: VultrInferenceClient) -> dict[str, Any]:
     }
 
 
+def tool_round_trip(client: VultrInferenceClient) -> dict[str, Any]:
+    """Multi-turn: the model calls a tool, we return the result under its original id as a
+    ``role=tool`` message, and the model must use it. Proves the provider accepts our
+    assistant-tool-call and tool-result message shapes (C3-A), not just a single call."""
+    system = ChatMessage(
+        role="system",
+        content="Use the add_numbers tool for arithmetic, then state the result as a number.",
+    )
+    user = ChatMessage(role="user", content="What is 17 + 25?")
+    first = client.complete(
+        InferenceRequest(
+            messages=[system, user],
+            tools=[ADD_NUMBERS_TOOL],
+            tool_choice="required",
+            max_tokens=128,
+        )
+    )
+    report: dict[str, Any] = {"first": first.model_dump(mode="json")}
+    calls = [c for c in first.tool_calls if c.name == ADD_NUMBERS_TOOL.name]
+    if not calls or len(calls) != len(first.tool_calls):
+        return report | {"status": SmokeStatus.FAIL, "reason": "expected only add_numbers calls"}
+    try:
+        parsed = [AddNumbersArgs.model_validate_json(c.arguments_json) for c in calls]
+    except ValidationError as exc:
+        return report | {"status": SmokeStatus.FAIL, "reason": f"invalid arguments: {exc}"}
+    results = [
+        ToolResultMessage(tool_call_id=c.id, content=json.dumps({"sum": a.a + a.b}))
+        for c, a in zip(calls, parsed, strict=True)
+    ]
+    second = client.complete(
+        InferenceRequest(
+            messages=[
+                system,
+                user,
+                AssistantToolCallMessage(content=first.content, tool_calls=first.tool_calls),
+                *results,
+            ],
+            tools=[ADD_NUMBERS_TOOL],
+            max_tokens=256,
+        )
+    )
+    ok = bool(second.content and "42" in second.content)
+    return report | {
+        "status": SmokeStatus.PASS if ok else SmokeStatus.FAIL,
+        "tool_call_ids": [c.id for c in calls],
+        "second": second.model_dump(mode="json"),
+        "reason": None if ok else "final answer did not use the tool result (no '42')",
+    }
+
+
 def list_models(client: VultrInferenceClient) -> dict[str, Any]:
     models = client.list_models()
     return {
         "status": SmokeStatus.PASS if models else SmokeStatus.FAIL,
         "models": models,
         "configured_model_listed": client.model in models,
+        # Observed 2026-11-03: GET /models answers 200 with no key or a bogus key. This check
+        # therefore proves the catalog is reachable, NOT that the configured key is valid.
+        "verifies_credentials": False,
     }
 
 
 CHECKS: dict[str, Callable[[VultrInferenceClient], dict[str, Any]]] = {
     "basic_inference": basic_inference,
     "tool_calling": tool_calling,
+    "tool_round_trip": tool_round_trip,
 }
 
 

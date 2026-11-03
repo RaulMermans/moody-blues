@@ -7,6 +7,8 @@ Commands:
   vultr-models  LIVE: list models visible to the configured key.
   world-demo    Run the reference World Engine cases against real SQLite worlds.
   world-run     Run one scenario with one deterministic reference executor.
+  agent-run     LIVE: one LLM Target Agent run against one scenario (chargeable).
+  agent-eval    LIVE: bounded scenarios x configs x trials evaluation (chargeable).
 """
 
 from __future__ import annotations
@@ -18,13 +20,20 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from moody_blues.config import Settings
 from moody_blues.contracts.sandbox import SandboxRequest
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
+
+if TYPE_CHECKING:
+    from moody_blues.contracts.agent import AgentBudget, AgentRunReport
+    from moody_blues.contracts.common import ErrorDetail
+    from moody_blues.inference.vultr import VultrInferenceClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACTS = REPO_ROOT / ".artifacts"
@@ -172,6 +181,134 @@ def world_run(scenario_id: str, executor: str, *, as_json: bool, color: bool) ->
     return 0
 
 
+def _agent_preflight(
+    settings: Settings, model: str, artifact: Path
+) -> tuple[int, VultrInferenceClient | None]:
+    """Credentials, then the (unauthenticated, free) catalog. Returns (exit_code, client)."""
+    from moody_blues.inference.vultr import InferenceError, VultrInferenceClient
+
+    def blocked(
+        code: int, status: str, reason: str, **extra: object
+    ) -> tuple[int, VultrInferenceClient | None]:
+        body = {"status": status, "reason": reason, "requested_model": model, **extra}
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_text(json.dumps(body, indent=2) + "\n")
+        print(json.dumps(body, indent=2))
+        return code, None
+
+    if not settings.vultr_configured:
+        return blocked(2, "BLOCKED_BY_CREDENTIALS", "MOODY_VULTR_API_KEY not set")
+    client = VultrInferenceClient.from_settings(settings)
+    try:
+        catalog = client.list_models()
+    except InferenceError as exc:
+        return blocked(1, "FAIL", f"catalog unavailable: {exc.detail.message}")
+    if model not in catalog:
+        return blocked(1, "FAIL", "model not in the live catalog", catalog=catalog)
+    return 0, client
+
+
+def _auth_blocked(error: ErrorDetail | None) -> bool:
+    from moody_blues.contracts.common import ErrorCategory
+
+    return error is not None and error.category is ErrorCategory.PROVIDER_AUTH
+
+
+def _budget(args: argparse.Namespace) -> AgentBudget:
+    from moody_blues.contracts.agent import AgentBudget as Budget
+
+    return Budget(
+        max_steps=args.max_steps,
+        max_tool_calls=args.max_tool_calls,
+        max_total_tokens=args.max_run_tokens,
+    )
+
+
+def agent_run(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.contracts.agent import AgentConfigName
+    from moody_blues.services.agent_render import render_agent_report
+    from moody_blues.services.agent_world_runner import run_agent_scenario, write_report
+    from moody_blues.world.scenarios import load_scenario
+
+    model = args.model or settings.vultr_model
+    out = ARTIFACTS / "agent-runs"
+    code, client = _agent_preflight(settings, model, out / "preflight.json")
+    if client is None:
+        return code
+    budget = _budget(args)
+    report = run_agent_scenario(
+        load_scenario(args.scenario),
+        config=AgentConfigName(args.config),
+        inference=client,
+        evidence="live_provider",
+        provider="vultr",
+        model=model,
+        budget=budget,
+        price_per_million_tokens_usd=settings.vultr_price_per_million_tokens_usd,
+        keep=False,
+    )
+    path = write_report(report, out)
+    if args.json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2))
+    else:
+        print(render_agent_report(report))
+        print(f"\nrun report: {path}")
+    if _auth_blocked(report.agent.error):
+        print("BLOCKED_BY_CREDENTIALS: the provider rejected the API key (401)")
+        return 2
+    return 0
+
+
+def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.contracts.agent import AgentConfigName
+    from moody_blues.services.agent_eval import EVAL_SCENARIOS, EvalStatus, run_eval
+
+    model = args.model or settings.vultr_model
+    out = ARTIFACTS / "agent-eval" / datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    code, client = _agent_preflight(settings, model, out / "preflight.json")
+    if client is None:
+        return code
+    budget = _budget(args)
+
+    def progress(r: AgentRunReport) -> None:
+        print(
+            f"  {r.scenario_id:<24} {r.agent.config.value:<9} {r.assessment.outcome.value:<28}"
+            f" {r.assessment.recovery.value:<20} steps={len(r.agent.steps)} "
+            f"tokens={r.agent.tokens.total_tokens} {r.run_id}",
+            flush=True,
+        )
+
+    summary, _ = run_eval(
+        inference=client,
+        evidence="live_provider",
+        provider="vultr",
+        model=model,
+        out_dir=out,
+        scenarios=args.scenario or [s.scenario_id for s in EVAL_SCENARIOS],
+        configs=[AgentConfigName(c) for c in (args.config or [c.value for c in AgentConfigName])],
+        trials=args.trials,
+        budget=budget,
+        max_eval_tokens=args.max_eval_tokens,
+        price_per_million_tokens_usd=settings.vultr_price_per_million_tokens_usd,
+        on_run=progress,
+    )
+    print((out / "summary.md").read_text())
+    print(f"evidence: {out}")
+    return {
+        EvalStatus.COMPLETED: 0,
+        EvalStatus.PARTIAL_BUDGET: 0,
+        EvalStatus.BLOCKED_BY_CREDENTIALS: 2,
+        EvalStatus.ABORTED_PROVIDER: 1,
+    }[summary.status]
+
+
+def _add_agent_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--model", help="model id from the live catalog (default MOODY_VULTR_MODEL)")
+    p.add_argument("--max-steps", type=int, default=10)
+    p.add_argument("--max-tool-calls", type=int, default=16)
+    p.add_argument("--max-run-tokens", type=int, default=60_000)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="moody-blues")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -203,6 +340,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     wr.add_argument("--executor", required=True, choices=EXECUTORS_AVAILABLE)
     wr.add_argument("--json", action="store_true", help="print the full RunReport as JSON")
     wr.add_argument("--no-color", action="store_true")
+    from moody_blues.contracts.agent import AgentConfigName
+
+    configs = [c.value for c in AgentConfigName]
+    ar = sub.add_parser("agent-run")
+    ar.add_argument("--scenario", required=True, choices=scenario_ids())
+    ar.add_argument("--config", required=True, choices=configs)
+    ar.add_argument("--json", action="store_true")
+    _add_agent_args(ar)
+    ae = sub.add_parser("agent-eval")
+    ae.add_argument("--scenario", action="append", choices=scenario_ids())
+    ae.add_argument("--config", action="append", choices=configs)
+    ae.add_argument("--trials", type=int, default=3)
+    ae.add_argument("--max-eval-tokens", type=int, default=400_000)
+    _add_agent_args(ae)
     args = parser.parse_args(argv)
     color = sys.stdout.isatty() and not getattr(args, "no_color", False)
 
@@ -220,6 +371,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return world_demo(args.case, keep=args.keep, color=color)
         case "world-run":
             return world_run(args.scenario, args.executor, as_json=args.json, color=color)
+        case "agent-run":
+            return agent_run(settings, args)
+        case "agent-eval":
+            return agent_eval(settings, args)
         case _:
             parser.error(f"unknown command {args.command}")
     return 2

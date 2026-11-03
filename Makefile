@@ -8,7 +8,7 @@ FE      := frontend
 PYTEST  := $(UV) run pytest
 
 .PHONY: help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
-        test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models sandbox-clean clean
+        test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -71,6 +71,16 @@ vultr-smoke: ## LIVE + CHARGEABLE: basic inference and tool calling against Vult
 
 vultr-models: ## LIVE: list models visible to the configured Vultr key
 	$(UV) run moody-blues vultr-models
+
+SCENARIO ?= phantom-failure
+CONFIG   ?= hardened
+TRIALS   ?= 3
+
+agent-run: ## LIVE + CHARGEABLE: one LLM Target Agent run (SCENARIO=, CONFIG=, MODEL=)
+	$(UV) run moody-blues agent-run --scenario $(SCENARIO) --config $(CONFIG) $(if $(MODEL),--model $(MODEL))
+
+agent-eval: ## LIVE + CHARGEABLE: bounded baseline-vs-hardened evaluation (TRIALS=, MODEL=)
+	$(UV) run moody-blues agent-eval --trials $(TRIALS) $(if $(MODEL),--model $(MODEL))
 
 sandbox-clean: ## Force-remove any leftover sandbox containers
 	@ids=$$(docker ps -aq --filter label=io.moody-blues.sandbox); \
