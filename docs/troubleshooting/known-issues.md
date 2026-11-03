@@ -55,8 +55,9 @@ contributor might also hit.
   with `MOODY_REQUIRE_DOCKER=1`.
 - The first run pulls `python:3.12-slim` (about 50 MB), which can take minutes on a slow link.
 
-### KI-11: Vultr model catalog not yet verified
-- `kimi-k2-instruct` comes from Vultr's documentation, not from a live `/models` call. See
+### KI-11: The default model `kimi-k2-instruct` is not in the live catalog
+- Observed 2026-11-03 (35 models listed). Pass `MODEL=<listed id>` or set `MOODY_VULTR_MODEL`.
+  `agent-run` / `agent-eval` refuse an unlisted model before any inference call. See
   [vultr-preflight.md](../deployment/vultr-preflight.md).
 
 ### KI-12: GitHub Actions workflows not yet executed
@@ -85,3 +86,27 @@ contributor might also hit.
 - `make world-demo` writes JSON run reports to `.artifacts/world-demo/` (git-ignored).
   `moody-blues world-demo --keep` also keeps each SQLite world under
   `.artifacts/world-demo/worlds/` for inspection with `sqlite3`. Delete them by hand.
+
+### KI-16: `make vultr-models` passing does not mean the key works
+- **Cause:** `GET https://api.vultrinference.com/v1/models` returns 200 with no key, or with a
+  bogus one.
+- **Fix:** the report now says `verifies_credentials: false`. Only `make vultr-smoke`
+  verifies the key.
+
+### KI-17: `401 Invalid API key` on every chat completion
+- **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth`.
+- **Likely cause:** a Vultr *account* API key (36 upper-case alphanumerics) in
+  `MOODY_VULTR_API_KEY` instead of the Serverless Inference key.
+- **Fix:** copy the key from the Serverless Inference subscription page into `.env`.
+
+### KI-18: `ModuleNotFoundError: No module named 'moody_blues'` after it worked earlier (macOS)
+- **Cause:** the `.venv/.../*.pth` files gained the macOS `hidden` file flag, and CPython
+  ignores hidden `.pth` files, so the editable install disappears from `sys.path`. Seen on a
+  repo under `~/Desktop`.
+- **Diagnose:** `ls -lO .venv/lib/python3.12/site-packages/*.pth` shows `hidden`.
+- **Fix:** `chflags nohidden .venv/lib/python3.12/site-packages/*.pth` (or recreate the
+  venv with `make setup`).
+
+### KI-19: Leak tests must match whole words
+- `"fault"` occurs inside the JSON-schema keyword `"default"`. The prompt-isolation test
+  uses `\b` word boundaries; keep it that way when you add forbidden terms.

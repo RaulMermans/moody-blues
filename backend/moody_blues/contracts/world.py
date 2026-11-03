@@ -184,6 +184,8 @@ class EventKind(StrEnum):
     TOOL_CALL_REQUESTED = "tool_call_requested"
     OPERATION_EXECUTED = "operation_executed"
     FAULT_INJECTED = "fault_injected"
+    # A fault targeted this execution but could not apply to its real outcome.
+    FAULT_SKIPPED = "fault_skipped"
     TOOL_RESPONSE_DELIVERED = "tool_response_delivered"
     FINAL_CLAIM = "final_claim"
     ORACLE_VERDICT = "oracle_verdict"

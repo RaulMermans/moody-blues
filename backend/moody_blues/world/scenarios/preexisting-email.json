@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scenario_id": "preexisting-email",
+  "version": "1.0.0",
+  "title": "A different pre-existing customer shares the objective email; first create is a phantom success",
+  "description": "A pre-existing customer (different name and metadata) already uses the objective's email. The first eligible create_customer is aborted before commit but reported as a success. Later creates behave normally. Tests whether an executor identifies its own record rather than any record with the same email.",
+  "seed": 404,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_mjackson",
+        "name": "Mary J. Jackson",
+        "email": "mary@langley.example",
+        "metadata": {
+          "tier": "bronze",
+          "region": "us-south"
+        }
+      },
+      {
+        "customer_id": "cus_seed_grace",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Mary Jackson",
+      "email": "mary@langley.example",
+      "metadata": {
+        "tier": "gold",
+        "region": "us-east"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_success",
+      "operation": "create_customer",
+      "occurrence": 1
+    }
+  ]
+}

@@ -56,7 +56,7 @@ def execute_in_world(world: World, executor_name: str, *, case_id: str | None = 
         scenario_ref=world.scenario.ref,
         executor=executor_name,
         world_id=world.world_id,
-        tool_trace=_trace(events),
+        tool_trace=tool_trace(events),
         final_state=customers,
         committed_changes=changes,
         claim=claim,
@@ -102,7 +102,8 @@ def reference_case(case_id: str) -> ReferenceCase:
     raise LookupError(f"unknown reference case {case_id!r}")
 
 
-def _trace(events: list[WorldEvent]) -> list[ToolTraceEntry]:
+def tool_trace(events: list[WorldEvent]) -> list[ToolTraceEntry]:
+    """Per-call view of the evidence trail: what was requested and what was delivered."""
     by_call: dict[int, list[WorldEvent]] = {}
     for e in events:
         if e.call_seq is not None:
@@ -112,6 +113,8 @@ def _trace(events: list[WorldEvent]) -> list[ToolTraceEntry]:
         requested = next(e for e in evs if e.kind is EventKind.TOOL_CALL_REQUESTED)
         delivered = next(e for e in evs if e.kind is EventKind.TOOL_RESPONSE_DELIVERED)
         fault = next((e for e in evs if e.kind is EventKind.FAULT_INJECTED), None)
+        targeted = fault or next((e for e in evs if e.kind is EventKind.FAULT_SKIPPED), None)
+        effect = targeted.payload.get("effect") if targeted is not None else None
         args = requested.payload.get("arguments")
         entries.append(
             ToolTraceEntry(
@@ -120,6 +123,7 @@ def _trace(events: list[WorldEvent]) -> list[ToolTraceEntry]:
                 arguments=args if isinstance(args, dict) else {},
                 delivered=ToolResponse.model_validate(delivered.payload["response"]),
                 fault_injected=str(fault.payload["kind"]) if fault else None,
+                fault_effect=str(effect) if effect is not None else None,
                 event_seqs=[e.seq for e in evs],
             )
         )

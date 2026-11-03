@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import cast
 
 import httpx2
 import openai
@@ -22,10 +21,13 @@ from openai.types.chat import (
 from moody_blues.config import Settings
 from moody_blues.contracts.common import ErrorCategory, MoodyBluesError
 from moody_blues.contracts.inference import (
+    AssistantToolCallMessage,
+    ChatMessage,
     InferenceRequest,
     InferenceResult,
     TokenUsage,
     ToolCall,
+    ToolResultMessage,
 )
 
 log = logging.getLogger("moody_blues.inference")
@@ -66,6 +68,42 @@ def classify_provider_error(exc: Exception) -> InferenceError:
     status = getattr(exc, "status_code", None)
     message = f"{type(exc).__name__}" + (f" (HTTP {status})" if status else "") + f": {exc}"
     return InferenceError(category, message, retryable=retryable)
+
+
+def to_wire_message(
+    message: ChatMessage | AssistantToolCallMessage | ToolResultMessage,
+) -> ChatCompletionMessageParam:
+    """One conversation message in the OpenAI-compatible wire shape.
+
+    Assistant tool calls keep the provider's original ids and the raw argument strings, so a
+    tool result can be matched to its call and the model sees exactly what it sent.
+    """
+    match message:
+        case ToolResultMessage():
+            return {
+                "role": "tool",
+                "tool_call_id": message.tool_call_id,
+                "content": message.content,
+            }
+        case AssistantToolCallMessage():
+            return {
+                "role": "assistant",
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": c.id,
+                        "type": "function",
+                        "function": {"name": c.name, "arguments": c.arguments_json},
+                    }
+                    for c in message.tool_calls
+                ],
+            }
+        case ChatMessage(role="system"):
+            return {"role": "system", "content": message.content}
+        case ChatMessage(role="user"):
+            return {"role": "user", "content": message.content}
+        case ChatMessage():
+            return {"role": "assistant", "content": message.content}
 
 
 class VultrInferenceClient:
@@ -118,9 +156,7 @@ class VultrInferenceClient:
 
     def complete(self, request: InferenceRequest) -> InferenceResult:
         model = request.model or self.model
-        messages = cast(
-            "list[ChatCompletionMessageParam]", [m.model_dump() for m in request.messages]
-        )
+        messages = [to_wire_message(m) for m in request.messages]
         tools: list[ChatCompletionToolParam] = [
             {
                 "type": "function",
@@ -171,11 +207,21 @@ class VultrInferenceClient:
                 ErrorCategory.PROVIDER_INVALID_RESPONSE, "provider returned no choices"
             )
         choice = completion.choices[0]
-        tool_calls = [
-            ToolCall(id=tc.id, name=tc.function.name, arguments_json=tc.function.arguments)
-            for tc in (choice.message.tool_calls or [])
-            if tc.type == "function"
-        ]
+        tool_calls: list[ToolCall] = []
+        for tc in choice.message.tool_calls or []:
+            if tc.type != "function":
+                raise InferenceError(
+                    ErrorCategory.PROVIDER_INVALID_RESPONSE,
+                    f"unsupported tool call type {tc.type!r}",
+                )
+            if not tc.id:
+                raise InferenceError(
+                    ErrorCategory.PROVIDER_INVALID_RESPONSE,
+                    "provider returned a tool call without an id; results could not be linked",
+                )
+            tool_calls.append(
+                ToolCall(id=tc.id, name=tc.function.name, arguments_json=tc.function.arguments)
+            )
         usage = (
             TokenUsage(
                 prompt_tokens=completion.usage.prompt_tokens,

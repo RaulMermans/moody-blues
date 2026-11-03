@@ -1,6 +1,6 @@
 # Architecture overview
 
-_Last updated: Sprint 2 (2026-11-03). Covers only what is implemented; planned components are
+_Last updated: Sprint 3 (2026-11-03). Covers only what is implemented; planned components are
 marked as planned._
 
 ## Shape
@@ -17,16 +17,24 @@ builds those deterministic foundations and the contracts between them.
                                                                 ├─ contracts/ Pydantic types shared by all layers
                                                                 ├─ inference/ VultrInferenceClient ──► api.vultrinference.com/v1
                                                                 ├─ sandbox/   SandboxRunner ──► Docker daemon ──► disposable container
-                                                                └─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
+                                                                ├─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
+                                                                └─ agents/    Target Agent: LLM tool loop ──ToolPort──► world/ ; ──► inference/
  CLI (moody-blues world-demo | world-run) ──► services/world_runner ──► world/
+ CLI (moody-blues agent-run | agent-eval) ──► services/agent_world_runner, agent_eval ──► agents/ + world/
 ```
 
 Built in Sprint 2: the synthetic CRM World Engine, controlled fault injection
 (Phantom Success, Phantom Failure), the independent Truth Oracle, versioned scenarios and
 deterministic world replay. See [world-engine.md](world-engine.md).
 
-Planned (not built): the Investigator loop, LLM target agents, a coordinator between
-sandboxes and the world, and evaluation across experiments.
+Built in Sprint 3: typed multi-turn tool-calling contracts, outcome-accurate fault labels,
+and one LLM-driven Target Agent with baseline and hardened policies, evaluated by the
+unchanged Truth Oracle. See [target-agent.md](target-agent.md) and
+[ADR 0003](../adr/0003-target-agent.md). Live model behavior is not yet verified (the key is
+rejected; see the Sprint 3 record).
+
+Planned (not built): the Investigator loop, and a coordinator between sandboxes and the
+world (Sprint 4).
 
 ## Components
 
@@ -70,7 +78,12 @@ Integration states: `not_configured`, `configured_unverified`, `not_checked`, `a
   latency and tool calls.
 
 Tool-call arguments come back as raw JSON text. Callers must validate them with a Pydantic
-model before use (see `inference/smoke.py::AddNumbersArgs`).
+model before use (see `inference/smoke.py::AddNumbersArgs` and `agents/tooling.py`).
+
+Conversations are `ConversationMessage` lists: text messages, assistant tool-call turns
+(original ids and raw arguments kept) and `role=tool` results. `to_wire_message` produces
+the OpenAI-compatible shapes, and `validate_tool_protocol` rejects mis-ordered or unanswered
+tool calls.
 
 The OpenAI SDK 3.x is built on `httpx2`, not `httpx`. Offline tests inject an `httpx2.Client`
 backed by `MockTransport` fixtures, so the real SDK code path runs unchanged.

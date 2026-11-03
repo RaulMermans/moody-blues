@@ -7,13 +7,20 @@ Each call produces this evidence, in causal order, before the response is return
 3. ``fault_injected``        — only when a configured fault targeted this execution.
 4. ``tool_response_delivered`` — exactly what the executor sees.
 
-Fault boundaries are explicit:
+Fault boundaries are explicit, and what a fault does depends on the call's *real* outcome
+(recorded as a ``FaultEffect``):
 
-- ``phantom_success`` acts at the **pre-commit** boundary: the staged write is rolled back,
-  then a success response is fabricated.
-- ``phantom_failure`` acts at the **post-commit** boundary: the write commits normally,
-  then the response is replaced by the configured error.
+- ``phantom_success`` acts at the **pre-commit** boundary of a *new* write: the staged row is
+  rolled back, then a success response is fabricated (``aborted_new_write``). A call that
+  never stages a new row (idempotent replay, idempotency conflict, genuine transaction
+  failure) has no such boundary: the fault is **not applied**, the genuine response is
+  delivered and a ``fault_skipped`` event records why (``not_applied_no_new_write``).
+- ``phantom_failure`` acts **after** the write: if the call committed a new row, the
+  response is replaced by the configured error (``committed_write_reported_as_failure``);
+  if it committed nothing new, only the response is replaced
+  (``response_replaced_without_new_commit``) and the evidence says ``new_commit: false``.
 
+A targeted occurrence is consumed either way; it never carries over to a later call.
 Faults never touch rows other than the targeted call's own staged write.
 """
 
@@ -27,7 +34,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, JsonValue, ValidationError
 
-from moody_blues.contracts.scenario import FaultKind, FaultSpec
+from moody_blues.contracts.scenario import FaultEffect, FaultKind, FaultSpec
 from moody_blues.contracts.world import (
     CreateCustomerArgs,
     CustomerRecord,
@@ -43,7 +50,7 @@ from moody_blues.contracts.world import (
 from moody_blues.world.faults import FaultInjector
 from moody_blues.world.store import CommitDecision, CrmStore, InsertResult, WriteOutcome
 
-_ARG_MODELS: dict[ToolName, type[BaseModel]] = {
+ARG_MODELS: dict[ToolName, type[BaseModel]] = {
     ToolName.CREATE_CUSTOMER: CreateCustomerArgs,
     ToolName.GET_CUSTOMER: GetCustomerArgs,
     ToolName.SEARCH_CUSTOMERS: SearchCustomersArgs,
@@ -63,6 +70,26 @@ _DESCRIPTIONS: dict[ToolName, str] = {
 }
 
 
+TRANSACTION_FAILED = "transaction_failed"
+
+
+def _fault_effect(kind: FaultKind, *, boundary_reached: bool, committed: bool) -> FaultEffect:
+    """Map a targeted fault onto the call's real outcome. Labels follow what happened."""
+    match kind:
+        case FaultKind.PHANTOM_SUCCESS:
+            return (
+                FaultEffect.ABORTED_NEW_WRITE
+                if boundary_reached
+                else FaultEffect.NOT_APPLIED_NO_NEW_WRITE
+            )
+        case FaultKind.PHANTOM_FAILURE:
+            return (
+                FaultEffect.COMMITTED_WRITE_REPORTED_AS_FAILURE
+                if committed
+                else FaultEffect.RESPONSE_REPLACED_WITHOUT_NEW_COMMIT
+            )
+
+
 class ToolPort(Protocol):
     """What an executor (later: the target agent) is given. Nothing else."""
 
@@ -78,7 +105,7 @@ def derive_customer_id(seed: int, call_seq: int) -> str:
 def tool_specs() -> list[ToolSpec]:
     return [
         ToolSpec(name=name, description=_DESCRIPTIONS[name], parameters=model.model_json_schema())
-        for name, model in _ARG_MODELS.items()
+        for name, model in ARG_MODELS.items()
     ]
 
 
@@ -163,7 +190,7 @@ class ToolGateway:
             return _err(call_id, tool, ToolErrorCode.UNKNOWN_TOOL, f"unknown tool; use {known}")
 
         try:
-            args = _ARG_MODELS[name].model_validate(dict(arguments))
+            args = ARG_MODELS[name].model_validate(dict(arguments))
         except ValidationError as exc:
             message = _validation_message(exc)
             emit(
@@ -197,7 +224,7 @@ class ToolGateway:
                     name,
                     {"customers": [agent_view(r) for r in rows], "count": len(rows)},
                 )
-            case _:  # pragma: no cover - _ARG_MODELS is exhaustive
+            case _:  # pragma: no cover - ARG_MODELS is exhaustive
                 raise AssertionError(f"unhandled tool {name}")
 
     def _create(
@@ -220,24 +247,30 @@ class ToolGateway:
             created_at=now,
             created_by_call=call_seq,
         )
+        boundary_reached = False
 
         def pre_commit_boundary() -> CommitDecision:
+            # Runs only when a *new* row has been staged: never for idempotent replays,
+            # idempotency conflicts or writes that failed before staging completed.
+            nonlocal boundary_reached
+            boundary_reached = True
             if fault is not None and fault.kind is FaultKind.PHANTOM_SUCCESS:
                 return CommitDecision.ABORT
             return CommitDecision.COMMIT
 
-        result: InsertResult | None
+        outcome: str
         try:
             result = self._store.insert_customer(record, before_commit=pre_commit_boundary)
         except sqlite3.Error as exc:
             # A genuine (unfaulted) transaction failure. The store already rolled back.
-            result = None
+            outcome = TRANSACTION_FAILED
             emit(
                 EventKind.OPERATION_EXECUTED,
                 {
                     "tool": tool.value,
                     "occurrence": target.occurrence,
-                    "outcome": "transaction_failed",
+                    "outcome": outcome,
+                    "new_commit": False,
                     "detail": f"{type(exc).__name__}: {exc}"[:300],
                     "attempted_customer_id": record.customer_id,
                 },
@@ -250,12 +283,14 @@ class ToolGateway:
                 retryable=True,
             )
         else:
+            outcome = result.outcome.value
             emit(
                 EventKind.OPERATION_EXECUTED,
                 {
                     "tool": tool.value,
                     "occurrence": target.occurrence,
-                    "outcome": result.outcome.value,
+                    "outcome": outcome,
+                    "new_commit": result.outcome is WriteOutcome.COMMITTED,
                     "attempted_customer_id": record.customer_id,
                     "result_customer_id": result.record.customer_id if result.record else None,
                 },
@@ -264,19 +299,27 @@ class ToolGateway:
 
         if fault is None:
             return actual
+        new_commit = outcome == WriteOutcome.COMMITTED.value
+        effect = _fault_effect(fault.kind, boundary_reached=boundary_reached, committed=new_commit)
+        evidence: dict[str, Any] = {
+            "kind": fault.kind.value,
+            "operation": fault.operation.value,
+            "occurrence": target.occurrence,
+            "effect": effect.value,
+            "call_outcome": outcome,
+            "new_commit": new_commit,
+            "actual_response": actual.model_dump(mode="json"),
+        }
+        if effect is FaultEffect.NOT_APPLIED_NO_NEW_WRITE:
+            emit(EventKind.FAULT_SKIPPED, evidence | {"boundary": None})
+            return actual
+        boundary = {
+            FaultEffect.ABORTED_NEW_WRITE: "pre_commit",
+            FaultEffect.COMMITTED_WRITE_REPORTED_AS_FAILURE: "post_commit",
+            FaultEffect.RESPONSE_REPLACED_WITHOUT_NEW_COMMIT: "response",
+        }[effect]
         delivered = self._distort(call_id, fault, record)
-        emit(
-            EventKind.FAULT_INJECTED,
-            {
-                "kind": fault.kind.value,
-                "operation": fault.operation.value,
-                "occurrence": target.occurrence,
-                "boundary": "pre_commit"
-                if fault.kind is FaultKind.PHANTOM_SUCCESS
-                else "post_commit",
-                "actual_response": actual.model_dump(mode="json"),
-            },
-        )
+        emit(EventKind.FAULT_INJECTED, evidence | {"boundary": boundary})
         return delivered
 
     @staticmethod

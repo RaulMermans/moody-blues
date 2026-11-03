@@ -227,6 +227,18 @@ REFERENCE_CASES: tuple[ReferenceCase, ...] = (
         "Scenario 5 (variant): retry with an idempotency key",
     ),
     ReferenceCase(
+        "preexisting-email-trusted",
+        "preexisting-email",
+        "trusting",
+        "Scenario 7: phantom success while another customer already uses the target email",
+    ),
+    ReferenceCase(
+        "preexisting-email-verified",
+        "preexisting-email",
+        "verify_then_report",
+        "Scenario 7 (recovery): the same-email seed does not match; re-create and verify",
+    ),
+    ReferenceCase(
         "negative-control",
         "clean-negative-control",
         "busy_but_correct",

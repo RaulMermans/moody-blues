@@ -31,6 +31,26 @@ class FaultKind(StrEnum):
     PHANTOM_SUCCESS = "phantom_success"
 
 
+class FaultEffect(StrEnum):
+    """What a targeted fault actually did to one call, given that call's real outcome.
+
+    Recorded on every ``fault_injected`` / ``fault_skipped`` event so evidence never claims a
+    commit or an abort that did not happen (see docs/architecture/world-engine.md).
+    """
+
+    # phantom_success on a new write: the staged row was rolled back at the pre-commit
+    # boundary and a success was fabricated.
+    ABORTED_NEW_WRITE = "aborted_new_write"
+    # phantom_failure on a new write: the row committed and the response was replaced.
+    COMMITTED_WRITE_REPORTED_AS_FAILURE = "committed_write_reported_as_failure"
+    # phantom_failure on a call that committed nothing new (idempotent replay, idempotency
+    # conflict, genuine transaction failure): only the response was replaced.
+    RESPONSE_REPLACED_WITHOUT_NEW_COMMIT = "response_replaced_without_new_commit"
+    # phantom_success on a call that never staged a new write: there is no pre-commit
+    # boundary to act on, so the fault is not applied and the genuine response is delivered.
+    NOT_APPLIED_NO_NEW_WRITE = "not_applied_no_new_write"
+
+
 PHANTOM_FAILURE_CODES: frozenset[ToolErrorCode] = frozenset(
     {ToolErrorCode.TIMEOUT, ToolErrorCode.INTERNAL_ERROR, ToolErrorCode.UNAVAILABLE}
 )
