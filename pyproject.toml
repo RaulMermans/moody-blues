@@ -51,7 +51,6 @@ testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = [
   "docker: requires a reachable local Docker daemon",
-  "live_vultr: makes real (chargeable) calls to Vultr Serverless Inference",
 ]
 
 [dependency-groups]
