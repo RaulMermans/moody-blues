@@ -1,0 +1,41 @@
+name: Vultr live smoke (manual, chargeable)
+
+# Makes REAL, billable requests to Vultr Serverless Inference. Manual trigger only.
+# Requires the repository secret MOODY_VULTR_API_KEY. Without it the smoke command exits 2
+# (BLOCKED_BY_CREDENTIALS) and this job FAILS -- it never reports a false pass.
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model ID to test (blank = backend default)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  vultr-smoke:
+    runs-on: ubuntu-latest
+    environment: vultr-live
+    env:
+      MOODY_VULTR_API_KEY: ${{ secrets.MOODY_VULTR_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - name: List models
+        run: uv run moody-blues vultr-models
+      - name: Basic inference + tool calling
+        env:
+          INPUT_MODEL: ${{ inputs.model }} # via env, never interpolated into the script
+        run: |
+          if [ -n "$INPUT_MODEL" ]; then export MOODY_VULTR_MODEL="$INPUT_MODEL"; fi
+          uv run moody-blues vultr-smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vultr-smoke-evidence
+          path: .artifacts/
+          retention-days: 30
