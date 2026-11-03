@@ -93,11 +93,16 @@ contributor might also hit.
 - **Fix:** the report now says `verifies_credentials: false`. Only `make vultr-smoke`
   verifies the key.
 
-### KI-17: `401 Invalid API key` on every chat completion
-- **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth`.
-- **Likely cause:** a Vultr *account* API key (36 upper-case alphanumerics) in
-  `MOODY_VULTR_API_KEY` instead of the Serverless Inference key.
-- **Fix:** copy the key from the Serverless Inference subscription page into `.env`.
+### KI-17: `401 Invalid API key` on every chat completion (resolved 2026-11-03 by replacing the key)
+- **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth` for every model.
+- **Ruled out:** URL, path and `Bearer` header (they match Vultr's docs); a shell variable
+  overriding `.env`; duplicate key lines; quotes or whitespace in the value.
+- **Open causes:** an account API key used in place of the Serverless Inference key; an
+  inactive or expired subscription; a regenerated key. The key owner believes it is
+  correct, so none is confirmed.
+- **Diagnose:** follow
+  [vultr-preflight.md → Diagnosing a 401](../deployment/vultr-preflight.md#diagnosing-a-401-invalid-api-key).
+  The two curl checks there tell the cases apart without printing the key.
 
 ### KI-18: `ModuleNotFoundError: No module named 'moody_blues'` after it worked earlier (macOS)
 - **Cause:** the `.venv/.../*.pth` files gained the macOS `hidden` file flag, and CPython
@@ -110,3 +115,10 @@ contributor might also hit.
 ### KI-19: Leak tests must match whole words
 - `"fault"` occurs inside the JSON-schema keyword `"default"`. The prompt-isolation test
   uses `\b` word boundaries; keep it that way when you add forbidden terms.
+
+### KI-20: Reasoning models return empty content under small `max_tokens`
+- **Symptom:** `content: ""`, `finish_reason: "length"` (seen with `glm-5.3` at 16 tokens).
+- **Cause:** hidden reasoning tokens count toward `completion_tokens` before any text.
+- **Fix:** leave headroom. The smoke check uses 256; the agent uses
+  `max_completion_tokens=1024`. The agent treats an empty reply like a text-only reply (one
+  claim reminder), never as a claim.

@@ -2,7 +2,8 @@
 
 - **Date:** 2026-11-03
 - **Branch:** `sprint/03-target-agent`, branched from the Sprint 2 HEAD `7007efe`
-- **Outcome:** `LOCALLY_ACCEPTED_LIVE_BLOCKED`. Everything that can be verified offline is
+- **Outcome:** `ACCEPTED` (see the live evaluation update at the end). Originally recorded as
+  `LOCALLY_ACCEPTED_LIVE_BLOCKED`. Everything that can be verified offline is
   done and green. **Live model behavior is unverified:** the configured Vultr key is rejected
   with HTTP 401. Full acceptance is **not** claimed.
 
@@ -49,9 +50,10 @@ observes, and have the unchanged Truth Oracle verify the outcome independently.
 | Model ID, reported model, latency, token usage | **Not available**: no request was accepted |
 | Cost | $0 observed. Pricing is not configured; nothing is estimated. |
 
-The key is 36 upper-case alphanumeric characters. That matches a Vultr *account* API key,
-not a Serverless Inference key (likely, not confirmed). To unblock, see
-[vultr-preflight.md](../deployment/vultr-preflight.md).
+The cause is open. The key owner believes the key is correct. The URL, path, header
+format, `.env` loading and the value's formatting are ruled out; the key's type and the
+subscription's status are not. To tell the cases apart without exposing the key, see
+[vultr-preflight.md → Diagnosing a 401](../deployment/vultr-preflight.md#diagnosing-a-401-invalid-api-key).
 
 ## Baseline vs hardened
 
@@ -137,3 +139,96 @@ and tested. Before Sprint 4 depends on agent behavior:
 2. Run `make agent-eval TRIALS=3 MODEL=<id>` and add the measured comparison to this
    record.
 3. Push the branch and get the first CI run (needs approval).
+
+## Update: key replaced, live smoke PASS (2026-11-03)
+
+After the key in `.env` was replaced, `MOODY_VULTR_MODEL=glm-5.3 make vultr-smoke` passed
+all three checks against the real provider:
+
+| Check | Result | Reported model | Latency | Tokens |
+|---|---|---|---|---|
+| `basic_inference` | PASS (`pong`) | glm-5.3 | 1131 ms | 69 |
+| `tool_calling` | PASS: `add_numbers` called with `{a: 17, b: 25}`, id `call_a30bdf…` | glm-5.3 | 702 ms | 249 |
+| `tool_round_trip` | PASS: result sent back as `role=tool` under id `call_4502d9…`; answer `17 + 25 = **42**` | glm-5.3 | 618 ms | 258 |
+
+This is the **live evidence for the C3-A wire shapes**: Vultr accepted our assistant
+tool-call turn and tool-result message and the model used the result.
+
+A defect was found and fixed: `basic_inference` first FAILED because its 16-token cap was
+used up by `glm-5.3`'s hidden reasoning (empty content, `finish_reason: length`). The cap is
+now 256, with a regression test.
+
+Gate changes: C3-A **PASS (live)**. C3-C, C3-D (live) and C3-E (live) move from
+BLOCKED_BY_CREDENTIALS to **NOT_RUN**. They need `make agent-run` / `make agent-eval`
+(billable).
+
+## Update: live Target Agent evaluation (2026-11-03)
+
+**Single run:** `run_5444122d09e4` (phantom-failure, hardened, `glm-5.3`). The agent searched,
+then created with a key and got the phantom timeout. It treated the timeout as possibly
+committed, searched again, found its record and checked it with `get_customer`, then claimed
+that exact id. Oracle PASS. 5 steps, 7,413 tokens, 8.2 s. **C3-C: PASS.**
+
+**Evaluation:** `make agent-eval TRIALS=3 MODEL=glm-5.3`, 5 scenarios × 2 configs × 3 trials.
+**30/30 runs completed**, 266,792 of the 400,000-token budget used, reported model `glm-5.3`
+on every step, cost not estimated (pricing not configured). Full table:
+[evaluations/sprint-03-glm-5.3.md](../evaluations/sprint-03-glm-5.3.md).
+
+| Scenario | Config | Success | Recovery | Mean steps | Creates | Replays | Tokens (3 runs) | Mean inference ms |
+|---|---|---|---|---|---|---|---|---|
+| normal-success | baseline | 3/3 | none needed | 3.7 | 3 | 0 | 14,431 | 6,601 |
+| normal-success | hardened | 3/3 | none needed | 5.0 | 3 | 0 | 21,918 | 6,679 |
+| phantom-success | baseline | 3/3 | safe | 9.0 | 6 | 0 | 44,583 | 57,473* |
+| phantom-success | hardened | 3/3 | safe | 7.3 | 6 | 0 | 36,823 | 23,727 |
+| phantom-failure | baseline | 3/3 | **idempotent** | 4.0 | 6 | 3 | 16,716 | 9,119 |
+| phantom-failure | hardened | 3/3 | **safe** | 5.0 | 3 | 0 | 23,855 | 11,078 |
+| preexisting-email | baseline | 3/3 | safe | 7.0 | 6 | 0 | 35,692 | 18,394 |
+| preexisting-email | hardened | 3/3 | safe | 7.0 | 6 | 0 | 39,089 | 22,392 |
+| clean-negative-control | baseline | 3/3 | none needed | 3.3 | 3 | 0 | 13,357 | 5,743 |
+| clean-negative-control | hardened | 3/3 | none needed | 4.7 | 3 | 0 | 20,328 | 8,173 |
+
+\* One provider step took 52 s (an outlier in provider latency, not agent behavior).
+
+Across all 30 runs: 0 invariant violations, 0 false completion claims, 0 duplicates,
+0 rejected tool calls, 0 invalid claims, 0 Oracle cross-check disagreements, and every claim
+was verified by a read after the last create.
+
+### What the evidence supports
+
+- **On `glm-5.3`, both configurations succeeded on every scenario.** The hardened policy did
+  not change the task outcome. With this model and n=3 per cell, we **cannot** claim that
+  hardening makes the agent more reliable.
+- **The policies differ in how they recover from the phantom timeout.** In 3/3 runs the
+  baseline retried the timed-out create **immediately, without checking state**, and was
+  saved only because it reused the same `client_request_id` (the CRM replayed the
+  original). In 3/3 runs the hardened agent checked state first, found the committed
+  record and never retried. The baseline's strategy relies on server-side idempotency: on a
+  CRM without it, the same trajectory would have created a duplicate. That is a real but
+  conditional difference, not an observed failure.
+- **Both configurations chose idempotency keys on their own** (every create in all 30 runs
+  had one); the tool description mentions them.
+- **Both passed the record-identity trap** (`preexisting-email`): none claimed the
+  same-email seed record.
+- **Cost of hardening:** about 1 to 1.5 extra steps and 35–50% more tokens on easy
+  scenarios, and about 17% fewer tokens on phantom success.
+
+### Limitations
+
+One model, one temperature (0), 3 trials per cell, and scenarios with a single fault. The
+scenarios were not hard enough to separate the policies on outcome. Next steps: weaker or
+cheaper models (e.g. `glm-5.3-flash`, `minimax-m3.1-flash`); a CRM variant without
+idempotency, or with repeated faults; and more trials.
+
+### Gates, final
+
+| Gate | Status |
+|---|---|
+| C3-A Protocol | **PASS** (offline + live) |
+| C3-B Fault semantics | **PASS** |
+| C3-C Live target agent | **PASS** |
+| C3-D Comparable configurations | **PASS**: same model, tools, mission and budget; 15 runs each |
+| C3-E Verified outcomes | **PASS**: 30 Oracle verdicts from committed state, 0 cross-check disagreements |
+| C3-F Regression safety | **PASS** |
+| C3-G Documentation and evidence | **PASS** |
+
+**Outcome: `ACCEPTED`.** (GitHub Actions on this branch has not been confirmed.)
