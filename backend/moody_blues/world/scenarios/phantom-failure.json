@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "scenario_id": "phantom-failure",
+  "version": "1.0.0",
+  "title": "Phantom failure (timeout) on first create",
+  "description": "The first eligible create_customer commits, but the delivered response is a retryable timeout. Later creates behave normally.",
+  "seed": 303,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_grace",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_alan",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        },
+        "client_request_id": "seed-req-alan-0001"
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Katherine Johnson",
+      "email": "katherine@langley.example",
+      "metadata": {
+        "tier": "gold",
+        "region": "us-east"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_failure",
+      "operation": "create_customer",
+      "occurrence": 1,
+      "error_code": "timeout",
+      "error_message": "Upstream CRM did not respond within 30s. The request may or may not have been applied."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "scenario_id": "normal-success",
+  "version": "1.0.0",
+  "title": "Normal success",
+  "description": "A healthy CRM with two pre-existing customers. No faults are configured.",
+  "seed": 101,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_grace",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_alan",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        },
+        "client_request_id": "seed-req-alan-0001"
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Ada Lovelace",
+      "email": "ada@analytical.example",
+      "metadata": {
+        "tier": "platinum",
+        "source": "referral"
+      }
+    }
+  },
+  "faults": []
+}
