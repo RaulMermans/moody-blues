@@ -49,9 +49,10 @@ observes, and have the unchanged Truth Oracle verify the outcome independently.
 | Model ID, reported model, latency, token usage | **Not available**: no request was accepted |
 | Cost | $0 observed. Pricing is not configured; nothing is estimated. |
 
-The key is 36 upper-case alphanumeric characters. That matches a Vultr *account* API key,
-not a Serverless Inference key (likely, not confirmed). To unblock, see
-[vultr-preflight.md](../deployment/vultr-preflight.md).
+The cause is open. The key owner believes the key is correct. The URL, path, header
+format, `.env` loading and the value's formatting are ruled out; the key's type and the
+subscription's status are not. To tell the cases apart without exposing the key, see
+[vultr-preflight.md → Diagnosing a 401](../deployment/vultr-preflight.md#diagnosing-a-401-invalid-api-key).
 
 ## Baseline vs hardened
 

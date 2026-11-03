@@ -17,10 +17,9 @@ approval.
 | `make agent-run` / `make agent-eval` | BLOCKED_BY_CREDENTIALS |
 | Vultr VM deployment | Out of scope |
 
-**Likely cause of the 401 (unconfirmed):** the configured key is 36 upper-case alphanumeric
-characters, which is the format of a Vultr *account* API key (my.vultr.com → Account → API).
-Serverless Inference uses its own key, shown on the Serverless Inference subscription page.
-Put that key in `.env` and rerun step 6.
+The cause of the 401 is **not yet known**. The key owner believes the key is correct. See
+[Diagnosing a 401](#diagnosing-a-401-invalid-api-key) below for what has been ruled out and
+how to narrow it down.
 
 ## Steps
 
@@ -65,6 +64,73 @@ default is left unchanged rather than replaced by an unverified guess; `agent-ru
 `.github/workflows/vultr-live.yml` is a manual workflow (`workflow_dispatch`) that uses the
 `vultr-live` environment and the `MOODY_VULTR_API_KEY` repository secret. Without the secret
 it fails; it never passes silently. Ordinary CI never calls Vultr.
+
+## Diagnosing a 401 `Invalid API key`
+
+### How MOODY BLUES sends the key
+
+These details match Vultr's documentation (see Sources below):
+
+| | Value |
+|---|---|
+| Base URL | `https://api.vultrinference.com/v1` (`MOODY_VULTR_BASE_URL`) |
+| Endpoint | `POST /chat/completions` |
+| Header | `Authorization: Bearer <MOODY_VULTR_API_KEY>` (sent by the OpenAI SDK) |
+| Key source | `MOODY_VULTR_API_KEY` from the shell environment, which takes precedence, or from `.env` |
+
+`GET /v1/models` answers 200 even with no key, so `make vultr-models` cannot tell a good key
+from a bad one (KI-16). Only a completion call checks the key.
+
+### Already ruled out (2026-11-03)
+
+- The URL, path and header format match Vultr's docs.
+- No shell variable overrides `.env`, and `.env` holds exactly one `MOODY_VULTR_API_KEY=` line.
+- The value has no surrounding quotes, spaces or line-ending characters (36 alphanumerics).
+- The failure does not depend on the model: `glm-5.3`, `qwen3.8-27b` and
+  `deepseek-v4.1-flash-1017` all return the same 401.
+
+### What is still possible
+
+Vultr has **two kinds of key**, and both are long upper-case strings:
+
+| Key | Where it comes from | Works against |
+|---|---|---|
+| Account API key | my.vultr.com → *Account* → *API* | `api.vultr.com/v2/...` (the platform API) |
+| Serverless Inference key | my.vultr.com → *Products* → *Serverless Inference* → your subscription → API key | `api.vultrinference.com/v1/...` |
+
+Other causes to check: the inference subscription is not active yet, was paused or expired;
+the inference key was regenerated after you copied it; or the key belongs to a different
+subscription or account.
+
+### Check it yourself, without sharing the key
+
+Run these in your own terminal. Neither prints the key. A 401 is not billed, and
+`max_tokens: 1` keeps any successful call to a fraction of a cent.
+
+```bash
+# 1. Does the inference endpoint accept the key? Expect HTTP 200; 401 means it is rejected.
+export MOODY_VULTR_API_KEY="$(grep '^MOODY_VULTR_API_KEY=' .env | cut -d= -f2-)"
+curl -s -o /dev/null -w "inference: HTTP %{http_code}\n" \
+  https://api.vultrinference.com/v1/chat/completions \
+  -H "Authorization: Bearer $MOODY_VULTR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"model":"glm-5.3","messages":[{"role":"user","content":"hi"}],"max_tokens":1}'
+
+# 2. Is it an account key instead? Expect 200 for an account key, 401 for an inference key.
+curl -s -o /dev/null -w "account API: HTTP %{http_code}\n" \
+  https://api.vultr.com/v2/account -H "Authorization: Bearer $MOODY_VULTR_API_KEY"
+```
+
+| Result of 1 | Result of 2 | Meaning | Next step |
+|---|---|---|---|
+| 200 | any | The key works; the earlier failure was transient or environment-specific | `make vultr-smoke` |
+| 401 | 200 | It is an account key | Copy the key from the Serverless Inference subscription page into `.env` |
+| 401 | 401 | It is neither a valid account key nor an accepted inference key | In the console, check that the subscription is active, regenerate its key, and paste it in again |
+
+After any change, run `MOODY_VULTR_MODEL=glm-5.3 make vultr-smoke`. All three checks
+should report `PASS`.
+
+Sources: [Vultr tool-calling guide](https://docs.vultr.com/how-to-use-tool-calling-with-vultr-serverless-inference),
+[Vultr Serverless Inference in Node.js](https://docs.vultr.com/how-to-use-vultr-serverless-inference-in-nodejs).
 
 ## Troubleshooting
 

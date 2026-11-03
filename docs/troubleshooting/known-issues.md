@@ -93,11 +93,16 @@ contributor might also hit.
 - **Fix:** the report now says `verifies_credentials: false`. Only `make vultr-smoke`
   verifies the key.
 
-### KI-17: `401 Invalid API key` on every chat completion
-- **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth`.
-- **Likely cause:** a Vultr *account* API key (36 upper-case alphanumerics) in
-  `MOODY_VULTR_API_KEY` instead of the Serverless Inference key.
-- **Fix:** copy the key from the Serverless Inference subscription page into `.env`.
+### KI-17: `401 Invalid API key` on every chat completion (open)
+- **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth` for every model.
+- **Ruled out:** URL, path and `Bearer` header (they match Vultr's docs); a shell variable
+  overriding `.env`; duplicate key lines; quotes or whitespace in the value.
+- **Open causes:** an account API key used in place of the Serverless Inference key; an
+  inactive or expired subscription; a regenerated key. The key owner believes it is
+  correct, so none is confirmed.
+- **Diagnose:** follow
+  [vultr-preflight.md → Diagnosing a 401](../deployment/vultr-preflight.md#diagnosing-a-401-invalid-api-key).
+  The two curl checks there tell the cases apart without printing the key.
 
 ### KI-18: `ModuleNotFoundError: No module named 'moody_blues'` after it worked earlier (macOS)
 - **Cause:** the `.venv/.../*.pth` files gained the macOS `hidden` file flag, and CPython
