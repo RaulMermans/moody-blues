@@ -208,9 +208,11 @@ def evaluate_state(
             FindingCode.RESPONSE_STATE_DIVERGENCE,
             Severity.INFO,
             None,
-            f"{d.call_id}: response reported ok={d.reported_ok} "
-            f"(customer {d.reported_customer_id}) but the call committed "
-            f"{d.committed_customer_id or 'nothing'}",
+            f"{d.call_id}: response reported success (customer {d.reported_customer_id}) "
+            "but the call committed nothing"
+            if d.reported_ok
+            else f"{d.call_id}: response reported an error but the call committed "
+            f"{d.committed_customer_id}",
             extra_ids=[i for i in (d.reported_customer_id, d.committed_customer_id) if i],
         )
 

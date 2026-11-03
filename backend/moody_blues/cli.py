@@ -5,6 +5,8 @@ Commands:
   docker-smoke  Run the fixed smoke program in a real disposable container.
   vultr-smoke   LIVE: basic inference + tool calling against Vultr (chargeable).
   vultr-models  LIVE: list models visible to the configured key.
+  world-demo    Run the reference World Engine cases against real SQLite worlds.
+  world-run     Run one scenario with one deterministic reference executor.
 """
 
 from __future__ import annotations
@@ -147,6 +149,29 @@ def _vultr(settings: Settings, checks: list[str], artifact: str) -> int:
     return code
 
 
+def world_demo(case_ids: list[str] | None, *, keep: bool, color: bool) -> int:
+    from moody_blues.services.world_demo import run_demo
+    from moody_blues.services.world_runner import reference_case
+    from moody_blues.world.reference import REFERENCE_CASES
+
+    cases = [reference_case(c) for c in case_ids] if case_ids else list(REFERENCE_CASES)
+    run_demo(cases, artifacts_dir=ARTIFACTS / "world-demo", keep_worlds=keep, color=color)
+    return 0
+
+
+def world_run(scenario_id: str, executor: str, *, as_json: bool, color: bool) -> int:
+    from moody_blues.services.world_demo import render_report
+    from moody_blues.services.world_runner import run_scenario
+    from moody_blues.world.scenarios import load_scenario
+
+    report = run_scenario(load_scenario(scenario_id), executor)
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2))
+    else:
+        print(render_report(report, color=color))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="moody-blues")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -160,7 +185,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="run only this check (repeatable); default: all",
     )
     sub.add_parser("vultr-models")
+    from moody_blues.services.world_runner import EXECUTORS_AVAILABLE
+    from moody_blues.world.reference import REFERENCE_CASES
+    from moody_blues.world.scenarios import scenario_ids
+
+    wd = sub.add_parser("world-demo")
+    wd.add_argument(
+        "--case",
+        action="append",
+        choices=[c.case_id for c in REFERENCE_CASES],
+        help="run only this reference case (repeatable); default: all",
+    )
+    wd.add_argument("--keep", action="store_true", help="keep SQLite worlds under .artifacts/")
+    wd.add_argument("--no-color", action="store_true")
+    wr = sub.add_parser("world-run")
+    wr.add_argument("--scenario", required=True, choices=scenario_ids())
+    wr.add_argument("--executor", required=True, choices=EXECUTORS_AVAILABLE)
+    wr.add_argument("--json", action="store_true", help="print the full RunReport as JSON")
+    wr.add_argument("--no-color", action="store_true")
     args = parser.parse_args(argv)
+    color = sys.stdout.isatty() and not getattr(args, "no_color", False)
 
     settings = Settings()
     match args.command:
@@ -172,6 +216,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _vultr(settings, args.check or list(vultr_smoke.CHECKS), "vultr-smoke.json")
         case "vultr-models":
             return _vultr(settings, ["list_models"], "vultr-models.json")
+        case "world-demo":
+            return world_demo(args.case, keep=args.keep, color=color)
+        case "world-run":
+            return world_run(args.scenario, args.executor, as_json=args.json, color=color)
         case _:
             parser.error(f"unknown command {args.command}")
     return 2

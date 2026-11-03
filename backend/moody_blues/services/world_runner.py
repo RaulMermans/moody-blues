@@ -20,6 +20,8 @@ from moody_blues.world.oracle import TruthOracle
 from moody_blues.world.reference import EXECUTORS, REFERENCE_CASES, Executor, ReferenceCase
 from moody_blues.world.scenarios import load_scenario
 
+EXECUTORS_AVAILABLE: list[str] = sorted(EXECUTORS)
+
 
 class UnknownExecutorError(LookupError):
     pass
