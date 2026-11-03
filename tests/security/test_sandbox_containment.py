@@ -27,9 +27,7 @@ def test_runs_as_unprivileged_user(docker_runner: DockerSandboxRunner) -> None:
 
 def test_no_capabilities_and_no_new_privs(docker_runner: DockerSandboxRunner) -> None:
     r = _run(docker_runner, "print(open('/proc/self/status').read())")
-    fields = dict(
-        line.split(":\t", 1) for line in r.stdout.splitlines() if ":\t" in line
-    )
+    fields = dict(line.split(":\t", 1) for line in r.stdout.splitlines() if ":\t" in line)
     assert int(fields["CapEff"].strip(), 16) == 0
     assert int(fields["CapPrm"].strip(), 16) == 0
     assert int(fields["CapBnd"].strip(), 16) == 0
@@ -108,8 +106,17 @@ print(open("/proc/self/mountinfo").read())
     assert "docker.sock" not in r.stdout.split("\n", 2)[2]
     mount_points = {line.split()[4] for line in r.stdout.splitlines() if line.count(" ") > 5}
     # No bind mounts beyond what Docker always provides.
-    allowed = {"/", "/tmp", "/proc", "/dev", "/sys", "/etc/resolv.conf", "/etc/hostname",
-               "/etc/hosts"}
-    unexpected = {m for m in mount_points if not any(
-        m == a or m.startswith(a + "/") for a in allowed)}
+    allowed = {
+        "/",
+        "/tmp",
+        "/proc",
+        "/dev",
+        "/sys",
+        "/etc/resolv.conf",
+        "/etc/hostname",
+        "/etc/hosts",
+    }
+    unexpected = {
+        m for m in mount_points if not any(m == a or m.startswith(a + "/") for a in allowed)
+    }
     assert unexpected == set(), unexpected
