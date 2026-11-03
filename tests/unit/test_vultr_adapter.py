@@ -244,3 +244,19 @@ def test_smoke_reports_blocked_without_credentials() -> None:
     assert {c["status"] for c in report["checks"].values()} == {
         smoke.SmokeStatus.BLOCKED_BY_CREDENTIALS
     }
+
+
+def test_basic_inference_leaves_room_for_reasoning_models() -> None:
+    """Regression: with max_tokens=16, glm-5.3 returned empty content (finish=length)."""
+    client, rec = make_client(
+        lambda _: httpx2.Response(200, json=fixture_completion(content="pong"))
+    )
+    assert smoke.basic_inference(client)["status"] == smoke.SmokeStatus.PASS
+    assert rec.body()["max_tokens"] >= 256
+
+
+def test_basic_inference_fails_on_truncated_empty_reply() -> None:
+    payload = fixture_completion(content="")
+    payload["choices"][0]["finish_reason"] = "length"
+    client, _ = make_client(lambda _: httpx2.Response(200, json=payload))
+    assert smoke.basic_inference(client)["status"] == smoke.SmokeStatus.FAIL

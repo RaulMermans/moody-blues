@@ -10,16 +10,19 @@ approval.
 |---|---|
 | Adapter implemented and offline contract tests passing (incl. multi-turn tool calls) | PASS |
 | `MOODY_VULTR_API_KEY` present in `.env` | yes |
-| Key accepted by `POST /chat/completions` | **FAIL: HTTP 401 `Invalid API key`** → BLOCKED_BY_CREDENTIALS |
+| Key accepted by `POST /chat/completions` | **PASS** after the key was replaced (2026-11-03). The earlier key got HTTP 401. |
 | `make vultr-models` (live catalog) | Returns 35 models, but `GET /models` is **unauthenticated**, so this proves nothing about the key |
 | `MOODY_VULTR_MODEL=kimi-k2-instruct` in the catalog | **No**: choose a listed model |
-| `make vultr-smoke` (basic, tool calling, tool round trip) | BLOCKED_BY_CREDENTIALS |
-| `make agent-run` / `make agent-eval` | BLOCKED_BY_CREDENTIALS |
+| `make vultr-smoke` on `glm-5.3` (basic, tool calling, tool round trip) | **PASS** ×3. Reported model `glm-5.3`; latency 0.6–1.1 s; 69 / 249 / 258 tokens. |
+| `make agent-run` / `make agent-eval` | NOT_RUN (unblocked; awaiting approval for billable runs) |
 | Vultr VM deployment | Out of scope |
 
-The cause of the 401 is **not yet known**. The key owner believes the key is correct. See
-[Diagnosing a 401](#diagnosing-a-401-invalid-api-key) below for what has been ruled out and
-how to narrow it down.
+The 401 was resolved by replacing the key in `.env`. The diagnosis guide below is kept
+for future 401s.
+
+`glm-5.3` is a **reasoning model**: it spends completion tokens on hidden reasoning before
+any text. With `max_tokens=16`, `basic_inference` came back empty (`finish_reason: length`).
+The check now allows 256 tokens and still requires "pong".
 
 ## Steps
 
@@ -55,7 +58,7 @@ how to narrow it down.
 (<https://docs.vultr.com/how-to-use-tool-calling-with-vultr-serverless-inference>). It is
 **not** in the live catalog as of 2026-11-03. Chat-capable candidates in the catalog include
 `glm-5.3`, `glm-5.2`, `qwen3.8-27b`, `deepseek-v4.1-flash-1017`, `minimax-m3.1-flash` and
-`mimo-v2.6-pro`. None has been verified for tool calling, because the key is rejected. The
+`mimo-v2.6-pro`. `glm-5.3` is verified live for single tool calls and the multi-turn round trip; the others are unverified. The
 default is left unchanged rather than replaced by an unverified guess; `agent-run` and
 `agent-eval` refuse a model missing from the catalog before making any call.
 

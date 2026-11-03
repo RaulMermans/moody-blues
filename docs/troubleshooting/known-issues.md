@@ -93,7 +93,7 @@ contributor might also hit.
 - **Fix:** the report now says `verifies_credentials: false`. Only `make vultr-smoke`
   verifies the key.
 
-### KI-17: `401 Invalid API key` on every chat completion (open)
+### KI-17: `401 Invalid API key` on every chat completion (resolved 2026-11-03 by replacing the key)
 - **Symptom:** `vultr-smoke` and `agent-run` report `provider_auth` for every model.
 - **Ruled out:** URL, path and `Bearer` header (they match Vultr's docs); a shell variable
   overriding `.env`; duplicate key lines; quotes or whitespace in the value.
@@ -115,3 +115,10 @@ contributor might also hit.
 ### KI-19: Leak tests must match whole words
 - `"fault"` occurs inside the JSON-schema keyword `"default"`. The prompt-isolation test
   uses `\b` word boundaries; keep it that way when you add forbidden terms.
+
+### KI-20: Reasoning models return empty content under small `max_tokens`
+- **Symptom:** `content: ""`, `finish_reason: "length"` (seen with `glm-5.3` at 16 tokens).
+- **Cause:** hidden reasoning tokens count toward `completion_tokens` before any text.
+- **Fix:** leave headroom. The smoke check uses 256; the agent uses
+  `max_completion_tokens=1024`. The agent treats an empty reply like a text-only reply (one
+  claim reminder), never as a claim.

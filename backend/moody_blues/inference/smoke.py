@@ -56,7 +56,9 @@ def basic_inference(client: VultrInferenceClient) -> dict[str, Any]:
     result = client.complete(
         InferenceRequest(
             messages=[ChatMessage(role="user", content="Reply with exactly the word: pong")],
-            max_tokens=16,
+            # Reasoning models (e.g. glm-5.3) spend completion tokens on hidden reasoning
+            # before any text; 16 tokens produced an empty, length-truncated reply.
+            max_tokens=256,
         )
     )
     ok = bool(result.content and "pong" in result.content.lower())

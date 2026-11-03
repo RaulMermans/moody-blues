@@ -138,3 +138,25 @@ and tested. Before Sprint 4 depends on agent behavior:
 2. Run `make agent-eval TRIALS=3 MODEL=<id>` and add the measured comparison to this
    record.
 3. Push the branch and get the first CI run (needs approval).
+
+## Update: key replaced, live smoke PASS (2026-11-03)
+
+After the key in `.env` was replaced, `MOODY_VULTR_MODEL=glm-5.3 make vultr-smoke` passed
+all three checks against the real provider:
+
+| Check | Result | Reported model | Latency | Tokens |
+|---|---|---|---|---|
+| `basic_inference` | PASS (`pong`) | glm-5.3 | 1131 ms | 69 |
+| `tool_calling` | PASS: `add_numbers` called with `{a: 17, b: 25}`, id `call_a30bdf…` | glm-5.3 | 702 ms | 249 |
+| `tool_round_trip` | PASS: result sent back as `role=tool` under id `call_4502d9…`; answer `17 + 25 = **42**` | glm-5.3 | 618 ms | 258 |
+
+This is the **live evidence for the C3-A wire shapes**: Vultr accepted our assistant
+tool-call turn and tool-result message and the model used the result.
+
+A defect was found and fixed: `basic_inference` first FAILED because its 16-token cap was
+used up by `glm-5.3`'s hidden reasoning (empty content, `finish_reason: length`). The cap is
+now 256, with a regression test.
+
+Gate changes: C3-A **PASS (live)**. C3-C, C3-D (live) and C3-E (live) move from
+BLOCKED_BY_CREDENTIALS to **NOT_RUN**. They need `make agent-run` / `make agent-eval`
+(billable).
