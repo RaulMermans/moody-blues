@@ -15,6 +15,7 @@ class ExecutionStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     TIMED_OUT = "timed_out"
+    CANCELLED = "cancelled"  # stopped on request by trusted code
     ERROR = "error"  # infrastructure failure: the work itself never ran to completion
 
 
@@ -36,6 +37,9 @@ class ErrorCategory(StrEnum):
     SANDBOX_UNAVAILABLE = "sandbox_unavailable"
     SANDBOX_IMAGE_UNAVAILABLE = "sandbox_image_unavailable"
     SANDBOX_RUNTIME = "sandbox_runtime"
+    # Experiment runtime
+    BUDGET_EXCEEDED = "budget_exceeded"
+    EVIDENCE_INTEGRITY = "evidence_integrity"
 
 
 class ErrorDetail(BaseModel):

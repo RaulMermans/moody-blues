@@ -39,7 +39,13 @@ class SandboxResult(BaseModel):
       - SUCCEEDED: process exited 0.
       - FAILED: process exited non-zero (incl. OOM kill, reported via ``oom_killed``).
       - TIMED_OUT: wall-time limit hit; the container was killed.
+      - CANCELLED: trusted code asked the run to stop; the container was killed.
     Infrastructure failures raise ``SandboxError`` instead of returning a result.
+
+    ``stdout_bytes`` / ``stderr_bytes`` count everything the process wrote, measured on a
+    stream attached before the container started, so ``*_truncated`` cannot be fooled by log
+    rotation. ``output_complete`` is False when that stream ended abnormally; output from
+    such a run must not be acted on.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -51,10 +57,14 @@ class SandboxResult(BaseModel):
     stderr: str
     stdout_truncated: bool = False
     stderr_truncated: bool = False
+    stdout_bytes: int = Field(default=0, ge=0)
+    stderr_bytes: int = Field(default=0, ge=0)
+    output_complete: bool = True
     duration_ms: int = Field(ge=0)
     timed_out: bool = False
     oom_killed: bool = False
     image: str
+    image_id: str | None = None  # content id of the image actually used, when known
     limits: SandboxLimits
     cleaned_up: bool
 
@@ -68,6 +78,7 @@ class SandboxResult(BaseModel):
             ExecutionStatus.SUCCEEDED,
             ExecutionStatus.FAILED,
             ExecutionStatus.TIMED_OUT,
+            ExecutionStatus.CANCELLED,
         }:
             raise ValueError(f"invalid terminal status for a sandbox result: {self.status}")
         return self

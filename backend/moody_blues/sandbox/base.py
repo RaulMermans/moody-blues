@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from threading import Event
 from typing import Protocol
 
 from moody_blues.contracts.common import ErrorCategory, MoodyBluesError
@@ -22,9 +23,10 @@ class SandboxRunner(Protocol):
 
     Implementations must never run code in the calling process, must not pass host
     secrets into the environment, and must release all resources before returning.
+    Setting ``cancel`` stops an active run promptly; the result then has status CANCELLED.
     """
 
-    def run(self, request: SandboxRequest) -> SandboxResult: ...
+    def run(self, request: SandboxRequest, *, cancel: Event | None = None) -> SandboxResult: ...
 
     def ping(self) -> None:
         """Raise ``SandboxUnavailableError`` if the backing runtime is unreachable."""
