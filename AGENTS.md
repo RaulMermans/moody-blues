@@ -14,10 +14,12 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/inference/` | Model provider adapters (Vultr) + live smoke checks |
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
 | `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run` |
+| `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
+| `tests/agent` | Target Agent with labeled provider fixtures over real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -65,6 +67,22 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   fault may modify rows other than the targeted call's own staged write.
 - Expected verdicts live in `tests/world`, never in scenario files.
 - Reference executors are scripts. Never describe their results as LLM agent behavior.
+- Fault evidence must describe the call's real outcome (`FaultEffect`, `new_commit`); never
+  label a commit or a pre-commit abort that did not happen.
+
+**Target Agent**
+- The agent gets only the policy, the mission built from the `Objective`, the allowed tool
+  specs, its own history and `ToolPort` responses. Never the scenario description, faults,
+  paths, seed data, Oracle output or evidence events.
+- Baseline and hardened differ only in the system prompt. Same model, tools, mission and
+  budget in any comparison.
+- Every model tool call is validated (allowlist, JSON object, Pydantic) before the gateway.
+  Execution is sequential and exactly once per inference result.
+- A missing or invalid claim is never read as success (`state_correct_claim_missing`).
+  Don't change the Oracle to favor a configuration.
+- Results from `ScriptedModel` or HTTP fixtures are `offline_fixture` evidence and never
+  describe real model behavior. `agent-run` / `agent-eval` are live and chargeable: run them
+  only when asked, within their budgets.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

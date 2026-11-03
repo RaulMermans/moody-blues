@@ -7,10 +7,12 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 2, World Engine.** Built so far: the backend, the sandbox, the Vultr
-> adapter, a status page, and a deterministic synthetic CRM with controlled reality
-> distortions and an independent Truth Oracle. Not built yet: the Investigator and real LLM
-> target agents. See [docs/sprints/sprint-02.md](docs/sprints/sprint-02.md).
+> **Status: Sprint 3, Target Agent.** Built so far: the backend, the sandbox, the Vultr
+> adapter, a status page, a synthetic CRM with controlled reality distortions and an
+> independent Truth Oracle, and a real multi-turn tool-using LLM Target Agent (baseline and
+> hardened policies). **Live model behavior is not yet verified:** the configured Vultr key
+> is rejected (HTTP 401). Not built yet: the Investigator. See
+> [docs/sprints/sprint-03.md](docs/sprints/sprint-03.md).
 
 ## What works today
 
@@ -22,7 +24,10 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Next.js status page connected to the backend | Implemented and verified with Playwright |
 | World Engine: per-world SQLite CRM, tool gateway, Phantom Success and Phantom Failure faults | Implemented and tested against real SQLite (`tests/world`) |
 | Truth Oracle: `PASS` / `VIOLATION` / `INCONCLUSIVE` from authoritative state only | Implemented and tested, including tamper resistance |
-| `make world-demo`: 8 reference cases (deterministic scripts, **not** LLM agents) | Real runs; offline; free |
+| `make world-demo`: 10 reference cases (deterministic scripts, **not** LLM agents) | Real runs; offline; free |
+| Multi-turn tool-calling contracts (tool-call ids preserved, `role=tool` results) | Implemented and tested offline (fixtures) |
+| Target Agent: bounded LLM tool loop, baseline/hardened policies, Oracle-evaluated run reports | Implemented and tested offline with labeled provider fixtures. **Live runs BLOCKED_BY_CREDENTIALS (key rejected, 401).** |
+| `make agent-run` / `make agent-eval`: live single runs and baseline-vs-hardened evaluation | Implemented; exercised live up to the 401 |
 
 ## Prerequisites
 
@@ -50,7 +55,7 @@ Open http://localhost:3000.
 | `make lint` | `ruff format --check`, `ruff check`, ESLint |
 | `make format` | Auto-format and auto-fix Python |
 | `make typecheck` | Pyright (strict) and `tsc` |
-| `make test` | Unit and World Engine tests (offline: real SQLite, no Docker, no network) |
+| `make test` | Unit, World Engine and Target Agent tests (offline: real SQLite, labeled provider fixtures, no network) |
 | `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
 | `make build` | Production frontend build |
@@ -58,8 +63,10 @@ Open http://localhost:3000.
 | `make check` | All of the above. The local acceptance gate. |
 | `make doctor` | Check the toolchain, Docker, Playwright and config. Makes no chargeable calls. |
 | `make docker-smoke` | Run the fixed smoke program in a real disposable container |
-| `make vultr-models` | **Live:** list models visible to your key |
-| `make vultr-smoke` | **Live, chargeable:** basic inference plus tool calling |
+| `make vultr-models` | **Live:** list the catalog. The endpoint is unauthenticated, so this does **not** verify the key. |
+| `make vultr-smoke` | **Live, chargeable:** basic inference, tool calling, and a multi-turn tool round trip |
+| `make agent-run SCENARIO=… CONFIG=baseline\|hardened MODEL=…` | **Live, chargeable:** one Target Agent run, rendered trace, JSON report in `.artifacts/agent-runs/` |
+| `make agent-eval TRIALS=3 MODEL=…` | **Live, chargeable:** bounded scenarios × configs × trials, summary in `.artifacts/agent-eval/` |
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
 
@@ -75,9 +82,9 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 
 ## Documentation
 
-- [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md)
-- [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md)
-- [Sprint 1 record](docs/sprints/sprint-01.md) · [Sprint 2 record](docs/sprints/sprint-02.md) · [Validation](docs/testing/validation.md)
+- [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md) · [Target Agent](docs/architecture/target-agent.md)
+- [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md)
+- [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Validation](docs/testing/validation.md)
 - [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 

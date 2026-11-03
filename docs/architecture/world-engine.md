@@ -1,6 +1,6 @@
 # World Engine, controlled distortions and Truth Oracle
 
-_Sprint 2 (2026-11-03). Describes implemented behavior only._
+_Sprint 2 (2026-11-03), fault effects revised in Sprint 3. Describes implemented behavior only._
 
 The World Engine is a deterministic synthetic CRM. Future target agents will operate on it,
 and their tool observations can be deliberately distorted. A Truth Oracle then decides, using
@@ -129,9 +129,30 @@ boundary. Invalid calls and reads never consume an occurrence.
 | Fault | Boundary | Effect on state | Delivered response |
 |---|---|---|---|
 | `phantom_failure` | post-commit | The write runs normally: it commits, or replays/conflicts as it would without the fault | The configured error (`timeout`, `internal_error` or `unavailable`), always `retryable: true` |
-| `phantom_success` | pre-commit | Any staged write is rolled back; nothing is committed | A success shaped exactly like a genuine one, carrying the never-committed id |
+| `phantom_success` | pre-commit | The staged new row is rolled back; nothing is committed | A success shaped exactly like a genuine one, carrying the never-committed id |
 
-The delivered response depends only on the fault, never on the actual outcome. The fault
+### Fault effects (Sprint 3, C3-B)
+
+What a targeted fault does depends on the call's **real** outcome, and the evidence records
+it as a `FaultEffect` together with `call_outcome` and `new_commit`. Sprint 2 labeled a fault
+on an idempotent replay as if a new write had reached its boundary; that was a defect.
+
+| Real outcome of the call | `phantom_failure` | `phantom_success` |
+|---|---|---|
+| New write committed | `committed_write_reported_as_failure` (`boundary: post_commit`, `new_commit: true`) | n/a (the write is aborted instead) |
+| New write staged | n/a (it commits) | `aborted_new_write` (`boundary: pre_commit`, `new_commit: false`) |
+| Idempotent replay | `response_replaced_without_new_commit` (`boundary: response`) | `not_applied_no_new_write`: genuine replay delivered; `fault_skipped` event |
+| Idempotency conflict | `response_replaced_without_new_commit` | `not_applied_no_new_write` |
+| Genuine transaction failure | `response_replaced_without_new_commit` | `not_applied_no_new_write` |
+
+Rationale: a response may be deliberately altered without a new commit, but the evidence
+must never claim a commit or a pre-commit abort that did not happen. `phantom_success` is
+defined by its pre-commit boundary; a call that never stages a row has none, so fabricating
+a new id there would be a lie with no corresponding event. A targeted occurrence is consumed
+either way and never carries over to a later call.
+
+When a fault is applied, the delivered response depends only on the fault, never on the
+actual outcome. The fault
 touches only the targeted call's own staged write. Legitimate recovery paths stay open:
 `get_customer` and `search_customers` always tell the truth, and idempotency keys work.
 
@@ -147,9 +168,10 @@ Each gateway call appends, in `seq` order:
 1. `tool_call_requested`
 2. `operation_executed`, with the outcome: `committed`, `aborted_pre_commit`,
    `idempotent_replay`, `idempotency_conflict`, `transaction_failed`, `read`,
-   `rejected_invalid_arguments` or `unknown_tool`
-3. `fault_injected`, only if a fault fired: kind, occurrence, boundary and the
-   **actual** response
+   `rejected_invalid_arguments` or `unknown_tool`; writes also carry `new_commit`
+3. `fault_injected`, only if a fault was applied: kind, occurrence, boundary, `effect`,
+   `call_outcome`, `new_commit` and the **actual** response; or `fault_skipped` when a
+   targeted fault could not apply to the real outcome (same fields, `boundary: null`)
 4. `tool_response_delivered`, the exact response the executor saw
 
 The runner then appends:
@@ -225,6 +247,11 @@ A scenario contains:
 - `objective`
 - `faults`
 - the `invariants` to evaluate
+
+Shipped scenarios: `normal-success`, `phantom-success`, `phantom-failure`,
+`clean-negative-control` and (Sprint 3) `preexisting-email`, where a *different*
+pre-existing customer already uses the objective's email and the first create is a phantom
+success, so an executor must identify its own record rather than any same-email record.
 
 Scenario files hold no expected verdicts. Those live in `tests/world/test_scenarios.py`, so
 scenario definitions can be shown to a future Investigator without leaking the answers.
