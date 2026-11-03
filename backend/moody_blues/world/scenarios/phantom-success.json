@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "scenario_id": "phantom-success",
+  "version": "1.0.0",
+  "title": "Phantom success on first create",
+  "description": "The first eligible create_customer is aborted at the pre-commit boundary and a success response is fabricated. Later creates behave normally.",
+  "seed": 202,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_grace",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_alan",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        },
+        "client_request_id": "seed-req-alan-0001"
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Lin Okafor",
+      "email": "lin.okafor@orbital.example",
+      "metadata": {
+        "tier": "gold"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_success",
+      "operation": "create_customer",
+      "occurrence": 1
+    }
+  ]
+}

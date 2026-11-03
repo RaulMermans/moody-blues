@@ -63,3 +63,25 @@ contributor might also hit.
 - The workflows parse as valid YAML but have not run on GitHub, because no remote is
   configured and pushing needs approval. Expect first-run fixes (for example, action
   versions).
+
+### KI-13: Tampering tests must drop the append-only triggers first
+- **Symptom:** `sqlite3.IntegrityError: events are append-only` when a test rewrites evidence.
+- **Cause:** `events` and `committed_changes` have `BEFORE UPDATE/DELETE` triggers that abort.
+- **Fix:** this is intended. Tests that simulate tampering (`test_oracle.py`,
+  `test_properties.py`) `DROP TRIGGER events_append_only_u` / `_d` on a raw connection first.
+
+### KI-14: World databases are files, so the Oracle's view needs the file to exist
+- `ReadOnlyWorldView` opens `file:…?mode=ro`, which cannot create a database. Opening a view
+  on a closed or reset-in-progress world raises `FileNotFoundError` or `WorldClosedError`.
+  Always get views from `World.view()` on an open world.
+
+### KI-15: Pyright strict: `@contextmanager` returning `Iterator[...]` is deprecated
+- **Fix:** annotate the return type as `Generator[T]` (see `CrmStore.transaction`).
+
+### KI-16: Ruff S105 flags `PASS = "PASS"` as a hardcoded password
+- **Fix:** a scoped `# noqa: S105` on the `Verdict` enum member. Don't disable S105 globally.
+
+### KI-17: Kept world directories and demo reports
+- `make world-demo` writes JSON run reports to `.artifacts/world-demo/` (git-ignored).
+  `moody-blues world-demo --keep` also keeps each SQLite world under
+  `.artifacts/world-demo/worlds/` for inspection with `sqlite3`. Delete them by hand.

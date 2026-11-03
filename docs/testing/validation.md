@@ -7,6 +7,7 @@
 | Unit | `tests/unit` | nothing | contracts, config, API envelopes, request ids, health semantics, adapter wire contract, error classification, bounded retries, Docker-unavailable path | Yes, labeled: `FakeSandboxRunner` for API tests; `httpx2.MockTransport` **fixtures** for the Vultr wire format. The Docker-unavailable tests use the **real** runner against a nonexistent socket. |
 | Integration | `tests/integration` (`-m docker`) | Docker | real execution: success, Python error, exit code, timeout + kill, memory/PID/CPU limits, output truncation, cleanup after every test, `/sandbox/smoke` + `/ready` against real Docker | No |
 | Security | `tests/security` (`-m docker`) | Docker | inside the container: uid 65534, zero capabilities, NoNewPrivs, loopback-only network, read-only rootfs, noexec `/tmp`, no host-env leakage (canary), no Docker socket or host mounts | No |
+| World Engine | `tests/world` | nothing (real SQLite files in temp dirs) | CRM validation and transactions, pre-commit rollback, CHECK constraints, append-only evidence, `mode=ro` Oracle access, fault semantics and targeting, Oracle verdicts, tamper resistance, isolation, reset, deterministic replay, CLI | No. Executors are deterministic **scripts** (`world/reference.py`), labeled as not LLM agents. |
 | E2E | `frontend/e2e` | Docker, uv, Chromium | real browser → Next.js production server → FastAPI: identity renders, UI states equal backend-reported states, no key material or backend URL reaches the browser (canary key), genuine backend-down state | No (no request mocking) |
 | Live provider | `make vultr-smoke`, `make vultr-models` | Vultr key | real inference + tool calling, Pydantic-validated arguments, requested/reported model | No |
 
@@ -35,7 +36,26 @@ Run with `make check` (exit 0):
 | `make vultr-smoke` tool calling | BLOCKED_BY_CREDENTIALS (exit 2) |
 | GitHub Actions | NOT_RUN (no remote; YAML parses) |
 
-## Selected evidence
+## Sprint 2 results (2026-11-03, same host)
+
+Run with `make check` (exit 0):
+
+| Check | Result |
+|---|---|
+| `ruff format --check` / `ruff check` | PASS (62 files) |
+| `pyright` (strict) | PASS (0 errors) |
+| `pytest tests/unit tests/world` | PASS (174 passed: 60 unit + 114 world) |
+| ↳ world breakdown | domain 36, faults 20, oracle 23, scenarios/reproducibility 25, Hypothesis 7, CLI 3 |
+| ↳ Hypothesis | Model-based state machine (60 examples × ≤25 steps, random fault plans) plus 6 properties × 40 examples |
+| `pytest tests/integration tests/security -m docker` | PASS (16 passed, real Docker) |
+| ESLint, `tsc`, `next build` | PASS |
+| Playwright E2E | PASS (4 passed) |
+| `make world-demo` | PASS (8 reference cases; real runs; see [sprint-02.md](../sprints/sprint-02.md)) |
+| Mutation check (4 injected bugs) | All detected (7, 11, 5 and 15 failing tests) |
+| `make vultr-smoke` | BLOCKED_BY_CREDENTIALS (not run) |
+| GitHub Actions | NOT_RUN |
+
+## Selected evidence (Sprint 1)
 
 ```text
 docker-smoke   status=succeeded exit=0 stdout="hello from sandbox: python 3.12.16 uid=65534"

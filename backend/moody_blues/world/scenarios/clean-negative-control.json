@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scenario_id": "clean-negative-control",
+  "version": "1.0.0",
+  "title": "Clean negative control",
+  "description": "No faults. Includes a pre-existing customer with a similar name (different email) so near-matches must not be confused with the objective record.",
+  "seed": 404,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_grace",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_alan",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        },
+        "client_request_id": "seed-req-alan-0001"
+      },
+      {
+        "customer_id": "cus_seed_adabyron",
+        "name": "Ada Byron",
+        "email": "ada.byron@example.org",
+        "metadata": {}
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Ada Lovelace",
+      "email": "ada@analytical.example",
+      "metadata": {
+        "tier": "platinum",
+        "source": "referral"
+      }
+    }
+  },
+  "faults": []
+}

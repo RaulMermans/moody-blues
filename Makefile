@@ -8,7 +8,7 @@ FE      := frontend
 PYTEST  := $(UV) run pytest
 
 .PHONY: help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
-        test-e2e build check doctor docker-smoke vultr-smoke vultr-models sandbox-clean clean
+        test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -43,8 +43,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit tests (offline; no Docker, no network)
-	$(PYTEST) tests/unit
+test: ## Unit + World Engine tests (offline; real SQLite; no Docker, no network)
+	$(PYTEST) tests/unit tests/world
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
@@ -59,6 +59,9 @@ check: lint typecheck test test-integration test-e2e ## Everything except live V
 
 doctor: ## Diagnose local prerequisites and configuration (makes no chargeable calls)
 	$(UV) run moody-blues doctor
+
+world-demo: ## Run the World Engine reference cases (real SQLite; offline; free)
+	$(UV) run moody-blues world-demo
 
 docker-smoke: ## Run the fixed smoke program in a real disposable container
 	$(UV) run moody-blues docker-smoke
