@@ -17,7 +17,10 @@ class ToolTraceEntry(BaseModel):
     tool: str
     arguments: dict[str, JsonValue]
     delivered: ToolResponse
+    # Fault kind, only when a fault was actually applied to this call's response.
     fault_injected: str | None
+    # ``FaultEffect`` for any targeted fault, applied or skipped (see contracts/scenario.py).
+    fault_effect: str | None = None
     event_seqs: list[int]
 
 

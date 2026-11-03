@@ -1,7 +1,8 @@
 """Property-based tests (Hypothesis) against real SQLite worlds.
 
 The state machine is a model-based test: an independent in-memory model of the CRM *and of
-the fault semantics* predicts every response and the exact committed state after every step.
+the fault semantics* predicts every response, the exact committed state after every step and
+the fault effect recorded in the evidence (C3-B: labels must match what actually happened).
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from moody_blues.contracts.scenario import FaultKind
 from moody_blues.contracts.world import (
     ClaimStatus,
     CustomerRecord,
+    EventKind,
     FinalClaim,
     ToolErrorCode,
     ToolName,
@@ -113,29 +115,64 @@ class CrmMachine(RuleBasedStateMachine):
         r = self.w.gateway.call(ToolName.CREATE_CUSTOMER, args)
 
         owner = self._key_owner(key) if key is not None else None
-        if fault == FaultKind.PHANTOM_SUCCESS:
+        new_write = owner is None  # a replay or conflict never stages a new row
+        if fault == FaultKind.PHANTOM_SUCCESS and new_write:
             assert r.ok  # fabricated, nothing committed
             assert r.data is not None
             customer = r.data["customer"]
             assert isinstance(customer, dict)
             assert customer["customer_id"] == new_id
+            self._check_fault_label(expected_effect="aborted_new_write", new_commit=False)
             return
-        if owner is None:
+        if new_write:
             self.model[new_id] = row
             self.commits += 1
         if fault == FaultKind.PHANTOM_FAILURE:
             assert not r.ok
             assert r.error is not None
             assert r.error.code is ToolErrorCode.TIMEOUT
-        elif owner is None:
+            self._check_fault_label(
+                expected_effect="committed_write_reported_as_failure"
+                if new_write
+                else "response_replaced_without_new_commit",
+                new_commit=new_write,
+            )
+            return
+        if fault == FaultKind.PHANTOM_SUCCESS:
+            # Replay/conflict: no pre-commit boundary exists, so the fault is not applied.
+            self._check_fault_label(expected_effect="not_applied_no_new_write", new_commit=False)
+        if owner is None:
             assert r.ok
         elif self.model[owner][:3] == row[:3]:
             assert r.ok
             assert r.data is not None
             assert r.data["idempotent_replay"] is True
+            replayed = r.data["customer"]
+            assert isinstance(replayed, dict)
+            assert replayed["customer_id"] == owner
         else:
             assert r.error is not None
             assert r.error.code is ToolErrorCode.IDEMPOTENCY_CONFLICT
+
+    def _check_fault_label(self, *, expected_effect: str, new_commit: bool) -> None:
+        """The fault evidence for the call just made must describe what really happened."""
+        with self.w.view() as view:
+            events = [e for e in view.events() if e.call_seq == self.calls]
+        faults = [
+            e for e in events if e.kind in {EventKind.FAULT_INJECTED, EventKind.FAULT_SKIPPED}
+        ]
+        assert len(faults) == 1
+        fault = faults[0]
+        assert fault.payload["effect"] == expected_effect
+        assert fault.payload["new_commit"] is new_commit
+        executed = next(e for e in events if e.kind is EventKind.OPERATION_EXECUTED)
+        assert executed.payload["new_commit"] is new_commit
+        expected_kind = (
+            EventKind.FAULT_SKIPPED
+            if expected_effect == "not_applied_no_new_write"
+            else EventKind.FAULT_INJECTED
+        )
+        assert fault.kind is expected_kind
 
     @precondition(lambda self: self.world is not None)
     @rule(email=st.sampled_from(["", "not-an-email", "a@b"]))
