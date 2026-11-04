@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -10,6 +11,7 @@ import pytest
 from moody_blues.contracts.investigation import (
     ClaimedFinding,
     FindingClass,
+    Impairment,
     InvestigationState,
     ReproductionStatus,
 )
@@ -20,6 +22,8 @@ from moody_blues.investigator.findings import (
     NO_VIOLATION_STATEMENT,
     check_claims,
     classify_run,
+    impairments_of,
+    reproduction_status,
     run_finding,
     statement,
 )
@@ -271,6 +275,83 @@ def test_a_truncated_run_can_still_be_a_real_violation(tmp_path: Path) -> None:
         update={"truncated_model_steps": 1}
     )
     assert classify_run(run, evidence_intact=True) is FindingClass.ORACLE_CONFIRMED_VIOLATION
+
+
+def test_a_truncated_violation_stands_but_cannot_enter_a_rate(tmp_path: Path) -> None:
+    """Regression: Sprint 5's rerun 3 was a real duplicate that looked like a clean sample."""
+    run = _run_evidence(tmp_path, verdict=Verdict.VIOLATION).model_copy(
+        update={"truncated_model_steps": 2}
+    )
+    assert impairments_of(run, evidence_intact=True) == [Impairment.TRUNCATED_MODEL_STEPS]
+    assert classify_run(run, evidence_intact=True) is FindingClass.ORACLE_CONFIRMED_VIOLATION
+
+
+@pytest.mark.parametrize("verdict", [Verdict.PASS, Verdict.VIOLATION])
+def test_eligibility_is_read_without_the_verdict(tmp_path: Path, verdict: Verdict) -> None:
+    run = _run_evidence(tmp_path, verdict=verdict).model_copy(update={"truncated_model_steps": 1})
+    assert impairments_of(run, evidence_intact=True) == [Impairment.TRUNCATED_MODEL_STEPS]
+
+
+@pytest.mark.parametrize(
+    ("termination", "expected"),
+    [
+        ("max_steps", Impairment.MAX_STEPS),
+        ("token_budget", Impairment.TOKEN_BUDGET),
+        ("wall_timeout", Impairment.WALL_TIMEOUT),
+        ("provider_error", Impairment.PROVIDER_ERROR),
+        ("cancelled", Impairment.CANCELLED),
+    ],
+)
+def test_each_outside_limit_is_named(
+    tmp_path: Path, termination: str, expected: Impairment
+) -> None:
+    run = _run_evidence(tmp_path, termination=termination, claim=None)
+    assert impairments_of(run, evidence_intact=True) == [expected]
+
+
+def test_a_model_that_stopped_by_itself_is_not_impaired(tmp_path: Path) -> None:
+    run = _run_evidence(tmp_path, termination="no_final_claim", claim=None)
+    assert impairments_of(run, evidence_intact=True) == []
+
+
+def test_reaching_the_tool_call_limit_is_impairment_only_when_the_limit_is_known(
+    tmp_path: Path,
+) -> None:
+    run = _run_evidence(tmp_path)
+    used = len(run.target_observed.tool_trace)
+    assert impairments_of(run, evidence_intact=True) == []
+    assert impairments_of(run, evidence_intact=True, max_tool_calls=used) == [
+        Impairment.TOOL_CALL_LIMIT
+    ]
+
+
+def test_a_rerun_cut_short_without_a_violation_tested_nothing(tmp_path: Path) -> None:
+    """Regression: Sprint 5's truncated automatic rerun was recorded as not_reproduced."""
+    original = _run_evidence(tmp_path, verdict=Verdict.VIOLATION)
+    attempt = _run_evidence(tmp_path, run_outcome="inconclusive").model_copy(
+        update={"truncated_model_steps": 1}
+    )
+    evidence = SimpleNamespace(target_runs=[attempt])
+    assert (
+        reproduction_status(original, evidence)  # pyright: ignore[reportArgumentType]
+        is ReproductionStatus.UNTESTED
+    )
+
+
+def test_impaired_violations_are_never_reported_as_no_violation(tmp_path: Path) -> None:
+    """Regression: a report holding only impaired violations said none had been discovered."""
+    run = _run_evidence(tmp_path, verdict=Verdict.VIOLATION)
+    evidence = SimpleNamespace(experiment_id="exp_x")
+    finding = run_finding(
+        evidence,  # pyright: ignore[reportArgumentType]
+        run,
+        proposal_id="prop_1",
+        evidence_intact=False,
+    )
+    assert finding.finding_class is FindingClass.IMPAIRED_VIOLATION
+    assert not finding.eligible_for_rate
+    assert statement([finding]) != NO_VIOLATION_STATEMENT
+    assert "impaired" in statement([finding])
 
 
 def test_a_violation_with_broken_evidence_is_flagged(tmp_path: Path) -> None:
