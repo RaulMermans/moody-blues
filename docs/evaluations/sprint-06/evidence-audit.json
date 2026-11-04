@@ -9,9 +9,9 @@
   "verified_world_state_violations": 7,
   "violations_in_eligible_runs": 5,
   "violations_in_impaired_runs": 2,
-  "live_investigations": 13,
+  "live_investigations": 17,
   "investigations_by_state": {
-    "completed": 7,
+    "completed": 11,
     "failed": 2,
     "inconclusive": 4
   },
