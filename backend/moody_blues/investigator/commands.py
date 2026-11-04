@@ -176,13 +176,12 @@ def _live(settings: Settings) -> _Live | None:
 
 
 def _target_client(settings: Settings, key: str) -> VultrInferenceClient:
-    """No SDK retries for the target: a retry could be billed without being reserved."""
     return VultrInferenceClient(
         api_key=key,
         model=settings.investigator_target_model,
         base_url=settings.vultr_base_url,
         timeout_seconds=settings.investigator_timeout_seconds,
-        max_retries=0,
+        max_retries=settings.investigator_max_retries,
     )
 
 

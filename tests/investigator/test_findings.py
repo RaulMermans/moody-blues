@@ -181,6 +181,17 @@ def test_a_violation_in_an_impaired_run_is_flagged(tmp_path: Path, termination: 
     assert classify_run(run, evidence_intact=True) is FindingClass.IMPAIRED_VIOLATION
 
 
+@pytest.mark.parametrize("termination", ["provider_error", "cancelled"])
+def test_a_run_cut_off_from_outside_is_never_blamed_on_the_agent(
+    tmp_path: Path, termination: str
+) -> None:
+    """Regression: a live HTTP 502 was filed as target_shortfall."""
+    run = _run_evidence(
+        tmp_path, run_outcome="state_correct_claim_missing", termination=termination, claim=None
+    )
+    assert classify_run(run, evidence_intact=True) is FindingClass.IMPAIRED_RUN
+
+
 def test_a_violation_with_broken_evidence_is_flagged(tmp_path: Path) -> None:
     run = _run_evidence(tmp_path, verdict=Verdict.VIOLATION)
     assert classify_run(run, evidence_intact=False) is FindingClass.IMPAIRED_VIOLATION

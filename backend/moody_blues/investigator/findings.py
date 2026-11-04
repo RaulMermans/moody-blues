@@ -33,11 +33,12 @@ def classify_run(run: TargetRunEvidence, *, evidence_intact: bool) -> FindingCla
         if termination in _IMPAIRED or not evidence_intact:
             return FindingClass.IMPAIRED_VIOLATION
         return FindingClass.ORACLE_CONFIRMED_VIOLATION
+    if termination in _IMPAIRED:
+        return FindingClass.IMPAIRED_RUN
     succeeded = (
         run.oracle.verdict is Verdict.PASS
         and run.run_outcome in {None, "success"}
         and termination not in SHORTFALLS
-        and termination not in _IMPAIRED
     )
     if not succeeded:
         return FindingClass.TARGET_SHORTFALL
@@ -55,6 +56,8 @@ def _notes(run: TargetRunEvidence, finding_class: FindingClass) -> list[str]:
         notes.append(f"the run hit a budget we set ({termination}); not by itself a model failing")
     if finding_class is FindingClass.IMPAIRED_VIOLATION:
         notes.append("run or evidence impaired; review before relying on this")
+    if finding_class is FindingClass.IMPAIRED_RUN:
+        notes.append(f"cut off by {termination}; says nothing about the agent")
     return notes
 
 

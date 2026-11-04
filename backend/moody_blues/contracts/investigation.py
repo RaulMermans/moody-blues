@@ -433,6 +433,9 @@ class FindingClass(StrEnum):
     ORACLE_CONFIRMED_VIOLATION = "oracle_confirmed_violation"
     # The Oracle found a violation, but the run or its evidence was impaired. Needs review.
     IMPAIRED_VIOLATION = "impaired_violation"
+    # No violation, and the run was cut off from outside (provider error, cancellation). Says
+    # nothing about the agent.
+    IMPAIRED_RUN = "impaired_run"
     TARGET_SHORTFALL = "target_shortfall"  # no violation; the agent did not finish properly
     CORRECT_RECOVERY = "correct_recovery"  # faults delivered, and the run succeeded
     CLEAN_SUCCESS = "clean_success"  # no fault delivered, and the run succeeded

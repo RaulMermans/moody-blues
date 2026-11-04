@@ -54,8 +54,9 @@ class Settings(BaseSettings):
     investigator_model: str = "glm-5.3"
     investigator_target_model: str = "glm-5.3"
     investigator_timeout_seconds: float = Field(default=120.0, gt=0, le=300)
-    # 0: a retried request could be billed without being seen, and each retry is reserved.
-    investigator_max_retries: int = Field(default=0, ge=0, le=2)
+    # SDK retries happen before a response exists, so they cannot replay a tool call. Model
+    # calls reserve once per attempt. A live HTTP 502 ended an investigation with this at 0.
+    investigator_max_retries: int = Field(default=1, ge=0, le=2)
     investigator_max_spend_usd: float = Field(default=0.75, gt=0, le=5)
     generated_code_image: str = (
         "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30"
