@@ -1,0 +1,1210 @@
+{
+  "experiments_read": 186,
+  "live_runs": 52,
+  "categories": {
+    "complete_unimpaired": 47,
+    "impaired_by_our_limits": 4,
+    "provider_or_infrastructure": 1
+  },
+  "verified_world_state_violations": 7,
+  "violations_in_eligible_runs": 5,
+  "violations_in_impaired_runs": 2,
+  "live_investigations": 13,
+  "investigations_by_state": {
+    "completed": 7,
+    "failed": 2,
+    "inconclusive": 4
+  },
+  "proposals": 36,
+  "proposals_executed": 25,
+  "model_claims": 5,
+  "model_claims_supported": 3,
+  "reported_models": [
+    "glm-5.3"
+  ],
+  "long_stale_rows": [
+    {
+      "experiment_id": "exp_7bfcf22f2070",
+      "created_at": "2026-11-04T07:07:49.450180+00:00",
+      "trial": {
+        "trial_id": "run_fdf9e052728e",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_5c9f95de6c09",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-v1|baseline|stale_read#1x6",
+        "world_id": "w-v1",
+        "world_version": "1.0.0",
+        "world_sha256": "4286985842bae340f5bcde294330f22ac2c17a6c9eb447f7965d01a377044ef6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 11,
+          "create_calls": 2,
+          "read_calls": 9,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 15576,
+        "completion_tokens": 3652,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.037875,
+        "wall_ms": 20815,
+        "experiment_id": "exp_7bfcf22f2070",
+        "evidence_ref": "experiments/exp_7bfcf22f2070/evidence.json",
+        "evidence_sha256": "74ebe8be34665fdb7f7024cf1f5bb603ff7006bb6d0baa3bdaf5693650f639bd"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_5c9f95de6c09"
+    },
+    {
+      "experiment_id": "exp_7867af43c17c",
+      "created_at": "2026-11-04T15:24:56.784163+00:00",
+      "trial": {
+        "trial_id": "run_e9f3ebda139d",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_4e32358d2ff9",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "not_completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 3,
+          "read_calls": 9,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 14435,
+        "completion_tokens": 4603,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.040462,
+        "wall_ms": 61363,
+        "experiment_id": "exp_7867af43c17c",
+        "evidence_ref": "experiments/exp_7867af43c17c/evidence.json",
+        "evidence_sha256": "cec160f1e78351183727b31753e0c8a7049bad433f067696cba0c9964efcbd37"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_4e32358d2ff9"
+    },
+    {
+      "experiment_id": "exp_ecbb08fb9e12",
+      "created_at": "2026-11-04T15:26:06.703359+00:00",
+      "trial": {
+        "trial_id": "run_422f9afbb127",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_4e32358d2ff9",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "INCONCLUSIVE",
+        "violation_codes": [],
+        "run_outcome": "inconclusive",
+        "termination": "final_claim",
+        "claim_status": "not_completed",
+        "category": "impaired_by_our_limits",
+        "impairments": [
+          "truncated_model_steps"
+        ],
+        "behavior": {
+          "tool_calls": 8,
+          "create_calls": 2,
+          "read_calls": 6,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 12564,
+        "completion_tokens": 8467,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.054844,
+        "wall_ms": 111949,
+        "experiment_id": "exp_ecbb08fb9e12",
+        "evidence_ref": "experiments/exp_ecbb08fb9e12/evidence.json",
+        "evidence_sha256": "7050949f134e23247a12bbd0c93a4ccfe4028abb0f3b9d2e1e9db15306a8e7a8"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "inv_4e32358d2ff9"
+    },
+    {
+      "experiment_id": "exp_c306e7ea5fd4",
+      "created_at": "2026-11-04T15:36:27.013271+00:00",
+      "trial": {
+        "trial_id": "run_fac63f51349f",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_1be3b6b34ff6",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "max_steps",
+        "claim_status": null,
+        "category": "impaired_by_our_limits",
+        "impairments": [
+          "max_steps"
+        ],
+        "behavior": {
+          "tool_calls": 13,
+          "create_calls": 3,
+          "read_calls": 10,
+          "creates_without_key": 1,
+          "distinct_keys": 1,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 15157,
+        "completion_tokens": 5009,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.043259,
+        "wall_ms": 57013,
+        "experiment_id": "exp_c306e7ea5fd4",
+        "evidence_ref": "experiments/exp_c306e7ea5fd4/evidence.json",
+        "evidence_sha256": "d1dfebdd6e3a917a8aad8a53ab0c824663a5432542a7af34ff713163f469ec54"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_1be3b6b34ff6"
+    },
+    {
+      "experiment_id": "exp_5f7875660cc6",
+      "created_at": "2026-11-04T15:38:27.708712+00:00",
+      "trial": {
+        "trial_id": "run_d3d814c78d31",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_1be3b6b34ff6",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 10,
+          "create_calls": 2,
+          "read_calls": 8,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 11950,
+        "completion_tokens": 1596,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.023752,
+        "wall_ms": 32509,
+        "experiment_id": "exp_5f7875660cc6",
+        "evidence_ref": "experiments/exp_5f7875660cc6/evidence.json",
+        "evidence_sha256": "c64d418a8e11671a14bc6669e0f7cb6722841f980ffd1715a8ced510e1716115"
+      },
+      "reproduction_of": "exp_c306e7ea5fd4",
+      "investigation_id": "inv_1be3b6b34ff6"
+    },
+    {
+      "experiment_id": "exp_4697d5e7ed00",
+      "created_at": "2026-11-04T15:47:16.153426+00:00",
+      "trial": {
+        "trial_id": "run_cb0ea6251b49",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 2,
+          "read_calls": 10,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 14547,
+        "completion_tokens": 1874,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.028611,
+        "wall_ms": 89088,
+        "experiment_id": "exp_4697d5e7ed00",
+        "evidence_ref": "experiments/exp_4697d5e7ed00/evidence.json",
+        "evidence_sha256": "929fbaf219f35fc708de065f9ce33d466ee59ce1d3054c9981be3360e7508839"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_ab465a8cef05",
+      "created_at": "2026-11-04T15:48:48.237101+00:00",
+      "trial": {
+        "trial_id": "run_ed38b500454a",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 10,
+          "create_calls": 2,
+          "read_calls": 8,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 10697,
+        "completion_tokens": 1581,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.021932,
+        "wall_ms": 141614,
+        "experiment_id": "exp_ab465a8cef05",
+        "evidence_ref": "experiments/exp_ab465a8cef05/evidence.json",
+        "evidence_sha256": "96cebdbb909c66b7c84bb9313284a1fd5118c1c4a3aa6e726c81e10a93f2c73d"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_3b41966f39bd",
+      "created_at": "2026-11-04T15:51:11.488032+00:00",
+      "trial": {
+        "trial_id": "run_729a53e608cc",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "no_final_claim",
+        "claim_status": null,
+        "category": "impaired_by_our_limits",
+        "impairments": [
+          "truncated_model_steps"
+        ],
+        "behavior": {
+          "tool_calls": 11,
+          "create_calls": 3,
+          "read_calls": 8,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 16094,
+        "completion_tokens": 10220,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.0675,
+        "wall_ms": 153938,
+        "experiment_id": "exp_3b41966f39bd",
+        "evidence_ref": "experiments/exp_3b41966f39bd/evidence.json",
+        "evidence_sha256": "85031da3c223bb0952a12d811a8097c7d02623934b9da59f82c67fda10c8d28a"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_9433fa52b3ea",
+      "created_at": "2026-11-04T15:53:46.738937+00:00",
+      "trial": {
+        "trial_id": "run_e3a1b7cf47d1",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 10,
+          "create_calls": 2,
+          "read_calls": 8,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 12057,
+        "completion_tokens": 1897,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.025227,
+        "wall_ms": 87064,
+        "experiment_id": "exp_9433fa52b3ea",
+        "evidence_ref": "experiments/exp_9433fa52b3ea/evidence.json",
+        "evidence_sha256": "2528e4a775faf6bfbef3715ec6003ed6fb19fdcac306e841faeb7eae7e2f33eb"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_cc1ba16e2358",
+      "created_at": "2026-11-04T15:55:15.147078+00:00",
+      "trial": {
+        "trial_id": "run_58baa4728b04",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "not_completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 3,
+          "read_calls": 9,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 15127,
+        "completion_tokens": 3820,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.037986,
+        "wall_ms": 89336,
+        "experiment_id": "exp_cc1ba16e2358",
+        "evidence_ref": "experiments/exp_cc1ba16e2358/evidence.json",
+        "evidence_sha256": "1bfed67f3641e99d3b627f389644b3585af2ccfbb714bc82470dc783aed44edd"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_aef2016824d1",
+      "created_at": "2026-11-04T15:56:45.915460+00:00",
+      "trial": {
+        "trial_id": "run_cab81ab59774",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "PASS",
+        "violation_codes": [],
+        "run_outcome": "success",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 2,
+          "read_calls": 10,
+          "creates_without_key": 0,
+          "distinct_keys": 1,
+          "key_consistent": true,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": false,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 1,
+        "prompt_tokens": 13874,
+        "completion_tokens": 2246,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.029306,
+        "wall_ms": 61023,
+        "experiment_id": "exp_aef2016824d1",
+        "evidence_ref": "experiments/exp_aef2016824d1/evidence.json",
+        "evidence_sha256": "798c60b20196e8440a6733b7c8bfaced69b2b49dd5957ef5d75a0cae42afa6c9"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    }
+  ],
+  "violation_rows": [
+    {
+      "experiment_id": "exp_d17ebe232bf6",
+      "created_at": "2026-11-04T07:17:43.683283+00:00",
+      "trial": {
+        "trial_id": "run_b648965b8248",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_929350af68a8",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-v2|baseline|none",
+        "world_id": "w-v2",
+        "world_version": "1.0.0",
+        "world_sha256": "e40485da0585a51d52681405fcd355bf5cc8f0a88f137af3ce88cb495457d25f",
+        "config": "baseline",
+        "experiment_source": "developer_script",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [],
+        "faults_delivered": 0,
+        "fault_kinds_delivered": [],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "claim_references_wrong_record",
+          "false_completion_claim"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 2,
+          "create_calls": 0,
+          "read_calls": 2,
+          "creates_without_key": 0,
+          "distinct_keys": 0,
+          "key_consistent": true,
+          "verified_after_create": false,
+          "replay_seen": false,
+          "create_after_replay": false,
+          "stale_reads_delivered": 0,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 0,
+        "prompt_tokens": 3051,
+        "completion_tokens": 3107,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.017942,
+        "wall_ms": 13560,
+        "experiment_id": "exp_d17ebe232bf6",
+        "evidence_ref": "experiments/exp_d17ebe232bf6/evidence.json",
+        "evidence_sha256": "1cf5fe61c606c1ca3775b85384be9ac1c375f40b434ab18536e2020d8b882329"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_929350af68a8"
+    },
+    {
+      "experiment_id": "exp_dbd8c7bf347f",
+      "created_at": "2026-11-04T07:18:47.169095+00:00",
+      "trial": {
+        "trial_id": "run_5f90510d41b1",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_d0786b0999d0",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-v2|baseline|phantom_success#1,stale_read#1x3",
+        "world_id": "w-v2",
+        "world_version": "1.0.0",
+        "world_sha256": "0932784a2c795285102901504c9f2380fc61e01cf723aee0ca53d7d7f1b0443c",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "phantom_success#1",
+          "stale_read#1x3"
+        ],
+        "faults_delivered": 0,
+        "fault_kinds_delivered": [],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "claim_references_wrong_record",
+          "false_completion_claim"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 2,
+          "create_calls": 0,
+          "read_calls": 2,
+          "creates_without_key": 0,
+          "distinct_keys": 0,
+          "key_consistent": true,
+          "verified_after_create": false,
+          "replay_seen": false,
+          "create_after_replay": false,
+          "stale_reads_delivered": 0,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 0,
+        "prompt_tokens": 3051,
+        "completion_tokens": 3094,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.017885,
+        "wall_ms": 14030,
+        "experiment_id": "exp_dbd8c7bf347f",
+        "evidence_ref": "experiments/exp_dbd8c7bf347f/evidence.json",
+        "evidence_sha256": "1d49aa0ec7479f19be0d91cd6bbb4ca6c3dc2bf74c82c0d4f517543b65515c14"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_d0786b0999d0"
+    },
+    {
+      "experiment_id": "exp_853c3a124b1e",
+      "created_at": "2026-11-04T07:19:07.699075+00:00",
+      "trial": {
+        "trial_id": "run_284c3cc069ca",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_d0786b0999d0",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-v2|baseline|phantom_success#1,stale_read#1x3",
+        "world_id": "w-v2",
+        "world_version": "1.0.0",
+        "world_sha256": "0932784a2c795285102901504c9f2380fc61e01cf723aee0ca53d7d7f1b0443c",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "phantom_success#1",
+          "stale_read#1x3"
+        ],
+        "faults_delivered": 0,
+        "fault_kinds_delivered": [],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "claim_references_wrong_record",
+          "false_completion_claim"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 2,
+          "create_calls": 0,
+          "read_calls": 2,
+          "creates_without_key": 0,
+          "distinct_keys": 0,
+          "key_consistent": true,
+          "verified_after_create": false,
+          "replay_seen": false,
+          "create_after_replay": false,
+          "stale_reads_delivered": 0,
+          "fault_preceded_duplicate_write": false
+        },
+        "new_records": 0,
+        "prompt_tokens": 3053,
+        "completion_tokens": 3303,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.018807,
+        "wall_ms": 16305,
+        "experiment_id": "exp_853c3a124b1e",
+        "evidence_ref": "experiments/exp_853c3a124b1e/evidence.json",
+        "evidence_sha256": "ae18a14b665cb464b4ddead40a605c9a8d0af939c6020dc98142ece2ca91e3be"
+      },
+      "reproduction_of": "exp_dbd8c7bf347f",
+      "investigation_id": "inv_d0786b0999d0"
+    },
+    {
+      "experiment_id": "exp_7867af43c17c",
+      "created_at": "2026-11-04T15:24:56.784163+00:00",
+      "trial": {
+        "trial_id": "run_e9f3ebda139d",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_4e32358d2ff9",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "not_completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 3,
+          "read_calls": 9,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 14435,
+        "completion_tokens": 4603,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.040462,
+        "wall_ms": 61363,
+        "experiment_id": "exp_7867af43c17c",
+        "evidence_ref": "experiments/exp_7867af43c17c/evidence.json",
+        "evidence_sha256": "cec160f1e78351183727b31753e0c8a7049bad433f067696cba0c9964efcbd37"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_4e32358d2ff9"
+    },
+    {
+      "experiment_id": "exp_c306e7ea5fd4",
+      "created_at": "2026-11-04T15:36:27.013271+00:00",
+      "trial": {
+        "trial_id": "run_fac63f51349f",
+        "suite": "sprint-05-audit",
+        "unit_id": "inv_1be3b6b34ff6",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "max_steps",
+        "claim_status": null,
+        "category": "impaired_by_our_limits",
+        "impairments": [
+          "max_steps"
+        ],
+        "behavior": {
+          "tool_calls": 13,
+          "create_calls": 3,
+          "read_calls": 10,
+          "creates_without_key": 1,
+          "distinct_keys": 1,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 15157,
+        "completion_tokens": 5009,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.043259,
+        "wall_ms": 57013,
+        "experiment_id": "exp_c306e7ea5fd4",
+        "evidence_ref": "experiments/exp_c306e7ea5fd4/evidence.json",
+        "evidence_sha256": "d1dfebdd6e3a917a8aad8a53ab0c824663a5432542a7af34ff713163f469ec54"
+      },
+      "reproduction_of": null,
+      "investigation_id": "inv_1be3b6b34ff6"
+    },
+    {
+      "experiment_id": "exp_3b41966f39bd",
+      "created_at": "2026-11-04T15:51:11.488032+00:00",
+      "trial": {
+        "trial_id": "run_729a53e608cc",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "no_final_claim",
+        "claim_status": null,
+        "category": "impaired_by_our_limits",
+        "impairments": [
+          "truncated_model_steps"
+        ],
+        "behavior": {
+          "tool_calls": 11,
+          "create_calls": 3,
+          "read_calls": 8,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 16094,
+        "completion_tokens": 10220,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.0675,
+        "wall_ms": 153938,
+        "experiment_id": "exp_3b41966f39bd",
+        "evidence_ref": "experiments/exp_3b41966f39bd/evidence.json",
+        "evidence_sha256": "85031da3c223bb0952a12d811a8097c7d02623934b9da59f82c67fda10c8d28a"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    },
+    {
+      "experiment_id": "exp_cc1ba16e2358",
+      "created_at": "2026-11-04T15:55:15.147078+00:00",
+      "trial": {
+        "trial_id": "run_58baa4728b04",
+        "suite": "sprint-05-audit",
+        "unit_id": "repro_exp_7867af43c17c_eb189e",
+        "block": 0,
+        "attempt": 1,
+        "strategy": null,
+        "condition_id": null,
+        "condition_key": "w-e3|baseline|stale_read#1x6",
+        "world_id": "w-e3",
+        "world_version": "1.0.0",
+        "world_sha256": "b640efc861a133e24830c96da7360ae3565a8f6233d5b3ea582d21f9be26b5c6",
+        "config": "baseline",
+        "experiment_source": "model_generated",
+        "evidence_source": "live_provider",
+        "requested_model": "glm-5.3",
+        "reported_models": [
+          "glm-5.3"
+        ],
+        "policy_version": "baseline-v1",
+        "policy_sha256": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+        "faults_configured": [
+          "stale_read#1x6"
+        ],
+        "faults_delivered": 6,
+        "fault_kinds_delivered": [
+          "stale_read"
+        ],
+        "oracle_verdict": "VIOLATION",
+        "violation_codes": [
+          "duplicate_side_effect"
+        ],
+        "run_outcome": "violation",
+        "termination": "final_claim",
+        "claim_status": "not_completed",
+        "category": "complete_unimpaired",
+        "impairments": [],
+        "behavior": {
+          "tool_calls": 12,
+          "create_calls": 3,
+          "read_calls": 9,
+          "creates_without_key": 0,
+          "distinct_keys": 2,
+          "key_consistent": false,
+          "verified_after_create": true,
+          "replay_seen": true,
+          "create_after_replay": true,
+          "stale_reads_delivered": 6,
+          "fault_preceded_duplicate_write": true
+        },
+        "new_records": 2,
+        "prompt_tokens": 15127,
+        "completion_tokens": 3820,
+        "tokens_complete": true,
+        "estimated_cost_usd": 0.037986,
+        "wall_ms": 89336,
+        "experiment_id": "exp_cc1ba16e2358",
+        "evidence_ref": "experiments/exp_cc1ba16e2358/evidence.json",
+        "evidence_sha256": "1bfed67f3641e99d3b627f389644b3585af2ccfbb714bc82470dc783aed44edd"
+      },
+      "reproduction_of": "exp_7867af43c17c",
+      "investigation_id": "repro_exp_7867af43c17c_eb189e"
+    }
+  ]
+}

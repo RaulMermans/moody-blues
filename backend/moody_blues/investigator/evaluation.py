@@ -158,7 +158,7 @@ def selection_of(evidence: ExperimentEvidence) -> str | None:
     return f"{grant.scenario_id}|{grant.config.value}|{grant.fault_source}|{','.join(faults)}"
 
 
-def _follow_up(
+def follow_up(
     *,
     model: InvestigatorModel,
     context: InvestigationContext,
@@ -289,7 +289,7 @@ def run_pair(
         for _ in range(repeats):
             seq += 1
             answers[branch].append(
-                _follow_up(
+                follow_up(
                     model=model,
                     context=contexts[branch],
                     runner=runner_for(executor),

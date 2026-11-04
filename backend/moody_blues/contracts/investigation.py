@@ -75,6 +75,7 @@ class WorldTier(StrEnum):
     DEVELOPMENT = "development"
     VALIDATION = "validation"
     EVALUATION = "evaluation"
+    RESERVED = "reserved"
 
 
 class InvestigationLimits(BaseModel):

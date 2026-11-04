@@ -4,7 +4,10 @@ Tiers keep tuning apart from measurement:
 
 - ``development``: legible names, used by fixtures and demos.
 - ``validation``: used while developing the Investigator's prompt.
-- ``evaluation``: reserved. Run only for the final comparison, after its plan was committed.
+- ``evaluation``: used up. Sprint 5 evaluated and then diagnosed on these worlds, so results from
+  them are regression evidence, not held-out evidence.
+- ``reserved``: fresh in Sprint 6. Run only for its registered adaptation test, once. Results must
+  not be used to revise the Investigator and then be reported as unseen again.
 
 Validation and evaluation worlds have neutral ids and titles, and are the only ones an
 investigation may be given in a live comparison. A ``WorldCard`` says how many seed customers
@@ -34,6 +37,7 @@ WORLD_TIERS: dict[WorldTier, tuple[str, ...]] = {
     ),
     WorldTier.VALIDATION: ("w-v1", "w-v2", "w-v3"),
     WorldTier.EVALUATION: ("w-e1", "w-e2", "w-e3"),
+    WorldTier.RESERVED: ("w-r1", "w-r2", "w-r3"),
 }
 
 MISSION = (

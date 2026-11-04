@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-r2",
+  "version": "1.0.0",
+  "title": "World R2",
+  "description": "",
+  "seed": 702,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_r2_a",
+        "name": "Leslie Lamport",
+        "email": "leslie@paxos.example",
+        "metadata": {
+          "tier": "silver",
+          "region": "us-west"
+        }
+      },
+      {
+        "customer_id": "cus_seed_r2_b",
+        "name": "Karen Jones",
+        "email": "karen@idf.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Adele Goldberg",
+      "email": "adele@parc.example",
+      "metadata": {
+        "tier": "silver",
+        "region": "us-west"
+      }
+    }
+  },
+  "faults": []
+}

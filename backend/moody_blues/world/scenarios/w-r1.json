@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-r1",
+  "version": "1.0.0",
+  "title": "World R1",
+  "description": "",
+  "seed": 701,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_r1_a",
+        "name": "Barbara Liskov",
+        "email": "barbara@clu.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_r1_b",
+        "name": "Edsger Dijkstra",
+        "email": "edsger@thea.example",
+        "metadata": {
+          "tier": "silver"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Frances Allen",
+      "email": "frances@ptran.example",
+      "metadata": {
+        "tier": "gold"
+      }
+    }
+  },
+  "faults": []
+}
