@@ -179,6 +179,7 @@ class VultrInferenceClient:
                 temperature=request.temperature,
                 tools=tools or omit,
                 tool_choice=tool_choice or omit,
+                reasoning_effort=request.reasoning_effort or omit,
             )
         except openai.OpenAIError as exc:
             err = classify_provider_error(exc)

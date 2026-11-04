@@ -85,6 +85,9 @@ class InvestigationLimits(BaseModel):
     max_model_calls: int = Field(default=5, ge=1, le=12)
     # Includes hidden reasoning: glm-5.3 spent all of 4,096 before writing anything (KI-27).
     max_completion_tokens: int = Field(default=8_192, ge=256, le=8_192)
+    # "low" measured at 213 tokens where the default ran past 900 with no output (KI-27). The
+    # target is never given this: its behavior is what is being studied.
+    reasoning_effort: Literal["low", "medium", "high"] | None = "low"
     max_prompt_chars: int = Field(default=48_000, ge=2_000, le=120_000)
     max_refinements: int = Field(default=1, ge=0, le=2)
     max_reproductions: int = Field(default=1, ge=0, le=3)
@@ -251,7 +254,11 @@ class DeliveredFacts(BaseModel):
 
 
 class RunFacts(BaseModel):
-    """One target run. Built faults of a world are not named: they are for finding out."""
+    """One target run. Built faults of a world are not named: they are for finding out.
+
+    ``truncated_model_steps`` counts agent steps cut off by a limit we set. A run with any of
+    these ended for a reason that may have nothing to do with the agent.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -264,6 +271,7 @@ class RunFacts(BaseModel):
     oracle: OracleFacts
     target: TargetReportedFacts
     delivered: DeliveredFacts
+    truncated_model_steps: int = 0
 
 
 class CallFact(BaseModel):

@@ -645,6 +645,7 @@ class ExperimentCoordinator:
             cost_note=result.cost_note,
             report_path=f"runs/{name}",
             report_sha256=report_sha,
+            truncated_model_steps=result.truncated_model_steps,
         )
         session.workspace.journal("target_run_finished", run.model_dump(mode="json"))
         return run

@@ -192,6 +192,21 @@ def test_a_run_cut_off_from_outside_is_never_blamed_on_the_agent(
     assert classify_run(run, evidence_intact=True) is FindingClass.IMPAIRED_RUN
 
 
+def test_a_run_ended_by_our_token_limit_is_not_blamed_on_the_agent(tmp_path: Path) -> None:
+    """Regression (KI-29): glm-5.3 was cut off at 1,024 tokens and looked like a shortfall."""
+    run = _run_evidence(
+        tmp_path, run_outcome="inconclusive", termination="no_final_claim", claim=None
+    ).model_copy(update={"truncated_model_steps": 2})
+    assert classify_run(run, evidence_intact=True) is FindingClass.IMPAIRED_RUN
+
+
+def test_a_truncated_run_can_still_be_a_real_violation(tmp_path: Path) -> None:
+    run = _run_evidence(tmp_path, verdict=Verdict.VIOLATION).model_copy(
+        update={"truncated_model_steps": 1}
+    )
+    assert classify_run(run, evidence_intact=True) is FindingClass.ORACLE_CONFIRMED_VIOLATION
+
+
 def test_a_violation_with_broken_evidence_is_flagged(tmp_path: Path) -> None:
     run = _run_evidence(tmp_path, verdict=Verdict.VIOLATION)
     assert classify_run(run, evidence_intact=False) is FindingClass.IMPAIRED_VIOLATION

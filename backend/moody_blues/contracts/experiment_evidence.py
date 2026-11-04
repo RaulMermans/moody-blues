@@ -267,6 +267,8 @@ class TargetRunEvidence(BaseModel):
     cost_note: str
     report_path: str  # relative to the experiment directory
     report_sha256: str
+    # Model steps cut off by a token limit we set. Absent in earlier records.
+    truncated_model_steps: int = 0
 
 
 class UnresolvedTargetRun(BaseModel):

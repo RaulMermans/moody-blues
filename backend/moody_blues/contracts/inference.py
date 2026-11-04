@@ -150,6 +150,8 @@ class InferenceRequest(BaseModel):
     tool_choice: Literal["auto", "required", "none"] | None = None
     max_tokens: int = Field(default=256, ge=1, le=8192)
     temperature: float = Field(default=0.0, ge=0, le=2)
+    # How much hidden reasoning the provider should spend. None: the provider's default.
+    reasoning_effort: Literal["low", "medium", "high"] | None = None
 
     @model_validator(mode="after")
     def _protocol(self) -> Self:

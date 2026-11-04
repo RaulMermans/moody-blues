@@ -233,6 +233,7 @@ def _run_facts(run: TargetRunEvidence) -> RunFacts:
         delivered=DeliveredFacts(
             tool_calls=len(observed.tool_trace), faults_delivered=observed.faults_delivered
         ),
+        truncated_model_steps=run.truncated_model_steps,
     )
 
 

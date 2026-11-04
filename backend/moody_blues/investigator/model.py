@@ -209,6 +209,7 @@ class InvestigatorModel:
         max_completion_tokens: int,
         temperature: float,
         provider_attempts: int = 1,
+        reasoning_effort: Literal["low", "medium", "high"] | None = None,
     ) -> None:
         if evidence == "live_provider" and spend is None:
             raise ValueError("a live Investigator requires a spend ledger")
@@ -220,6 +221,7 @@ class InvestigatorModel:
         self._max_completion = max_completion_tokens
         self._temperature = temperature
         self._attempts = provider_attempts
+        self._reasoning_effort: Literal["low", "medium", "high"] | None = reasoning_effort
 
     def worst_case_tokens(self, messages: list[ChatMessage], tools: list[ToolSpec]) -> int:
         """Two characters per token is well below any tokenizer's average for this text."""
@@ -254,6 +256,7 @@ class InvestigatorModel:
             tool_choice="required",
             max_tokens=self._max_completion,
             temperature=self._temperature,
+            reasoning_effort=self._reasoning_effort,
         )
         prompt_text = request.model_dump_json()
         name = f"call-{seq:02d}.json"

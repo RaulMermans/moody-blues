@@ -35,6 +35,8 @@ def classify_run(run: TargetRunEvidence, *, evidence_intact: bool) -> FindingCla
         return FindingClass.ORACLE_CONFIRMED_VIOLATION
     if termination in _IMPAIRED:
         return FindingClass.IMPAIRED_RUN
+    if run.truncated_model_steps and termination in SHORTFALLS:
+        return FindingClass.IMPAIRED_RUN  # our token limit ended it, not the agent
     succeeded = (
         run.oracle.verdict is Verdict.PASS
         and run.run_outcome in {None, "success"}
@@ -57,7 +59,12 @@ def _notes(run: TargetRunEvidence, finding_class: FindingClass) -> list[str]:
     if finding_class is FindingClass.IMPAIRED_VIOLATION:
         notes.append("run or evidence impaired; review before relying on this")
     if finding_class is FindingClass.IMPAIRED_RUN:
-        notes.append(f"cut off by {termination}; says nothing about the agent")
+        cause = (
+            f"{run.truncated_model_steps} model step(s) cut off by our token limit"
+            if run.truncated_model_steps
+            else f"cut off by {termination}"
+        )
+        notes.append(f"{cause}; says nothing about the agent")
     return notes
 
 
