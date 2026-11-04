@@ -30,7 +30,7 @@ from moody_blues.contracts.oracle import OracleReport
 from moody_blues.contracts.run import ToolTraceEntry
 from moody_blues.contracts.scenario import Scenario
 from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
-from moody_blues.experiments.budget import SpendLedger, worst_case_run_tokens
+from moody_blues.experiments.budget import SpendPort, worst_case_run_tokens
 from moody_blues.services.agent_world_runner import run_agent_scenario
 from moody_blues.services.world_runner import run_scenario
 
@@ -73,6 +73,7 @@ class TargetResult(BaseModel):
     estimated_cost_usd: float | None
     cost_note: str
     full_report: dict[str, JsonValue]
+    truncated_model_steps: int = 0
 
 
 class TargetPort(Protocol):
@@ -90,7 +91,7 @@ class AgentTarget:
         provider: str,
         model: str,
         budget: AgentBudget,
-        ledger: SpendLedger | None = None,
+        ledger: SpendPort | None = None,
     ) -> None:
         if evidence == "live_provider" and ledger is None:
             raise ValueError("a live target requires a spend ledger")
@@ -162,6 +163,7 @@ class AgentTarget:
             estimated_cost_usd=cost,
             cost_note=note,
             full_report=report.model_dump(mode="json"),
+            truncated_model_steps=sum(1 for s in trajectory.steps if s.finish_reason == "length"),
         )
 
 

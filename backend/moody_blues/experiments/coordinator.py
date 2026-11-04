@@ -81,6 +81,7 @@ from moody_blues.experiments.recovery import inspect_worlds
 from moody_blues.experiments.target import TargetPort, TargetRequest, TargetResult
 from moody_blues.experiments.workspace import (
     EVIDENCE,
+    SOURCE,
     ExperimentWorkspace,
     atomic_write,
     sha256_text,
@@ -224,9 +225,11 @@ class ExperimentCoordinator:
         sandbox_limits: SandboxLimits,
         limits: ExperimentLimits | None = None,
         monotonic: Callable[[], float] = time.monotonic,
+        allowed_scenarios: tuple[str, ...] = APPROVED_SCENARIOS,
     ) -> None:
         if sandbox_limits.network_enabled:
             raise ValueError("experiments never run with networking")
+        self._allowed_scenarios = allowed_scenarios
         self._sandbox = sandbox
         self._target = target
         self._root = root
@@ -237,6 +240,10 @@ class ExperimentCoordinator:
     # --- lifecycle ----------------------------------------------------------------------
 
     def run(self, spec: ExperimentSpec, *, cancel: Event | None = None) -> ExperimentEvidence:
+        if spec.authorship is ExperimentAuthorship.MODEL_GENERATED and not getattr(
+            self._sandbox, "approved_for_generated_code", False
+        ):
+            raise ValueError("model-generated code needs a sandbox approved by the preflight")
         experiment_id = f"exp_{uuid4().hex[:12]}"
         session = _Session(
             experiment_id=experiment_id,
@@ -254,11 +261,15 @@ class ExperimentCoordinator:
                 "parent_investigation_id": spec.parent_investigation_id,
                 "label": spec.label,
                 "code_sha256": session.code_sha256,
+                "authorship": spec.authorship.value,
+                "reproduction_of": spec.reproduction_of,
                 "limits": self._limits.model_dump(mode="json"),
                 "protocol": PROTOCOL_VERSION,
                 "created_at": session.created_at.isoformat(),
             },
         )
+        if spec.authorship is ExperimentAuthorship.MODEL_GENERATED:
+            atomic_write(session.workspace.directory / SOURCE, spec.code)
         try:
             stop = self._loop(session)
         except Exception as exc:
@@ -346,7 +357,7 @@ class ExperimentCoordinator:
             max_steps=self._limits.max_steps,
             target_runs_remaining=self._limits.max_target_runs - len(session.runs),
             catalog=ApprovedCatalog(
-                scenarios=list(APPROVED_SCENARIOS),
+                scenarios=list(self._allowed_scenarios),
                 configs=[c.value for c in AgentConfigName],
                 fault_kinds=[k.value for k in FaultKind],
                 fault_error_codes=["timeout", "internal_error", "unavailable"],
@@ -499,7 +510,7 @@ class ExperimentCoordinator:
     def _authorize(
         self, session: _Session, action: RunTargetAgent
     ) -> AuthorizedTargetRun | ProtocolRejection:
-        if action.scenario_id not in APPROVED_SCENARIOS:
+        if action.scenario_id not in self._allowed_scenarios:
             return ProtocolRejection(
                 code=RejectionCode.UNSUPPORTED_SCENARIO, detail="scenario is not approved"
             )
@@ -634,6 +645,7 @@ class ExperimentCoordinator:
             cost_note=result.cost_note,
             report_path=f"runs/{name}",
             report_sha256=report_sha,
+            truncated_model_steps=result.truncated_model_steps,
         )
         session.workspace.journal("target_run_finished", run.model_dump(mode="json"))
         return run
@@ -696,7 +708,13 @@ class ExperimentCoordinator:
             experiment_id=session.experiment_id,
             parent_investigation_id=session.spec.parent_investigation_id,
             label=session.spec.label,
-            authorship=ExperimentAuthorship.DEVELOPER_SCRIPT,
+            authorship=session.spec.authorship,
+            generation=session.spec.generation,
+            reproduction_of=session.spec.reproduction_of,
+            source_path=SOURCE
+            if session.spec.authorship is ExperimentAuthorship.MODEL_GENERATED
+            else None,
+            observations=session.observations,
             code_sha256=session.code_sha256,
             protocol=PROTOCOL_VERSION,
             limits=self._limits,

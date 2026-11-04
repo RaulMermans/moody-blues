@@ -14,6 +14,22 @@ enforces nothing described here. Check real spending in the Vultr console.
 - Sprint limit: **$5** (`MOODY_LIVE_SPEND_LIMIT_USD`). Every chargeable command reserves its
   worst case first and is refused (`BLOCKED_BY_BUDGET`, exit 3) if that could cross the limit.
 
+## Investigations (Sprint 5)
+
+- Model calls and target runs share one scope in the same ledger, capped per investigation at
+  `MOODY_INVESTIGATOR_MAX_SPEND_USD` ($0.75). Each must also fit the sprint limit. No second ledger
+  exists, and a restart cannot reset a scope.
+- Every model call reserves its worst case per attempt: prompt at two characters per token, plus
+  8,192 completion tokens, all at the output price. A failed or usage-less call keeps that amount,
+  so a dropped call costs about $0.15 on the books.
+- Live investigation target caps: 10 steps, 16 tool calls, 30,000 tokens, 4,096 completion tokens
+  per call, 180 s. That is $0.28 reserved per run.
+- A corrupt ledger refuses all new work. Investigations run one at a time, and live commands run the
+  free preflight first.
+- **SDK retries** (1 by default) can repeat a request. Model calls reserve for them; a target run's
+  reservation does not multiply, because it is far above real usage, but a retried request that was
+  billed without reporting usage would not appear here.
+
 ## How the estimate works
 
 | Situation | What is booked |
@@ -55,6 +71,7 @@ needs a human decision. Estimates at ceiling prices:
 | Sprint 3 evaluation (30 runs) | 266,792 | $0.48 |
 | Sprint 3 single run and smoke checks | about 8,000 | $0.02 |
 | Sprint 4 (ledger: `make live-budget`) | 61,526 | $0.11 |
-| **Total** | **about 336,000** | **about $0.61** |
+| Sprint 5 (ledger: `make live-budget`) | 1,043,673 | $2.33 |
+| **Total** | **about 1.38 million** | **about $2.94** |
 
 Update this table when a sprint closes.

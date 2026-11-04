@@ -260,3 +260,13 @@ def test_basic_inference_fails_on_truncated_empty_reply() -> None:
     payload["choices"][0]["finish_reason"] = "length"
     client, _ = make_client(lambda _: httpx2.Response(200, json=payload))
     assert smoke.basic_inference(client)["status"] == smoke.SmokeStatus.FAIL
+
+
+def test_reasoning_effort_is_sent_only_when_requested() -> None:
+    client, rec = make_client(
+        lambda _: httpx2.Response(200, json=fixture_completion(content="pong"))
+    )
+    client.complete(PING)
+    assert "reasoning_effort" not in rec.body()
+    client.complete(PING.model_copy(update={"reasoning_effort": "low"}))
+    assert rec.body()["reasoning_effort"] == "low"

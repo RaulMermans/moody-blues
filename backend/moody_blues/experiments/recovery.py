@@ -195,6 +195,12 @@ def verify_experiment(directory: Path) -> list[str]:
         evidence = ExperimentEvidence.model_validate_json(text)
     except ValidationError:
         return [*problems, "evidence.json does not match the schema"]
+    if evidence.source_path is not None:
+        source = directory / evidence.source_path
+        if not source.exists():
+            problems.append(f"{evidence.source_path} is missing")
+        elif sha256_text(source.read_text(encoding="utf-8")) != evidence.code_sha256:
+            problems.append(f"{evidence.source_path} does not match the recorded code hash")
     for run in evidence.target_runs:
         report = directory / run.report_path
         if not report.exists():

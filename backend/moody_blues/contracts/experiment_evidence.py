@@ -21,14 +21,18 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 from moody_blues.contracts.agent import AgentConfigName, TokenTotals
 from moody_blues.contracts.common import ErrorDetail, ExecutionStatus
 from moody_blues.contracts.oracle import OracleReport
-from moody_blues.contracts.protocol import ExperimentConclusion, ProtocolRejection
+from moody_blues.contracts.protocol import (
+    ExperimentConclusion,
+    Observation,
+    ProtocolRejection,
+)
 from moody_blues.contracts.run import ToolTraceEntry
 from moody_blues.contracts.scenario import FaultSpec
 from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
@@ -39,6 +43,9 @@ EVIDENCE_SCHEMA_VERSION = 1
 class ExperimentAuthorship(StrEnum):
     # Sprint 4 experiments are written by developers. They are not autonomous discoveries.
     DEVELOPER_SCRIPT = "developer_script"
+    # Written by the Investigator's model. Generating code is not a discovery; a finding needs
+    # an Oracle verdict about a real target run.
+    MODEL_GENERATED = "model_generated"
 
 
 class ExperimentState(StrEnum):
@@ -119,12 +126,32 @@ class ExperimentLimits(BaseModel):
     sandbox_infra_retries: int = Field(default=1, ge=0, le=2)
 
 
+class GenerationRecord(BaseModel):
+    """Who wrote a ``model_generated`` program. ``offline_fixture`` is never model behavior."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    proposal_id: str = Field(max_length=64)
+    model: str = Field(max_length=120)
+    evidence_source: Literal["live_provider", "offline_fixture"]
+
+
 class ExperimentSpec(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     label: str = Field(min_length=1, max_length=120)
     code: str = Field(min_length=1)
     parent_investigation_id: str | None = Field(default=None, max_length=64)
+    authorship: ExperimentAuthorship = ExperimentAuthorship.DEVELOPER_SCRIPT
+    generation: GenerationRecord | None = None
+    reproduction_of: str | None = Field(default=None, max_length=64)
+
+    @model_validator(mode="after")
+    def _generation_matches_authorship(self) -> Self:
+        generated = self.authorship is ExperimentAuthorship.MODEL_GENERATED
+        if generated != (self.generation is not None):
+            raise ValueError("generation is required for, and only for, model_generated code")
+        return self
 
 
 class SandboxExecutionRecord(BaseModel):
@@ -240,6 +267,8 @@ class TargetRunEvidence(BaseModel):
     cost_note: str
     report_path: str  # relative to the experiment directory
     report_sha256: str
+    # Model steps cut off by a token limit we set. Absent in earlier records.
+    truncated_model_steps: int = 0
 
 
 class UnresolvedTargetRun(BaseModel):
@@ -299,3 +328,9 @@ class ExperimentEvidence(BaseModel):
     )
     sandbox_supplied: SandboxSupplied | None
     usage: ResourceUsage
+    # Sprint 5. Absent in earlier records, so all of these default.
+    generation: GenerationRecord | None = None
+    reproduction_of: str | None = None
+    source_path: str | None = None  # the original program, relative to the experiment directory
+    # Exactly what the sandbox was shown, in order. The Investigator's view is built from these.
+    observations: list[Observation] = Field(default_factory=list[Observation])

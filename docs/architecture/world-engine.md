@@ -283,3 +283,10 @@ LLM agents and say nothing about how real agents behave.
 The World Engine has no API endpoint yet. AGENTS.md forbids endpoints that run arbitrary
 experiments until authentication exists. Access is through the CLI and the Python services
 only.
+
+## `stale_read` (Sprint 5)
+
+A lagging read replica. From the Nth read (`get_customer` and `search_customers` share one count),
+for `span` reads, rows committed during this run are left out of the delivered response. Seed rows
+stay visible, nothing is written, and the Oracle is unaffected. A read with nothing to hide records
+`fault_skipped` with `not_applied_nothing_to_hide`. Properties: `tests/world/test_stale_read.py`.

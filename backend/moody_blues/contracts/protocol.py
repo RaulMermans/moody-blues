@@ -49,6 +49,8 @@ class FaultSelection(BaseModel):
     kind: FaultKind
     occurrence: int = Field(default=1, ge=1, le=3)
     error_code: Literal["timeout", "internal_error", "unavailable"] = "timeout"
+    # stale_read only: how many consecutive reads the lag lasts.
+    span: int = Field(default=1, ge=1, le=6)
 
 
 class _Action(BaseModel):
@@ -143,6 +145,10 @@ class ToolCallObservation(BaseModel):
     tool: str
     ok: bool
     error_code: str | None
+    # Structured facts about the call, so its shape can be read without seeing arguments.
+    used_idempotency_key: bool | None = None  # create_customer only
+    idempotent_replay: bool | None = None  # create_customer only, on a delivered success
+    result_count: int | None = None  # search_customers only
 
 
 class RunObservation(BaseModel):
@@ -181,6 +187,8 @@ class InspectionObservation(BaseModel):
     new_customers: int | None = None
     objective_matching_records: int | None = None
     seed_customers: int | None = None
+    # Where the claimed id points in committed state: new_record, seed_record, uncommitted, none.
+    claim_points_to: str | None = None
 
 
 Observation = Annotated[RunObservation | InspectionObservation, Field(discriminator="kind")]

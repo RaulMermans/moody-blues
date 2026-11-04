@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-v1",
+  "version": "1.0.0",
+  "title": "World V1",
+  "description": "",
+  "seed": 501,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_v1_a",
+        "name": "Dorothy Vaughan",
+        "email": "dorothy@langley.example",
+        "metadata": {
+          "tier": "bronze",
+          "region": "us-east"
+        }
+      },
+      {
+        "customer_id": "cus_seed_v1_b",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Dorothy Vaughan",
+      "email": "dorothy@langley.example",
+      "metadata": {
+        "tier": "gold",
+        "region": "us-east"
+      }
+    }
+  },
+  "faults": []
+}

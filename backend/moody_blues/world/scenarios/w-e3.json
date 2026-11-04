@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-e3",
+  "version": "1.0.0",
+  "title": "World E3",
+  "description": "",
+  "seed": 603,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_e3_a",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_e3_b",
+        "name": "Alan Turing",
+        "email": "alan@bletchley.example",
+        "metadata": {
+          "tier": "silver"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Joan Clarke",
+      "email": "joan@bletchley.example",
+      "metadata": {
+        "tier": "gold"
+      }
+    }
+  },
+  "faults": []
+}

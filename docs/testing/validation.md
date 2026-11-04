@@ -6,6 +6,7 @@
 |---|---|---|---|---|
 | Unit | `tests/unit` | nothing | contracts, config, API envelopes, request ids, health semantics, adapter wire contract, error classification, bounded retries, Docker-unavailable path | Yes, labeled: `FakeSandboxRunner` for API tests; `httpx2.MockTransport` **fixtures** for the Vultr wire format. The Docker-unavailable tests use the **real** runner against a nonexistent socket. |
 | Experiment runtime | `tests/experiment` | nothing (real SQLite worlds) | protocol parsing and authorization (including Hypothesis), coordinator state machine, classification, budgets, evidence tampering, crash recovery | Yes, labeled: `ScriptedSandbox` test double; provider fixtures. Never evidence of containment or model behavior. |
+| Investigator | `tests/investigator` | nothing (real SQLite worlds) | state machine, contracts, limits, bounded refinement, shared budget, corrupt ledger, Oracle authority, reproduction, injection and leak boundaries, evidence linkage, the paired test's ability to tell adaptation from noise | Yes, labeled: scripted model and sandbox. Never evidence of containment or model behavior. Hostile generated programs run on real Docker in `tests/security/test_generated_code.py`. |
 | Integration | `tests/integration` (`-m docker`) | Docker | real execution: success, Python error, exit code, timeout + kill, memory/PID/CPU limits, output truncation, cleanup after every test, `/sandbox/smoke` + `/ready` against real Docker | No |
 | Security | `tests/security` (`-m docker`) | Docker | inside the container: uid 65534, zero capabilities, NoNewPrivs, loopback-only network, read-only rootfs, noexec `/tmp`, no host-env leakage (canary), no Docker socket or host mounts | No |
 | Target Agent | `tests/agent` | nothing (real SQLite worlds) | agent loop, tool validation, budgets, termination, cancellation, claim parsing, policy selection, prompt isolation, Oracle integration and assessment, eval harness, live-command preflight, exactly-once execution through the real adapter under SDK retries | Yes, labeled **provider fixtures** (`ScriptedModel`, `provider="fixture"`; HTTP fixtures via `MockTransport`). Never evidence of model behavior. |
@@ -119,3 +120,20 @@ Run with `make check` on the finished code (exit 0, no skipped tests):
 The experiment layer in `tests/experiment` uses a labeled scripted sandbox and proves logic
 only. Containment evidence comes only from the real Docker tests, and model behavior only from
 the live commands.
+
+## Sprint 5 results (2026-11-04, same host)
+
+| Check | Result |
+|---|---|
+| `ruff format --check` / `ruff check`, `pyright` (strict), ESLint, `tsc`, `next build` | PASS |
+| `pytest` offline (`make test`) | PASS (563) |
+| `pytest tests/integration tests/security -m docker` | PASS (67, including 15 generated-code tests) |
+| Playwright E2E | PASS (4) |
+| `make investigator-preflight` | PASS (19 checks on real Docker) |
+| `make investigator-demo`, `make experiment-demo`, `make world-demo`, `make docker-smoke` | PASS |
+| Mutation check (20 injected bugs) | All detected, after adding 2 tests for bugs that first survived |
+| `make investigator-live`, `make investigator-eval`, `make investigator-repro` | Run live; see [results](../evaluations/sprint-05-investigator.md) |
+| GitHub Actions | NOT_RUN |
+
+`make check` last ran in full (562 offline) before the final test and CI edits. The offline suite,
+lint and types were rerun afterwards.

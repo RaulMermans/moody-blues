@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-v2",
+  "version": "1.1.0",
+  "title": "World V2",
+  "description": "",
+  "seed": 502,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_v2_a",
+        "name": "Annie Easley",
+        "email": "annie@glenn.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_v2_b",
+        "name": "Grace Hopper",
+        "email": "grace@navy.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Annie Easley",
+      "email": "annie@glenn.example",
+      "metadata": {
+        "tier": "gold"
+      }
+    },
+    "instructions": "Create one new customer record with the specified attributes and verify that it exists. This is a new customer: other records may already hold similar or identical details, and those are different people, so a new record is required in any case."
+  },
+  "faults": []
+}

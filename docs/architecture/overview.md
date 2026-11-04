@@ -1,6 +1,6 @@
 # Architecture overview
 
-_Last updated: Sprint 4 (2026-11-03). Covers only what is implemented; planned components are
+_Last updated: Sprint 5 (2026-11-04). Covers only what is implemented; planned components are
 marked as planned._
 
 ## Shape
@@ -122,12 +122,13 @@ proof of containment. Remaining risks:
   Kernel exploits are out of scope for Sprint 1.
 - It uses Docker's default seccomp and AppArmor profiles, not custom ones.
 - No user-namespace remapping is configured.
-- The image (`python:3.12-slim`) is pulled by tag, not digest.
+- The general sandbox image is pulled by tag. Generated code runs only on a digest-pinned image
+  that is never pulled (Sprint 5; see [investigator.md](investigator.md)).
 - The image's own `ENV` values (PATH, LANG, PYTHON_VERSION and similar) are visible. They are
   not secrets.
 
-Candidate hardening for later sprints: gVisor (`runsc`), a custom seccomp profile, digest
-pinning, rootless Docker.
+Candidate hardening for later sprints: gVisor (`runsc`, not available in this Colima VM as of
+Sprint 5), a custom seccomp profile, rootless Docker.
 
 ### World Engine (`world/`, `services/world_runner.py`)
 
