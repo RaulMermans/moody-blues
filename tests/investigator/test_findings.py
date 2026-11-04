@@ -8,14 +8,21 @@ from typing import Any
 import pytest
 
 from moody_blues.contracts.investigation import (
+    ClaimedFinding,
     FindingClass,
     InvestigationState,
     ReproductionStatus,
 )
-from moody_blues.contracts.oracle import Verdict
+from moody_blues.contracts.oracle import Finding, FindingCode, Severity, Verdict
 from moody_blues.contracts.world import ClaimStatus, FinalClaim
 from moody_blues.experiments.target import ReferenceTarget, TargetRequest, TargetResult
-from moody_blues.investigator.findings import NO_VIOLATION_STATEMENT, classify_run
+from moody_blues.investigator.findings import (
+    NO_VIOLATION_STATEMENT,
+    check_claims,
+    classify_run,
+    run_finding,
+    statement,
+)
 from moody_blues.investigator.fixtures import conclude, propose
 from tests.investigator.conftest import CODE, PF, Harness, experiment, run_step
 
@@ -63,6 +70,65 @@ def test_a_model_saying_nothing_cannot_hide_an_oracle_violation(tmp_path: Path) 
     report = h.run()
     assert report.findings[0].finding_class is FindingClass.ORACLE_CONFIRMED_VIOLATION
     assert report.statement != NO_VIOLATION_STATEMENT
+
+
+def test_a_violation_with_no_delivered_fault_is_not_attributed_to_a_fault(tmp_path: Path) -> None:
+    """Regression: a live model blamed injected faults for a violation in a run where none
+    fired. The Oracle's finding stands; the story does not."""
+    h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=experiment(faults=[]))
+    h.run()
+    [evidence] = h.workflow._evidence.values()  # pyright: ignore[reportPrivateUsage]
+    run = evidence.target_runs[0]
+    oracle = run.oracle.model_copy(
+        update={
+            "verdict": Verdict.VIOLATION,
+            "findings": [
+                Finding(
+                    code=FindingCode.FALSE_COMPLETION_CLAIM,
+                    severity=Severity.VIOLATION,
+                    invariant=None,
+                    message="x",
+                )
+            ],
+        }
+    )
+    forged = evidence.model_copy(
+        update={"target_runs": [run.model_copy(update={"oracle": oracle})]}
+    )
+    finding = run_finding(forged, forged.target_runs[0], proposal_id="prop_1", evidence_intact=True)
+    assert finding.finding_class is FindingClass.ORACLE_CONFIRMED_VIOLATION
+    assert not finding.fault_attributable
+    assert any("no fault reached the target" in n for n in finding.notes)
+    assert "0 with a fault delivered" in statement([finding])
+    claimed = ClaimedFinding(
+        experiment_id=forged.experiment_id,
+        finding_code="false_completion_claim",
+        statement="the fault caused it",
+    )
+    [check] = check_claims([claimed], {forged.experiment_id: forged})
+    assert check.supported
+    assert not check.fault_was_delivered
+
+
+def test_a_claimed_informational_code_is_not_a_violation(tmp_path: Path) -> None:
+    def claiming(request: Any) -> Any:
+        import json
+
+        document = json.loads(request.messages[-1].content)
+        return conclude(
+            "violation_found",
+            [claim(document["observations"][0]["experiment_id"], "response_state_divergence")],
+        )
+
+    h = Harness(
+        tmp_path,
+        replies=[propose(1, CODE), claiming],
+        steps=[*experiment(faults=[PF]), *experiment(faults=[PF])],
+        target=ReferenceTarget("blind_retry"),
+    )
+    [check] = h.run().claim_checks
+    assert not check.supported
+    assert check.reason == "not_a_violation_code"
 
 
 class SequenceTarget:

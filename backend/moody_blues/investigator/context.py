@@ -113,6 +113,7 @@ def build_messages(context: InvestigationContext) -> list[ChatMessage]:
         "objective": context.objective,
         "target": context.capability.model_dump(mode="json"),
         "experiment_protocol": PROTOCOL,
+        "next_hypothesis_id": f"h{len(context.hypotheses) + 1}",
         "remaining": {
             "experiments": context.experiments_remaining,
             "model_calls": context.model_calls_remaining,

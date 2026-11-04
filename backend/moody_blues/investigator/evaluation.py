@@ -350,6 +350,7 @@ class StrategyRow(BaseModel):
     adaptively_selected: int  # executed programs citing an earlier observation
     hypothesis_revisions: int
     live_confirmed_violations: int
+    fault_triggered_violations: int  # the same, restricted to runs a fault actually reached
     reproduced: int
     not_reproduced: int
     violation_codes: list[str]
@@ -396,6 +397,7 @@ def strategy_row(report: InvestigationReport, trial: int) -> StrategyRow:
         adaptively_selected=sum(1 for p in executed if p.motivated_by),
         hypothesis_revisions=sum(1 for h in r.hypotheses if h.hypothesis.revises is not None),
         live_confirmed_violations=len(confirmed),
+        fault_triggered_violations=sum(1 for f in confirmed if f.fault_attributable),
         reproduced=sum(1 for f in confirmed if f.reproduction is ReproductionStatus.REPRODUCED),
         not_reproduced=sum(
             1 for f in confirmed if f.reproduction is ReproductionStatus.NOT_REPRODUCED
@@ -420,16 +422,16 @@ def strategy_row(report: InvestigationReport, trial: int) -> StrategyRow:
 def render_comparison(rows: list[StrategyRow]) -> str:
     header = (
         "| Strategy | Trial | State | Generated | Rejected | Runs | Conditions | Cited prior obs "
-        "| Revisions | Live violations | Reproduced | Codes | Recoveries | Shortfalls "
+        "| Revisions | Live violations | Fault-triggered | Reproduced | Codes | Recoveries | Shortfalls "
         "| Unsupported claims | Model calls | Inv tokens | Target tokens | Est. $ |"
     )
-    lines = [header, "|" + "---|" * 19]
+    lines = [header, "|" + "---|" * 20]
     for r in rows:
         lines.append(
             f"| {r.strategy.value} | {r.trial} | {r.state} | {r.programs_generated} "
             f"| {r.programs_rejected} | {r.experiments_with_target_run} "
             f"| {r.distinct_conditions} | {r.adaptively_selected} | {r.hypothesis_revisions} "
-            f"| {r.live_confirmed_violations} | {r.reproduced} "
+            f"| {r.live_confirmed_violations} | {r.fault_triggered_violations} | {r.reproduced} "
             f"| {', '.join(r.violation_codes) or '-'} | {r.correct_recoveries} "
             f"| {r.target_shortfalls} | {r.unsupported_claims} | {r.model_calls} "
             f"| {r.investigator_tokens} | {r.target_tokens} | {r.estimated_cost_usd:.4f} |"

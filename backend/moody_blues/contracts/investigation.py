@@ -35,7 +35,7 @@ SafeToken = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_.:@+-]{0,96}$
 ObservationId = Annotated[str, StringConstraints(pattern=r"^obs_[0-9]{1,3}$")]
 HypothesisId = Annotated[str, StringConstraints(pattern=r"^h[0-9]{1,3}$")]
 ExperimentLabel = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{2,63}$")]
-Prose = Annotated[str, StringConstraints(min_length=1, max_length=800)]
+Prose = Annotated[str, StringConstraints(min_length=1, max_length=1_500)]
 
 
 class InvestigationState(StrEnum):
@@ -483,6 +483,11 @@ class VerifiedFinding(BaseModel):
     def is_model_behavior(self) -> bool:
         return self.target_evidence_source == "live_provider"
 
+    @property
+    def fault_attributable(self) -> bool:
+        """Whether any perturbation reached the target. Required to blame one for a violation."""
+        return self.faults_delivered > 0
+
 
 class ClaimCheck(BaseModel):
     """Whether something the model claimed is backed by an Oracle report."""
@@ -496,7 +501,11 @@ class ClaimCheck(BaseModel):
         "unknown_experiment",
         "no_violation_in_experiment",
         "finding_code_not_reported",
+        "not_a_violation_code",
     ]
+    # True only if a fault reached the target in the run. A story blaming an injected fault for
+    # a violation in a run where none fired is the model's narrative, not evidence.
+    fault_was_delivered: bool = False
 
 
 class InvestigationUsage(BaseModel):

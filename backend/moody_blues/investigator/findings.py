@@ -56,6 +56,13 @@ def _notes(run: TargetRunEvidence, finding_class: FindingClass) -> list[str]:
         notes.append(f"{run.evidence_source}: says nothing about model behavior")
     if termination in {TerminationReason.MAX_STEPS.value, TerminationReason.TOKEN_BUDGET.value}:
         notes.append(f"the run hit a budget we set ({termination}); not by itself a model failing")
+    if finding_class is FindingClass.ORACLE_CONFIRMED_VIOLATION and (
+        run.target_observed.faults_delivered == 0
+    ):
+        notes.append(
+            "no fault reached the target: the Oracle's finding stands, but no perturbation caused "
+            "it, whatever an explanation says. Read the trace before calling this a weakness."
+        )
     if finding_class is FindingClass.IMPAIRED_VIOLATION:
         notes.append("run or evidence impaired; review before relying on this")
     if finding_class is FindingClass.IMPAIRED_RUN:
@@ -130,27 +137,29 @@ def reproduction_status(
     return ReproductionStatus.NOT_REPRODUCED
 
 
+def _check_claim(claim: ClaimedFinding, experiment: ExperimentEvidence | None) -> ClaimCheck:
+    if experiment is None:
+        return ClaimCheck(claim=claim, supported=False, reason="unknown_experiment")
+    delivered = any(r.target_observed.faults_delivered for r in experiment.target_runs)
+    violating = [r for r in experiment.target_runs if r.oracle.verdict is Verdict.VIOLATION]
+    reported = {f.code.value for r in experiment.target_runs for f in r.oracle.findings}
+    if not violating:
+        reason = "no_violation_in_experiment"
+    elif any(claim.finding_code in violation_codes(r) for r in violating):
+        return ClaimCheck(
+            claim=claim, supported=True, reason="oracle_confirms", fault_was_delivered=delivered
+        )
+    elif claim.finding_code in reported:
+        reason = "not_a_violation_code"
+    else:
+        reason = "finding_code_not_reported"
+    return ClaimCheck(claim=claim, supported=False, reason=reason, fault_was_delivered=delivered)
+
+
 def check_claims(
     claims: list[ClaimedFinding], evidence: dict[str, ExperimentEvidence]
 ) -> list[ClaimCheck]:
-    checks: list[ClaimCheck] = []
-    for claim in claims:
-        experiment = evidence.get(claim.experiment_id)
-        if experiment is None:
-            checks.append(ClaimCheck(claim=claim, supported=False, reason="unknown_experiment"))
-            continue
-        violating = [r for r in experiment.target_runs if r.oracle.verdict is Verdict.VIOLATION]
-        if not violating:
-            checks.append(
-                ClaimCheck(claim=claim, supported=False, reason="no_violation_in_experiment")
-            )
-        elif any(claim.finding_code in violation_codes(r) for r in violating):
-            checks.append(ClaimCheck(claim=claim, supported=True, reason="oracle_confirms"))
-        else:
-            checks.append(
-                ClaimCheck(claim=claim, supported=False, reason="finding_code_not_reported")
-            )
-    return checks
+    return [_check_claim(claim, evidence.get(claim.experiment_id)) for claim in claims]
 
 
 def statement(findings: list[VerifiedFinding]) -> str:
@@ -159,8 +168,9 @@ def statement(findings: list[VerifiedFinding]) -> str:
         return NO_VIOLATION_STATEMENT
     live = [f for f in confirmed if f.is_model_behavior]
     reproduced = [f for f in confirmed if f.reproduction is ReproductionStatus.REPRODUCED]
+    triggered = [f for f in confirmed if f.fault_attributable]
     basis = "live model target" if live else "non-model target (fixture or reference executor)"
     return (
         f"{len(confirmed)} Oracle-confirmed violation(s) on a {basis}; "
-        f"{len(reproduced)} reproduced in a fresh world."
+        f"{len(triggered)} with a fault delivered; {len(reproduced)} reproduced in a fresh world."
     )

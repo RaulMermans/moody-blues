@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scenario_id": "w-v2",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "World V2",
   "description": "",
   "seed": 502,
@@ -36,7 +36,8 @@
       "metadata": {
         "tier": "gold"
       }
-    }
+    },
+    "instructions": "Create one new customer record with the specified attributes and verify that it exists. This is a new customer: other records may already hold similar or identical details, and those are different people, so a new record is required in any case."
   },
   "faults": []
 }

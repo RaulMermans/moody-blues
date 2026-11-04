@@ -407,6 +407,19 @@ def test_the_one_shot_strategy_writes_everything_before_any_result_exists(
     assert not any(p.motivated_by for p in report.proposals)
 
 
+def test_trusted_code_states_the_next_hypothesis_id(tmp_path: Path) -> None:
+    """Regression: a live one-shot plan lost two of three proposals by reusing h1."""
+    h = Harness(
+        tmp_path,
+        replies=[propose(1, CODE), propose(2, CODE)],
+        steps=[*experiment(), *experiment()],
+        strategy=Strategy.ONE_SHOT,
+        max_experiments=2,
+    )
+    h.run()
+    assert [h.prompt(i)["next_hypothesis_id"] for i in range(2)] == ["h1", "h2"]
+
+
 def test_the_one_shot_strategy_gets_no_refinement_from_results(tmp_path: Path) -> None:
     h = Harness(
         tmp_path,
