@@ -75,7 +75,8 @@ def render_report(report: InvestigationReport) -> str:
             f"- {f.finding_class.value}: {f.world_ref} {f.config.value}, run {f.run_id}, "
             f"Oracle {f.oracle_verdict.value}, outcome {f.run_outcome}, "
             f"violations {', '.join(f.violation_codes) or 'none'}, "
-            f"faults delivered {f.faults_delivered}, source {f.target_evidence_source}, reproduction {f.reproduction.value}"
+            f"faults delivered {f.faults_delivered}, source {f.target_evidence_source}, "
+            f"reproduction {f.reproduction.value}"
         )
         lines += [f"  - {safe_text(n, 200)}" for n in f.notes]
     if not r.findings:
@@ -91,7 +92,8 @@ def render_report(report: InvestigationReport) -> str:
         cause = "" if check.fault_was_delivered else "; no fault was delivered in that run"
         lines.append(
             f"- Claim {safe_text(check.claim.finding_code, 60)} on "
-            f"{safe_text(check.claim.experiment_id, 40)}: {verdict} ({check.reason}{cause})"
+            f"{safe_text(check.claim.experiment_id, 40)}: {verdict} "
+            f"({check.reason}{cause})"
         )
     u = r.usage
     lines += [

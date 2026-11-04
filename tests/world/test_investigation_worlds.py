@@ -7,7 +7,6 @@ nothing about any model.
 from __future__ import annotations
 
 import pytest
-
 from pydantic import JsonValue
 
 from moody_blues.contracts.oracle import Verdict
