@@ -14,12 +14,14 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/inference/` | Model provider adapters (Vultr) + live smoke checks |
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
 | `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
+| `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
 | `tests/agent` | Target Agent with labeled provider fixtures over real SQLite worlds; offline; part of `make test` |
+| `tests/experiment` | Experiment runtime with a labeled scripted sandbox and real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -36,7 +38,7 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   configuration only; `/ready` reports real, non-chargeable checks; Vultr is verified only by
   `make vultr-smoke`.
 - Status vocabulary for reports: `PASS`, `FAIL`, `NOT_RUN`, `BLOCKED_BY_CREDENTIALS`,
-  `BLOCKED_BY_LOCAL_DEPENDENCY`. A skipped test is not a pass.
+  `BLOCKED_BY_LOCAL_DEPENDENCY`, `BLOCKED_BY_BUDGET`. A skipped test is not a pass.
 - Fixtures/mocks are allowed for unit tests and must be labeled as such. They are never
   evidence of a live integration.
 
@@ -83,6 +85,23 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - Results from `ScriptedModel` or HTTP fixtures are `offline_fixture` evidence and never
   describe real model behavior. `agent-run` / `agent-eval` are live and chargeable: run them
   only when asked, within their budgets.
+
+**Experiment runtime**
+- Experiment code is untrusted, even when a developer wrote it. It runs only in a sandbox with
+  networking off, and it influences anything only through validated `mb-exp/1` actions.
+- Only the coordinator invokes the Target Agent, gateway and Oracle. Never add an action that
+  carries SQL, shell, paths, credentials, budgets, models or free text that reaches an LLM.
+- Output is never repaired or partly accepted. A truncated or incomplete stream is rejected
+  even if what survived is valid.
+- A verdict comes only from the Truth Oracle. Sandbox text is recorded as untrusted and never
+  feeds a verdict, status or classification. Read `run_outcome` with the verdict.
+- Never retry a target run automatically. If one does not report back, the outcome is
+  `uncertain`. Write the journal before an effect, and evidence before `experiment_finished`.
+- Scripted experiments are `developer_script`, never autonomous discoveries. Reference
+  executor results never describe model behavior; if a model does not show a failure, say so.
+- Every chargeable command goes through the spend ledger, and billable batches need explicit
+  opt-in. The ledger is an estimate, never a provider limit. See
+  `docs/deployment/live-budget.md`.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

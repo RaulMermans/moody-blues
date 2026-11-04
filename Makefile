@@ -8,7 +8,9 @@ FE      := frontend
 PYTEST  := $(UV) run pytest
 
 .PHONY: help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
-        test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval sandbox-clean clean
+        test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
+        experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
+        live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -43,8 +45,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit + World Engine + Target Agent tests (offline; real SQLite; provider fixtures; no network)
-	$(PYTEST) tests/unit tests/world tests/agent
+test: ## Unit + World + Target Agent + experiment tests (offline; real SQLite; fixtures; no network)
+	$(PYTEST) tests/unit tests/world tests/agent tests/experiment
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
@@ -79,8 +81,29 @@ TRIALS   ?= 3
 agent-run: ## LIVE + CHARGEABLE: one LLM Target Agent run (SCENARIO=, CONFIG=, MODEL=)
 	$(UV) run moody-blues agent-run --scenario $(SCENARIO) --config $(CONFIG) $(if $(MODEL),--model $(MODEL))
 
-agent-eval: ## LIVE + CHARGEABLE: bounded baseline-vs-hardened evaluation (TRIALS=, MODEL=)
-	$(UV) run moody-blues agent-eval --trials $(TRIALS) $(if $(MODEL),--model $(MODEL))
+agent-eval: ## LIVE + CHARGEABLE batch: needs CONFIRM=1 (TRIALS=, MODEL=)
+	$(UV) run moody-blues agent-eval --trials $(TRIALS) $(if $(MODEL),--model $(MODEL)) $(if $(CONFIRM),--confirm-billable)
+
+experiment-demo: ## Real sandbox + coordinator + world + Oracle; reference executors; no model; free
+	$(UV) run moody-blues experiment-demo
+
+experiment-test: ## Offline experiment runtime tests (scripted sandbox; no Docker; no network)
+	$(PYTEST) tests/experiment
+
+experiment-containment: ## Real Docker: experiment runtime and the 12 containment violations
+	$(PYTEST) tests/integration/test_experiment_runtime.py tests/security/test_experiment_containment.py -m docker
+
+CASE  ?= phantom-failure-duplicate
+LIVE_MODEL ?= glm-5.3
+
+experiment-live: ## LIVE + CHARGEABLE: one sandboxed experiment; needs CONFIRM=1 (CASE=, CONFIG=, LIVE_MODEL=)
+	$(UV) run moody-blues experiment-live --case $(CASE) --config $(if $(filter command line,$(origin CONFIG)),$(CONFIG),baseline) --model $(LIVE_MODEL) $(if $(CONFIRM),--confirm-billable)
+
+experiment-recover: ## Remove orphan sandboxes; close experiments whose coordinator died (free)
+	$(UV) run moody-blues experiment-recover
+
+live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
+	$(UV) run moody-blues live-budget
 
 sandbox-clean: ## Force-remove any leftover sandbox containers
 	@ids=$$(docker ps -aq --filter label=io.moody-blues.sandbox); \

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
+from threading import Event
 
 import pytest
 from fastapi import FastAPI
@@ -40,7 +41,7 @@ class FakeSandboxRunner:
         if not self.available:
             raise SandboxUnavailableError("fake: daemon down")
 
-    def run(self, request: SandboxRequest) -> SandboxResult:
+    def run(self, request: SandboxRequest, *, cancel: Event | None = None) -> SandboxResult:
         self.ping()
         self.requests.append(request)
         return SandboxResult(

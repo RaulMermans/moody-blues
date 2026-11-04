@@ -7,8 +7,11 @@ Implemented restrictions (per run):
   * read-only root filesystem; only a small ``noexec`` tmpfs at /tmp
   * memory (swap disabled), CPU quota and PID limits
   * no host mounts, no Docker socket, no host environment variables
-  * bounded log capture (driver max-size + in-process truncation)
+  * output captured from a stream attached before start: exact byte counts, bounded memory
   * wall-clock timeout enforced by the host, followed by SIGKILL
+  * a second, later deadline enforced *inside* the container by ``timeout`` as PID 1, so a
+    run stops even if the host process that started it has crashed
+  * cancellation: trusted code can stop an active run through a ``threading.Event``
 
 These are *configured restrictions*. Containment guarantees ultimately depend on the
 host kernel, the container runtime and its seccomp/AppArmor profiles; see
@@ -18,9 +21,12 @@ docs/architecture/overview.md#sandbox-threat-model.
 from __future__ import annotations
 
 import logging
+import math
+import threading
 import time
 import uuid
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, cast
 
 import docker
 import docker.errors
@@ -38,13 +44,62 @@ log = logging.getLogger("moody_blues.sandbox")
 
 SANDBOX_LABEL = "io.moody-blues.sandbox"
 RUN_ID_LABEL = "io.moody-blues.run-id"
+EXPIRES_AT_LABEL = "io.moody-blues.expires-at"
 SANDBOX_UID = "65534:65534"
 
+# The in-container deadline trails the host deadline so that the host normally decides (and
+# reports TIMED_OUT). It only matters when the host process is gone.
+HARD_DEADLINE_GRACE_SECONDS = 10
+# A container past its in-container deadline plus this margin has no live owner.
+ORPHAN_MARGIN_SECONDS = 30
+_CANCEL_POLL_SECONDS = 0.25
+_CAPTURE_JOIN_SECONDS = 5.0
 
-def _truncate(data: bytes, limit: int) -> tuple[str, bool]:
-    if len(data) <= limit:
-        return data.decode("utf-8", errors="replace"), False
-    return data[:limit].decode("utf-8", errors="replace"), True
+
+class _OutputCapture:
+    """Reads a container's attached output stream on a background thread.
+
+    Attached before ``start``, so every byte the process writes is counted. The json-file
+    log driver cannot provide this: once its ``max-size`` is reached it discards older output,
+    and reading the logs back then shows a short, apparently complete stream. At most ``limit``
+    bytes per channel are kept in memory; the rest is only counted.
+    """
+
+    def __init__(self, stream: Iterable[tuple[bytes | None, bytes | None]], limit: int) -> None:
+        self._stream = stream
+        self._limit = limit
+        self.stdout = bytearray()
+        self.stderr = bytearray()
+        self.stdout_bytes = 0
+        self.stderr_bytes = 0
+        self.failed = False
+        self._thread = threading.Thread(target=self._drain, name="sandbox-output", daemon=True)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def _keep(self, buffer: bytearray, chunk: bytes) -> None:
+        room = self._limit - len(buffer)
+        if room > 0:
+            buffer.extend(chunk[:room])
+
+    def _drain(self) -> None:
+        try:
+            for out, err in self._stream:
+                if out:
+                    self.stdout_bytes += len(out)
+                    self._keep(self.stdout, out)
+                if err:
+                    self.stderr_bytes += len(err)
+                    self._keep(self.stderr, err)
+        except (OSError, ValueError, docker.errors.DockerException):
+            log.exception("sandbox_output_stream_failed")
+            self.failed = True
+
+    def finish(self) -> bool:
+        """Wait for end of stream. True only if the whole stream was read."""
+        self._thread.join(_CAPTURE_JOIN_SECONDS)
+        return not self._thread.is_alive() and not self.failed
 
 
 class DockerSandboxRunner:
@@ -130,13 +185,37 @@ class DockerSandboxRunner:
 
     # -- execution ----------------------------------------------------------------
 
+    def reap_orphans(self, *, now: float | None = None) -> list[str]:
+        """Remove containers whose in-container deadline has long passed.
+
+        Such a container's owner died before its ``finally`` ran: a live owner removes its
+        container well before this point. Returns the removed run ids.
+        """
+        current = time.time() if now is None else now
+        removed: list[str] = []
+        for container in self.list_sandbox_containers():
+            labels = container.labels or {}
+            expires = labels.get(EXPIRES_AT_LABEL)
+            # An unlabeled container predates this field and cannot be judged; leave it.
+            if expires is not None and float(expires) <= current and self._remove(container):
+                removed.append(labels.get(RUN_ID_LABEL, container.name or "unknown"))
+        return removed
+
     def _container_config(self, run_id: str, code: str, limits: SandboxLimits) -> dict[str, Any]:
         memory = f"{limits.memory_mb}m"
+        hard_deadline = math.ceil(limits.wall_timeout_seconds) + HARD_DEADLINE_GRACE_SECONDS
+        expires_at = int(time.time()) + hard_deadline + ORPHAN_MARGIN_SECONDS
         return {
             "image": self.image,
-            "command": ["python", "-I", "-c", code],
+            # ``timeout`` runs as PID 1. The kernel ignores SIGKILL sent to a namespace's init
+            # from inside that namespace, so the sandboxed code cannot remove this deadline.
+            "command": ["timeout", "-s", "KILL", str(hard_deadline), "python", "-I", "-c", code],
             "name": f"moody-sbx-{run_id}",
-            "labels": {SANDBOX_LABEL: "true", RUN_ID_LABEL: run_id},
+            "labels": {
+                SANDBOX_LABEL: "true",
+                RUN_ID_LABEL: run_id,
+                EXPIRES_AT_LABEL: str(expires_at),
+            },
             "user": SANDBOX_UID,
             "working_dir": "/tmp",
             "environment": {"HOME": "/tmp", "PYTHONDONTWRITEBYTECODE": "1"},
@@ -159,25 +238,48 @@ class DockerSandboxRunner:
             "tty": False,
         }
 
-    def run(self, request: SandboxRequest) -> SandboxResult:
+    def _await_exit(
+        self, container: Container, limits: SandboxLimits, cancel: threading.Event | None
+    ) -> ExecutionStatus | None:
+        """Block until exit, deadline or cancellation. Returns the forced status, if any."""
+        deadline = time.monotonic() + limits.wall_timeout_seconds
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return ExecutionStatus.TIMED_OUT
+            if cancel is not None and cancel.is_set():
+                return ExecutionStatus.CANCELLED
+            wait = remaining if cancel is None else min(remaining, _CANCEL_POLL_SECONDS)
+            try:
+                container.wait(timeout=wait)
+            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+                # docker-py surfaces the wait deadline as a client-side read timeout.
+                continue
+            return None
+
+    def run(
+        self, request: SandboxRequest, *, cancel: threading.Event | None = None
+    ) -> SandboxResult:
         limits = request.limits or self.default_limits
         run_id = f"sbx_{uuid.uuid4().hex[:16]}"
         self.ensure_image()
         client = self._docker()
 
         container: Container | None = None
-        timed_out = False
         started = time.perf_counter()
         try:
             container = client.containers.create(
                 **self._container_config(run_id, request.code, limits)
             )
+            image_id = cast(str | None, container.attrs.get("Image"))
+            stream = container.attach(stdout=True, stderr=True, stream=True, logs=False, demux=True)
+            capture = _OutputCapture(
+                cast(Iterable[tuple[bytes | None, bytes | None]], stream), self.output_limit_bytes
+            )
+            capture.start()
             container.start()
-            try:
-                container.wait(timeout=limits.wall_timeout_seconds)
-            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
-                # docker-py surfaces the wait deadline as a client-side read timeout.
-                timed_out = True
+            forced = self._await_exit(container, limits, cancel)
+            if forced is not None:
                 self._kill(container)
                 container.wait(timeout=self._api_timeout)
             duration_ms = int((time.perf_counter() - started) * 1000)
@@ -186,12 +288,7 @@ class DockerSandboxRunner:
             state: dict[str, Any] = container.attrs["State"]
             exit_code = int(state["ExitCode"])
             oom_killed = bool(state.get("OOMKilled", False))
-            stdout, out_trunc = _truncate(
-                container.logs(stdout=True, stderr=False), self.output_limit_bytes
-            )
-            stderr, err_trunc = _truncate(
-                container.logs(stdout=False, stderr=True), self.output_limit_bytes
-            )
+            output_complete = capture.finish()
         except (docker.errors.DockerException, requests.exceptions.RequestException) as exc:
             raise SandboxError(
                 ErrorCategory.SANDBOX_RUNTIME, f"sandbox run {run_id} failed: {exc}"
@@ -199,8 +296,8 @@ class DockerSandboxRunner:
         finally:
             cleaned_up = self._remove(container) if container is not None else True
 
-        if timed_out:
-            status = ExecutionStatus.TIMED_OUT
+        if forced is not None:
+            status = forced
         elif exit_code == 0:
             status = ExecutionStatus.SUCCEEDED
         else:
@@ -210,14 +307,18 @@ class DockerSandboxRunner:
             run_id=run_id,
             status=status,
             exit_code=exit_code,
-            stdout=stdout,
-            stderr=stderr,
-            stdout_truncated=out_trunc,
-            stderr_truncated=err_trunc,
+            stdout=bytes(capture.stdout).decode("utf-8", errors="replace"),
+            stderr=bytes(capture.stderr).decode("utf-8", errors="replace"),
+            stdout_truncated=capture.stdout_bytes > self.output_limit_bytes,
+            stderr_truncated=capture.stderr_bytes > self.output_limit_bytes,
+            stdout_bytes=capture.stdout_bytes,
+            stderr_bytes=capture.stderr_bytes,
+            output_complete=output_complete,
             duration_ms=duration_ms,
-            timed_out=timed_out,
+            timed_out=status is ExecutionStatus.TIMED_OUT,
             oom_killed=oom_killed,
             image=self.image,
+            image_id=image_id,
             limits=limits,
             cleaned_up=cleaned_up,
         )

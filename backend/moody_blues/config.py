@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     # Optional, for cost estimates only. Unset means "unknown"; nothing guesses a price.
     vultr_price_per_million_tokens_usd: float | None = Field(default=None, ge=0, le=1_000)
 
+    # Live spending guard. An application-side estimate, NOT a provider billing limit.
+    live_spend_limit_usd: float = Field(default=5.0, gt=0, le=200)
+    # Vultr publishes no per-model price for the models we use, so these are deliberately
+    # high assumptions (see docs/deployment/live-budget.md), not quoted prices.
+    live_price_ceiling_input_per_million_usd: float = Field(default=1.40, gt=0, le=1_000)
+    live_price_ceiling_output_per_million_usd: float = Field(default=4.40, gt=0, le=1_000)
+
     # Sandbox
     docker_host: str | None = None
     sandbox_image: str = "python:3.12-slim"

@@ -8,7 +8,13 @@ Commands:
   world-demo    Run the reference World Engine cases against real SQLite worlds.
   world-run     Run one scenario with one deterministic reference executor.
   agent-run     LIVE: one LLM Target Agent run against one scenario (chargeable).
-  agent-eval    LIVE: bounded scenarios x configs x trials evaluation (chargeable).
+  agent-eval    LIVE: bounded scenarios x configs x trials evaluation (chargeable; needs
+                --confirm-billable).
+  experiment-demo     Real sandbox + coordinator + world + Oracle with reference executors.
+  experiment-live     LIVE: one sandboxed experiment driving the real Target Agent (chargeable;
+                      needs --confirm-billable).
+  experiment-recover  Remove orphan sandboxes; close experiments whose coordinator died.
+  live-budget   Show the application-side spend ledger (no calls).
 """
 
 from __future__ import annotations
@@ -22,23 +28,27 @@ import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from moody_blues.config import Settings
-from moody_blues.contracts.sandbox import SandboxRequest
+from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
 
 if TYPE_CHECKING:
-    from moody_blues.contracts.agent import AgentBudget, AgentRunReport
+    from moody_blues.contracts.agent import AgentBudget, AgentRunReport, TokenTotals
     from moody_blues.contracts.common import ErrorDetail
+    from moody_blues.experiments.budget import SpendLedger
     from moody_blues.inference.vultr import VultrInferenceClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACTS = REPO_ROOT / ".artifacts"
 
 OK, WARN, FAIL = "PASS", "WARN", "FAIL"
+
+# Generous bound for the fixed smoke checks, which use about 800 tokens in total.
+SMOKE_MAX_TOKENS = 4_000
 
 
 def _version(cmd: Sequence[str]) -> str | None:
@@ -149,8 +159,56 @@ def docker_smoke(settings: Settings) -> int:
     return 0 if result.exit_code == 0 and result.cleaned_up else 1
 
 
+def _ledger(settings: Settings) -> SpendLedger:
+    from moody_blues.experiments.budget import SpendLedger as Ledger
+
+    return Ledger.from_settings(settings, ARTIFACTS / "live-spend" / "ledger.jsonl")
+
+
+def _budget_blocked(message: str) -> int:
+    print(json.dumps({"status": "BLOCKED_BY_BUDGET", "reason": message}, indent=2))
+    return 3
+
+
+def _smoke_tokens(report: dict[str, Any]) -> TokenTotals:
+    """Sum provider-reported usage over a smoke report; incomplete if any call lacks it."""
+    from moody_blues.contracts.agent import TokenTotals as Totals
+    from moody_blues.contracts.inference import InferenceResult
+
+    prompt = completion = total = 0
+    complete = True
+    checks = cast(dict[str, dict[str, Any]], report["checks"])
+    for check in checks.values():
+        if "error" in check:
+            complete = False  # a failed call may still have been billed
+        for key in ("result", "first", "second"):
+            if key not in check:
+                continue
+            usage = InferenceResult.model_validate(check[key]).usage
+            if usage is None or usage.total_tokens is None:
+                complete = False
+                continue
+            prompt += usage.prompt_tokens or 0
+            completion += usage.completion_tokens or 0
+            total += usage.total_tokens
+    return Totals(
+        prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, complete=complete
+    )
+
+
 def _vultr(settings: Settings, checks: list[str], artifact: str) -> int:
+    from moody_blues.experiments.budget import BudgetExceededError
+
+    billable = settings.vultr_configured and any(c in vultr_smoke.CHECKS for c in checks)
+    entry = None
+    if billable:
+        try:
+            entry = _ledger(settings).reserve("vultr-smoke", worst_case_tokens=SMOKE_MAX_TOKENS)
+        except BudgetExceededError as exc:
+            return _budget_blocked(exc.detail.message)
     code, report = vultr_smoke.run(checks, settings)
+    if entry is not None:
+        _ledger(settings).settle(entry, _smoke_tokens(report))
     text = vultr_smoke.render(report)
     print(text)
     ARTIFACTS.mkdir(exist_ok=True)
@@ -226,6 +284,7 @@ def _budget(args: argparse.Namespace) -> AgentBudget:
 
 def agent_run(settings: Settings, args: argparse.Namespace) -> int:
     from moody_blues.contracts.agent import AgentConfigName
+    from moody_blues.experiments.budget import BudgetExceededError, worst_case_run_tokens
     from moody_blues.services.agent_render import render_agent_report
     from moody_blues.services.agent_world_runner import run_agent_scenario, write_report
     from moody_blues.world.scenarios import load_scenario
@@ -236,6 +295,14 @@ def agent_run(settings: Settings, args: argparse.Namespace) -> int:
     if client is None:
         return code
     budget = _budget(args)
+    ledger = _ledger(settings)
+    try:
+        entry = ledger.reserve(
+            f"agent-run:{args.scenario}:{args.config}",
+            worst_case_tokens=worst_case_run_tokens(budget),
+        )
+    except BudgetExceededError as exc:
+        return _budget_blocked(exc.detail.message)
     report = run_agent_scenario(
         load_scenario(args.scenario),
         config=AgentConfigName(args.config),
@@ -247,6 +314,7 @@ def agent_run(settings: Settings, args: argparse.Namespace) -> int:
         price_per_million_tokens_usd=settings.vultr_price_per_million_tokens_usd,
         keep=False,
     )
+    ledger.settle(entry, report.agent.tokens)
     path = write_report(report, out)
     if args.json:
         print(json.dumps(report.model_dump(mode="json"), indent=2))
@@ -261,6 +329,8 @@ def agent_run(settings: Settings, args: argparse.Namespace) -> int:
 
 def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
     from moody_blues.contracts.agent import AgentConfigName
+    from moody_blues.contracts.agent import TokenTotals as Totals
+    from moody_blues.experiments.budget import BudgetExceededError, worst_case_run_tokens
     from moody_blues.services.agent_eval import EVAL_SCENARIOS, EvalStatus, run_eval
 
     model = args.model or settings.vultr_model
@@ -269,6 +339,26 @@ def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
     if client is None:
         return code
     budget = _budget(args)
+    if not args.confirm_billable:
+        print(
+            json.dumps(
+                {
+                    "status": "NOT_RUN",
+                    "reason": "agent-eval is a billable batch; pass --confirm-billable "
+                    "(make agent-eval CONFIRM=1)",
+                },
+                indent=2,
+            )
+        )
+        return 2
+    ledger = _ledger(settings)
+    try:
+        entry = ledger.reserve(
+            "agent-eval",
+            worst_case_tokens=args.max_eval_tokens + worst_case_run_tokens(budget),
+        )
+    except BudgetExceededError as exc:
+        return _budget_blocked(exc.detail.message)
 
     def progress(r: AgentRunReport) -> None:
         print(
@@ -278,7 +368,7 @@ def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
             flush=True,
         )
 
-    summary, _ = run_eval(
+    summary, reports = run_eval(
         inference=client,
         evidence="live_provider",
         provider="vultr",
@@ -292,6 +382,16 @@ def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
         price_per_million_tokens_usd=settings.vultr_price_per_million_tokens_usd,
         on_run=progress,
     )
+    tokens = [r.agent.tokens for r in reports]
+    ledger.settle(
+        entry,
+        Totals(
+            prompt_tokens=sum(t.prompt_tokens for t in tokens),
+            completion_tokens=sum(t.completion_tokens for t in tokens),
+            total_tokens=sum(t.total_tokens for t in tokens),
+            complete=all(t.complete for t in tokens),
+        ),
+    )
     print((out / "summary.md").read_text())
     print(f"evidence: {out}")
     return {
@@ -300,6 +400,138 @@ def agent_eval(settings: Settings, args: argparse.Namespace) -> int:
         EvalStatus.BLOCKED_BY_CREDENTIALS: 2,
         EvalStatus.ABORTED_PROVIDER: 1,
     }[summary.status]
+
+
+def _experiment_root() -> Path:
+    return ARTIFACTS / "experiments"
+
+
+def _sandbox_limits(settings: Settings) -> SandboxLimits:
+    return SandboxLimits(
+        wall_timeout_seconds=settings.sandbox_wall_timeout_seconds,
+        memory_mb=settings.sandbox_memory_mb,
+        cpus=settings.sandbox_cpus,
+        pids_limit=settings.sandbox_pids_limit,
+    )
+
+
+def _ready_sandbox(settings: Settings) -> DockerSandboxRunner | None:
+    runner = DockerSandboxRunner.from_settings(settings)
+    try:
+        runner.ping()
+        runner.ensure_image()
+    except SandboxError as exc:
+        print(json.dumps({"status": "BLOCKED_BY_LOCAL_DEPENDENCY", "error": exc.detail.message}))
+        return None
+    return runner
+
+
+def experiment_demo(settings: Settings, case_ids: list[str] | None) -> int:
+    from moody_blues.experiments.demo import DEMO_CASES, demo_case, render_evidence, run_case
+    from moody_blues.experiments.recovery import verify_experiment
+
+    runner = _ready_sandbox(settings)
+    if runner is None:
+        return 2
+    root = _experiment_root()
+    print(
+        "Deterministic demonstration: real Docker sandboxes, real SQLite worlds, the real Oracle,"
+    )
+    print("and scripted reference executors in place of an LLM. No model is called.\n")
+    failed: list[str] = []
+    for case in [demo_case(c) for c in case_ids] if case_ids else list(DEMO_CASES):
+        evidence = run_case(
+            case, sandbox=runner, root=root, sandbox_limits=_sandbox_limits(settings)
+        )
+        print(render_evidence(evidence, title=case.title, root=root) + "\n")
+        intact = not verify_experiment(root / evidence.experiment_id)
+        if evidence.status is not case.expected_status or not intact:
+            failed.append(case.case_id)
+    print(f"FAILED: {', '.join(failed)}" if failed else "All demonstration paths behaved.")
+    return 1 if failed else 0
+
+
+def experiment_live(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.contracts.agent import AgentBudget as Budget
+    from moody_blues.experiments.demo import demo_case, render_evidence, run_case
+    from moody_blues.experiments.target import AgentTarget
+
+    if not args.confirm_billable:
+        print(
+            json.dumps(
+                {
+                    "status": "NOT_RUN",
+                    "reason": "experiment-live is billable; pass --confirm-billable "
+                    "(make experiment-live CONFIRM=1)",
+                },
+                indent=2,
+            )
+        )
+        return 2
+    model = args.model or settings.vultr_model
+    root = _experiment_root()
+    code, client = _agent_preflight(settings, model, root / "live-preflight.json")
+    if client is None:
+        return code
+    runner = _ready_sandbox(settings)
+    if runner is None:
+        return 2
+    target = AgentTarget(
+        inference=client,
+        evidence="live_provider",
+        provider="vultr",
+        model=model,
+        budget=Budget(
+            max_steps=args.max_steps,
+            max_tool_calls=args.max_tool_calls,
+            max_total_tokens=args.max_run_tokens,
+            max_wall_seconds=120,
+        ),
+        ledger=_ledger(settings),
+    )
+    case = demo_case(args.case)
+    evidence = run_case(
+        case,
+        sandbox=runner,
+        root=root,
+        sandbox_limits=_sandbox_limits(settings),
+        target=target,
+        config=args.config,
+    )
+    print(render_evidence(evidence, title=f"LIVE: {case.title}", root=root))
+    status = _ledger(settings).status()
+    print(
+        f"\nspend ledger: ${status.settled_usd:.4f} settled, ${status.remaining_usd:.4f} of "
+        f"${status.limit_usd:.2f} left (estimate at assumed ceiling prices)"
+    )
+    return 3 if evidence.status.value == "budget_exhausted" else 0
+
+
+def experiment_recover(settings: Settings) -> int:
+    from moody_blues.experiments.recovery import recover_interrupted
+
+    runner = _ready_sandbox(settings)
+    if runner is None:
+        return 2
+    removed = runner.reap_orphans()
+    recovered = recover_interrupted(_experiment_root())
+    print(f"orphan sandboxes removed: {len(removed)}")
+    for e in recovered:
+        print(f"{e.experiment_id}: closed as {e.status.value} ({e.termination.value})")
+    if not recovered:
+        print("no interrupted experiments")
+    return 0
+
+
+def live_budget(settings: Settings, reports: list[Path]) -> int:
+    from moody_blues.contracts.agent import AgentRunReport as Report
+
+    ledger = _ledger(settings)
+    for path in reports:
+        report = Report.model_validate_json(path.read_text(encoding="utf-8"))
+        ledger.record_measured(f"imported:{report.run_id}", report.agent.tokens)
+    print(ledger.status().model_dump_json(indent=2))
+    return 0
 
 
 def _add_agent_args(p: argparse.ArgumentParser) -> None:
@@ -353,7 +585,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     ae.add_argument("--config", action="append", choices=configs)
     ae.add_argument("--trials", type=int, default=3)
     ae.add_argument("--max-eval-tokens", type=int, default=400_000)
+    ae.add_argument("--confirm-billable", action="store_true", help="required: this is billable")
     _add_agent_args(ae)
+    from moody_blues.experiments.demo import DEMO_CASES, LIVE_CASE_IDS
+
+    ed = sub.add_parser("experiment-demo")
+    ed.add_argument("--case", action="append", choices=[c.case_id for c in DEMO_CASES])
+    el = sub.add_parser("experiment-live")
+    el.add_argument("--case", required=True, choices=LIVE_CASE_IDS)
+    el.add_argument("--config", default="baseline", choices=configs)
+    el.add_argument("--model", help="model id from the live catalog (default MOODY_VULTR_MODEL)")
+    el.add_argument("--confirm-billable", action="store_true", help="required: this is billable")
+    # Same step and tool limits as agent-run, so results stay comparable: a tighter step cap
+    # cut a correct run off one step before its claim. The token cap is what bounds spend.
+    el.add_argument("--max-steps", type=int, default=10)
+    el.add_argument("--max-tool-calls", type=int, default=16)
+    el.add_argument("--max-run-tokens", type=int, default=20_000)
+    sub.add_parser("experiment-recover")
+    lb = sub.add_parser("live-budget")
+    lb.add_argument(
+        "--import-report",
+        action="append",
+        type=Path,
+        default=[],
+        help="book a saved agent run report made outside the ledger",
+    )
     args = parser.parse_args(argv)
     color = sys.stdout.isatty() and not getattr(args, "no_color", False)
 
@@ -375,6 +631,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             return agent_run(settings, args)
         case "agent-eval":
             return agent_eval(settings, args)
+        case "experiment-demo":
+            return experiment_demo(settings, args.case)
+        case "experiment-live":
+            return experiment_live(settings, args)
+        case "experiment-recover":
+            return experiment_recover(settings)
+        case "live-budget":
+            return live_budget(settings, args.import_report)
         case _:
             parser.error(f"unknown command {args.command}")
     return 2

@@ -3,7 +3,9 @@ otherwise; fails instead when MOODY_REQUIRE_DOCKER=1)."""
 
 from __future__ import annotations
 
+import time
 from collections.abc import Iterator
+from threading import Event, Timer
 
 import pytest
 from fastapi.testclient import TestClient
@@ -130,3 +132,78 @@ def test_api_sandbox_smoke_against_real_docker() -> None:
     assert "hello from sandbox" in body["stdout"]
     assert "uid=65534" in body["stdout"]
     assert body["cleaned_up"] is True
+
+
+# --- Sprint 4: output accounting, cancellation, deadlines that outlive the host process -------
+
+
+def test_flood_past_log_rotation_is_reported_as_truncated(
+    docker_runner: DockerSandboxRunner,
+) -> None:
+    """Regression: the json-file driver rotates at max-size, so reading logs back returned a
+    short tail with ``stdout_truncated=False`` after 2 MB of output."""
+    code = (
+        "import sys\n"
+        "for _ in range(40):\n"
+        "    sys.stdout.write('x' * 50_000 + '\\n')\n"
+        'print(\'{"action": "finish_experiment"}\')\n'
+    )
+    r = docker_runner.run(SandboxRequest(code=code))
+    assert r.status is ExecutionStatus.SUCCEEDED
+    assert r.stdout_truncated
+    assert r.stdout_bytes > 2_000_000
+    assert len(r.stdout) == docker_runner.output_limit_bytes
+    assert r.output_complete
+
+
+def test_output_byte_counts_are_exact(docker_runner: DockerSandboxRunner) -> None:
+    code = "import sys; sys.stdout.write('a' * 1234); sys.stderr.write('b' * 56)"
+    r = docker_runner.run(SandboxRequest(code=code))
+    assert (r.stdout_bytes, r.stderr_bytes) == (1234, 56)
+    assert not r.stdout_truncated
+    assert r.output_complete
+
+
+def test_cancellation_stops_an_active_run(docker_runner: DockerSandboxRunner) -> None:
+    cancel = Event()
+    timer = Timer(1.0, cancel.set)
+    timer.start()
+    started = time.monotonic()
+    r = docker_runner.run(
+        SandboxRequest(code="import time; time.sleep(30)", limits=limits()), cancel=cancel
+    )
+    timer.join()
+    assert r.status is ExecutionStatus.CANCELLED
+    assert not r.timed_out
+    assert r.cleaned_up
+    assert time.monotonic() - started < 8
+
+
+def test_in_container_deadline_runs_as_pid_1_and_survives_sigkill(
+    docker_runner: DockerSandboxRunner,
+) -> None:
+    code = (
+        "import os, time\n"
+        "assert os.getppid() == 1\n"
+        "print(open('/proc/1/comm').read().strip())\n"
+        "os.kill(1, 9)\n"
+        "time.sleep(0.3)\n"
+        "print('init survived')\n"
+    )
+    r = docker_runner.run(SandboxRequest(code=code))
+    assert r.stdout.split() == ["timeout", "init", "survived"]
+
+
+def test_reaper_only_removes_expired_containers(docker_runner: DockerSandboxRunner) -> None:
+    config = docker_runner._container_config(  # pyright: ignore[reportPrivateUsage]
+        "sbx_reaper_test", "import time; time.sleep(1)", limits(wall_timeout_seconds=1)
+    )
+    client = docker_runner._docker()  # pyright: ignore[reportPrivateUsage]
+    container = client.containers.create(**config)
+    try:
+        assert docker_runner.reap_orphans() == []
+        assert container.id in {c.id for c in docker_runner.list_sandbox_containers()}
+        assert docker_runner.reap_orphans(now=time.time() + 3600) == ["sbx_reaper_test"]
+        assert container.id not in {c.id for c in docker_runner.list_sandbox_containers()}
+    finally:
+        docker_runner._remove(container)  # pyright: ignore[reportPrivateUsage]
