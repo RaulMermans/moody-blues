@@ -98,7 +98,8 @@ HINTS: dict[str, str] = {
     ),
     ResultClass.INVALID_PROTOCOL_OUTPUT.value: (
         "Each step must print exactly one valid mb-exp/1 action through emit() and nothing else, "
-        "using only listed worlds, configs and fault fields."
+        "using only listed worlds, configs and fault fields. Do not redefine emit. A corrected "
+        "program may keep the same hypothesis_id."
     ),
     ResultClass.NO_TARGET_RUN.value: (
         "The program finished without run_target_agent, so it tested nothing. Emit "

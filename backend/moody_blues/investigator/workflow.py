@@ -309,7 +309,7 @@ class InvestigationWorkflow:
             if isinstance(outcome, ConcludeInvestigation):
                 return self._accept_conclusion(outcome)
             if isinstance(outcome, ProposeExperiment):
-                outcome = self._check_proposal(outcome)
+                outcome = self._check_proposal(outcome, replaces)
             if isinstance(outcome, GenerationDiagnostic):
                 proposal_id = self._record_rejected(outcome, replaces)
                 if self._refinements_used >= self._limits.max_refinements:
@@ -479,7 +479,7 @@ class InvestigationWorkflow:
         return {o.observation_id for o in self._observations}
 
     def _check_proposal(
-        self, proposal: ProposeExperiment
+        self, proposal: ProposeExperiment, replaces: str | None = None
     ) -> ProposeExperiment | GenerationDiagnostic:
         """References must be real. Causal claims cannot be checked here; see evaluation.py."""
         known = self._known_observations()
@@ -487,7 +487,10 @@ class InvestigationWorkflow:
         if len(experiment.python_code.encode()) > MAX_EXPERIMENT_CODE_BYTES:
             return invalid("code_too_long", ["python_code"])
         bad: list[str] = []
-        if hypothesis.hypothesis_id in self._hypotheses:
+        # A replacement program may keep testing the hypothesis of the proposal it replaces.
+        replaced = next((p for p in self._proposals if p.proposal_id == replaces), None)
+        kept = replaced is not None and replaced.hypothesis_id == hypothesis.hypothesis_id
+        if hypothesis.hypothesis_id in self._hypotheses and not kept:
             bad.append("hypothesis_id")
         if hypothesis.revises is not None and hypothesis.revises not in self._hypotheses:
             bad.append("revises")

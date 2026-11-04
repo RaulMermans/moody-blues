@@ -53,8 +53,8 @@ library only. It runs in a sandbox with no network. It is executed once per step
 new process with no memory of earlier steps. Two names are predefined:
 - EXPERIMENT_INPUT: a dict with keys "step", "max_steps", "target_runs_remaining", "catalog" and \
 "observations" (results so far in this experiment; empty on the first step).
-- emit(action): prints one action. Each step must call emit exactly once, print nothing else, \
-and exit. An action is a dict with "protocol": "mb-exp/1" and one of:
+- emit(action): prints one action as JSON. Use it as provided: never redefine it and never \
+use print. Each step must call emit exactly once and then end. An action is a dict with "protocol": "mb-exp/1" and one of:
   {{"action": "run_target_agent", "scenario_id": <world id>, "config": "baseline"|"hardened", \
 "faults": [{{"kind": ..., "occurrence": 1-3, "error_code": "timeout"|"internal_error"|\
 "unavailable" (phantom_failure only), "span": 1-6 (stale_read only)}}]}}

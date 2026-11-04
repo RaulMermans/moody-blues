@@ -236,6 +236,30 @@ def test_protocol_rejection_stays_terminal_for_the_experiment(tmp_path: Path) ->
     assert first.experiment_id != second.experiment_id  # a new experiment, not a resumed one
 
 
+def test_a_replacement_program_may_keep_its_hypothesis(tmp_path: Path) -> None:
+    """Regression: a live refinement reused its hypothesis id and was refused as a duplicate."""
+    h = Harness(
+        tmp_path,
+        replies=[propose(1, CODE), propose(1, CODE, motivated_by=["obs_1"]), conclude()],
+        steps=["not json", *experiment()],
+    )
+    report = h.run()
+    assert report.state is InvestigationState.COMPLETED
+    assert report.proposals[1].hypothesis_id == report.proposals[0].hypothesis_id
+    assert report.proposals[1].replaces_proposal_id == report.proposals[0].proposal_id
+
+
+def test_an_unrelated_proposal_may_not_reuse_a_hypothesis_id(tmp_path: Path) -> None:
+    h = Harness(
+        tmp_path,
+        replies=[propose(1, CODE), propose(1, CODE, motivated_by=["obs_1"]), conclude()],
+        steps=experiment(),
+    )
+    report = h.run()
+    assert report.proposals[1].rejection is not None
+    assert report.proposals[1].rejection.invalid_fields == ["hypothesis_id"]
+
+
 def test_an_unauthorized_action_is_never_answered_with_a_refinement(tmp_path: Path) -> None:
     bad = json.dumps({"protocol": "mb-exp/1", "action": "execute_sql", "sql": "x"})
     h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=[bad])
