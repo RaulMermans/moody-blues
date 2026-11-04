@@ -80,6 +80,18 @@ def hypothesis(number: int, motivated_by: Sequence[str] = (), **overrides: Any) 
     } | overrides
 
 
+def _previous(assessments: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    if not assessments:
+        return {}
+    first = assessments[0]
+    return {
+        "previous_hypothesis_id": first["hypothesis_id"],
+        "previous_status": first["status"],
+        "previous_cited_observations": first["cited_observations"],
+        "previous_reasoning": first["reasoning"],
+    }
+
+
 def propose(
     number: int,
     code: str,
@@ -89,17 +101,17 @@ def propose(
     label: str | None = None,
     **hypothesis_overrides: Any,
 ) -> InferenceResult:
+    fields = hypothesis(number, motivated_by, **hypothesis_overrides)
+    fields["revises"] = fields["revises"] or ""
     return tool_result(
         PROPOSE_TOOL,
-        {
-            "assessments": list(assessments),
-            "hypothesis": hypothesis(number, motivated_by, **hypothesis_overrides),
-            "experiment": {
-                "label": label or f"fixture-{number}",
-                "rationale": "fixture",
-                "motivated_by": list(motivated_by),
-                "python_code": code,
-            },
+        _previous(assessments)
+        | fields
+        | {
+            "label": label or f"fixture-{number}",
+            "rationale": "fixture",
+            "motivated_by": list(motivated_by),
+            "python_code": code,
         },
     )
 
@@ -110,9 +122,8 @@ def conclude(
     return tool_result(
         CONCLUDE_TOOL,
         {
-            "assessments": [],
             "conclusion": conclusion,
-            "claimed_findings": list(claimed),
+            "claimed_findings": [f"{c['experiment_id']}:{c['finding_code']}" for c in claimed],
             "reasoning": "fixture",
         },
     )

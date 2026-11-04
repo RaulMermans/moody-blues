@@ -35,7 +35,7 @@ SafeToken = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_.:@+-]{0,96}$
 ObservationId = Annotated[str, StringConstraints(pattern=r"^obs_[0-9]{1,3}$")]
 HypothesisId = Annotated[str, StringConstraints(pattern=r"^h[0-9]{1,3}$")]
 ExperimentLabel = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{2,63}$")]
-Prose = Annotated[str, StringConstraints(min_length=1, max_length=600)]
+Prose = Annotated[str, StringConstraints(min_length=1, max_length=800)]
 
 
 class InvestigationState(StrEnum):
@@ -83,7 +83,8 @@ class InvestigationLimits(BaseModel):
     max_experiments: int = Field(default=3, ge=1, le=6)
     max_target_runs_per_experiment: int = Field(default=1, ge=1, le=1)
     max_model_calls: int = Field(default=5, ge=1, le=12)
-    max_completion_tokens: int = Field(default=4_096, ge=256, le=8_192)
+    # Includes hidden reasoning: glm-5.3 spent all of 4,096 before writing anything (KI-27).
+    max_completion_tokens: int = Field(default=8_192, ge=256, le=8_192)
     max_prompt_chars: int = Field(default=48_000, ge=2_000, le=120_000)
     max_refinements: int = Field(default=1, ge=0, le=2)
     max_reproductions: int = Field(default=1, ge=0, le=3)
@@ -168,17 +169,6 @@ class ProposeExperiment(_ModelArgs):
     assessments: list[HypothesisAssessment] = Field(max_length=8)
     hypothesis: Hypothesis
     experiment: ProposedExperiment
-
-
-class PlannedExperiment(_ModelArgs):
-    hypothesis: Hypothesis
-    experiment: ProposedExperiment
-
-
-class ProposePlan(_ModelArgs):
-    """Strategy B only: every experiment at once, before any result exists."""
-
-    experiments: list[PlannedExperiment] = Field(min_length=1, max_length=6)
 
 
 class ClaimedFinding(_ModelArgs):

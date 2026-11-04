@@ -40,7 +40,6 @@ from moody_blues.contracts.investigation import (
     InvestigationObservation,
     InvestigationReport,
     ProposalStatus,
-    ProposePlan,
     ReproductionStatus,
     Strategy,
     TargetCapability,
@@ -181,7 +180,6 @@ def _follow_up(
             prompt_sha256=prompt,
             **empty,
         )
-    assert not isinstance(decision, ProposePlan)  # noqa: S101 - never offered here
     assessed = next((a.status for a in decision.assessments), None)
     if isinstance(decision, ConcludeInvestigation):
         return FollowUp(

@@ -52,7 +52,6 @@ from moody_blues.contracts.investigation import (
     ProposalStatus,
     ProposedExperiment,
     ProposeExperiment,
-    ProposePlan,
     ResultClass,
     Strategy,
     TargetCapability,
@@ -80,7 +79,6 @@ from moody_blues.investigator.findings import (
 )
 from moody_blues.investigator.model import (
     CONCLUDE_TOOL,
-    PLAN_TOOL,
     PROPOSE_TOOL,
     Decision,
     InvestigatorModel,
@@ -308,10 +306,8 @@ class InvestigationWorkflow:
             if isinstance(outcome, _Stop):
                 return outcome
             diagnostic = None
-            if not isinstance(outcome, GenerationDiagnostic | ProposeExperiment):
-                if isinstance(outcome, ConcludeInvestigation):
-                    return self._accept_conclusion(outcome)
-                raise AssertionError("a plan was not offered")  # pragma: no cover
+            if isinstance(outcome, ConcludeInvestigation):
+                return self._accept_conclusion(outcome)
             if isinstance(outcome, ProposeExperiment):
                 outcome = self._check_proposal(outcome)
             if isinstance(outcome, GenerationDiagnostic):
@@ -353,30 +349,50 @@ class InvestigationWorkflow:
             self._slots_used += 1
 
     def _one_shot(self) -> _Stop:
-        outcome = self._ask([PLAN_TOOL], "plan", None)
-        if isinstance(outcome, _Stop):
-            return outcome
-        if not isinstance(outcome, ProposePlan):
-            problem = outcome if isinstance(outcome, GenerationDiagnostic) else None
-            if problem is not None:
-                proposal_id = self._record_rejected(problem, None)
-                self._decide(DecisionKind.INVALID, problem.problem, proposal_id=proposal_id)
-            return _Stop(InvestigationState.INCONCLUSIVE, "generation_failed")
-        for item in outcome.experiments[: self._limits.max_experiments]:
+        """Every program is written first, then all run. Results reach no model at all."""
+        planned: list[tuple[ProposalRecord, str]] = []
+        diagnostic: GenerationDiagnostic | None = None
+        replaces: str | None = None
+        while len(planned) < self._limits.max_experiments:
             stop = self._guard()
             if stop is not None:
                 return stop
-            self._hypotheses[item.hypothesis.hypothesis_id] = HypothesisRecord(
-                hypothesis=item.hypothesis
+            if len(self._calls) >= self._limits.max_model_calls:
+                break
+            outcome = self._ask([PROPOSE_TOOL], "plan", diagnostic, planned=len(planned))
+            if isinstance(outcome, _Stop):
+                return outcome
+            diagnostic = None
+            if isinstance(outcome, ProposeExperiment):
+                outcome = self._check_proposal(outcome)
+            if isinstance(outcome, GenerationDiagnostic):
+                proposal_id = self._record_rejected(outcome, replaces)
+                if self._refinements_used >= self._limits.max_refinements:
+                    self._decide(DecisionKind.INVALID, outcome.problem, proposal_id=proposal_id)
+                    break
+                self._refinements_used += 1
+                self._decide(DecisionKind.REFINE, outcome.problem, proposal_id=proposal_id)
+                diagnostic, replaces = outcome, proposal_id
+                continue
+            if not isinstance(outcome, ProposeExperiment):  # pragma: no cover - not offered
+                raise TypeError("only proposals are offered while planning")
+            self._hypotheses[outcome.hypothesis.hypothesis_id] = HypothesisRecord(
+                hypothesis=outcome.hypothesis
             )
-            proposal = self._record_generated(item.hypothesis, item.experiment, None)
+            proposal = self._record_generated(outcome.hypothesis, outcome.experiment, replaces)
+            replaces = None
             self._decide(
                 DecisionKind.PROPOSE,
                 "model_planned_experiment",
-                hypothesis_id=item.hypothesis.hypothesis_id,
+                hypothesis_id=outcome.hypothesis.hypothesis_id,
                 proposal_id=proposal.proposal_id,
             )
-            _, observation = self._execute(proposal, item.experiment.python_code)
+            planned.append((proposal, outcome.experiment.python_code))
+        for proposal, code in planned:
+            stop = self._guard()
+            if stop is not None:
+                return stop
+            _, observation = self._execute(proposal, code)
             self._slots_used += 1
             stop = self._stop_for(observation)
             if stop is not None:
@@ -420,7 +436,11 @@ class InvestigationWorkflow:
     # --- the model ----------------------------------------------------------------------
 
     def _ask(
-        self, offered: list[str], purpose: str, diagnostic: GenerationDiagnostic | None
+        self,
+        offered: list[str],
+        purpose: str,
+        diagnostic: GenerationDiagnostic | None,
+        planned: int | None = None,
     ) -> Decision | GenerationDiagnostic | _Stop:
         if self._model is None:  # pragma: no cover - refused in __init__
             raise AssertionError("no model")
@@ -428,11 +448,13 @@ class InvestigationWorkflow:
             objective=self.request.objective,
             capability=self._capability,
             limits=self._limits,
-            experiments_remaining=self._limits.max_experiments - self._slots_used,
+            experiments_remaining=self._limits.max_experiments
+            - (self._slots_used if planned is None else planned),
             model_calls_remaining=self._limits.max_model_calls - len(self._calls),
             hypotheses=list(self._hypotheses.values()),
             observations=self._observations,
             diagnostic=diagnostic,
+            planning_without_results=planned is not None,
         )
         try:
             messages = build_messages(context)

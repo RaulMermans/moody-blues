@@ -108,7 +108,10 @@ HINTS: dict[str, str] = {
         "Call exactly one offered tool with arguments matching its schema. Observation ids must "
         "exist, labels must be lowercase-with-hyphens, and hypothesis ids must be new."
     ),
-    "truncated_response": "The response was cut off. Write a shorter program and shorter text.",
+    "truncated_response": (
+        "You ran out of output tokens before calling a tool, and reasoning counts towards them. "
+        "Reason far less, keep to one simple hypothesis, and call the tool now."
+    ),
     "code_too_long": "The program exceeds the size limit. Write a shorter one.",
 }
 

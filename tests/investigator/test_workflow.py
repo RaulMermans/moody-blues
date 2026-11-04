@@ -23,7 +23,7 @@ from moody_blues.experiments.target import ReferenceTarget, TargetRequest, Targe
 from moody_blues.experiments.workspace import sha256_text
 from moody_blues.inference.vultr import InferenceError
 from moody_blues.investigator.fixtures import conclude, propose, tool_result
-from moody_blues.investigator.model import CONCLUDE_TOOL, PLAN_TOOL, PROPOSE_TOOL
+from moody_blues.investigator.model import CONCLUDE_TOOL, PROPOSE_TOOL, tool_spec
 from moody_blues.investigator.workspace import (
     InvestigationBusyError,
     exclusive,
@@ -32,6 +32,26 @@ from moody_blues.investigator.workspace import (
 )
 from tests.experiment.conftest import finish_action, sandbox_result
 from tests.investigator.conftest import CODE, PF, PS, Harness, experiment, run_step
+
+
+def test_a_stringified_nested_object_is_refused_not_decoded(tmp_path: Path) -> None:
+    """Regression (KI-28): a live model encoded objects as strings. Output is never repaired."""
+    arguments = json.loads(propose(1, CODE).tool_calls[0].arguments_json)
+    arguments["motivated_by"] = "[]"
+    h = Harness(tmp_path, replies=[tool_result(PROPOSE_TOOL, arguments), conclude()], steps=[])
+    report = h.run()
+    assert report.proposals[0].rejection is not None
+    assert report.proposals[0].rejection.invalid_fields == ["motivated_by"]
+
+
+def test_tool_schemas_stay_flat(tmp_path: Path) -> None:
+    """Regression (KI-28): nested schema objects did not survive the provider's tool calling."""
+    for name in (PROPOSE_TOOL, CONCLUDE_TOOL):
+        schema = tool_spec(name).parameters
+        assert "$defs" not in schema
+        for field in schema["properties"].values():
+            assert field.get("type") != "object"
+            assert field.get("items", {}).get("type", "string") == "string"
 
 
 def test_an_adaptive_investigation_feeds_observations_into_the_next_decision(
@@ -343,32 +363,37 @@ def test_a_dead_investigation_is_marked_and_never_resumed(tmp_path: Path) -> Non
     assert "investigation_interrupted" in (directory / "journal.jsonl").read_text()
 
 
-def test_the_one_shot_strategy_gets_one_call_and_no_results(tmp_path: Path) -> None:
-    plan = {
-        "experiments": [
-            {
-                "hypothesis": json.loads(propose(n, CODE).tool_calls[0].arguments_json)[
-                    "hypothesis"
-                ],
-                "experiment": json.loads(propose(n, CODE).tool_calls[0].arguments_json)[
-                    "experiment"
-                ],
-            }
-            for n in (1, 2)
-        ]
-    }
+def test_the_one_shot_strategy_writes_everything_before_any_result_exists(
+    tmp_path: Path,
+) -> None:
     h = Harness(
         tmp_path,
-        replies=[tool_result(PLAN_TOOL, plan)],
-        steps=[*experiment(), *experiment()],
+        replies=[propose(1, CODE), propose(2, CODE), propose(3, CODE)],
+        steps=[*experiment(faults=[PF]), *experiment(), *experiment()],
         strategy=Strategy.ONE_SHOT,
     )
     report = h.run()
     assert report.state is InvestigationState.COMPLETED
-    assert report.usage.model_calls == 1
-    assert len(report.experiments) == 2
-    assert h.offered(0) == [PLAN_TOOL]
+    assert report.usage.model_calls == 3
+    assert len(report.experiments) == 3
+    assert h.offered(0) == [PROPOSE_TOOL]
+    assert all(h.prompt(i)["observations"] == [] for i in range(3))
+    assert "planning_note" in h.prompt(0)
+    assert len(h.prompt(2)["hypotheses_so_far"]) == 2
     assert not any(p.motivated_by for p in report.proposals)
+
+
+def test_the_one_shot_strategy_gets_no_refinement_from_results(tmp_path: Path) -> None:
+    h = Harness(
+        tmp_path,
+        replies=[propose(1, CODE)],
+        steps=["garbage"],
+        strategy=Strategy.ONE_SHOT,
+        max_experiments=1,
+    )
+    report = h.run()
+    assert report.usage.model_calls == 1
+    assert report.state is InvestigationState.INCONCLUSIVE
 
 
 def test_the_fixed_strategy_uses_no_model_and_is_labeled_a_script(tmp_path: Path) -> None:

@@ -10,9 +10,9 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from moody_blues.agents.target import InferencePort
 from moody_blues.contracts.agent import EvidenceSource, TokenTotals
@@ -29,57 +29,133 @@ from moody_blues.contracts.investigation import (
     GenerationDiagnostic,
     ModelCallRecord,
     ProposeExperiment,
-    ProposePlan,
 )
 from moody_blues.experiments.budget import SpendPort
 from moody_blues.experiments.workspace import atomic_write, sha256_text
 from moody_blues.investigator.observations import HINTS
 
 PROPOSE_TOOL = "propose_experiment"
-PLAN_TOOL = "propose_plan"
 CONCLUDE_TOOL = "conclude_investigation"
 
-_ARGUMENTS: dict[str, type[BaseModel]] = {
-    PROPOSE_TOOL: ProposeExperiment,
-    PLAN_TOOL: ProposePlan,
-    CONCLUDE_TOOL: ConcludeInvestigation,
+
+class _FlatArgs(BaseModel):
+    """What the provider's tool calling reliably fills: top-level primitives only.
+
+    Live finding (KI-28): with nested objects in the schema, glm-5.3 returned them as
+    JSON-encoded strings. Decoding those would be repairing untrusted output, so the schema is
+    flat and trusted code builds the nested contracts, validating them again as it does.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+
+    previous_hypothesis_id: str = Field(
+        default="", description="The hypothesis being assessed, if any. Empty on the first call."
+    )
+    previous_status: Literal["none", "supported", "refuted", "inconclusive"] = "none"
+    previous_cited_observations: list[str] = Field(default_factory=list[str])
+    previous_reasoning: str = ""
+
+    def assessments(self) -> list[dict[str, object]]:
+        if self.previous_status == "none":
+            return []
+        return [
+            {
+                "hypothesis_id": self.previous_hypothesis_id,
+                "status": self.previous_status,
+                "cited_observations": self.previous_cited_observations,
+                "reasoning": self.previous_reasoning,
+            }
+        ]
+
+
+class ProposeArgs(_FlatArgs):
+    hypothesis_id: str = Field(description="New id: h1, h2, ...")
+    behavior: str = Field(description="The target behavior under investigation.")
+    suspected_mechanism: str = Field(description="How that behavior could fail.")
+    motivating_observations: list[str] = Field(description="Observation ids behind this.")
+    motivation: str = Field(description="Why this is worth testing now.")
+    predicted_observation: str = Field(description="What you expect to see if you are right.")
+    failure_discriminator: str = Field(description="What separates failure from correct behavior.")
+    revises: str = Field(default="", description="Id of the hypothesis this replaces, or empty.")
+    label: str = Field(description="lowercase-with-hyphens name for the experiment.")
+    rationale: str = Field(description="Why this experiment tests the hypothesis.")
+    motivated_by: list[str] = Field(description="Observation ids that led to this experiment.")
+    python_code: str = Field(description="The complete experiment program.")
+
+    def decision(self) -> ProposeExperiment:
+        return ProposeExperiment.model_validate_json(
+            json.dumps(
+                {
+                    "assessments": self.assessments(),
+                    "hypothesis": {
+                        "hypothesis_id": self.hypothesis_id,
+                        "behavior": self.behavior,
+                        "suspected_mechanism": self.suspected_mechanism,
+                        "motivating_observations": self.motivating_observations,
+                        "motivation": self.motivation,
+                        "predicted_observation": self.predicted_observation,
+                        "failure_discriminator": self.failure_discriminator,
+                        "revises": self.revises or None,
+                    },
+                    "experiment": {
+                        "label": self.label,
+                        "rationale": self.rationale,
+                        "motivated_by": self.motivated_by,
+                        "python_code": self.python_code,
+                    },
+                }
+            )
+        )
+
+
+class ConcludeArgs(_FlatArgs):
+    conclusion: Literal["violation_found", "no_violation_found", "inconclusive"]
+    reasoning: str = Field(description="Your assessment of the investigation.")
+    claimed_findings: list[str] = Field(
+        default_factory=list[str],
+        description='Each as "<experiment_id>:<finding_code>". Checked against Oracle reports.',
+    )
+
+    def decision(self) -> ConcludeInvestigation:
+        claims = [c.partition(":") for c in self.claimed_findings]
+        return ConcludeInvestigation.model_validate_json(
+            json.dumps(
+                {
+                    "assessments": self.assessments(),
+                    "conclusion": self.conclusion,
+                    "claimed_findings": [
+                        {
+                            "experiment_id": experiment,
+                            "finding_code": code,
+                            "statement": self.reasoning,
+                        }
+                        for experiment, _, code in claims
+                    ],
+                    "reasoning": self.reasoning,
+                }
+            )
+        )
+
+
+_ARGUMENTS: dict[str, type[ProposeArgs] | type[ConcludeArgs]] = {
+    PROPOSE_TOOL: ProposeArgs,
+    CONCLUDE_TOOL: ConcludeArgs,
 }
 _DESCRIPTIONS = {
-    PROPOSE_TOOL: "Assess earlier hypotheses, state a new one and submit its experiment program.",
-    PLAN_TOOL: "Submit every experiment now. No results will be available to you.",
+    PROPOSE_TOOL: "Assess the previous hypothesis, state a new one and submit its program.",
     CONCLUDE_TOOL: "End the investigation with your assessment and any claimed findings.",
 }
 # Names a diagnostic may repeat. Anything else in a validation error came from the model.
-_KNOWN_FIELDS = frozenset(
-    {
-        "assessments",
-        "hypothesis",
-        "experiment",
-        "experiments",
-        "conclusion",
-        "claimed_findings",
-        "hypothesis_id",
-        "behavior",
-        "suspected_mechanism",
-        "motivating_observations",
-        "motivation",
-        "predicted_observation",
-        "failure_discriminator",
-        "revises",
-        "label",
-        "rationale",
-        "motivated_by",
-        "python_code",
-        "status",
-        "cited_observations",
-        "reasoning",
-        "experiment_id",
-        "finding_code",
-        "statement",
-    }
-)
+_KNOWN_FIELDS = frozenset(ProposeArgs.model_fields) | frozenset(ConcludeArgs.model_fields)
+_NESTED_TO_FLAT = {
+    "cited_observations": "previous_cited_observations",
+    "status": "previous_status",
+    "experiment_id": "claimed_findings",
+    "finding_code": "claimed_findings",
+    "statement": "reasoning",
+}
 
-Decision = ProposeExperiment | ProposePlan | ConcludeInvestigation
+Decision = ProposeExperiment | ConcludeInvestigation
 
 
 def tool_spec(name: str) -> ToolSpec:
@@ -95,6 +171,11 @@ def invalid(problem: str, fields: list[str] | None = None) -> GenerationDiagnost
     return GenerationDiagnostic(problem=problem, invalid_fields=(fields or [])[:12], hint=hint)
 
 
+def _bad_fields(exc: ValidationError) -> list[str]:
+    names = {str(p) for e in exc.errors() for p in e["loc"]}
+    return sorted({_NESTED_TO_FLAT.get(n, n) for n in names} & _KNOWN_FIELDS)
+
+
 def parse_decision(result: InferenceResult, offered: list[str]) -> Decision | GenerationDiagnostic:
     """Exactly one offered tool call with valid arguments, or a diagnostic. Never repaired."""
     if result.finish_reason == "length":
@@ -105,13 +186,9 @@ def parse_decision(result: InferenceResult, offered: list[str]) -> Decision | Ge
     if call.name not in offered:
         return invalid("invalid_decision")
     try:
-        parsed = _ARGUMENTS[call.name].model_validate_json(call.arguments_json)
+        return _ARGUMENTS[call.name].model_validate_json(call.arguments_json).decision()
     except ValidationError as exc:
-        names = {str(p) for e in exc.errors() for p in e["loc"]}
-        return invalid("invalid_decision", sorted(names & _KNOWN_FIELDS))
-    if isinstance(parsed, ProposeExperiment | ProposePlan | ConcludeInvestigation):
-        return parsed
-    raise AssertionError("unreachable: every tool maps to a decision model")  # pragma: no cover
+        return invalid("invalid_decision", _bad_fields(exc))
 
 
 @dataclass(frozen=True, slots=True)
