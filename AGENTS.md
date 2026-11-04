@@ -15,13 +15,15 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
 | `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
+| `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
 | `tests/agent` | Target Agent with labeled provider fixtures over real SQLite worlds; offline; part of `make test` |
 | `tests/experiment` | Experiment runtime with a labeled scripted sandbox and real SQLite worlds; offline; part of `make test` |
+| `tests/investigator` | Investigator with a labeled scripted model and sandbox, real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -66,7 +68,8 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   delivered tool responses, agent claims taken at face value, or fault events. Any change
   to the Oracle keeps the tamper-resistance tests passing.
 - Faults are deterministic and scoped to one world. There are no random faults, and no
-  fault may modify rows other than the targeted call's own staged write.
+  fault may modify rows other than the targeted call's own staged write. `stale_read` changes
+  only what a read delivers.
 - Expected verdicts live in `tests/world`, never in scenario files.
 - Reference executors are scripts. Never describe their results as LLM agent behavior.
 - Fault evidence must describe the call's real outcome (`FaultEffect`, `new_commit`); never
@@ -102,6 +105,21 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - Every chargeable command goes through the spend ledger, and billable batches need explicit
   opt-in. The ledger is an estimate, never a provider limit. See
   `docs/deployment/live-budget.md`.
+
+**Investigator**
+- One model inside a deterministic workflow. No extra agents, persistent memory or self-modifying
+  policy. The model reasons; trusted code holds every limit and every transition.
+- Generated Python is untrusted. It runs only through the coordinator on a sandbox approved by the
+  preflight (digest-pinned, never pulled), and never in the host process, even to parse it.
+- Nothing free-form from a target or a sandbox reaches the Investigator's model. Observation strings
+  are `SafeToken`s; never widen one to carry text, and never pass `ProtocolRejection.detail` on.
+- A verdict comes only from the Oracle. Model claims are recorded and checked and cannot add or
+  remove a finding. Read `fault_attributable` and the trace before describing any violation.
+- Reject, never repair: no decoding of malformed tool arguments or editing of generated code. A
+  replacement is a new proposal, within limits, and only if the failed one ran no target.
+- Keep tool schemas flat. Reservation comes before every model call, and failed calls stay reserved.
+- Reserved evaluation worlds run only after their plan is committed. Their ids and titles stay
+  neutral, and expected outcomes never enter a prompt. `offline_fixture` is never model behavior.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

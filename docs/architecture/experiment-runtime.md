@@ -75,7 +75,8 @@ a fresh container, and reads stdout after exit. The prologue defining `EXPERIMEN
 | `inspect_observation` | `run_ref`, `section` (`tool_trace`, `claim`, `state_summary`) | Adds detail to the next step's input |
 | `finish_experiment` | `conclusion`, `summary` | Ends the experiment. Recorded as untrusted remarks. |
 
-A `faults` entry is `{kind, occurrence (1-3), error_code}`, nothing else. Every action carries
+A `faults` entry is `{kind, occurrence (1-3), error_code, span}`, nothing else. `span` (1-6) is for
+`stale_read` only; `error_code` for `phantom_failure` only. Every action carries
 `protocol: "mb-exp/1"`. All models are strict and forbid extra fields.
 
 Bounds: action 8,192 bytes; step input 24,000 bytes; experiment code 16,000 bytes; summary
@@ -167,7 +168,9 @@ version and hash, tokens, latency, estimated cost, termination and timestamps.
 `verify_experiment` checks the journal chain, the evidence hash and each report hash. **This
 detects accidental or casual edits, not a determined local attacker:** the chain has no key.
 
-Sprint 4 experiments are developer scripts. Nothing here is an autonomous discovery.
+Authorship is `developer_script` or, from Sprint 5, `model_generated`, which also records the
+proposal, model, evidence source and original program (`source.py`). Generated code needs a sandbox
+approved by the preflight. See [investigator.md](investigator.md).
 
 ## Containment threat model
 
@@ -188,7 +191,7 @@ Remaining risks, none of which these tests address:
 
 - Containers share a kernel (here, the Colima VM's). A kernel or runtime escape defeats all of
   the above. Default seccomp and AppArmor; no user-namespace remapping, gVisor or Kata.
-- The image is pulled by tag. Evidence records the image id, but nothing pins it.
+- The general image is pulled by tag. Generated code uses a digest-pinned one (Sprint 5).
 - CPU and memory can be consumed up to the limits for each step's duration.
 - After a host crash an exited container stays until `experiment-recover` runs.
 - Timing and exit codes are a side channel to the coordinator. The experiment learns nothing

@@ -144,6 +144,35 @@ contributor might also hit.
 ### KI-20: Reasoning models return empty content under small `max_tokens`
 - **Symptom:** `content: ""`, `finish_reason: "length"` (seen with `glm-5.3` at 16 tokens).
 - **Cause:** hidden reasoning tokens count toward `completion_tokens` before any text.
-- **Fix:** leave headroom. The smoke check uses 256; the agent uses
-  `max_completion_tokens=1024`. The agent treats an empty reply like a text-only reply (one
+- **Fix:** leave headroom. The smoke check uses 256; the agent defaults to
+  `max_completion_tokens=1024` (see KI-29 for live investigations). The agent treats an empty reply like a text-only reply (one
   claim reminder), never as a claim.
+
+### KI-26: The host sleeping stalls live runs
+- **Symptom:** a 100-minute gap inside one experiment; a model call ending `provider_connection`.
+- **Cause:** the laptop slept. The journal shows normal timings on both sides of the gap.
+- **Fix:** run long live commands under `caffeinate -i`. A dropped call keeps its full reservation.
+
+### KI-27: `glm-5.3` can spend its whole output on hidden reasoning
+- **Symptom:** `finish_reason: "length"`, no content, no tool call, at 4,096 and at 8,192 tokens.
+- **Fix:** the Investigator sends `reasoning_effort: "low"` (213 tokens in a probe where the default
+  passed 900). `enable_thinking` and `thinking` had no effect. Low effort writes sloppier programs,
+  so the prompt includes a protocol skeleton. The target is never given this setting.
+
+### KI-28: Nested tool arguments arrive as JSON strings
+- **Symptom:** `model_type` errors on `hypothesis` and `experiment`, whose values are strings.
+- **Cause:** `glm-5.3` with nested objects in a tool schema, on this provider.
+- **Fix:** keep tool schemas flat (`test_tool_schemas_stay_flat`). Never decode the strings: that
+  would repair untrusted output.
+
+### KI-29: A per-step cap can look like an agent failure
+- **Symptom:** `no_final_claim` after steps with `finish_reason: "length"`.
+- **Cause:** the 1,024-token step cap cut the agent off when a hard world made it think.
+- **Fix:** live investigations use 4,096, and `truncated_model_steps` makes such a run `impaired_run`.
+
+### KI-30: An Oracle VIOLATION can come from the world, not the agent
+- **Symptom:** a confirmed violation with `faults delivered 0`, and a trace showing a reasonable choice.
+- **Cause:** "create exactly one customer" is ambiguous beside an identical record. The agent declined
+  to duplicate it and said so.
+- **Fix:** identical-twin worlds state that a new record is required. Check `fault_attributable` and
+  read the trace before describing any violation.

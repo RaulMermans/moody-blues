@@ -30,6 +30,7 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Target Agent: bounded LLM tool loop, baseline/hardened policies, Oracle-evaluated run reports | Implemented; tested offline with labeled fixtures; **verified live on `glm-5.3`** ([results](docs/evaluations/sprint-03-glm-5.3.md)) |
 | `make agent-run` / `make agent-eval`: live single runs and baseline-vs-hardened evaluation | Implemented and run live |
 | Experiment runtime: sandbox → trusted coordinator → Target Agent → CRM → Oracle | Implemented; containment tested on real Docker; **verified live** on `glm-5.3` ([design](docs/architecture/experiment-runtime.md)) |
+| Investigator: one model writes and revises Python experiments inside a deterministic workflow | Implemented; hostile programs tested on real Docker; **run live** on `glm-5.3` ([design](docs/architecture/investigator.md)) |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
 
 ## Prerequisites
@@ -58,7 +59,7 @@ Open http://localhost:3000.
 | `make lint` | `ruff format --check`, `ruff check`, ESLint |
 | `make format` | Auto-format and auto-fix Python |
 | `make typecheck` | Pyright (strict) and `tsc` |
-| `make test` | Unit, World Engine, Target Agent and experiment tests (offline: real SQLite, labeled fixtures, no network) |
+| `make test` | Unit, World Engine, Target Agent, experiment and Investigator tests (offline: real SQLite, labeled fixtures, no network) |
 | `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
 | `make build` | Production frontend build |
@@ -75,6 +76,11 @@ Open http://localhost:3000.
 | `make experiment-containment` | Real-Docker experiment runtime and containment tests |
 | `make experiment-live CASE=… CONFIG=… CONFIRM=1` | **Live, chargeable:** one sandboxed experiment driving the real Target Agent. Refuses without `CONFIRM=1`. |
 | `make experiment-recover` | Remove orphan sandboxes and close experiments whose coordinator died |
+| `make investigator-preflight` | Verify the generated-code sandbox on this host. Free. |
+| `make investigator-demo` | **Fixture** model with real sandboxes, worlds and Oracle. Free. |
+| `make investigator-test` / `make investigator-containment` | Offline tests / hostile programs on real Docker |
+| `make investigator-live TIER=… STRATEGY=… CONFIRM=1` | **Live, chargeable:** one investigation. Refuses without `CONFIRM=1`. |
+| `make investigator-eval TIER=… PART=… EVAL_TRIALS=… REPEATS=… CONFIRM=1` | **Live, chargeable:** paired tests and strategy comparison. Refuses without `CONFIRM=1`. |
 | `make live-budget` | Show the estimated spend ledger. Makes no calls. |
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
@@ -91,9 +97,9 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 
 ## Documentation
 
-- [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md) · [Target Agent](docs/architecture/target-agent.md) · [Experiment runtime](docs/architecture/experiment-runtime.md)
-- [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md)
-- [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Validation](docs/testing/validation.md)
+- [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md) · [Target Agent](docs/architecture/target-agent.md) · [Experiment runtime](docs/architecture/experiment-runtime.md) · [Investigator](docs/architecture/investigator.md)
+- [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md) · [ADR 0005](docs/adr/0005-autonomous-investigator.md)
+- [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Sprint 5](docs/sprints/sprint-05.md) · [Evaluation methodology](docs/evaluations/methodology.md) · [Validation](docs/testing/validation.md)
 - [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
