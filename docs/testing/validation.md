@@ -5,6 +5,7 @@
 | Layer | Location | Needs | Proves | Uses fakes? |
 |---|---|---|---|---|
 | Unit | `tests/unit` | nothing | contracts, config, API envelopes, request ids, health semantics, adapter wire contract, error classification, bounded retries, Docker-unavailable path | Yes, labeled: `FakeSandboxRunner` for API tests; `httpx2.MockTransport` **fixtures** for the Vultr wire format. The Docker-unavailable tests use the **real** runner against a nonexistent socket. |
+| Experiment runtime | `tests/experiment` | nothing (real SQLite worlds) | protocol parsing and authorization (including Hypothesis), coordinator state machine, classification, budgets, evidence tampering, crash recovery | Yes, labeled: `ScriptedSandbox` test double; provider fixtures. Never evidence of containment or model behavior. |
 | Integration | `tests/integration` (`-m docker`) | Docker | real execution: success, Python error, exit code, timeout + kill, memory/PID/CPU limits, output truncation, cleanup after every test, `/sandbox/smoke` + `/ready` against real Docker | No |
 | Security | `tests/security` (`-m docker`) | Docker | inside the container: uid 65534, zero capabilities, NoNewPrivs, loopback-only network, read-only rootfs, noexec `/tmp`, no host-env leakage (canary), no Docker socket or host mounts | No |
 | Target Agent | `tests/agent` | nothing (real SQLite worlds) | agent loop, tool validation, budgets, termination, cancellation, claim parsing, policy selection, prompt isolation, Oracle integration and assessment, eval harness, live-command preflight, exactly-once execution through the real adapter under SDK retries | Yes, labeled **provider fixtures** (`ScriptedModel`, `provider="fixture"`; HTTP fixtures via `MockTransport`). Never evidence of model behavior. |
@@ -92,3 +93,29 @@ Run with `make check` (exit 0, no skipped tests):
 | `make agent-run` (live) | Exercised up to the provider: 401 → `BLOCKED_BY_CREDENTIALS`, attributed to infrastructure. The default `kimi-k2-instruct` is refused before any call (not in the catalog). |
 | `make agent-eval` (live) | BLOCKED_BY_CREDENTIALS (not run past the preflight; it would stop at the first 401) |
 | GitHub Actions | NOT_RUN |
+
+## Sprint 4 results (2026-11-04, same host; Colima, kernel 6.8.0, Docker 29.9.0)
+
+Run with `make check` on the finished code (exit 0, no skipped tests):
+
+| Check | Result |
+|---|---|
+| `ruff format --check` / `ruff check` | PASS |
+| `pyright` (strict) | PASS (0 errors) |
+| `pytest tests/unit tests/world tests/agent tests/experiment` | PASS (394: 81 unit, 131 world, 61 agent, 121 experiment) |
+| `pytest tests/integration tests/security -m docker` | PASS (52: 14 sandbox, 10 experiment runtime, 7 containment, 21 experiment containment) |
+| ESLint, `tsc`, `next build` | PASS |
+| Playwright E2E | PASS (4) |
+| `make experiment-containment` | PASS (31, a subset of the 52) |
+| `make experiment-demo` | PASS (7 paths; deterministic reference executors) |
+| `make world-demo`, `make docker-smoke` | PASS |
+| Mutation check (9 injected bugs) | All detected |
+| `make vultr-smoke` on `glm-5.3` | PASS (3/3, live) |
+| `make agent-run` | PASS (2 runs, live) |
+| `make experiment-live` | PASS (6 runs, live; see [sprint-04.md](../sprints/sprint-04.md)) |
+| `make agent-eval` | NOT_RUN (deliberately; Sprint 3 results stand) |
+| GitHub Actions | NOT_RUN |
+
+The experiment layer in `tests/experiment` uses a labeled scripted sandbox and proves logic
+only. Containment evidence comes only from the real Docker tests, and model behavior only from
+the live commands.
