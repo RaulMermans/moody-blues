@@ -217,7 +217,7 @@ class TargetRunEvidence(BaseModel):
     target_kind: Literal["llm_agent", "reference_executor"]
     # ``RunOutcome`` for agent runs. Read this with the verdict: an Oracle PASS only says the
     # state is right, and an agent that never claimed anything is not a success.
-    run_outcome: str | None
+    run_outcome: str | None = None  # absent in records written before this field existed
     # "reference_executor" and "offline_fixture" are never evidence of model behavior.
     evidence_source: Literal["live_provider", "offline_fixture", "reference_executor"]
     executor: str | None

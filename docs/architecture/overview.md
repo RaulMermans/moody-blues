@@ -1,6 +1,6 @@
 # Architecture overview
 
-_Last updated: Sprint 3 (2026-11-03). Covers only what is implemented; planned components are
+_Last updated: Sprint 4 (2026-11-03). Covers only what is implemented; planned components are
 marked as planned._
 
 ## Shape
@@ -18,7 +18,8 @@ builds those deterministic foundations and the contracts between them.
                                                                 ├─ inference/ VultrInferenceClient ──► api.vultrinference.com/v1
                                                                 ├─ sandbox/   SandboxRunner ──► Docker daemon ──► disposable container
                                                                 ├─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
-                                                                └─ agents/    Target Agent: LLM tool loop ──ToolPort──► world/ ; ──► inference/
+                                                                ├─ agents/    Target Agent: LLM tool loop ──ToolPort──► world/ ; ──► inference/
+                                                                └─ experiments/ Coordinator: sandbox/ ◄─ validated actions ─► agents/ + world/
  CLI (moody-blues world-demo | world-run) ──► services/world_runner ──► world/
  CLI (moody-blues agent-run | agent-eval) ──► services/agent_world_runner, agent_eval ──► agents/ + world/
 ```
@@ -30,11 +31,13 @@ deterministic world replay. See [world-engine.md](world-engine.md).
 Built in Sprint 3: typed multi-turn tool-calling contracts, outcome-accurate fault labels,
 and one LLM-driven Target Agent with baseline and hardened policies, evaluated by the
 unchanged Truth Oracle. See [target-agent.md](target-agent.md) and
-[ADR 0003](../adr/0003-target-agent.md). Live model behavior is not yet verified (the key is
-rejected; see the Sprint 3 record).
+[ADR 0003](../adr/0003-target-agent.md). Verified live on `glm-5.3`; see the Sprint 3 record.
 
-Planned (not built): the Investigator loop, and a coordinator between sandboxes and the
-world (Sprint 4).
+Built in Sprint 4: an isolated experiment runtime. Sandboxed Python proposes validated actions,
+a trusted coordinator runs the Target Agent, and the Oracle decides. See
+[experiment-runtime.md](experiment-runtime.md) and [ADR 0004](../adr/0004-experiment-runtime.md).
+
+Planned (not built): the Investigator loop.
 
 ## Components
 
@@ -104,9 +107,10 @@ backed by `MockTransport` fixtures, so the real SDK code path runs unchanged.
 | Filesystem | read-only root; `/tmp` as a 16 MB `noexec,nosuid,nodev` tmpfs; no host mounts |
 | Resources | memory with swap disabled, CPU quota (`nano_cpus`), PID limit |
 | Environment | only `HOME` and `PYTHONDONTWRITEBYTECODE`. Host env is never passed. |
-| Wall time | host-side deadline, then SIGKILL, reported as `TIMED_OUT` (exit 137) |
-| Output | log driver `max-size` plus in-process truncation (`*_truncated` flags) |
-| Lifecycle | `remove(force=True, v=True)` in `finally`; `cleaned_up` is reported per run |
+| Wall time | host-side deadline, then SIGKILL, reported as `TIMED_OUT` (exit 137); a later in-container deadline (`timeout` as PID 1) covers a dead host process |
+| Cancellation | a `threading.Event` kills an active run, reported as `CANCELLED` |
+| Output | stream attached before start: exact byte counts, bounded memory (`*_truncated`, `output_complete`) |
+| Lifecycle | `remove(force=True, v=True)` in `finally`; `cleaned_up` is reported per run; `reap_orphans` removes containers past their expiry label |
 | Daemon | resolves `MOODY_DOCKER_HOST`, then `DOCKER_HOST`, then the active `docker context` |
 
 #### Sandbox threat model

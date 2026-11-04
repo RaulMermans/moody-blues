@@ -4,7 +4,9 @@ How to take the Vultr integration from *configured* to *verified*. Every step in
 document that costs money is marked **[chargeable]**, and each one needs explicit human
 approval.
 
-## Current state (2026-11-03, Sprint 3)
+Spending rules: [live-budget.md](live-budget.md).
+
+## Current state (2026-11-03, Sprint 3; re-verified in Sprint 4)
 
 | Item | Status |
 |---|---|

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from moody_blues.contracts.experiment_evidence import (
+    ExperimentEvidence,
     ExperimentSpec,
     ExperimentState,
     ExperimentTermination,
@@ -56,6 +58,20 @@ def test_removed_journal_line_is_detected(tmp_path: Path) -> None:
     lines = path.read_text().splitlines()
     path.write_text("\n".join(lines[:2] + lines[3:]) + "\n")
     assert any("does not chain" in p for p in verify_experiment(directory))
+
+
+def test_evidence_written_before_run_outcome_existed_still_verifies(tmp_path: Path) -> None:
+    """Regression: real live evidence predates the field and must stay readable."""
+    directory = finished(tmp_path)
+    path = directory / "evidence.json"
+    document = json.loads(path.read_text())
+    del document["target_runs"][0]["run_outcome"]
+    text = json.dumps(document)
+    path.write_text(text)
+    journal = directory / JOURNAL
+    records, _ = read_journal(journal)
+    assert ExperimentEvidence.model_validate_json(text).target_runs[0].run_outcome is None
+    assert records[-1].kind == "experiment_finished"
 
 
 def test_workspace_is_private_and_worlds_are_removed_after_a_clean_close(tmp_path: Path) -> None:

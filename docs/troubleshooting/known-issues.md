@@ -116,6 +116,31 @@ contributor might also hit.
 - `"fault"` occurs inside the JSON-schema keyword `"default"`. The prompt-isolation test
   uses `\b` word boundaries; keep it that way when you add forbidden terms.
 
+### KI-21: The sandbox log driver hides output floods (fixed)
+- **Symptom:** after 2 MB of stdout, `container.logs()` returned 880 bytes and
+  `stdout_truncated=False`.
+- **Cause:** `json-file` with `max-file=1` discards old output at `max-size`.
+- **Fix:** `DockerSandboxRunner` reads a stream attached before start. Don't go back to reading
+  logs for anything that decides behavior.
+
+### KI-22: `.env` still points at `kimi-k2-instruct`
+- `make vultr-smoke` and `agent-run` need `MOODY_VULTR_MODEL=glm-5.3` or `MODEL=glm-5.3` until
+  `.env` is updated (see KI-11). `make experiment-live` defaults to `LIVE_MODEL=glm-5.3`.
+
+### KI-23: An Oracle PASS is not a successful agent run
+- A correct row with no claim is PASS plus `state_correct_claim_missing`. Live, `glm-5.3` hit a
+  step cap of 8 on phantom-success one step before claiming. Read `run_outcome`, and check
+  `termination` before blaming the agent: `target_agent_failure` can be a budget that was too
+  tight.
+
+### KI-24: Probes that walk `/` hit `/proc` and `/sys`
+- A recursive search from `/` in a sandbox runs into the 10 s step deadline. Prune both.
+
+### KI-25: `make experiment-recover` after a crash
+- A killed coordinator leaves an exited container and an open journal. The container stops by
+  itself; the recover command removes it once its expiry label passes (about 40 s plus the
+  step timeout) and closes the experiment.
+
 ### KI-20: Reasoning models return empty content under small `max_tokens`
 - **Symptom:** `content: ""`, `finish_reason: "length"` (seen with `glm-5.3` at 16 tokens).
 - **Cause:** hidden reasoning tokens count toward `completion_tokens` before any text.
