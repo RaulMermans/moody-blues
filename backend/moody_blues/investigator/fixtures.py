@@ -103,6 +103,7 @@ def propose(
 ) -> InferenceResult:
     fields = hypothesis(number, motivated_by, **hypothesis_overrides)
     fields["revises"] = fields["revises"] or ""
+    fields.pop("motivation")
     return tool_result(
         PROPOSE_TOOL,
         _previous(assessments)

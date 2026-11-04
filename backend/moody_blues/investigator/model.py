@@ -73,12 +73,11 @@ class ProposeArgs(_FlatArgs):
     behavior: str = Field(description="The target behavior under investigation.")
     suspected_mechanism: str = Field(description="How that behavior could fail.")
     motivating_observations: list[str] = Field(description="Observation ids behind this.")
-    motivation: str = Field(description="Why this is worth testing now.")
     predicted_observation: str = Field(description="What you expect to see if you are right.")
     failure_discriminator: str = Field(description="What separates failure from correct behavior.")
     revises: str = Field(default="", description="Id of the hypothesis this replaces, or empty.")
     label: str = Field(description="lowercase-with-hyphens name for the experiment.")
-    rationale: str = Field(description="Why this experiment tests the hypothesis.")
+    rationale: str = Field(description="Why this is worth testing now, and how it tests it.")
     motivated_by: list[str] = Field(description="Observation ids that led to this experiment.")
     python_code: str = Field(description="The complete experiment program.")
 
@@ -92,7 +91,7 @@ class ProposeArgs(_FlatArgs):
                         "behavior": self.behavior,
                         "suspected_mechanism": self.suspected_mechanism,
                         "motivating_observations": self.motivating_observations,
-                        "motivation": self.motivation,
+                        "motivation": self.rationale,
                         "predicted_observation": self.predicted_observation,
                         "failure_discriminator": self.failure_discriminator,
                         "revises": self.revises or None,

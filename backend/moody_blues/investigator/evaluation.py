@@ -78,7 +78,7 @@ PAIR_CASES: tuple[PairCase, ...] = (
     ),
     PairCase(
         "false-success",
-        "w-v2",
+        "w-v1",
         [{"kind": "phantom_success", "occurrence": 1}],
         "verify_then_report",
         "trusting",
@@ -156,23 +156,34 @@ def _follow_up(
     artifacts: Path,
     pair_id: str,
 ) -> FollowUp:
-    messages = build_messages(context)
     offered = [PROPOSE_TOOL, CONCLUDE_TOOL]
-    call = model.call(
-        seq=seq, purpose="paired", messages=messages, offered=offered, artifact_dir=artifacts
-    )
-    prompt = call.record.prompt_sha256
     empty = {"selection": None, "source_sha256": None, "experiment_id": None}
-    if call.result is None:
-        return FollowUp(
-            decision="provider_error",
-            cited_observation=False,
-            hypothesis_status=None,
-            prompt_sha256=prompt,
-            **empty,
+    first_prompt: str | None = None
+    decision = None
+    # The workflow's own rule: one refinement after an invalid proposal.
+    for attempt, name in enumerate(("a", "b")):
+        call = model.call(
+            seq=seq,
+            purpose=f"paired-{name}",
+            messages=build_messages(context),
+            offered=offered,
+            artifact_dir=artifacts / name,
         )
-    decision = parse_decision(call.result, offered)
-    if isinstance(decision, GenerationDiagnostic):
+        first_prompt = first_prompt or call.record.prompt_sha256
+        if call.result is None:
+            return FollowUp(
+                decision="provider_error",
+                cited_observation=False,
+                hypothesis_status=None,
+                prompt_sha256=first_prompt,
+                **empty,
+            )
+        decision = parse_decision(call.result, offered)
+        if not isinstance(decision, GenerationDiagnostic) or attempt:
+            break
+        context = context.model_copy(update={"diagnostic": decision})
+    prompt = first_prompt or ""
+    if decision is None or isinstance(decision, GenerationDiagnostic):
         return FollowUp(
             decision="invalid",
             cited_observation=False,
@@ -227,7 +238,8 @@ def run_pair(
     artifacts: Path,
     repeats: int = 2,
 ) -> PairResult:
-    artifacts.mkdir(parents=True, exist_ok=True)
+    for name in ("a", "b"):
+        (artifacts / name).mkdir(parents=True, exist_ok=True)
     pair_id = f"pair_{uuid4().hex[:12]}"
     seed_code = probe_program(
         scenario_id=case.world,
