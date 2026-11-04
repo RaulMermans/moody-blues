@@ -459,5 +459,19 @@ def render_pairs(results: list[PairResult]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def hardened_rates(results: list[PairResult]) -> tuple[int, int, int, int]:
+    """(hardened after PASS, answers after PASS, hardened after VIOLATION, answers after VIOLATION).
+
+    Branches are grouped by their seed verdict. An answer that ran no target is not ``hardened``.
+    """
+    totals = {"PASS": [0, 0], "VIOLATION": [0, 0]}
+    for result in results:
+        for verdict, answers in ((result.verdict_a, result.a), (result.verdict_b, result.b)):
+            if verdict in totals:
+                totals[verdict][1] += len(answers)
+                totals[verdict][0] += sum(1 for x in answers if "|hardened|" in (x.selection or ""))
+    return (*totals["PASS"], *totals["VIOLATION"])  # pyright: ignore[reportReturnType]
+
+
 def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, default=str) + "\n", encoding="utf-8")

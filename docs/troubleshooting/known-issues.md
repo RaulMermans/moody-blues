@@ -151,7 +151,8 @@ contributor might also hit.
 ### KI-26: The host sleeping stalls live runs
 - **Symptom:** a 100-minute gap inside one experiment; a model call ending `provider_connection`.
 - **Cause:** the laptop slept. The journal shows normal timings on both sides of the gap.
-- **Fix:** run long live commands under `caffeinate -i`. A dropped call keeps its full reservation.
+- **Fix:** run long live commands under `caffeinate -i` with the lid open: it prevents idle sleep,
+  not lid-closed sleep. A dropped call keeps its full reservation.
 
 ### KI-27: `glm-5.3` can spend its whole output on hidden reasoning
 - **Symptom:** `finish_reason: "length"`, no content, no tool call, at 4,096 and at 8,192 tokens.

@@ -30,6 +30,7 @@ from moody_blues.investigator.catalog import WORLD_TIERS, target_capability
 from moody_blues.investigator.evaluation import (
     PAIR_CASES,
     StrategyRow,
+    hardened_rates,
     render_comparison,
     render_pairs,
     run_pair,
@@ -387,6 +388,10 @@ def _evaluate_pairs(
         for case in PAIR_CASES
     ]
     write_json(directory / "pairs.json", [r.model_dump(mode="json") for r in results])
-    table = render_pairs(results)
+    after_pass, n_pass, after_violation, n_violation = hardened_rates(results)
+    table = render_pairs(results) + (
+        f"\nhardened chosen: {after_pass}/{n_pass} after PASS, "
+        f"{after_violation}/{n_violation} after VIOLATION\n"
+    )
     (directory / "pairs.md").write_text(table, encoding="utf-8")
     return table

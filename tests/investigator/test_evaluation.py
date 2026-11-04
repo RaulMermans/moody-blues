@@ -12,8 +12,10 @@ from moody_blues.contracts.investigation import InvestigationLimits, Strategy
 from moody_blues.experiments.target import ReferenceTarget
 from moody_blues.investigator.catalog import target_capability
 from moody_blues.investigator.evaluation import (
+    FollowUp,
     PairCase,
     PairResult,
+    hardened_rates,
     render_comparison,
     render_pairs,
     run_pair,
@@ -140,6 +142,21 @@ def test_prompts_in_a_pair_differ_only_in_the_observation(tmp_path: Path) -> Non
     first.pop("observations")
     last.pop("observations")
     assert first == last
+
+
+def test_hardened_rates_group_answers_by_the_seed_verdict(tmp_path: Path) -> None:
+    result = _pair(tmp_path, ReactiveModel(), 2)
+    hardened = FollowUp(
+        decision="propose",
+        selection="w-v2|hardened|experiment_selection|",
+        source_sha256=None,
+        experiment_id=None,
+        cited_observation=True,
+        hypothesis_status=None,
+        prompt_sha256="x",
+    )
+    changed = result.model_copy(update={"b": [hardened, *result.b[1:]]})
+    assert hardened_rates([changed]) == (0, 2, 1, 2)
 
 
 def test_rows_count_generated_adaptive_and_discovered_separately(tmp_path: Path) -> None:
