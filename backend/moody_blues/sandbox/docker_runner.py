@@ -181,6 +181,16 @@ class DockerSandboxRunner:
         except (docker.errors.DockerException, requests.exceptions.RequestException) as exc:
             raise SandboxUnavailableError(f"Docker daemon error: {exc}") from exc
 
+    def runtime_info(self) -> tuple[str, list[str]]:
+        """The default OCI runtime and every runtime this daemon offers."""
+        info = self._docker().info()
+        return str(info.get("DefaultRuntime")), sorted(info["Runtimes"])
+
+    def image_digests(self) -> list[str]:
+        """Repository digests of the configured image, as the daemon knows it."""
+        image = self._docker().images.get(self.image)
+        return list(image.attrs.get("RepoDigests") or [])
+
     def list_sandbox_containers(self) -> list[Container]:
         """All containers (any state) created by this runner. Used to verify cleanup."""
         return self._docker().containers.list(all=True, filters={"label": SANDBOX_LABEL})

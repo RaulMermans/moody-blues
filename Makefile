@@ -10,7 +10,8 @@ PYTEST  := $(UV) run pytest
 .PHONY: help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
         test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
-        live-budget sandbox-clean clean
+        investigator-preflight investigator-demo investigator-test investigator-containment \
+        investigator-live investigator-eval live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -45,8 +46,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit + World + Target Agent + experiment tests (offline; real SQLite; fixtures; no network)
-	$(PYTEST) tests/unit tests/world tests/agent tests/experiment
+test: ## Unit + World + Target Agent + experiment + Investigator tests (offline; fixtures; no network)
+	$(PYTEST) tests/unit tests/world tests/agent tests/experiment tests/investigator
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
@@ -101,6 +102,29 @@ experiment-live: ## LIVE + CHARGEABLE: one sandboxed experiment; needs CONFIRM=1
 
 experiment-recover: ## Remove orphan sandboxes; close experiments whose coordinator died (free)
 	$(UV) run moody-blues experiment-recover
+
+TIER     ?= validation
+STRATEGY ?= adaptive
+PART     ?= both
+EVAL_TRIALS ?= 1
+
+investigator-preflight: ## Verify image pin, containment and fail-closed output on this host (free)
+	$(UV) run moody-blues investigator-preflight
+
+investigator-demo: ## OFFLINE fixture model; real sandboxes, worlds and Oracle (free)
+	$(UV) run moody-blues investigator-demo
+
+investigator-test: ## Offline Investigator tests (fixture model; no Docker; no network)
+	$(PYTEST) tests/investigator
+
+investigator-containment: ## Real Docker: hostile generated programs and the full workflow
+	$(PYTEST) tests/security/test_generated_code.py -m docker
+
+investigator-live: ## LIVE + CHARGEABLE: one investigation; needs CONFIRM=1 (TIER=, STRATEGY=)
+	$(UV) run moody-blues investigator-live --tier $(TIER) --strategy $(STRATEGY) $(if $(CONFIRM),--confirm-billable)
+
+investigator-eval: ## LIVE + CHARGEABLE: paired tests + comparison; needs CONFIRM=1 (TIER=, PART=, EVAL_TRIALS=)
+	$(UV) run moody-blues investigator-eval --tier $(TIER) --part $(PART) --trials $(EVAL_TRIALS) $(if $(CONFIRM),--confirm-billable)
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget

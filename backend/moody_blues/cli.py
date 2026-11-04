@@ -15,6 +15,10 @@ Commands:
                       needs --confirm-billable).
   experiment-recover  Remove orphan sandboxes; close experiments whose coordinator died.
   live-budget   Show the application-side spend ledger (no calls).
+  investigator-preflight  Verify the generated-code sandbox on this host (free).
+  investigator-demo       Fixture model, real sandboxes and worlds (free).
+  investigator-live       One live investigation (chargeable; --confirm-billable).
+  investigator-eval       Paired tests and strategy comparison (chargeable; --confirm-billable).
 """
 
 from __future__ import annotations
@@ -509,18 +513,48 @@ def experiment_live(settings: Settings, args: argparse.Namespace) -> int:
 
 def experiment_recover(settings: Settings) -> int:
     from moody_blues.experiments.recovery import recover_interrupted
+    from moody_blues.investigator.workspace import recover_investigations
 
     runner = _ready_sandbox(settings)
     if runner is None:
         return 2
     removed = runner.reap_orphans()
     recovered = recover_interrupted(_experiment_root())
+    for investigation in recover_investigations(ARTIFACTS / "investigations"):
+        print(f"{investigation}: marked interrupted; reservations stay open in the ledger")
     print(f"orphan sandboxes removed: {len(removed)}")
     for e in recovered:
         print(f"{e.experiment_id}: closed as {e.status.value} ({e.termination.value})")
     if not recovered:
         print("no interrupted experiments")
     return 0
+
+
+def _investigator(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.contracts.investigation import Strategy, WorldTier
+    from moody_blues.investigator import commands
+
+    match args.command:
+        case "investigator-preflight":
+            return commands.preflight(settings)
+        case "investigator-demo":
+            return commands.demo(settings)
+        case "investigator-live":
+            return commands.investigate_live(
+                settings,
+                confirmed=args.confirm_billable,
+                tier=WorldTier(args.tier),
+                strategy=Strategy(args.strategy),
+            )
+        case _:
+            return commands.evaluate(
+                settings,
+                confirmed=args.confirm_billable,
+                tier=WorldTier(args.tier),
+                trials=args.trials,
+                pairs=args.part in {"pairs", "both"},
+                compare=args.part in {"comparison", "both"},
+            )
 
 
 def live_budget(settings: Settings, reports: list[Path]) -> int:
@@ -602,6 +636,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     el.add_argument("--max-tool-calls", type=int, default=16)
     el.add_argument("--max-run-tokens", type=int, default=20_000)
     sub.add_parser("experiment-recover")
+    sub.add_parser("investigator-preflight")
+    sub.add_parser("investigator-demo")
+    il = sub.add_parser("investigator-live")
+    il.add_argument(
+        "--tier", choices=["development", "validation", "evaluation"], default="validation"
+    )
+    il.add_argument("--strategy", choices=["adaptive", "one_shot", "fixed"], default="adaptive")
+    il.add_argument("--confirm-billable", action="store_true")
+    ie = sub.add_parser("investigator-eval")
+    ie.add_argument("--tier", choices=["validation", "evaluation"], default="validation")
+    ie.add_argument("--trials", type=int, default=1)
+    ie.add_argument("--part", choices=["pairs", "comparison", "both"], default="both")
+    ie.add_argument("--confirm-billable", action="store_true")
     lb = sub.add_parser("live-budget")
     lb.add_argument(
         "--import-report",
@@ -639,6 +686,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return experiment_recover(settings)
         case "live-budget":
             return live_budget(settings, args.import_report)
+        case "investigator-preflight" | "investigator-demo" | "investigator-live":
+            return _investigator(settings, args)
+        case "investigator-eval":
+            return _investigator(settings, args)
         case _:
             parser.error(f"unknown command {args.command}")
     return 2

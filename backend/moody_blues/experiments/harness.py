@@ -31,6 +31,9 @@ def emit(action):
 """
 
 
+PROLOGUE_LINES = _PROLOGUE.count("\n")
+
+
 def build_step_program(code: str, step_input_json: str) -> str:
     payload = base64.b64encode(step_input_json.encode()).decode("ascii")
     return _PROLOGUE.format(payload=payload) + code

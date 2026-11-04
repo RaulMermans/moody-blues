@@ -49,7 +49,8 @@ def test_a_stale_get_reports_not_found_for_a_committed_row_then_the_lag_ends() -
         assert isinstance(customer, dict)
         args = {"customer_id": customer["customer_id"]}
         first = w.gateway.call("get_customer", args)
-        assert first.error is not None and first.error.code is ToolErrorCode.NOT_FOUND
+        assert first.error is not None
+        assert first.error.code is ToolErrorCode.NOT_FOUND
         assert w.gateway.call("get_customer", args).ok
 
 
@@ -61,15 +62,18 @@ def test_span_covers_consecutive_reads_of_either_tool() -> None:
         assert isinstance(customer, dict)
         assert not w.gateway.call("get_customer", {"customer_id": customer["customer_id"]}).ok
         hidden = w.gateway.call("search_customers", {"email": ADA["email"]})
-        assert hidden.data is not None and hidden.data["count"] == 0
+        assert hidden.data is not None
+        assert hidden.data["count"] == 0
         visible = w.gateway.call("search_customers", {"email": ADA["email"]})
-        assert visible.data is not None and visible.data["count"] == 1
+        assert visible.data is not None
+        assert visible.data["count"] == 1
 
 
 def test_nothing_to_hide_is_recorded_as_not_applied() -> None:
     with World(make_scenario(faults=[stale()])) as w:
         delivered = w.gateway.call("search_customers", {})
-        assert delivered.data is not None and delivered.data["count"] == 2
+        assert delivered.data is not None
+        assert delivered.data["count"] == 2
         assert not events(w, EventKind.FAULT_INJECTED)
         [skipped] = events(w, EventKind.FAULT_SKIPPED)
         assert skipped["effect"] == FaultEffect.NOT_APPLIED_NOTHING_TO_HIDE.value
@@ -80,24 +84,25 @@ def test_rejected_reads_do_not_consume_an_occurrence() -> None:
         w.gateway.call("create_customer", ADA)
         assert not w.gateway.call("get_customer", {}).ok  # invalid arguments
         delivered = w.gateway.call("search_customers", {})
-        assert delivered.data is not None and delivered.data["count"] == 2
+        assert delivered.data is not None
+        assert delivered.data["count"] == 2
 
 
 @pytest.mark.parametrize(
-    "fault",
+    ("fault", "message"),
     [
-        {"kind": "stale_read"},  # must target reads
-        {"kind": "phantom_failure", "operation": "read"},  # reads are stale_read's alone
-        {"kind": "phantom_failure", "span": 2},  # only a read window has a span
+        ({"kind": "stale_read"}, "targets reads"),
+        ({"kind": "phantom_failure", "operation": "read"}, "targets reads"),
+        ({"kind": "phantom_failure", "span": 2}, "only stale_read may span"),
     ],
 )
-def test_invalid_fault_specs_are_refused(fault: dict[str, Any]) -> None:
-    with pytest.raises(ValueError):
+def test_invalid_fault_specs_are_refused(fault: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
         FaultSpec.model_validate(fault)
 
 
 def test_overlapping_windows_are_refused() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="at most one fault"):
         make_scenario(faults=[stale(span=3), stale(occurrence=2)])
 
 
