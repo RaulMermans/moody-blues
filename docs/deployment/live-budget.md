@@ -71,6 +71,7 @@ needs a human decision. Estimates at ceiling prices:
 | Sprint 3 evaluation (30 runs) | 266,792 | $0.48 |
 | Sprint 3 single run and smoke checks | about 8,000 | $0.02 |
 | Sprint 4 (ledger: `make live-budget`) | 61,526 | $0.11 |
-| **Total** | **about 336,000** | **about $0.61** |
+| Sprint 5 (ledger: `make live-budget`) | 1,043,673 | $2.33 |
+| **Total** | **about 1.38 million** | **about $2.94** |
 
 Update this table when a sprint closes.

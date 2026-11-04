@@ -7,13 +7,13 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 4, isolated experiments.** Built so far: the backend, the sandbox, the
-> Vultr adapter, a status page, a synthetic CRM with controlled reality distortions and an
-> independent Truth Oracle, a real tool-using LLM Target Agent, and an isolated experiment
-> runtime: sandboxed Python proposes validated actions, a trusted coordinator runs the agent,
-> and the Oracle decides what happened. Verified live on Vultr `glm-5.3`. Experiments are
-> developer-written scripts. Not built yet: the Investigator. See
-> [docs/sprints/sprint-04.md](docs/sprints/sprint-04.md).
+> **Status: Sprint 5, autonomous Investigator.** Built so far: the backend, the sandbox, the
+> Vultr adapter, a status page, a synthetic CRM with controlled reality distortions, an independent
+> Truth Oracle, a real tool-using LLM Target Agent, an isolated experiment runtime, and an
+> Investigator: one model that writes Python experiments, reads sanitized results and chooses what
+> to test next, inside a deterministic workflow. Verified live on Vultr `glm-5.3`, where it found
+> one real, intermittent failure. See [docs/sprints/sprint-05.md](docs/sprints/sprint-05.md) and the
+> [results](docs/evaluations/sprint-05-investigator.md).
 
 ## What works today
 
@@ -81,6 +81,7 @@ Open http://localhost:3000.
 | `make investigator-test` / `make investigator-containment` | Offline tests / hostile programs on real Docker |
 | `make investigator-live TIER=… STRATEGY=… CONFIRM=1` | **Live, chargeable:** one investigation. Refuses without `CONFIRM=1`. |
 | `make investigator-eval TIER=… PART=… EVAL_TRIALS=… REPEATS=… CONFIRM=1` | **Live, chargeable:** paired tests and strategy comparison. Refuses without `CONFIRM=1`. |
+| `make investigator-repro EXPERIMENT=… RUNS=… CONFIRM=1` | **Live, chargeable:** rerun one generated program unchanged, in fresh worlds (at most 8). |
 | `make live-budget` | Show the estimated spend ledger. Makes no calls. |
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |

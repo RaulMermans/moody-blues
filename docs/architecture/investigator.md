@@ -103,8 +103,8 @@ Remaining risks:
 
 - **Shared kernel.** Only `runc` is available; `runsc` (gVisor) is not installed in the Colima VM. A
   kernel or runtime escape defeats everything above. Generated code is confined to `mb-exp/1`.
-- **Image provenance** is a local digest pin of the official `python:3.12-slim`; no signature is
-  verified. The digest is what this arm64 host holds, and CI on another platform needs checking.
+- **Image provenance** is a digest pin of the official `python:3.12-slim`. The digest resolves on
+  the registry as a multi-architecture index. No signature is verified.
 - **The model's own prose** returns to it in later prompts. It derives only from sanitized
   observations, but it is unverified interpretation.
 - **Persuasive conclusions.** Claim checks test codes, not causal stories. `fault_attributable`
@@ -122,3 +122,4 @@ Remaining risks:
 | `make investigator-containment` | free | Hostile programs on real Docker |
 | `make investigator-live CONFIRM=1` | **chargeable** | One investigation (`TIER=`, `STRATEGY=`) |
 | `make investigator-eval CONFIRM=1` | **chargeable** | Pairs and comparison (`TIER=`, `PART=`, `EVAL_TRIALS=`, `REPEATS=`) |
+| `make investigator-repro EXPERIMENT= CONFIRM=1` | **chargeable** | Rerun one generated program unchanged (`RUNS=`, at most 8) |

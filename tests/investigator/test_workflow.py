@@ -10,7 +10,11 @@ import pytest
 
 from moody_blues.config import Settings
 from moody_blues.contracts.common import ErrorCategory
-from moody_blues.contracts.experiment_evidence import ExperimentAuthorship, ExperimentState
+from moody_blues.contracts.experiment_evidence import (
+    ExperimentAuthorship,
+    ExperimentState,
+    UnresolvedTargetRun,
+)
 from moody_blues.contracts.inference import InferenceRequest, InferenceResult
 from moody_blues.contracts.investigation import (
     DecisionKind,
@@ -31,6 +35,7 @@ from moody_blues.inference.vultr import InferenceError
 from moody_blues.investigator import commands
 from moody_blues.investigator.fixtures import conclude, propose, tool_result
 from moody_blues.investigator.model import CONCLUDE_TOOL, PROPOSE_TOOL, tool_spec
+from moody_blues.investigator.observations import recoverable
 from moody_blues.investigator.workspace import (
     InvestigationBusyError,
     exclusive,
@@ -532,3 +537,22 @@ def test_reruns_are_bounded(capsys: pytest.CaptureFixture[str]) -> None:
     code = commands.reproduce(Settings(_env_file=None), confirmed=True, experiment_id="x", runs=99)  # type: ignore[call-arg]
     assert code == 2
     assert "runs must be" in capsys.readouterr().out
+
+
+def test_a_failure_that_touched_a_target_is_never_recoverable(tmp_path: Path) -> None:
+    """Defense in depth: classification already avoids this, and the guard must hold regardless."""
+    h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=experiment())
+    h.run()
+    [evidence] = h.workflow._evidence.values()  # pyright: ignore[reportPrivateUsage]
+    assert not recoverable(evidence, ResultClass.INVALID_PROTOCOL_OUTPUT)
+    clean = evidence.model_copy(update={"target_runs": []})
+    assert recoverable(clean, ResultClass.INVALID_PROTOCOL_OUTPUT)
+    unresolved = UnresolvedTargetRun(
+        run_ref="trun_1",
+        scenario_id="normal-success",
+        world_found=False,
+        committed_new_customer_ids=None,
+        note="x",
+    )
+    uncertain = clean.model_copy(update={"unresolved_target_runs": [unresolved]})
+    assert not recoverable(uncertain, ResultClass.INVALID_PROTOCOL_OUTPUT)
