@@ -26,7 +26,7 @@ jobs:
       - run: uv run ruff format --check backend tests
       - run: uv run ruff check backend tests
       - run: uv run pyright
-      - run: uv run pytest tests/unit tests/world tests/agent
+      - run: uv run pytest tests/unit tests/world tests/agent tests/experiment
       - run: uv run moody-blues world-demo --no-color
 
   frontend:
