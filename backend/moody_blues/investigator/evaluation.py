@@ -132,10 +132,22 @@ class PairResult(BaseModel):
     across_differs: bool
     # Across-branch difference with both branches stable: the only result counted as adaptation.
     adaptation_shown: bool
+    # Secondary, coarser: compares only the world and config chosen, ignoring the fault. Added
+    # after a first run showed that pattern, so it was registered before being tested again.
+    coarse_a: list[str]
+    coarse_b: list[str]
+    coarse_adaptation_shown: bool
 
 
 def _signature(item: FollowUp) -> tuple[str, str | None]:
     return item.decision, item.selection
+
+
+def _coarse(item: FollowUp) -> str:
+    if item.selection is None:
+        return item.decision
+    world, config, *_ = item.selection.split("|")
+    return f"{world}|{config}"
 
 
 def selection_of(evidence: ExperimentEvidence) -> str | None:
@@ -293,6 +305,7 @@ def run_pair(
     within_b = len({_signature(x) for x in b}) == 1
     across = not ({_signature(x) for x in a} & {_signature(x) for x in b})
     differ = observations[0] != observations[1]
+    coarse_a, coarse_b = [_coarse(x) for x in a], [_coarse(x) for x in b]
     same_rest = (
         contexts[0].model_copy(update={"observations": []}).model_dump_json()
         == contexts[1].model_copy(update={"observations": []}).model_dump_json()
@@ -309,6 +322,13 @@ def run_pair(
         within_b_stable=within_b,
         across_differs=across,
         adaptation_shown=differ and same_rest and within_a and within_b and across,
+        coarse_a=coarse_a,
+        coarse_b=coarse_b,
+        coarse_adaptation_shown=differ
+        and same_rest
+        and len(set(coarse_a)) == 1
+        and len(set(coarse_b)) == 1
+        and set(coarse_a) != set(coarse_b),
     )
 
 
@@ -420,8 +440,8 @@ def render_comparison(rows: list[StrategyRow]) -> str:
 def render_pairs(results: list[PairResult]) -> str:
     lines = [
         "| Case | Seed verdicts A/B | Observations differ | A answers | B answers "
-        "| Stable A/B | Differ across | Adaptation shown |",
-        "|" + "---|" * 8,
+        "| Stable A/B | Differ across | Strict adaptation | Coarse adaptation |",
+        "|" + "---|" * 9,
     ]
 
     def show(items: list[FollowUp]) -> str:
@@ -431,7 +451,7 @@ def render_pairs(results: list[PairResult]) -> str:
         lines.append(
             f"| {r.case_id} | {r.verdict_a}/{r.verdict_b} | {r.observations_differ} "
             f"| {show(r.a)} | {show(r.b)} | {r.within_a_stable}/{r.within_b_stable} "
-            f"| {r.across_differs} | {r.adaptation_shown} |"
+            f"| {r.across_differs} | {r.adaptation_shown} | {r.coarse_adaptation_shown} |"
         )
     return "\n".join(lines) + "\n"
 

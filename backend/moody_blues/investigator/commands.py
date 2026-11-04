@@ -8,7 +8,7 @@ Agent reserve from the same ledger under one scope.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
@@ -67,6 +67,8 @@ LIVE_TARGET_BUDGET = AgentBudget(
     max_wall_seconds=180,
 )
 MAX_EVAL_TRIALS = 3
+# The world each tier's fixed first experiment runs in. Reference executors behave cleanly in it.
+PAIR_SEED_WORLDS = {WorldTier.VALIDATION: "w-v1", WorldTier.EVALUATION: "w-e3"}
 
 
 def preflight(settings: Settings) -> int:
@@ -290,7 +292,14 @@ def investigate_live(
 
 
 def evaluate(
-    settings: Settings, *, confirmed: bool, tier: WorldTier, trials: int, pairs: bool, compare: bool
+    settings: Settings,
+    *,
+    confirmed: bool,
+    tier: WorldTier,
+    trials: int,
+    pairs: bool,
+    compare: bool,
+    repeats: int = 2,
 ) -> int:
     if not confirmed:
         return _not_confirmed("investigator-eval")
@@ -306,7 +315,7 @@ def evaluate(
     directory.mkdir(parents=True, exist_ok=True)
     reports: list[InvestigationReport] = []
     if pairs:
-        reports_text = _evaluate_pairs(settings, live, limits, directory)
+        reports_text = _evaluate_pairs(settings, live, limits, directory, tier, repeats)
         print(reports_text)
     if compare:
         rows: list[StrategyRow] = []
@@ -332,9 +341,15 @@ def evaluate(
 
 
 def _evaluate_pairs(
-    settings: Settings, live: _Live, limits: InvestigationLimits, directory: Path
+    settings: Settings,
+    live: _Live,
+    limits: InvestigationLimits,
+    directory: Path,
+    tier: WorldTier,
+    repeats: int,
 ) -> str:
-    worlds = WORLD_TIERS[WorldTier.VALIDATION]
+    worlds = WORLD_TIERS[tier]
+    seed_world = PAIR_SEED_WORLDS[tier]
     scope = f"pairs_{directory.name}"
     spend = ScopedSpend(live.ledger, scope, settings.investigator_max_spend_usd)
     model = InvestigatorModel(
@@ -359,7 +374,7 @@ def _evaluate_pairs(
 
     results = [
         run_pair(
-            case,
+            replace(case, world=seed_world),
             model=model,
             runner_for=runner_for,
             capability=target_capability(worlds),
@@ -367,6 +382,7 @@ def _evaluate_pairs(
             objective=DEFAULT_OBJECTIVE,
             limits=limits,
             artifacts=directory / "pairs" / case.case_id,
+            repeats=repeats,
         )
         for case in PAIR_CASES
     ]

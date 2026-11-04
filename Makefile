@@ -107,6 +107,7 @@ TIER     ?= validation
 STRATEGY ?= adaptive
 PART     ?= both
 EVAL_TRIALS ?= 1
+REPEATS ?= 2
 
 investigator-preflight: ## Verify image pin, containment and fail-closed output on this host (free)
 	$(UV) run moody-blues investigator-preflight
@@ -123,8 +124,8 @@ investigator-containment: ## Real Docker: hostile generated programs and the ful
 investigator-live: ## LIVE + CHARGEABLE: one investigation; needs CONFIRM=1 (TIER=, STRATEGY=)
 	$(UV) run moody-blues investigator-live --tier $(TIER) --strategy $(STRATEGY) $(if $(CONFIRM),--confirm-billable)
 
-investigator-eval: ## LIVE + CHARGEABLE: paired tests + comparison; needs CONFIRM=1 (TIER=, PART=, EVAL_TRIALS=)
-	$(UV) run moody-blues investigator-eval --tier $(TIER) --part $(PART) --trials $(EVAL_TRIALS) $(if $(CONFIRM),--confirm-billable)
+investigator-eval: ## LIVE + CHARGEABLE: paired tests + comparison; needs CONFIRM=1 (TIER=, PART=, EVAL_TRIALS=, REPEATS=)
+	$(UV) run moody-blues investigator-eval --tier $(TIER) --part $(PART) --trials $(EVAL_TRIALS) --repeats $(REPEATS) $(if $(CONFIRM),--confirm-billable)
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget

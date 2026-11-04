@@ -554,6 +554,7 @@ def _investigator(settings: Settings, args: argparse.Namespace) -> int:
                 trials=args.trials,
                 pairs=args.part in {"pairs", "both"},
                 compare=args.part in {"comparison", "both"},
+                repeats=args.repeats,
             )
 
 
@@ -647,6 +648,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     ie = sub.add_parser("investigator-eval")
     ie.add_argument("--tier", choices=["validation", "evaluation"], default="validation")
     ie.add_argument("--trials", type=int, default=1)
+    ie.add_argument("--repeats", type=int, default=2, choices=[2, 3, 4])
     ie.add_argument("--part", choices=["pairs", "comparison", "both"], default="both")
     ie.add_argument("--confirm-billable", action="store_true")
     lb = sub.add_parser("live-budget")
