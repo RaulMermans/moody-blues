@@ -596,8 +596,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     el.add_argument("--config", default="baseline", choices=configs)
     el.add_argument("--model", help="model id from the live catalog (default MOODY_VULTR_MODEL)")
     el.add_argument("--confirm-billable", action="store_true", help="required: this is billable")
-    el.add_argument("--max-steps", type=int, default=8)
-    el.add_argument("--max-tool-calls", type=int, default=10)
+    # Same step and tool limits as agent-run, so results stay comparable: a tighter step cap
+    # cut a correct run off one step before its claim. The token cap is what bounds spend.
+    el.add_argument("--max-steps", type=int, default=10)
+    el.add_argument("--max-tool-calls", type=int, default=16)
     el.add_argument("--max-run-tokens", type=int, default=20_000)
     sub.add_parser("experiment-recover")
     lb = sub.add_parser("live-budget")

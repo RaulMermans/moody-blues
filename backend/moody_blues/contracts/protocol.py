@@ -156,6 +156,7 @@ class RunObservation(BaseModel):
     config: AgentConfigName
     target_kind: str
     termination: str
+    run_outcome: str | None
     claim_status: str | None
     oracle_verdict: str
     objective_satisfied: bool

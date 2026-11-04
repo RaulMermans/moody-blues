@@ -35,6 +35,7 @@ from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import AgentTarget, ReferenceTarget, TargetRequest, TargetResult
 from moody_blues.inference.vultr import InferenceError
 from moody_blues.sandbox.base import SandboxError, SandboxUnavailableError
+from moody_blues.world.scenarios import load_scenario
 from tests.agent.conftest import (
     FIXTURE_MODEL,
     FIXTURE_PROVIDER,
@@ -400,6 +401,22 @@ def test_agent_stopping_short_is_a_target_outcome_not_infrastructure(tmp_path: P
     evidence, _ = run([run_action(), finish_action()], tmp_path, target=fixture_target(model))
     assert evidence.status is ExperimentState.COMPLETED
     assert OutcomeClass.TARGET_AGENT_FAILURE in evidence.classifications
+
+
+def test_oracle_pass_without_a_claim_is_not_presented_as_success(tmp_path: Path) -> None:
+    """Regression: a live run hit its step limit after committing the right row. The Oracle
+    passes correct state with no claim, so evidence must also carry the run outcome."""
+    from tests.agent.conftest import text
+
+    customer = load_scenario("normal-success").objective.customer
+    args = customer.model_dump(mode="json")
+    model = ScriptedModel([tools(call("create_customer", args)), text("done"), text("done")])
+    evidence, sandbox = run([run_action(), finish_action()], tmp_path, target=fixture_target(model))
+    (target,) = evidence.target_runs
+    assert target.oracle.verdict is Verdict.PASS
+    assert target.run_outcome == "state_correct_claim_missing"
+    observation = inputs(sandbox)[1]["observations"][0]
+    assert observation["run_outcome"] == "state_correct_claim_missing"
 
 
 def test_exhausted_ledger_stops_before_any_inference(tmp_path: Path) -> None:

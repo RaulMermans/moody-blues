@@ -600,6 +600,7 @@ class ExperimentCoordinator:
             run_ref=run_ref,
             run_id=result.run_id,
             target_kind=result.target_kind,
+            run_outcome=result.run_outcome,
             evidence_source=result.evidence_source,
             executor=result.executor,
             provider=result.provider,

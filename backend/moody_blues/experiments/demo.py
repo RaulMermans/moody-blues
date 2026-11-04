@@ -214,6 +214,11 @@ def render_evidence(evidence: ExperimentEvidence, *, title: str, root: Path) -> 
             f"{str(o.objective_satisfied).lower()} "
             f"findings={sorted({f.code.value for f in o.findings}) or 'none'}"
         )
+        if run.run_outcome is not None:
+            lines.append(
+                f"     run outcome: {run.run_outcome} "
+                f"(agent termination: {run.target_observed.termination})"
+            )
         if run.tokens is not None:
             cost = run.estimated_cost_usd
             lines.append(

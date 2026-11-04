@@ -59,6 +59,7 @@ class TargetResult(BaseModel):
     policy_version: str | None
     policy_sha256: str | None
     termination: str
+    run_outcome: str | None
     error: ErrorDetail | None
     claim: FinalClaim | None
     world_id: str
@@ -147,6 +148,7 @@ class AgentTarget:
             policy_version=trajectory.policy_version,
             policy_sha256=trajectory.policy_sha256,
             termination=trajectory.termination.value,
+            run_outcome=report.assessment.outcome.value,
             error=trajectory.error,
             claim=trajectory.claim,
             world_id=report.world_id,
@@ -186,6 +188,7 @@ class ReferenceTarget:
             termination=TerminationReason.FINAL_CLAIM.value
             if report.claim is not None
             else TerminationReason.NO_FINAL_CLAIM.value,
+            run_outcome=None,
             error=None,
             claim=report.claim,
             world_id=report.world_id,

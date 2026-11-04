@@ -43,6 +43,7 @@ def observe_run(run: TargetRunEvidence) -> RunObservation:
         config=run.authorized.config,
         target_kind=run.target_kind,
         termination=observed.termination,
+        run_outcome=run.run_outcome,
         claim_status=observed.claim.status.value if observed.claim is not None else None,
         oracle_verdict=oracle.verdict.value,
         objective_satisfied=oracle.objective_satisfied,
