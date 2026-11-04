@@ -32,7 +32,7 @@ from moody_blues.contracts.protocol import (
     RunTargetAgent,
 )
 from moody_blues.contracts.sandbox import SandboxResult
-from moody_blues.contracts.scenario import FaultKind, FaultSpec, Scenario
+from moody_blues.contracts.scenario import READ_OPERATION, FaultKind, FaultSpec, Scenario
 from moody_blues.contracts.world import ToolErrorCode
 
 APPROVED_SCENARIOS: tuple[str, ...] = (
@@ -116,6 +116,16 @@ def fault_specs(selections: list[FaultSelection]) -> list[FaultSpec]:
     specs: list[FaultSpec] = []
     for selection in selections:
         code = ToolErrorCode(selection.error_code)
+        if selection.kind is FaultKind.STALE_READ:
+            specs.append(
+                FaultSpec(
+                    kind=selection.kind,
+                    operation=READ_OPERATION,
+                    occurrence=selection.occurrence,
+                    span=selection.span,
+                )
+            )
+            continue
         specs.append(
             FaultSpec(
                 kind=selection.kind,
@@ -141,14 +151,20 @@ def authorize_run(
         return _reject(RejectionCode.TARGET_RUN_LIMIT, f"limit of {max_runs} target run(s) reached")
     if action.faults is None:
         return AuthorizedTargetRun(scenario, action.config, "scenario")
-    occurrences = [f.occurrence for f in action.faults]
-    if len(occurrences) != len(set(occurrences)):
+    if any(f.span > 1 and f.kind is not FaultKind.STALE_READ for f in action.faults):
+        return _reject(RejectionCode.INVALID_FAULT, "only stale_read may span several calls")
+    targets = [
+        (f.kind is FaultKind.STALE_READ, f.occurrence + i)
+        for f in action.faults
+        for i in range(f.span)
+    ]
+    if len(targets) != len(set(targets)):
         return _reject(RejectionCode.INVALID_FAULT, "two faults target the same occurrence")
     if any(
-        f.kind is FaultKind.PHANTOM_SUCCESS and f.error_code != ToolErrorCode.TIMEOUT.value
+        f.kind is not FaultKind.PHANTOM_FAILURE and f.error_code != ToolErrorCode.TIMEOUT.value
         for f in action.faults
     ):
-        return _reject(RejectionCode.INVALID_FAULT, "phantom_success takes no error_code")
+        return _reject(RejectionCode.INVALID_FAULT, "only phantom_failure takes an error_code")
     # Rebuilt through the validator: the scenario's own rules still apply to the result.
     data = scenario.model_dump(mode="json")
     data["faults"] = [f.model_dump(mode="json") for f in fault_specs(action.faults)]

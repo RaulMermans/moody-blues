@@ -4,6 +4,7 @@ Layout of ``<root>/<experiment_id>/`` (mode 0700)::
 
     journal.jsonl   append-only write-ahead log, fsynced, hash-chained
     evidence.json   final record, written atomically, hash stored in the journal
+    source.py       the original program, for model-generated experiments
     runs/           full target run reports
     worlds/         live world databases; present after a crash, otherwise emptied
     .lock           held while a coordinator owns the experiment
@@ -27,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, JsonValue
 
 JOURNAL = "journal.jsonl"
 EVIDENCE = "evidence.json"
+SOURCE = "source.py"
 GENESIS = "0" * 64
 
 

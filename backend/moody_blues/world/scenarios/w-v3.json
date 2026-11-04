@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-v3",
+  "version": "1.0.0",
+  "title": "World V3",
+  "description": "",
+  "seed": 503,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_v3_a",
+        "name": "M. Hamilton",
+        "email": "margaret@draper.example",
+        "metadata": {
+          "tier": "silver"
+        }
+      },
+      {
+        "customer_id": "cus_seed_v3_b",
+        "name": "Margaret H.",
+        "email": "margaret@draper.example",
+        "metadata": {
+          "tier": "gold",
+          "region": "us-east"
+        },
+        "client_request_id": "seed-req-margaret-01"
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Margaret Hamilton",
+      "email": "margaret@draper.example",
+      "metadata": {
+        "tier": "gold",
+        "region": "us-east"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_failure",
+      "operation": "create_customer",
+      "occurrence": 1,
+      "error_code": "timeout",
+      "error_message": "Upstream CRM did not respond within 30s. The request may or may not have been applied."
+    }
+  ]
+}

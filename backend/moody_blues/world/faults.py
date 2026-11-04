@@ -12,7 +12,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from moody_blues.contracts.scenario import FaultSpec
-from moody_blues.contracts.world import ToolName
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,17 +22,17 @@ class FaultTarget:
 
 class FaultInjector:
     def __init__(self, specs: Sequence[FaultSpec]) -> None:
-        self._specs = {(s.operation, s.occurrence): s for s in specs}
-        if len(self._specs) != len(specs):
+        self._specs = {target: s for s in specs for target in s.targets}
+        if len(self._specs) != sum(s.span for s in specs):
             raise ValueError("duplicate fault target (operation, occurrence)")
-        self._counts: Counter[ToolName] = Counter()
+        self._counts: Counter[str] = Counter()
 
     @property
     def enabled(self) -> bool:
         return bool(self._specs)
 
-    def next_execution(self, operation: ToolName) -> FaultTarget:
+    def next_execution(self, operation: str) -> FaultTarget:
         """Register one eligible execution of ``operation`` and return its fault, if any."""
-        self._counts[operation] += 1
-        occurrence = self._counts[operation]
-        return FaultTarget(occurrence, self._specs.get((operation, occurrence)))
+        self._counts[str(operation)] += 1
+        occurrence = self._counts[str(operation)]
+        return FaultTarget(occurrence, self._specs.get((str(operation), occurrence)))

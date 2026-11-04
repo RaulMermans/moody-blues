@@ -19,6 +19,10 @@ Fault boundaries are explicit, and what a fault does depends on the call's *real
   response is replaced by the configured error (``committed_write_reported_as_failure``);
   if it committed nothing new, only the response is replaced
   (``response_replaced_without_new_commit``) and the evidence says ``new_commit: false``.
+- ``stale_read`` acts on the **response of a read**: rows committed during this run are left
+  out, as if a lagging replica had served the call (``read_served_from_stale_snapshot``). If
+  there was nothing to leave out, the fault is not applied (``not_applied_nothing_to_hide``).
+  It never writes, so committed state and the Oracle are unaffected.
 
 A targeted occurrence is consumed either way; it never carries over to a later call.
 Faults never touch rows other than the targeted call's own staged write.
@@ -34,7 +38,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, JsonValue, ValidationError
 
-from moody_blues.contracts.scenario import FaultEffect, FaultKind, FaultSpec
+from moody_blues.contracts.scenario import READ_OPERATION, FaultEffect, FaultKind, FaultSpec
 from moody_blues.contracts.world import (
     CreateCustomerArgs,
     CustomerRecord,
@@ -88,6 +92,8 @@ def _fault_effect(kind: FaultKind, *, boundary_reached: bool, committed: bool) -
                 if committed
                 else FaultEffect.RESPONSE_REPLACED_WITHOUT_NEW_COMMIT
             )
+        case FaultKind.STALE_READ:  # pragma: no cover - reads are handled by ``_read``
+            raise AssertionError("stale_read does not target writes")
 
 
 class ToolPort(Protocol):
@@ -202,16 +208,30 @@ class ToolGateway:
         match args:
             case CreateCustomerArgs():
                 return self._create(args, call_seq, call_id, now, emit)
+            case GetCustomerArgs() | SearchCustomersArgs():
+                return self._read(args, call_id, emit)
+            case _:  # pragma: no cover - ARG_MODELS is exhaustive
+                raise AssertionError(f"unhandled tool {name}")
+
+    def _read(
+        self,
+        args: GetCustomerArgs | SearchCustomersArgs,
+        call_id: str,
+        emit: Callable[[EventKind, dict[str, Any]], None],
+    ) -> ToolResponse:
+        target = self._faults.next_execution(READ_OPERATION)
+        stale = target.spec is not None
+        match args:
             case GetCustomerArgs():
+                name = ToolName.GET_CUSTOMER
                 found = self._store.get_customer(args.customer_id)
+                rows = [] if found is None else [found]
                 emit(
                     EventKind.OPERATION_EXECUTED,
                     {"tool": name.value, "outcome": "read", "found": found is not None},
                 )
-                if found is None:
-                    return _err(call_id, name.value, ToolErrorCode.NOT_FOUND, "customer not found")
-                return _ok(call_id, name, {"customer": agent_view(found)})
             case SearchCustomersArgs():
+                name = ToolName.SEARCH_CUSTOMERS
                 rows = self._store.search_customers(
                     email=args.email, name_contains=args.name_contains, limit=args.limit
                 )
@@ -219,13 +239,43 @@ class ToolGateway:
                     EventKind.OPERATION_EXECUTED,
                     {"tool": name.value, "outcome": "read", "result_count": len(rows)},
                 )
-                return _ok(
-                    call_id,
-                    name,
-                    {"customers": [agent_view(r) for r in rows], "count": len(rows)},
-                )
-            case _:  # pragma: no cover - ARG_MODELS is exhaustive
-                raise AssertionError(f"unhandled tool {name}")
+
+        def respond(visible: list[CustomerRecord]) -> ToolResponse:
+            if name is ToolName.SEARCH_CUSTOMERS:
+                data: dict[str, JsonValue] = {
+                    "customers": [agent_view(r) for r in visible],
+                    "count": len(visible),
+                }
+                return _ok(call_id, name, data)
+            if not visible:
+                return _err(call_id, name.value, ToolErrorCode.NOT_FOUND, "customer not found")
+            return _ok(call_id, name, {"customer": agent_view(visible[0])})
+
+        actual = respond(rows)
+        if not stale:
+            return actual
+        snapshot = [r for r in rows if r.created_by_call == 0]  # seed rows predate the run
+        hidden = len(rows) - len(snapshot)
+        effect = (
+            FaultEffect.READ_SERVED_FROM_STALE_SNAPSHOT
+            if hidden
+            else FaultEffect.NOT_APPLIED_NOTHING_TO_HIDE
+        )
+        evidence: dict[str, Any] = {
+            "kind": FaultKind.STALE_READ.value,
+            "operation": READ_OPERATION,
+            "occurrence": target.occurrence,
+            "effect": effect.value,
+            "call_outcome": "read",
+            "new_commit": False,
+            "rows_hidden": hidden,
+            "actual_response": actual.model_dump(mode="json"),
+        }
+        if not hidden:
+            emit(EventKind.FAULT_SKIPPED, evidence | {"boundary": None})
+            return actual
+        emit(EventKind.FAULT_INJECTED, evidence | {"boundary": "response"})
+        return respond(snapshot)
 
     def _create(
         self,
@@ -236,7 +286,7 @@ class ToolGateway:
         emit: Callable[[EventKind, dict[str, Any]], None],
     ) -> ToolResponse:
         tool = ToolName.CREATE_CUSTOMER
-        target = self._faults.next_execution(tool)
+        target = self._faults.next_execution(tool.value)
         fault = target.spec
         record = CustomerRecord(
             customer_id=derive_customer_id(self._seed, call_seq),
@@ -303,7 +353,7 @@ class ToolGateway:
         effect = _fault_effect(fault.kind, boundary_reached=boundary_reached, committed=new_commit)
         evidence: dict[str, Any] = {
             "kind": fault.kind.value,
-            "operation": fault.operation.value,
+            "operation": tool.value,
             "occurrence": target.occurrence,
             "effect": effect.value,
             "call_outcome": outcome,
@@ -368,3 +418,5 @@ class ToolGateway:
                 return _ok(
                     call_id, tool, {"customer": agent_view(attempted), "idempotent_replay": False}
                 )
+            case FaultKind.STALE_READ:  # pragma: no cover - reads are handled by ``_read``
+                raise AssertionError("stale_read does not target writes")

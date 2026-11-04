@@ -29,6 +29,9 @@ class FaultKind(StrEnum):
     PHANTOM_FAILURE = "phantom_failure"
     # The write is aborted at the pre-commit boundary; the delivered response says it succeeded.
     PHANTOM_SUCCESS = "phantom_success"
+    # A read is served by a lagging replica: rows committed during this run are invisible to it.
+    # Nothing is written and committed state is untouched; only the delivered response differs.
+    STALE_READ = "stale_read"
 
 
 class FaultEffect(StrEnum):
@@ -49,7 +52,14 @@ class FaultEffect(StrEnum):
     # phantom_success on a call that never staged a new write: there is no pre-commit
     # boundary to act on, so the fault is not applied and the genuine response is delivered.
     NOT_APPLIED_NO_NEW_WRITE = "not_applied_no_new_write"
+    # stale_read that hid at least one row committed during this run.
+    READ_SERVED_FROM_STALE_SNAPSHOT = "read_served_from_stale_snapshot"
+    # stale_read on a read whose result had nothing to hide: the genuine response is delivered.
+    NOT_APPLIED_NOTHING_TO_HIDE = "not_applied_nothing_to_hide"
 
+
+# Fault target for ``stale_read``: get_customer and search_customers share one occurrence count.
+READ_OPERATION = "read"
 
 PHANTOM_FAILURE_CODES: frozenset[ToolErrorCode] = frozenset(
     {ToolErrorCode.TIMEOUT, ToolErrorCode.INTERNAL_ERROR, ToolErrorCode.UNAVAILABLE}
@@ -61,14 +71,16 @@ class FaultSpec(BaseModel):
 
     ``occurrence`` is 1-based and counts *eligible executions* of ``operation``: calls whose
     arguments validated and therefore reached the execution boundary. Calls rejected during
-    validation never consume an occurrence.
+    validation never consume an occurrence. ``span`` is how many consecutive executions are
+    hit, starting at ``occurrence``; only a ``stale_read`` window may exceed 1.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     kind: FaultKind
-    operation: Literal[ToolName.CREATE_CUSTOMER] = ToolName.CREATE_CUSTOMER
+    operation: Literal[ToolName.CREATE_CUSTOMER, "read"] = ToolName.CREATE_CUSTOMER
     occurrence: int = Field(default=1, ge=1, le=1000)
+    span: int = Field(default=1, ge=1, le=6)
     error_code: ToolErrorCode = ToolErrorCode.TIMEOUT
     error_message: str = Field(
         default="The request timed out before a response was received.", max_length=500
@@ -79,7 +91,17 @@ class FaultSpec(BaseModel):
         if self.kind is FaultKind.PHANTOM_FAILURE and self.error_code not in PHANTOM_FAILURE_CODES:
             allowed = sorted(c.value for c in PHANTOM_FAILURE_CODES)
             raise ValueError(f"phantom_failure error_code must be one of {allowed}")
+        reads = self.kind is FaultKind.STALE_READ
+        if reads != (self.operation == READ_OPERATION):
+            raise ValueError("stale_read targets reads, and only stale_read may")
+        if self.span > 1 and not reads:
+            raise ValueError("only stale_read may span several executions")
         return self
+
+    @property
+    def targets(self) -> list[tuple[str, int]]:
+        """Every (operation, occurrence) this fault hits."""
+        return [(str(self.operation), self.occurrence + i) for i in range(self.span)]
 
 
 class SeedCustomer(CustomerDraft):
@@ -173,7 +195,7 @@ class Scenario(BaseModel):
     @field_validator("faults")
     @classmethod
     def _unique_targets(cls, value: list[FaultSpec]) -> list[FaultSpec]:
-        targets = [(f.operation, f.occurrence) for f in value]
+        targets = [t for f in value for t in f.targets]
         if len(targets) != len(set(targets)):
             raise ValueError("at most one fault may target a given (operation, occurrence)")
         return value

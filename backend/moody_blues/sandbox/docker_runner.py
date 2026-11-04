@@ -118,6 +118,8 @@ class DockerSandboxRunner:
         self.output_limit_bytes = output_limit_bytes
         self.docker_host, self.docker_host_source = resolve_docker_host(docker_host)
         self.auto_pull = auto_pull
+        # Only a pinned image that can never be replaced by a pull may run generated code.
+        self.approved_for_generated_code = "@sha256:" in image and not auto_pull
         self._api_timeout = api_timeout_seconds
         self._client: docker.DockerClient | None = None
 

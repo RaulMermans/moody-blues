@@ -12,6 +12,10 @@ Rules, all of which err towards refusing:
   books rather than vanishing.
 - Settling with incomplete usage keeps the full reservation.
 - A ledger that cannot be read refuses all further spending.
+
+There is one ledger for every live caller. A *scope* adds a second, narrower limit on the same
+records: an investigation's model calls and target runs share one scope, so they share one cap
+and neither can be reset by restarting a command.
 """
 
 from __future__ import annotations
@@ -23,7 +27,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Protocol
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -83,6 +87,7 @@ class SpendRecord(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     usage_complete: bool | None = None
+    scope: str | None = None  # absent in records written before scopes existed
 
 
 class SpendStatus(BaseModel):
@@ -100,6 +105,14 @@ class SpendStatus(BaseModel):
         "Application-side estimate at assumed ceiling prices. Not a provider invoice and not a "
         "provider-enforced limit."
     )
+
+
+class SpendPort(Protocol):
+    """What live work needs from a ledger. ``SpendLedger`` and ``ScopedSpend`` satisfy it."""
+
+    def reserve(self, label: str, *, worst_case_tokens: int) -> str: ...
+
+    def settle(self, entry_id: str, tokens: TokenTotals | None) -> float: ...
 
 
 class SpendLedger:
@@ -161,11 +174,28 @@ class SpendLedger:
         with self._locked():
             return self._status(self._records())
 
-    def reserve(self, label: str, *, worst_case_tokens: int) -> str:
+    def reserve(
+        self,
+        label: str,
+        *,
+        worst_case_tokens: int,
+        scope: str | None = None,
+        scope_limit_usd: float | None = None,
+    ) -> str:
         """Hold the worst case, or raise ``BudgetExceededError``. Returns the entry id."""
         amount = self.prices.worst_case(worst_case_tokens)
         with self._locked():
-            status = self._status(self._records())
+            records = self._records()
+            status = self._status(records)
+            if scope is not None and scope_limit_usd is not None:
+                inside = self._status([r for r in records if r.scope == scope])
+                committed = inside.settled_usd + inside.open_reservations_usd
+                if amount + committed > scope_limit_usd:
+                    raise BudgetExceededError(
+                        f"refusing live work {label!r}: worst case ${amount:.4f} on top of "
+                        f"${committed:.4f} exceeds this investigation's "
+                        f"${scope_limit_usd:.2f} cap"
+                    )
             if amount > status.remaining_usd:
                 raise BudgetExceededError(
                     f"refusing live work {label!r}: worst case ${amount:.4f} exceeds the "
@@ -181,6 +211,7 @@ class SpendLedger:
                     at=datetime.now(UTC),
                     label=label,
                     amount_usd=amount,
+                    scope=scope,
                 )
             )
         return entry_id
@@ -212,6 +243,7 @@ class SpendLedger:
                     prompt_tokens=tokens.prompt_tokens if tokens is not None else None,
                     completion_tokens=tokens.completion_tokens if tokens is not None else None,
                     usage_complete=complete,
+                    scope=reserved.scope,
                 )
             )
         return amount
@@ -222,6 +254,33 @@ class SpendLedger:
         self.settle(entry_id, tokens)
         return entry_id
 
+    def scope_status(self, scope: str) -> SpendStatus:
+        with self._locked():
+            return self._status([r for r in self._records() if r.scope == scope])
+
     def export(self) -> list[dict[str, object]]:
         with self._locked():
             return [json.loads(r.model_dump_json()) for r in self._records()]
+
+
+class ScopedSpend:
+    """One investigation's view of the shared ledger: same records, an extra cap."""
+
+    def __init__(self, ledger: SpendLedger, scope: str, limit_usd: float) -> None:
+        self._ledger = ledger
+        self.scope = scope
+        self.limit_usd = limit_usd
+
+    def reserve(self, label: str, *, worst_case_tokens: int) -> str:
+        return self._ledger.reserve(
+            f"{self.scope}:{label}",
+            worst_case_tokens=worst_case_tokens,
+            scope=self.scope,
+            scope_limit_usd=self.limit_usd,
+        )
+
+    def settle(self, entry_id: str, tokens: TokenTotals | None) -> float:
+        return self._ledger.settle(entry_id, tokens)
+
+    def status(self) -> SpendStatus:
+        return self._ledger.scope_status(self.scope)

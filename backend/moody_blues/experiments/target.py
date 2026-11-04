@@ -30,7 +30,7 @@ from moody_blues.contracts.oracle import OracleReport
 from moody_blues.contracts.run import ToolTraceEntry
 from moody_blues.contracts.scenario import Scenario
 from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
-from moody_blues.experiments.budget import SpendLedger, worst_case_run_tokens
+from moody_blues.experiments.budget import SpendPort, worst_case_run_tokens
 from moody_blues.services.agent_world_runner import run_agent_scenario
 from moody_blues.services.world_runner import run_scenario
 
@@ -90,7 +90,7 @@ class AgentTarget:
         provider: str,
         model: str,
         budget: AgentBudget,
-        ledger: SpendLedger | None = None,
+        ledger: SpendPort | None = None,
     ) -> None:
         if evidence == "live_provider" and ledger is None:
             raise ValueError("a live target requires a spend ledger")

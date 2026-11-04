@@ -63,7 +63,9 @@ drafts = st.fixed_dictionaries(
 fault_plans = st.lists(
     st.fixed_dictionaries(
         {
-            "kind": st.sampled_from([k.value for k in FaultKind]),
+            # Write faults only: this suite's model of the CRM covers creates. stale_read has its
+            # own properties in test_stale_read.py.
+            "kind": st.sampled_from([FaultKind.PHANTOM_FAILURE, FaultKind.PHANTOM_SUCCESS]),
             "occurrence": st.integers(min_value=1, max_value=6),
         }
     ),
