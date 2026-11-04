@@ -8,6 +8,7 @@ from threading import Event
 
 import pytest
 
+from moody_blues.config import Settings
 from moody_blues.contracts.common import ErrorCategory
 from moody_blues.contracts.experiment_evidence import ExperimentAuthorship, ExperimentState
 from moody_blues.contracts.inference import InferenceRequest, InferenceResult
@@ -22,6 +23,7 @@ from moody_blues.contracts.investigation import (
 from moody_blues.experiments.target import ReferenceTarget, TargetRequest, TargetResult
 from moody_blues.experiments.workspace import sha256_text
 from moody_blues.inference.vultr import InferenceError
+from moody_blues.investigator import commands
 from moody_blues.investigator.fixtures import conclude, propose, tool_result
 from moody_blues.investigator.model import CONCLUDE_TOOL, PROPOSE_TOOL, tool_spec
 from moody_blues.investigator.workspace import (
@@ -492,3 +494,15 @@ def test_finish_action_summary_is_recorded_only_as_a_hash(tmp_path: Path) -> Non
         o for o in report.observations[0].omitted_untrusted_text if o.source == "sandbox_summary"
     ]
     assert omitted.sha256 == sha256_text("hello")
+
+
+def test_reruns_refuse_without_confirmation(capsys: pytest.CaptureFixture[str]) -> None:
+    code = commands.reproduce(Settings(_env_file=None), confirmed=False, experiment_id="x", runs=6)  # type: ignore[call-arg]
+    assert code == 2
+    assert "NOT_RUN" in capsys.readouterr().out
+
+
+def test_reruns_are_bounded(capsys: pytest.CaptureFixture[str]) -> None:
+    code = commands.reproduce(Settings(_env_file=None), confirmed=True, experiment_id="x", runs=99)  # type: ignore[call-arg]
+    assert code == 2
+    assert "runs must be" in capsys.readouterr().out

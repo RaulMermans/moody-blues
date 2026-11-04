@@ -16,6 +16,12 @@ from uuid import uuid4
 from moody_blues.config import Settings
 from moody_blues.contracts.agent import AgentBudget
 from moody_blues.contracts.common import MoodyBluesError
+from moody_blues.contracts.experiment_evidence import (
+    ExperimentAuthorship,
+    ExperimentEvidence,
+    ExperimentSpec,
+    ExperimentState,
+)
 from moody_blues.contracts.investigation import (
     InvestigationLimits,
     InvestigationReport,
@@ -24,7 +30,9 @@ from moody_blues.contracts.investigation import (
     WorldTier,
 )
 from moody_blues.experiments.budget import PriceCeiling, ScopedSpend, SpendLedger
+from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import AgentTarget, ReferenceTarget
+from moody_blues.experiments.workspace import EVIDENCE
 from moody_blues.inference.vultr import PROVIDER, VultrInferenceClient
 from moody_blues.investigator.catalog import WORLD_TIERS, target_capability
 from moody_blues.investigator.evaluation import (
@@ -37,8 +45,10 @@ from moody_blues.investigator.evaluation import (
     strategy_row,
     write_json,
 )
+from moody_blues.investigator.findings import classify_run, reproduction_status
 from moody_blues.investigator.fixtures import FIXTURE_MODEL, ObservationDrivenFixture
 from moody_blues.investigator.model import InvestigatorModel
+from moody_blues.investigator.observations import violation_codes
 from moody_blues.investigator.preflight import (
     PreflightReport,
     generated_code_runner,
@@ -68,6 +78,7 @@ LIVE_TARGET_BUDGET = AgentBudget(
     max_wall_seconds=180,
 )
 MAX_EVAL_TRIALS = 3
+MAX_REPRO_RUNS = 8
 # The world each tier's fixed first experiment runs in. Reference executors behave cleanly in it.
 PAIR_SEED_WORLDS = {WorldTier.VALIDATION: "w-v1", WorldTier.EVALUATION: "w-e3"}
 
@@ -339,6 +350,88 @@ def evaluate(
         print(table)
     print(f"record: {directory}")
     return _finish_live(live, reports)
+
+
+def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: int) -> int:
+    """Rerun one generated program unchanged in fresh worlds, to estimate how often it recurs."""
+    if not confirmed:
+        return _not_confirmed("investigator-repro")
+    if not 1 <= runs <= MAX_REPRO_RUNS:
+        print(json.dumps({"status": "NOT_RUN", "reason": f"runs must be 1-{MAX_REPRO_RUNS}"}))
+        return 2
+    directory = EXPERIMENTS / experiment_id
+    original = ExperimentEvidence.model_validate_json(
+        (directory / EVIDENCE).read_text(encoding="utf-8")
+    )
+    if original.generation is None or original.source_path is None or not original.target_runs:
+        print(json.dumps({"status": "NOT_RUN", "reason": "not a generated experiment with a run"}))
+        return 2
+    if verify_experiment(directory):
+        print(json.dumps({"status": "NOT_RUN", "reason": "original evidence does not verify"}))
+        return 2
+    live = _live(settings)
+    if live is None:
+        return 2
+    code = (directory / original.source_path).read_text(encoding="utf-8")
+    key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
+    scope = f"repro_{experiment_id}_{uuid4().hex[:6]}"
+    spend = ScopedSpend(live.ledger, scope, settings.investigator_max_spend_usd)
+    runner = ExperimentRunner(
+        sandbox=generated_code_runner(settings),
+        target=AgentTarget(
+            inference=_target_client(settings, key),
+            evidence="live_provider",
+            provider=PROVIDER,
+            model=settings.investigator_target_model,
+            budget=LIVE_TARGET_BUDGET,
+            ledger=spend,
+        ),
+        root=EXPERIMENTS,
+        sandbox_limits=sandbox_limits(settings),
+    )
+    first = original.target_runs[0]
+    rows: list[dict[str, object]] = []
+    for index in range(1, runs + 1):
+        evidence = runner.run(
+            ExperimentSpec(
+                label=f"repro-rate-{index}",
+                code=code,
+                parent_investigation_id=scope[:64],
+                authorship=ExperimentAuthorship.MODEL_GENERATED,
+                generation=original.generation,
+                reproduction_of=experiment_id,
+            ),
+            worlds=(first.authorized.scenario_id,),
+            max_runtime_seconds=300.0,
+            cancel=None,
+        )
+        status = reproduction_status(first, evidence)
+        run = evidence.target_runs[0] if evidence.target_runs else None
+        row: dict[str, object] = {
+            "run": index,
+            "experiment_id": evidence.experiment_id,
+            "status": evidence.status.value,
+            "reproduction": status.value,
+            "finding_class": classify_run(run, evidence_intact=True).value if run else None,
+            "verdict": run.oracle.verdict.value if run else None,
+            "run_outcome": run.run_outcome if run else None,
+            "violation_codes": violation_codes(run) if run else [],
+            "new_records": len(run.committed.new_customer_ids) if run else None,
+            "claim": run.target_observed.claim.status.value
+            if run and run.target_observed.claim
+            else None,
+            "truncated_model_steps": run.truncated_model_steps if run else None,
+            "tokens": run.tokens.total_tokens if run and run.tokens else None,
+        }
+        rows.append(row)
+        print(json.dumps(row))
+        if evidence.status is ExperimentState.BUDGET_EXHAUSTED:
+            break
+    out = EVALUATIONS / f"repro-{experiment_id}-{datetime.now(UTC):%Y%m%dT%H%M%SZ}.json"
+    EVALUATIONS.mkdir(parents=True, exist_ok=True)
+    write_json(out, rows)
+    print(f"record: {out}")
+    return _finish_live(live, [])
 
 
 def _evaluate_pairs(

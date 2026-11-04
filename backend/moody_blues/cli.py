@@ -546,6 +546,13 @@ def _investigator(settings: Settings, args: argparse.Namespace) -> int:
                 tier=WorldTier(args.tier),
                 strategy=Strategy(args.strategy),
             )
+        case "investigator-repro":
+            return commands.reproduce(
+                settings,
+                confirmed=args.confirm_billable,
+                experiment_id=args.experiment,
+                runs=args.runs,
+            )
         case _:
             return commands.evaluate(
                 settings,
@@ -645,6 +652,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     il.add_argument("--strategy", choices=["adaptive", "one_shot", "fixed"], default="adaptive")
     il.add_argument("--confirm-billable", action="store_true")
+    ir = sub.add_parser("investigator-repro")
+    ir.add_argument("--experiment", required=True)
+    ir.add_argument("--runs", type=int, default=6)
+    ir.add_argument("--confirm-billable", action="store_true")
     ie = sub.add_parser("investigator-eval")
     ie.add_argument("--tier", choices=["validation", "evaluation"], default="validation")
     ie.add_argument("--trials", type=int, default=1)
@@ -690,7 +701,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return live_budget(settings, args.import_report)
         case "investigator-preflight" | "investigator-demo" | "investigator-live":
             return _investigator(settings, args)
-        case "investigator-eval":
+        case "investigator-eval" | "investigator-repro":
             return _investigator(settings, args)
         case _:
             parser.error(f"unknown command {args.command}")

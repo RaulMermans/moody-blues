@@ -11,7 +11,7 @@ PYTEST  := $(UV) run pytest
         test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
-        investigator-live investigator-eval live-budget sandbox-clean clean
+        investigator-live investigator-eval investigator-repro live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -126,6 +126,11 @@ investigator-live: ## LIVE + CHARGEABLE: one investigation; needs CONFIRM=1 (TIE
 
 investigator-eval: ## LIVE + CHARGEABLE: paired tests + comparison; needs CONFIRM=1 (TIER=, PART=, EVAL_TRIALS=, REPEATS=)
 	$(UV) run moody-blues investigator-eval --tier $(TIER) --part $(PART) --trials $(EVAL_TRIALS) --repeats $(REPEATS) $(if $(CONFIRM),--confirm-billable)
+
+RUNS ?= 6
+
+investigator-repro: ## LIVE + CHARGEABLE: rerun one generated program; needs CONFIRM=1 (EXPERIMENT=, RUNS=)
+	$(UV) run moody-blues investigator-repro --experiment $(EXPERIMENT) --runs $(RUNS) $(if $(CONFIRM),--confirm-billable)
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget
