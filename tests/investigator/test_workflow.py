@@ -21,7 +21,12 @@ from moody_blues.contracts.investigation import (
     Strategy,
 )
 from moody_blues.experiments.target import ReferenceTarget, TargetRequest, TargetResult
-from moody_blues.experiments.workspace import sha256_text
+from moody_blues.experiments.workspace import (
+    append_record,
+    atomic_write,
+    read_journal,
+    sha256_text,
+)
 from moody_blues.inference.vultr import InferenceError
 from moody_blues.investigator import commands
 from moody_blues.investigator.fixtures import conclude, propose, tool_result
@@ -375,6 +380,27 @@ def test_tampering_with_linked_evidence_is_detected(tmp_path: Path) -> None:
     path = h.experiments / report.experiments[0].experiment_id / "evidence.json"
     path.write_text(path.read_text().replace('"PASS"', '"VIOLATION"'), encoding="utf-8")
     assert verify_investigation(h.investigations / report.investigation_id, h.experiments)
+
+
+def test_a_consistently_rewritten_report_still_fails_on_the_evidence_link(tmp_path: Path) -> None:
+    """The report hash and journal can be made to agree; the link to evidence must still hold."""
+    h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=experiment())
+    report = h.run()
+    directory = h.investigations / report.investigation_id
+    ref = report.experiments[0].model_copy(update={"evidence_sha256": "0" * 64})
+    forged = report.model_copy(update={"experiments": [ref]})
+    digest = atomic_write(directory / "report.json", forged.model_dump_json(indent=2) + "\n")
+    records, _ = read_journal(directory / "journal.jsonl")
+    append_record(
+        directory / "journal.jsonl",
+        seq=records[-1].seq + 1,
+        at=records[-1].at,
+        kind="investigation_finished",
+        payload={"state": "completed", "report_sha256": digest},
+        prev=records[-1].sha256,
+    )
+    problems = verify_investigation(directory, h.experiments)
+    assert problems == [f"{ref.experiment_id}: evidence differs from the linked hash"]
 
 
 def test_a_dead_investigation_is_marked_and_never_resumed(tmp_path: Path) -> None:
