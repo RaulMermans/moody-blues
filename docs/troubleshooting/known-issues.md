@@ -201,7 +201,10 @@ contributor might also hit.
   `index.lock`; a reset moves files but not the ref.
 - **Cause:** the repo is in iCloud Drive and the disk is nearly full, so macOS evicts files (`ls -lO`,
   `find -flags +dataless`). Git memory-maps objects, so an evicted one raises SIGBUS.
-- **Fix:** move the repo out of iCloud or free disk space. Until then: `brctl download <file>` and wait
+- **Resolved in Sprint 7:** the working copy is now `~/dev/Moody-Blues`, outside iCloud, with `.git`,
+  `.artifacts` and `.env` carried over and hash-checked. The Desktop copy stays as the original until
+  the owner approves removing it. Do not work there.
+- **Fix, if it recurs:** move the repo out of iCloud or free disk space. Until then: `brctl download <file>` and wait
   for `find .git -type f -flags +dataless` to return nothing, then `git fsck`. Run live work from a
   `git archive` export outside iCloud, symlinking `.artifacts` so the ledger stays put. Remove a lock
   only after `lsof` shows no holder and no git process is working in this repo. Other apps' git
@@ -214,3 +217,30 @@ contributor might also hit.
 - **Fix:** check `Runs a fault reached` and `Control runs a fault reached` before reading any
   contrast. A met rule against an unexposed arm says nothing about that fault.
 
+### KI-36: The evidence scan flagged a newline as a Windows path
+- **Symptom:** `recorded-export` refused every bundle with `windows_path`.
+- **Cause:** the scan read escaped JSON, where `a:\nb` looks like a drive path.
+- **Fix:** it scans decoded strings and dictionary keys. The pattern stayed as strict.
+
+### KI-37: A rehearsal said a model concluded
+- **Symptom:** "Ended as Model concluded" and an "Investigator model" tag on a run with no model.
+- **Cause:** recorded codes such as `model_concluded` were shown as written.
+- **Fix:** a run whose evidence is `offline_fixture` says fixture in its timeline, panel and job status.
+  The stored code is unchanged. Regression tests are in `tests/explorer` and `frontend/e2e`.
+
+### KI-38: Playwright finds two pages, or a loading panel in a screenshot
+- **Symptom:** a strict-mode error naming two `main` elements after a client navigation, or a screenshot
+  of the loading state although assertions passed.
+- **Cause:** Next keeps the previous route in the DOM, hidden. Streamed content can also exist in the
+  DOM before it replaces its fallback.
+- **Fix:** assert through `page.getByRole("main")`, which ignores hidden content. Before a screenshot,
+  wait for the loading text to leave. Before a key press, wait for `networkidle`, because a key pressed
+  before hydration can be lost.
+- **Related:** `networkidle` never fired after sign-in because the client did not read the response
+  body, which left that request open. The client now releases it. An unread `fetch` body is worth
+  checking whenever `networkidle` hangs.
+
+### KI-39: Local `make test-e2e` needs the pinned sandbox image
+- **Symptom:** a rehearsal job ends `failed` with `sandbox_preflight_failed`.
+- **Cause:** generated code runs only on the digest-pinned image, which is never pulled implicitly.
+- **Fix:** `docker pull` the value of `generated_code_image`. CI does this in the `e2e` job.

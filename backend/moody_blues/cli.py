@@ -19,6 +19,8 @@ Commands:
   investigator-demo       Fixture model, real sandboxes and worlds (free).
   investigator-live       One live investigation (chargeable; --confirm-billable).
   investigator-eval       Paired tests and strategy comparison (chargeable; --confirm-billable).
+  recorded-export         Rebuild the curated recorded investigations from local records (free).
+  recorded-verify         Check the recorded investigations against manifest and source (free).
 """
 
 from __future__ import annotations
@@ -530,6 +532,37 @@ def experiment_recover(settings: Settings) -> int:
     return 0
 
 
+def _known_secrets(settings: Settings) -> tuple[str, ...]:
+    held = (settings.vultr_api_key, settings.operator_token)
+    return tuple(s.get_secret_value() for s in held if s is not None)
+
+
+def recorded_export(settings: Settings) -> int:
+    from moody_blues.explorer.paths import artifacts_dir, recorded_dir
+    from moody_blues.explorer.recorded import export
+
+    manifest = export(
+        artifacts_dir(settings), recorded_dir(settings), secrets=_known_secrets(settings)
+    )
+    print(manifest.model_dump_json(indent=2))
+    return 0
+
+
+def recorded_verify(settings: Settings) -> int:
+    from moody_blues.explorer.paths import artifacts_dir, recorded_dir
+    from moody_blues.explorer.recorded import verify_export
+
+    artifacts = artifacts_dir(settings)
+    problems = verify_export(
+        recorded_dir(settings),
+        artifacts if (artifacts / "investigations").is_dir() else None,
+        secrets=_known_secrets(settings),
+    )
+    status = "FAIL" if problems else "PASS"
+    print(json.dumps({"status": status, "problems": problems}, indent=2))
+    return 1 if problems else 0
+
+
 def _investigator(settings: Settings, args: argparse.Namespace) -> int:
     from moody_blues.contracts.investigation import Strategy, WorldTier
     from moody_blues.investigator import commands
@@ -669,6 +702,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     el.add_argument("--max-tool-calls", type=int, default=16)
     el.add_argument("--max-run-tokens", type=int, default=20_000)
     sub.add_parser("experiment-recover")
+    sub.add_parser("recorded-export")
+    sub.add_parser("recorded-verify")
     sub.add_parser("investigator-preflight")
     sub.add_parser("investigator-demo")
     il = sub.add_parser("investigator-live")
@@ -736,6 +771,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return experiment_live(settings, args)
         case "experiment-recover":
             return experiment_recover(settings)
+        case "recorded-export":
+            return recorded_export(settings)
+        case "recorded-verify":
+            return recorded_verify(settings)
         case "live-budget":
             return live_budget(settings, args.import_report)
         case "investigator-preflight" | "investigator-demo" | "investigator-live":

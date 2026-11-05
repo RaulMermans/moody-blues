@@ -23,6 +23,10 @@ class ErrorCategory(StrEnum):
     VALIDATION = "validation"
     NOT_FOUND = "not_found"
     INTERNAL = "internal"
+    UNAUTHORIZED = "unauthorized"
+    FORBIDDEN = "forbidden"
+    RATE_LIMITED = "rate_limited"
+    CONFLICT = "conflict"
     # Provider
     PROVIDER_NOT_CONFIGURED = "provider_not_configured"
     PROVIDER_AUTH = "provider_auth"

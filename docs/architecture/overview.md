@@ -1,17 +1,19 @@
 # Architecture overview
 
-_Last updated: Sprint 6 (2026-11-05). Measurement is described in [evaluation.md](evaluation.md). Covers only what is implemented; planned components are
-marked as planned._
+_Last updated: Sprint 7 (2026-11-05). Measurement is in [evaluation.md](evaluation.md), the product
+layer in [product-experience.md](product-experience.md). Covers only what is implemented._
 
 ## Shape
 
-A hybrid workflow–agent design. One adaptive **Investigator** (planned, Sprint 2+) will be
-surrounded by deterministic services for execution, world state and verification. Sprint 1
-builds those deterministic foundations and the contracts between them.
+A hybrid workflow–agent design. One **Investigator** model works inside a deterministic workflow,
+surrounded by deterministic services for execution, world state and verification. A read-only
+evidence API and a Next.js explorer make the records readable without the source code.
 
 ```text
  Browser ──► Next.js (frontend/)
-              └─ /api/status route handler  ──server-side──►  FastAPI (backend/moody_blues)
+              ├─ server components ──────────┐
+              ├─ /api/status                 ├─ server-side ──►  FastAPI (backend/moody_blues)
+              └─ /api/operator/* (session) ──┘
                                                                 ├─ api/       HTTP, request ids, error envelopes
                                                                 ├─ services/  health/readiness logic
                                                                 ├─ contracts/ Pydantic types shared by all layers
@@ -19,7 +21,10 @@ builds those deterministic foundations and the contracts between them.
                                                                 ├─ sandbox/   SandboxRunner ──► Docker daemon ──► disposable container
                                                                 ├─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
                                                                 ├─ agents/    Target Agent: LLM tool loop ──ToolPort──► world/ ; ──► inference/
-                                                                └─ experiments/ Coordinator: sandbox/ ◄─ validated actions ─► agents/ + world/
+                                                                ├─ experiments/ Coordinator: sandbox/ ◄─ validated actions ─► agents/ + world/
+                                                                ├─ investigator/ One model in a deterministic workflow ──► experiments/
+                                                                ├─ evaluation/ Registered studies over the above
+                                                                └─ explorer/  Evidence projection, recorded bundles, operator jobs
  CLI (moody-blues world-demo | world-run) ──► services/world_runner ──► world/
  CLI (moody-blues agent-run | agent-eval) ──► services/agent_world_runner, agent_eval ──► agents/ + world/
 ```
@@ -37,7 +42,16 @@ Built in Sprint 4: an isolated experiment runtime. Sandboxed Python proposes val
 a trusted coordinator runs the Target Agent, and the Oracle decides. See
 [experiment-runtime.md](experiment-runtime.md) and [ADR 0004](../adr/0004-experiment-runtime.md).
 
-Planned (not built): the Investigator loop.
+Built in Sprint 5: the Investigator. See [investigator.md](investigator.md) and
+[ADR 0005](../adr/0005-autonomous-investigator.md).
+
+Built in Sprint 6: registered evaluation. Its conclusion was `NO_DEMONSTRATED_ADVANTAGE`. See
+[evaluation.md](evaluation.md) and [ADR 0006](../adr/0006-registered-evaluation.md).
+
+Built in Sprint 7: the Investigation Explorer. Real records become hash-pinned public bundles served
+by a read-only API, and an operator can start a bounded mission. See
+[product-experience.md](product-experience.md), [evidence-api.md](evidence-api.md) and
+[ADR 0007](../adr/0007-investigation-explorer.md).
 
 ## Components
 

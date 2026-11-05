@@ -14,7 +14,8 @@ export const ORPHAN_FRONTEND_URL = `http://127.0.0.1:${ORPHAN_FRONTEND_PORT}`;
 // Not a real credential: a canary to prove key material never reaches the browser.
 // It makes the backend report Vultr as configured_unverified; nothing calls Vultr.
 export const CANARY_VULTR_KEY = "e2e-canary-not-a-real-key-7c41";
-
+// Likewise a test value. It exists only in this process and in the servers started below.
+export const OPERATOR_TOKEN = "e2e-operator-token-not-a-real-secret-3f9a2";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -29,10 +30,18 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `uv run uvicorn moody_blues.main:app --host 127.0.0.1 --port ${BACKEND_PORT}`,
+      command: `node frontend/e2e/prepare.mjs && uv run uvicorn moody_blues.main:app --host 127.0.0.1 --port ${BACKEND_PORT}`,
       cwd: "..",
       url: `${BACKEND_URL}/health`,
-      env: { MOODY_VULTR_API_KEY: CANARY_VULTR_KEY },
+      env: {
+        MOODY_VULTR_API_KEY: CANARY_VULTR_KEY,
+        MOODY_OPERATOR_TOKEN: OPERATOR_TOKEN,
+        MOODY_RECORDED_EVIDENCE_DIR: "frontend/.e2e/recorded",
+        MOODY_ARTIFACTS_DIR: "frontend/.e2e/artifacts",
+        // On, so refusal below is the ledger's doing. Its fixture is over the limit, and the key
+        // is a canary: a chargeable mission cannot reach a provider from this configuration.
+        MOODY_LIVE_RUNS_ENABLED: "true",
+      },
       reuseExistingServer: false,
       timeout: 60_000,
       stdout: "pipe",

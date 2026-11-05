@@ -26,7 +26,7 @@ jobs:
       - run: uv run ruff format --check backend tests
       - run: uv run ruff check backend tests
       - run: uv run pyright
-      - run: uv run pytest tests/unit tests/world tests/agent tests/experiment tests/investigator tests/evaluation
+      - run: uv run pytest tests/unit tests/world tests/agent tests/experiment tests/investigator tests/evaluation tests/explorer
       - run: uv run moody-blues world-demo --no-color
 
   frontend:
@@ -82,6 +82,8 @@ jobs:
           node-version: 20
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
+      # The rehearsal journey runs generated programs on this pinned image, never pulled implicitly.
+      - run: docker pull "$(uv run python -c 'from moody_blues.config import Settings; print(Settings().generated_code_image)')"
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
       - run: pnpm exec playwright install --with-deps chromium

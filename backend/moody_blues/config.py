@@ -7,9 +7,10 @@ All settings are read from environment variables (prefix ``MOODY_``) or a local
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 VULTR_INFERENCE_BASE_URL = "https://api.vultrinference.com/v1"
@@ -18,6 +19,7 @@ VULTR_INFERENCE_BASE_URL = "https://api.vultrinference.com/v1"
 # (https://docs.vultr.com/how-to-use-tool-calling-with-vultr-serverless-inference).
 # Verify against the live catalog with `make vultr-models` once credentials exist.
 DEFAULT_VULTR_MODEL = "kimi-k2-instruct"
+MIN_OPERATOR_TOKEN_CHARS = 32
 
 
 class Settings(BaseSettings):
@@ -62,6 +64,15 @@ class Settings(BaseSettings):
         "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30"
     )
 
+    # Investigation Explorer. Public reads serve only the committed, hash-pinned bundles.
+    # None means the repository defaults (``evidence/recorded`` and ``.artifacts``).
+    recorded_evidence_dir: Path | None = None
+    artifacts_dir: Path | None = None
+    # Operator access to the job API. Unset means every operator route refuses.
+    operator_token: SecretStr | None = None
+    # A separate switch for missions that spend money. Off unless the owner turns it on.
+    live_runs_enabled: bool = False
+
     # Sandbox
     docker_host: str | None = None
     sandbox_image: str = "python:3.12-slim"
@@ -70,6 +81,13 @@ class Settings(BaseSettings):
     sandbox_cpus: float = Field(default=0.5, gt=0, le=4)
     sandbox_pids_limit: int = Field(default=64, ge=8, le=1024)
     sandbox_output_limit_bytes: int = Field(default=64_000, ge=1_000, le=1_000_000)
+
+    @field_validator("operator_token")
+    @classmethod
+    def _operator_token_is_strong(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None and 0 < len(value.get_secret_value()) < MIN_OPERATOR_TOKEN_CHARS:
+            raise ValueError(f"operator token must be at least {MIN_OPERATOR_TOKEN_CHARS} chars")
+        return value
 
     @property
     def vultr_configured(self) -> bool:

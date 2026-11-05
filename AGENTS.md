@@ -17,8 +17,10 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
+| `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
+| `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -26,6 +28,7 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/experiment` | Experiment runtime with a labeled scripted sandbox and real SQLite worlds; offline; part of `make test` |
 | `tests/investigator` | Investigator with a labeled scripted model and sandbox, real SQLite worlds; offline; part of `make test` |
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
+| `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -137,6 +140,24 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   their registered test. Do not tune on them and report them as unseen.
 - `make eval-run` and `make eval-repro` are live and chargeable. Suites run one at a time, within the manifest's caps.
 
+**Explorer**
+- Everything shown comes from a real execution or a labeled one. The UI never holds a result, and no
+  timeline is built from a summary: each entry names the journal record it came from.
+- Projection copies named fields. It never derives a verdict, and it refuses rather than fills a gap.
+  `ProductOutcome` only summarises recorded states, and a missing claim never reads as success.
+- Public routes serve only committed bundles that pass their hash and schema check. A record that fails
+  is listed as refused and is never rendered as a result. Request ids are compared, never joined to a path.
+- Recorded runs are labeled recorded, never live. A fixture or reference script is never called a model,
+  and `offline_fixture` can never be exported as recorded.
+- Case notes are editorial and labeled so. Each states what its evidence must show, and an export whose
+  evidence disagrees is refused. Do not contradict `NO_DEMONSTRATED_ADVANTAGE` anywhere in the product.
+- Operator routes refuse by default. A request names a catalog mission and nothing else: no code, world,
+  fault, limit or model. Evaluation and reserved worlds are never missions.
+- Chargeable missions need the operator token, `MOODY_LIVE_RUNS_ENABLED`, and a ledger that covers one
+  investigation. The API has no way to raise a limit. Only ids and fixed codes are streamed as progress.
+- A job is terminal only once its bundle is on disk or the reason it cannot be. Jobs are never retried.
+  After a crash a target run that did not report makes the job `outcome_uncertain`.
+
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.
 - Small cohesive modules; no speculative abstractions; no broad `except` that hides
@@ -151,6 +172,10 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 **External actions requiring explicit human approval**
 Purchasing or creating Vultr resources, redeeming credits, deploying, pushing to remotes,
 running adversarial experiments against anything but local synthetic environments.
+
+**Environment**
+- Work from `~/dev/Moody-Blues`. The copy on the iCloud Desktop is the pre-migration original (KI-34):
+  do not develop there, and do not delete it without the owner's approval.
 
 **Docs**
 - Keep README, this file and `docs/` in sync with the code in the same change.
