@@ -13,7 +13,7 @@ from moody_blues import __version__
 from moody_blues.api.auth import OperatorGate
 from moody_blues.api.errors import install_error_handlers
 from moody_blues.api.middleware import RequestIdMiddleware
-from moody_blues.api.routes import health, investigations, operator, sandbox
+from moody_blues.api.routes import containment, health, investigations, operator, sandbox
 from moody_blues.config import Settings, get_settings
 from moody_blues.explorer.factories import default_factory
 from moody_blues.explorer.jobs import JobManager, JobStore, WorkflowFactory
@@ -92,7 +92,10 @@ def create_app(
     app.add_middleware(RequestIdMiddleware)  # outermost: wraps CORS and error responses
 
     app.include_router(health.router)
-    app.include_router(sandbox.router)
+    # It starts a container with no token. Private binding is the main control; this is the second.
+    if settings.environment != "production":
+        app.include_router(sandbox.router)
     app.include_router(investigations.router)
+    app.include_router(containment.router)
     app.include_router(operator.router)
     return app

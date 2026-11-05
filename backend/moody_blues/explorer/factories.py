@@ -13,7 +13,7 @@ from moody_blues.config import Settings
 from moody_blues.contracts.common import MoodyBluesError
 from moody_blues.contracts.explorer import ExecutionMode
 from moody_blues.contracts.investigation import InvestigationRequest
-from moody_blues.experiments.budget import PriceCeiling, SpendLedger
+from moody_blues.experiments.budget import SpendLedger, ledger_path
 from moody_blues.experiments.target import ReferenceTarget
 from moody_blues.explorer.jobs import MissionBlockedError, WorkflowFactory
 from moody_blues.explorer.missions import Mission
@@ -36,11 +36,7 @@ _REHEARSAL_SEQUENCE = [
 
 
 def ledger_for(settings: Settings, artifacts: Path) -> SpendLedger:
-    return SpendLedger(
-        artifacts / "live-spend" / "ledger.jsonl",
-        limit_usd=settings.live_spend_limit_usd,
-        prices=PriceCeiling.from_settings(settings),
-    )
+    return SpendLedger.from_settings(settings, ledger_path(settings, artifacts))
 
 
 def _preflight(settings: Settings) -> None:

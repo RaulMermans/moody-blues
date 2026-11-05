@@ -30,7 +30,11 @@ from moody_blues.contracts.investigation import (
     Strategy,
     WorldTier,
 )
-from moody_blues.experiments.budget import PriceCeiling, ScopedSpend, SpendLedger
+from moody_blues.experiments.budget import (
+    ScopedSpend,
+    SpendLedger,
+    ledger_path,
+)
 from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import AgentTarget, ReferenceTarget
 from moody_blues.experiments.workspace import EVIDENCE
@@ -167,10 +171,8 @@ def open_live(settings: Settings, *, limit_usd: float | None = None) -> LiveCont
         return None
     if _gate(settings) is None:
         return None
-    ledger = SpendLedger(
-        ARTIFACTS / "live-spend" / "ledger.jsonl",
-        limit_usd=limit_usd if limit_usd is not None else settings.live_spend_limit_usd,
-        prices=PriceCeiling.from_settings(settings),
+    ledger = SpendLedger.from_settings(
+        settings, ledger_path(settings, ARTIFACTS), limit_usd=limit_usd
     )
     try:
         status = ledger.status()  # refuses a corrupt ledger before anything is spent

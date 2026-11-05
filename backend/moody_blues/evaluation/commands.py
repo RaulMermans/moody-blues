@@ -59,6 +59,7 @@ from moody_blues.experiments.budget import (
     PriceCeiling,
     ScopedSpend,
     SpendLedger,
+    ledger_path,
     worst_case_run_tokens,
 )
 from moody_blues.experiments.programs import probe_program
@@ -280,11 +281,7 @@ def _registered(
 
 
 def eval_freeze(settings: Settings) -> int:
-    ledger = SpendLedger(
-        ARTIFACTS / "live-spend" / "ledger.jsonl",
-        limit_usd=settings.live_spend_limit_usd,
-        prices=PriceCeiling.from_settings(settings),
-    )
+    ledger = SpendLedger.from_settings(settings, ledger_path(settings, ARTIFACTS))
     status = ledger.status()
     if status.open_reservations:
         print(json.dumps({"status": "BLOCKED", "reason": "open reservations in the ledger"}))
@@ -422,10 +419,8 @@ def eval_report(settings: Settings) -> int:
     manifest, plan = load_frozen()
     journals = {s: _journal(s) for s in SUITES}
     runs = journals["causal"].payloads("run")
-    ledger = SpendLedger(
-        ARTIFACTS / "live-spend" / "ledger.jsonl",
-        limit_usd=manifest.budget.ledger_limit_usd,
-        prices=PriceCeiling.from_settings(settings),
+    ledger = SpendLedger.from_settings(
+        settings, ledger_path(settings, ARTIFACTS), limit_usd=manifest.budget.ledger_limit_usd
     )
     results, trials = build_results(
         manifest,

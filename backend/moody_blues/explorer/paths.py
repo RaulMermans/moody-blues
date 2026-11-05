@@ -15,3 +15,7 @@ def artifacts_dir(settings: Settings) -> Path:
 
 def recorded_dir(settings: Settings) -> Path:
     return settings.recorded_evidence_dir or REPO_ROOT / "evidence" / "recorded"
+
+
+def containment_report_path(settings: Settings) -> Path:
+    return settings.containment_report or REPO_ROOT / "evidence" / "containment" / "report.json"
