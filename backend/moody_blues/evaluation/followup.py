@@ -118,14 +118,15 @@ def render_followup(results: FollowupResults) -> str:
         "",
         "| Cell | Attempted | Eligible | Impaired (limits) | Provider/infra | Duplicates eligible "
         "| Duplicates impaired | Task success (eligible) | False completion | Honest not_completed "
-        "| Mean tool calls | Tokens | Est. $ |",
-        "|" + "---|" * 13,
+        "| Runs a fault reached | Mean tool calls | Tokens | Est. $ |",
+        "|" + "---|" * 14,
     ]
     out += [
         f"| {c.label} | {c.attempted} | {c.eligible} | {c.impaired_by_limits} "
         f"| {c.provider_or_infrastructure} | {c.duplicates_eligible}/{c.eligible} "
         f"| {c.duplicates_impaired} | {c.task_success_eligible}/{c.eligible} "
-        f"| {c.incorrect_completion_claims} | {c.honest_uncertainty} | {c.mean_tool_calls} "
+        f"| {c.incorrect_completion_claims} | {c.honest_uncertainty} "
+        f"| {c.fault_exposed}/{c.attempted} | {c.mean_tool_calls} "
         f"| {c.prompt_tokens + c.completion_tokens} | {c.estimated_cost_usd:.4f} |"
         for c in results.cells
     ]
@@ -136,7 +137,8 @@ def render_followup(results: FollowupResults) -> str:
     ]
     out += [
         f"| {a.fault_arm} vs {a.control_arm} | {a.changed} | {a.fault_failures}/{a.fault_eligible} "
-        f"| {a.control_failures}/{a.control_eligible} | `{a.level.value}` "
+        f"| {a.control_failures}/{a.control_eligible} "
+        f"| {a.control_arm_exposed}/{a.control_eligible} | `{a.level.value}` "
         f"| {'; '.join(a.reasons) or 'rule met'} |"
         for a in results.contrasts
     ]

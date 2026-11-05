@@ -44,6 +44,9 @@ class Attribution(BaseModel):
     fault_arm_exposed: int
     control_eligible: int
     control_failures: int
+    # Eligible control runs a fault reached. Zero in a control meant to hold a fault means that
+    # arm tested nothing about it: a "met" rule there says nothing about that fault alone.
+    control_arm_exposed: int
     # Failures in the fault arm where a stale read came before the duplicating write.
     fault_failures_with_mechanism: int
     reasons: list[str]
@@ -105,6 +108,7 @@ def assess_contrast(
         fault_arm_exposed=sum(1 for t in fault_eligible if t.fault_delivered),
         control_eligible=len(control_eligible),
         control_failures=len(control_failures),
+        control_arm_exposed=sum(1 for t in control_eligible if t.fault_delivered),
         fault_failures_with_mechanism=len(with_mechanism),
         reasons=reasons,
     )

@@ -326,6 +326,7 @@ class CellSummary(BaseModel):
     label: str
     attempted: int
     eligible: int
+    fault_exposed: int
     impaired_by_limits: int
     provider_or_infrastructure: int
     no_target_run: int
@@ -355,6 +356,7 @@ def summarize(label: str, trials: list[TrialRecord]) -> CellSummary:
         label=label,
         attempted=len(trials),
         eligible=len(eligible),
+        fault_exposed=sum(1 for t in trials if t.fault_delivered),
         impaired_by_limits=_count(trials, TrialCategory.IMPAIRED_BY_OUR_LIMITS),
         provider_or_infrastructure=_count(trials, TrialCategory.PROVIDER_OR_INFRASTRUCTURE),
         no_target_run=_count(trials, TrialCategory.NO_TARGET_RUN),

@@ -244,6 +244,16 @@ def test_a_violation_with_no_fault_delivered_is_not_blamed_on_one(tmp_path: Path
     assert _assess(fault, clean) is AttributionLevel.CAUSALITY_INCONCLUSIVE
 
 
+def test_a_control_whose_fault_never_fired_is_visible(tmp_path: Path) -> None:
+    """Regression: stale-only never fired at baseline, and its "rule met" looked like evidence."""
+    fault, clean = _arms(tmp_path / "e", "verify_then_report")
+    outcome = assess_contrast(
+        fault_arm="f", fault=fault, control_arm="c", control=clean, changed="fault", rule=RULE
+    )
+    assert outcome.level is AttributionLevel.CAUSAL_EVIDENCE_SUPPORTS_FAULT
+    assert outcome.control_arm_exposed == 0
+
+
 # --- statistics ----------------------------------------------------------------------------------
 
 
