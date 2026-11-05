@@ -161,6 +161,9 @@ class TargetAgent:
                 result = self._inference.complete(request)
             except MoodyBluesError as exc:
                 state.error = exc.detail
+                # A failed request may still be billed and reports no usage, so the run's measured
+                # tokens are a lower bound and the ledger must keep the full reservation.
+                state.usage_complete = False
                 termination = TerminationReason.PROVIDER_ERROR
                 break
             state.account(request, result)

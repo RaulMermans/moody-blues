@@ -177,3 +177,22 @@ contributor might also hit.
   to duplicate it and said so.
 - **Fix:** identical-twin worlds state that a new record is required. Check `fault_attributable` and
   read the trace before describing any violation.
+
+### KI-31: Our limits can bite exactly where the failure is
+- **Symptom:** at `stale_read` span 6, 3 of 10 Sprint 5 runs on `w-e3` ended on our limits, and 2 of
+  those 3 were duplicates. They looked like ordinary samples.
+- **Cause:** long lag makes the agent read and reason more, so step and token caps bind in that cell.
+- **Fix:** `impairments_of` and `TrialRecord.eligible` keep such runs out of rates without touching
+  their verdicts. Sprint 6 raised the target's limits for every arm alike.
+
+### KI-32: A report could say "no violation" beside a real one
+- **Symptom:** `statement()` counted only `oracle_confirmed_violation`, so a report holding only
+  `impaired_violation` findings said none had been discovered.
+- **Fix:** impaired violations are now stated as such.
+
+### KI-33: Editing a prompt blocks the registered evaluation
+- **Symptom:** `make eval-run` answers `NOT_RUN` and names a changed fingerprint.
+- **Cause:** a prompt, policy, world or model changed after registration.
+- **Fix:** none needed if the change is wanted: register a new manifest id with a stated reason. Do
+  not edit `manifest.json`.
+

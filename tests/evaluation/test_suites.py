@@ -12,6 +12,7 @@ import pytest
 
 from moody_blues.config import Settings
 from moody_blues.contracts.agent import AgentConfigName
+from moody_blues.contracts.common import ErrorCategory, MoodyBluesError
 from moody_blues.contracts.experiment_evidence import ExperimentState
 from moody_blues.contracts.inference import InferenceRequest, InferenceResult
 from moody_blues.contracts.investigation import Strategy
@@ -32,7 +33,9 @@ from moody_blues.experiments.budget import (
     SpendLedger,
     worst_case_run_tokens,
 )
-from tests.agent.conftest import ScriptedModel, claim
+from moody_blues.experiments.target import AgentTarget, TargetRequest
+from moody_blues.world.scenarios import load_scenario
+from tests.agent.conftest import ScriptedModel, call, claim, tools
 from tests.evaluation.conftest import StubCausalExecutor, trial
 from tests.experiment.conftest import SANDBOX_LIMITS, finish_action
 from tests.investigator.conftest import ApprovedSandbox
@@ -283,7 +286,7 @@ def test_the_shared_cap_refuses_a_run_before_it_starts(
 ) -> None:
     ledger, root = wired
     root.mkdir()
-    action = {
+    action: dict[str, object] = {
         "protocol": "mb-exp/1",
         "action": "run_target_agent",
         "scenario_id": "w-e3",
@@ -364,3 +367,47 @@ class _ManyClaims:
 
     def complete(self, request: InferenceRequest) -> InferenceResult:
         return _claiming_model().complete(request)
+
+
+class _FailsAfterOneTurn:
+    """TEST DOUBLE. One normal turn with reported usage, then a connection failure."""
+
+    def __init__(self) -> None:
+        self._turns = 0
+
+    def complete(self, request: InferenceRequest) -> InferenceResult:
+        self._turns += 1
+        if self._turns > 1:
+            raise MoodyBluesError(ErrorCategory.PROVIDER_CONNECTION, "fixture: connection error")
+        return tools(call("search_customers", {"query": "x"}))
+
+
+def test_a_failed_request_keeps_the_full_reservation(
+    wired: tuple[SpendLedger, Path], manifest: Manifest, tmp_path: Path
+) -> None:
+    """Regression: a live connection error settled at the tokens measured before it."""
+    ledger, _ = wired
+    spend = ScopedSpend(ledger, "s6-causal", manifest.budget.causal_cap_usd)
+    target = AgentTarget(
+        inference=_FailsAfterOneTurn(),
+        evidence="live_provider",
+        provider="fixture",
+        model="fixture",
+        budget=manifest.target_budget,
+        ledger=spend,
+    )
+    result = target.run(
+        TargetRequest(
+            scenario=load_scenario("w-e3"),
+            config=AgentConfigName.BASELINE,
+            world_root=tmp_path,
+            max_wall_seconds=30.0,
+            cancel=None,
+        )
+    )
+    assert result.termination == "provider_error"
+    assert result.tokens is not None
+    assert not result.tokens.complete
+    assert ledger.status().settled_usd == pytest.approx(
+        ledger.prices.worst_case(worst_case_run_tokens(manifest.target_budget))
+    )
