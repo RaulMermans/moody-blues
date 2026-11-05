@@ -10,7 +10,7 @@ function Attempt({ attempt }: { attempt: ContainmentAttempt }) {
     <li
       data-testid="containment-attempt"
       data-attempt={attempt.attempt_id}
-      className="flex flex-col gap-3 rounded border border-line bg-raised p-4"
+      className="flex flex-col gap-3 border border-line bg-raised p-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="max-w-xl text-sm font-semibold text-foreground">{attempt.attempted}</h3>
@@ -101,7 +101,7 @@ async function Loaded() {
   if (report.ok) return <Report report={report.data} />;
   if (report.kind === "not_found") {
     return (
-      <p className="rounded border border-line bg-raised p-4 text-sm text-muted" data-testid="containment-none">
+      <p className="border border-line bg-raised p-4 text-sm text-muted" data-testid="containment-none">
         No containment report has been recorded on this host yet. Nothing is implied until one is.
       </p>
     );

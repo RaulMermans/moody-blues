@@ -84,7 +84,7 @@ function Row({ item }: { item: ListedInvestigation }) {
 export function InvestigationListView({ items }: { items: ListedInvestigation[] }) {
   if (items.length === 0) {
     return (
-      <p data-testid="empty-investigations" className="rounded-lg border border-line p-6 text-sm text-muted">
+      <p data-testid="empty-investigations" className="border border-line p-6 text-sm text-muted">
         No investigations are published on this server.
       </p>
     );
@@ -92,7 +92,7 @@ export function InvestigationListView({ items }: { items: ListedInvestigation[] 
   return (
     <ul
       aria-label="Investigations"
-      className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface"
+      className="divide-y divide-line overflow-hidden border border-line bg-surface"
     >
       {items.map((item) => (
         <Row key={item.investigation_id} item={item} />
