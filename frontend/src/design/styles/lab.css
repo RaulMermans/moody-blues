@@ -1,0 +1,21 @@
+/* The lab's stylesheet entry. It loads only in the design lab and never in the product. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "..";
+@source "../../app/design-lab";
+
+@import "./tokens.css";
+@import "./primitives.css";
+@import "./prototypes.css";
+@import "./studies.css";
+
+/* Tailwind names for the tokens the product's theme does not already have */
+@theme inline {
+  --color-rf-agent: var(--rf-agent);
+  --color-rf-actual: var(--rf-actual);
+  --color-rf-divergence: var(--rf-divergence);
+  --color-rf-text: var(--rf-text);
+  --color-rf-muted: var(--rf-text-muted);
+  --color-rf-faint: var(--rf-text-faint);
+}

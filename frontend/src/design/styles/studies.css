@@ -1,0 +1,282 @@
+/* The three visual studies. Kept for reference; only Direction A's language is carried forward. */
+
+/* A: Reality Fracture */
+.st-a {
+  --rf-split: 50%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: calc(100svh - 2rem);
+}
+
+.st-a-left,
+.st-a-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--rf-space-8);
+  padding: var(--rf-space-6) var(--rf-gutter);
+  min-width: 0;
+}
+
+.st-a-title {
+  font-size: var(--rf-type-colossal);
+  max-width: 6.4em;
+}
+
+.st-a-title-actual {
+  color: var(--rf-actual);
+}
+
+.st-a-right {
+  padding-top: var(--rf-space-16);
+}
+
+.st-a .rf-plane-agent {
+  right: 0;
+}
+
+.st-a .rf-divider-label {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .st-a {
+    grid-template-columns: calc(50% - 96px) 192px minmax(0, 1fr);
+  }
+}
+
+/* B: Mirror Corruption. Negative and positive, either side of a true axis */
+.st-b {
+  --st-b-dark: #101114;
+  --st-b-light: #e9ecef;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 2rem);
+}
+
+.st-b-row {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.st-b-neg,
+.st-b-pos {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--rf-space-2);
+  padding: var(--rf-space-4) var(--rf-gutter);
+  min-width: 0;
+}
+
+.st-b-neg {
+  background: var(--st-b-dark);
+  color: var(--st-b-light);
+  align-items: flex-end;
+  text-align: right;
+}
+
+.st-b-neg .rf-micro {
+  color: var(--st-b-light);
+}
+
+.st-b-pos {
+  background: var(--st-b-light);
+  color: var(--st-b-dark);
+  align-items: flex-start;
+}
+
+.st-b-word {
+  font-family: var(--rf-font-display);
+  font-stretch: 125%;
+  font-weight: 200;
+  font-size: clamp(2rem, 8vw, 8rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.st-b-flip {
+  display: inline-block;
+  transform: scaleX(-1);
+  transform-origin: center;
+  opacity: 0.85;
+}
+
+.st-b-label {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-micro);
+  text-transform: uppercase;
+  letter-spacing: var(--rf-tracking-micro);
+}
+
+.st-b-value {
+  font-family: var(--rf-font-display);
+  font-stretch: 125%;
+  font-weight: 300;
+  font-size: clamp(1.25rem, 3.4vw, 3rem);
+  line-height: 1.05;
+}
+
+.st-b-number {
+  font-family: var(--rf-font-display);
+  font-stretch: 125%;
+  font-weight: 200;
+  font-size: clamp(4rem, 11vw, 10rem);
+  line-height: 0.9;
+}
+
+.st-b-id {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-data);
+  overflow-wrap: anywhere;
+}
+
+/* The reflection fails here: the right half slips out of register with the left */
+.st-b-break .st-b-pos {
+  transform: translate(-18px, 22px);
+  outline: 1px solid var(--st-b-dark);
+}
+
+.st-b-seal {
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--rf-space-8) + 22px) var(--rf-gutter) var(--rf-space-4);
+  background: var(--st-b-dark);
+}
+
+/* C: Forensic Brutalism */
+.st-c {
+  --st-c-paper: #f4f1ea;
+  --st-c-ink: #0b0b0b;
+  --st-c-signal: #d93a0b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 2rem);
+  padding: var(--rf-space-4) var(--rf-gutter) var(--rf-space-8);
+  background: var(--st-c-paper);
+  color: var(--st-c-ink);
+  overflow: hidden;
+}
+
+.st-c-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--rf-space-1) var(--rf-space-4);
+  padding-bottom: var(--rf-space-2);
+  border-bottom: var(--rf-border-slab) solid var(--st-c-ink);
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.st-c-title {
+  padding-block: var(--rf-space-4);
+  font-family: var(--rf-font-display);
+  font-stretch: 100%;
+  font-weight: 900;
+  font-size: clamp(2rem, 5vw, 4.75rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+}
+
+.st-c-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-block: var(--rf-border-heavy) solid var(--st-c-ink);
+}
+
+.st-c-exhibit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-1);
+  padding: var(--rf-space-3) var(--rf-space-4) var(--rf-space-4) 0;
+  min-width: 0;
+}
+
+.st-c-tag {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.st-c-number {
+  font-family: var(--rf-font-display);
+  font-stretch: 100%;
+  font-weight: 900;
+  font-size: clamp(6rem, 16vw, 15rem);
+  line-height: 0.8;
+}
+
+.st-c-exhibit-wide .st-c-number {
+  color: var(--st-c-signal);
+}
+
+.st-c-caption {
+  font-size: var(--rf-type-lead);
+  font-weight: 700;
+}
+
+.st-c-id {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-data);
+  overflow-wrap: anywhere;
+}
+
+.st-c-findings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-1);
+  padding-block: var(--rf-space-3);
+  font-size: var(--rf-type-body);
+  max-width: 62ch;
+}
+
+.st-c-findings code {
+  font-family: var(--rf-font-tech);
+  font-weight: 700;
+}
+
+.st-c-stamp {
+  position: absolute;
+  right: var(--rf-gutter);
+  bottom: var(--rf-space-8);
+  padding: var(--rf-space-1) var(--rf-space-3);
+  font-family: var(--rf-font-display);
+  font-stretch: 75%;
+  font-weight: 900;
+  font-size: clamp(2rem, 6vw, 5rem);
+  line-height: 1;
+  color: var(--st-c-signal);
+  border: var(--rf-border-heavy) solid var(--st-c-signal);
+  transform: rotate(-5deg);
+}
+
+@media (min-width: 768px) {
+  .st-c-grid {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  }
+
+  .st-c-exhibit-wide {
+    padding-left: var(--rf-space-4);
+    border-left: var(--rf-border-heavy) solid var(--st-c-ink);
+  }
+}
+
+@media (max-width: 767px) {
+  .st-c-stamp {
+    position: static;
+    align-self: flex-start;
+    margin-top: var(--rf-space-2);
+  }
+
+  .st-b-break .st-b-pos {
+    transform: translate(-6px, 8px);
+  }
+}
