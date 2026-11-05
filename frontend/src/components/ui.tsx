@@ -10,13 +10,14 @@ import {
   VERDICT_TONE,
 } from "@/lib/labels";
 
+// A tag is a word with a hairline. Tone colours the word only, so a screen of tags stays quiet.
 const TONE_TEXT: Record<Tone, string> = {
-  bad: "text-bad border-bad/40 bg-bad/10",
-  good: "text-good border-good/40 bg-good/10",
-  warn: "text-warn border-warn/40 bg-warn/10",
-  neutral: "text-muted border-line bg-raised",
-  agent: "text-agent border-agent/40 bg-agent/10",
-  truth: "text-truth border-truth/40 bg-truth/10",
+  bad: "text-bad border-bad/50",
+  good: "text-good border-line",
+  warn: "text-warn border-line",
+  neutral: "text-muted border-line",
+  agent: "text-agent border-line",
+  truth: "text-truth border-line",
 };
 
 export function Tag({
@@ -34,7 +35,7 @@ export function Tag({
     <span
       title={title}
       data-testid={testId}
-      className={`inline-flex items-center whitespace-nowrap rounded border px-1.5 py-0.5 font-mono text-[11px] leading-4 ${TONE_TEXT[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap border px-1.5 py-0.5 font-mono text-[11px] leading-4 ${TONE_TEXT[tone]}`}
     >
       {children}
     </span>
@@ -73,6 +74,23 @@ export function Eyebrow({ children, className = "" }: { children: ReactNode; cla
   );
 }
 
+/** A wide table on a narrow screen. It scrolls, so the keyboard has to be able to reach it. */
+export function TableScroll({
+  label,
+  className = "",
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div role="region" aria-label={label} tabIndex={0} className={`overflow-x-auto ${className}`}>
+      {children}
+    </div>
+  );
+}
+
 export function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
@@ -92,7 +110,10 @@ export function Chevron() {
 
 export function Code({ children }: { children: ReactNode }) {
   return (
-    <pre className="max-h-96 overflow-auto rounded border border-line bg-background p-3 font-mono text-xs leading-5 text-foreground">
+    <pre
+      tabIndex={0}
+      className="max-h-96 overflow-auto border border-line bg-background p-3 font-mono text-xs leading-5 text-foreground"
+    >
       <code>{children}</code>
     </pre>
   );
@@ -100,7 +121,7 @@ export function Code({ children }: { children: ReactNode }) {
 
 export function LoadingPanel({ label }: { label: string }) {
   return (
-    <div role="status" className="rounded-lg border border-line bg-surface p-6">
+    <div role="status" className="border border-line bg-surface p-6">
       <p className="text-sm text-muted">{label}</p>
     </div>
   );

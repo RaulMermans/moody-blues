@@ -1,21 +1,59 @@
 /* The lab's stylesheet entry. It loads only in the design lab and never in the product. */
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
+@layer utilities;
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
-@source "..";
 @source "../../app/design-lab";
 
-@import "./tokens.css";
-@import "./primitives.css";
-@import "./prototypes.css";
-@import "./studies.css";
+.rf-lab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rf-space-2) var(--rf-space-4);
+  padding: var(--rf-space-2) var(--rf-space-6);
+  font-family: var(--rf-font-tech);
+  font-size: 0.75rem;
+  color: var(--rf-text-muted);
+  border-bottom: 1px solid var(--rf-rule);
+}
 
-/* Tailwind names for the tokens the product's theme does not already have */
-@theme inline {
-  --color-rf-agent: var(--rf-agent);
-  --color-rf-actual: var(--rf-actual);
-  --color-rf-divergence: var(--rf-divergence);
-  --color-rf-text: var(--rf-text);
-  --color-rf-muted: var(--rf-text-muted);
-  --color-rf-faint: var(--rf-text-faint);
+.rf-lab-bar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--rf-hit);
+  margin-left: var(--rf-space-4);
+  text-decoration: underline;
+}
+
+.rf-lab-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-12);
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: var(--rf-space-8) var(--rf-space-6);
+}
+
+.rf-lab-page section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-4);
+}
+
+.rf-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--rf-space-4);
+}
+
+.rf-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-1);
+  font-size: 0.75rem;
+  color: var(--rf-text-muted);
+}
+
+.rf-swatch-chip {
+  height: 3.5rem;
+  box-shadow: inset 0 0 0 1px var(--rf-rule);
 }

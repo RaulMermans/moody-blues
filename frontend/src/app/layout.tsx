@@ -1,17 +1,27 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 
 import { SiteHeader } from "@/components/site-header";
 
 import "./globals.css";
 
+// Archivo: SIL Open Font License, see src/design/fonts/OFL.txt. Latin subset, width and weight axes.
+const archivo = localFont({
+  src: "../design/fonts/archivo-latin-wdth-normal.woff2",
+  variable: "--rf-font-archivo",
+  weight: "100 900",
+  display: "swap",
+  declarations: [{ prop: "font-stretch", value: "62% 125%" }],
+});
+
 export const metadata: Metadata = {
   title: "MOODY BLUES",
-  description: "The Reality Distortion Lab for AI agents.",
+  description: "MOODY BLUES investigates the gap between an AI agent's reported outcome and what actually happened.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={`h-full antialiased ${archivo.variable}`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         {children}

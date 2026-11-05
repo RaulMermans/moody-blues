@@ -1,21 +1,9 @@
-// The typed presentation contract for the Reality Fracture components.
+// The typed presentation contract for the investigation screens.
 //
-// Every visual state here is copied from a named evidence field. Nothing is inferred from text and
-// nothing is computed that the Oracle did not record: a component is told what to draw, so a fracture
-// can only appear where this mapping was given a recorded reason for one.
-import { disclosureLine } from "@/components/verdict-strip";
-import type {
-  CaseStudy,
-  CustomerView,
-  Discrepancy,
-  ExecutionMode,
-  InvestigationDetail,
-  OracleFindingView,
-  ProductOutcome,
-  RealityRun,
-  RunList,
-  Verdict,
-} from "@/lib/evidence-types";
+// Every visual state here is copied from a named evidence field. Nothing is inferred from free text
+// and nothing is computed that the Oracle did not record: a component is told what to draw, so a
+// distortion can only appear where this mapping was given a recorded reason for one.
+import type { CustomerView, Discrepancy, ProductOutcome, RealityRun, Verdict } from "@/lib/evidence-types";
 
 /**
  * What a seal may say. Only `verdict` is the Oracle speaking. `incomplete` and `unverified` mean no
@@ -27,52 +15,27 @@ export type SealState =
   | { kind: "unverified"; reason: "no_target_run" | "outcome_uncertain" | "integrity_failed" };
 
 /**
- * How far the two realities came apart.
- * - `violation`: the Oracle recorded a VIOLATION. The only state that breaks the frame.
- * - `delivery`: the agent was told something false, but the Oracle found the state correct.
+ * How far the two realities came apart in a run.
+ * - `violation`: the Oracle recorded a VIOLATION. The only state that displaces anything.
+ * - `delivery`: the agent was told something false, but the Oracle found no violation.
  * - `unresolved`: the Oracle returned INCONCLUSIVE.
  * - `none`: no discrepancy was recorded.
  */
 export type DivergenceState = "violation" | "delivery" | "unresolved" | "none";
+
+/** Whether two sides of one row agree. `unknown` is for a side that holds nothing to compare. */
+export type Relation = "equal" | "differs" | "unknown";
+
+/** How the seam between two sides is drawn at one row. Only `break` is displaced. */
+export type SeamTone = "steady" | "distortion" | "break";
 
 export type RecordMention = "structured_claim" | "message_only" | "not_named" | "not_assessed";
 
 export interface RecordView {
   customer: CustomerView;
   mention: RecordMention;
-}
-
-export interface PhantomWrite {
-  callSeq: number;
-  delivered: string;
-}
-
-export interface ComparisonModel {
-  investigationId: string;
-  runId: string;
-  caseTitle: string | null;
-  caseSummary: string | null;
-  mode: ExecutionMode;
-  targetLabel: string;
-  world: string;
-  runIndex: number;
-  runTotal: number;
-  faultsDelivered: number;
-  task: string | null;
-  seal: SealState;
-  divergence: DivergenceState;
-  claim: { status: string; customerId: string | null; message: string; truncated: boolean } | null;
-  claimedIdCount: number;
-  termination: string;
-  disclosure: string | null;
-  phantomWrites: PhantomWrite[];
-  newRecords: RecordView[];
-  seedRecordCount: number;
-  objectiveSatisfied: boolean;
-  violations: OracleFindingView[];
-  invariants: { name: string; held: boolean }[];
-  discrepancies: Discrepancy[];
-  caseStudy: CaseStudy | null;
+  /** A flagged record the structured claim left out, while it named another flagged record. */
+  extra: boolean;
 }
 
 export function sealFromRun(run: RealityRun): SealState {
@@ -100,6 +63,17 @@ export function divergenceFrom(run: RealityRun): DivergenceState {
   return run.discrepancies.length ? "delivery" : "none";
 }
 
+/** A wrong status is a recorded discrepancy, not a reading of the agent's words. */
+export function claimRelation(run: RealityRun): Relation {
+  if (!run.agent.claim) return "unknown";
+  return run.discrepancies.some((d) => d.kind === "claim_versus_state") ? "differs" : "equal";
+}
+
+export function seamFor(run: RealityRun, relation: Relation): SeamTone {
+  if (relation !== "differs") return "steady";
+  return run.verdict === "VIOLATION" ? "break" : "distortion";
+}
+
 function mentionOf(customer: CustomerView, run: RealityRun): RecordMention {
   if (customer.named_in_claim) return "structured_claim";
   const disclosure = run.agent.disclosure;
@@ -107,55 +81,28 @@ function mentionOf(customer: CustomerView, run: RealityRun): RecordMention {
   return disclosure.mentioned_in_message.includes(customer.customer_id) ? "message_only" : "not_named";
 }
 
-function targetLabel(run: RealityRun): string {
-  if (run.target_evidence === "live_provider") return `Model ${run.reported_models.join(", ")}`;
-  if (run.target_evidence === "reference_executor") return "Reference script, not a model";
-  return "Offline fixture, not a model";
+/** The rows this run created. Exactly the recorded rows: nothing is added for effect. */
+export function recordsFrom(run: RealityRun): RecordView[] {
+  const added = run.actual.customers.filter((c) => c.role === "new");
+  const claimedOne = added.some((c) => c.flagged_duplicate && c.named_in_claim);
+  return added.map((customer) => ({
+    customer,
+    mention: mentionOf(customer, run),
+    extra: claimedOne && customer.flagged_duplicate && !customer.named_in_claim,
+  }));
 }
 
-export function comparisonFrom(
-  detail: InvestigationDetail,
-  runs: RunList,
-  run: RealityRun,
-): ComparisonModel {
-  const claim = run.agent.claim;
-  const violated = new Set(run.actual.invariants_violated);
-  return {
-    investigationId: detail.summary.investigation_id,
-    runId: run.run_id,
-    caseTitle: detail.summary.case?.title ?? null,
-    caseSummary: detail.summary.case?.summary ?? null,
-    mode: detail.summary.mode,
-    targetLabel: targetLabel(run),
-    world: run.world_ref,
-    runIndex: runs.runs.findIndex((r) => r.run_id === run.run_id) + 1,
-    runTotal: runs.runs.length,
-    faultsDelivered: run.faults_delivered,
-    task: run.agent.mission?.text.split("\n")[0].replace(/^Mission:\s*/, "").split(/(?<=\.)\s/)[0] ?? null,
-    seal: sealFromRun(run),
-    divergence: divergenceFrom(run),
-    claim: claim
-      ? {
-          status: claim.status,
-          customerId: claim.customer_id,
-          message: claim.message.text,
-          truncated: claim.message.truncated,
-        }
-      : null,
-    claimedIdCount: claim?.customer_id ? 1 : 0,
-    termination: run.agent.termination,
-    disclosure: disclosureLine(run),
-    phantomWrites: run.agent.tool_events
-      .filter((e) => e.ok && e.fault_effect === "aborted_new_write")
-      .map((e) => ({ callSeq: e.call_seq, delivered: e.delivered_summary })),
-    newRecords: run.actual.customers
-      .filter((c) => c.role === "new")
-      .map((customer) => ({ customer, mention: mentionOf(customer, run) })),
-    seedRecordCount: run.actual.customers.filter((c) => c.role === "seed").length,
-    objectiveSatisfied: run.actual.objective_satisfied,
-    violations: run.actual.findings.filter((f) => f.severity === "violation"),
-    invariants: run.actual.invariants_evaluated.map((name) => ({ name, held: !violated.has(name) })),
-    discrepancies: run.discrepancies,
-    caseStudy: detail.case_study,
-  };
+/** The first recorded point where a delivered response and authoritative state parted. */
+export function firstDivergence(run: RealityRun): Discrepancy | null {
+  const located = run.discrepancies.filter((d) => d.call_seq !== null);
+  return located.reduce<Discrepancy | null>(
+    (first, d) => (first === null || (d.call_seq ?? 0) < (first.call_seq ?? 0) ? d : first),
+    null,
+  );
+}
+
+export function missionLine(run: RealityRun): string | null {
+  const mission = run.agent.mission;
+  if (!mission) return null;
+  return mission.text.split("\n")[0].replace(/^Mission:\s*/, "").split(/(?<=\.)\s/)[0];
 }
