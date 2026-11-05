@@ -29,7 +29,6 @@ restart() {
   systemctl enable moody-backend moody-web moody-healthcheck.timer >/dev/null
   systemctl restart moody-backend
   systemctl restart moody-web
-  systemctl start moody-healthcheck.timer
   install -m 0644 "$base/current/infra/vultr/config/Caddyfile" /etc/caddy/Caddyfile
   systemctl reload-or-restart caddy
 }
@@ -54,6 +53,8 @@ serving() {
 point_at "$target"
 restart
 if serving; then
+  # Only now: started earlier, its first run lands while the services are still restarting.
+  systemctl start moody-healthcheck.timer
   [[ -z "$previous" || "$previous" == "$target" ]] || echo "$previous" > "$base/previous"
   echo "serving $sha"
   exit 0

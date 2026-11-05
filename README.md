@@ -7,8 +7,8 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 8, deployment prepared and not yet deployed.** No public URL exists yet. See the
-> [deployment guide](docs/deployment/vultr-deployment.md) and [docs/sprints/sprint-08.md](docs/sprints/sprint-08.md).
+> **Status: Sprint 8, deployed on Vultr at <https://45-63-119-197.sslip.io>.** Containment evidence comes from
+> that host. See the [deployment guide](docs/deployment/vultr-deployment.md) and [docs/sprints/sprint-08.md](docs/sprints/sprint-08.md).
 > You can open a real investigation in a browser and compare
 > what an agent claimed with what actually happened. Every result shown comes from a real execution or
 > is labeled as a rehearsal. **The registered benchmark found no demonstrated adaptive advantage:** fixed
@@ -23,8 +23,8 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Capability | State |
 |---|---|
 | FastAPI backend: `/health`, `/ready`, `/sandbox/smoke` (not in production) | Implemented and tested |
-| Vultr deployment: scripts, Caddy, systemd, hosted test suite | Prepared and rehearsed locally; **not deployed** |
-| Containment report and page: eight real attempts, labeled with the host they ran on | Local evidence only until deployed |
+| Vultr deployment: scripts, Caddy, systemd, hosted test suite | **Deployed**; public browser suite passes. A live model run on the VM is outstanding |
+| Containment report and page: eight real attempts, labeled with the host they ran on | **Verified on the Vultr VM** |
 | Docker sandbox: no network, non-root, read-only, resource-limited, auto-cleanup | Implemented and verified against a real daemon |
 | Vultr Serverless Inference adapter (OpenAI SDK) | Implemented; **verified live** on `glm-5.3` |
 | Next.js status page connected to the backend | Implemented and verified with Playwright |

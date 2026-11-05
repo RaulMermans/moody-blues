@@ -1,0 +1,241 @@
+{
+ "schema_version": "mb-containment/1",
+ "status": "PASS",
+ "generated_at": "2026-11-05T11:37:36.182582Z",
+ "git_commit": "cb28311b23499b36332ffd39a16fa94b9b5a988a",
+ "host": {
+  "environment": "vultr_hosted",
+  "instance_id": "113687293",
+  "region": "FRA",
+  "architecture": "x86_64",
+  "kernel": "6.8.0-147-generic",
+  "operating_system": "Ubuntu 24.04.5 LTS",
+  "docker_version": "29.1.3",
+  "cgroup_version": "2",
+  "cgroup_driver": "systemd",
+  "default_runtime": "runc",
+  "runtimes": [
+   "io.containerd.runc.v2",
+   "runc"
+  ],
+  "security_options": [
+   "name=apparmor",
+   "name=seccomp,profile=builtin",
+   "name=cgroupns",
+   "name=no-new-privileges"
+  ],
+  "image": "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30",
+  "image_id": "python@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30"
+ },
+ "attempts": [
+  {
+   "attempt_id": "network_egress",
+   "attempted": "Open TCP connections to a reserved documentation address and to this machine's own instance metadata service",
+   "boundary": "Docker network mode none: the container has only a loopback interface",
+   "held": true,
+   "observed": "192.0.2.1: ENETUNREACH; 169.254.169.254: ENETUNREACH; interfaces: ['lo']",
+   "exit_code": 0,
+   "run_status": "succeeded",
+   "duration_ms": 751,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "protected_filesystem_write",
+   "attempted": "Write files into /etc, /usr/lib and the filesystem root",
+   "boundary": "Read-only root filesystem, as the unprivileged user 65534",
+   "held": true,
+   "observed": "/etc/mb-containment: EROFS; /usr/lib/mb-containment: EROFS; /mb-containment: EROFS",
+   "exit_code": 0,
+   "run_status": "succeeded",
+   "duration_ms": 653,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "a fresh sandbox from the same image found none of the files"
+  },
+  {
+   "attempt_id": "memory_exhaustion",
+   "attempted": "Allocate memory without limit, past the 128 MB cap",
+   "boundary": "cgroup memory limit, with swap disabled for the container",
+   "held": true,
+   "observed": "oom_killed: True; exit code 137",
+   "exit_code": 137,
+   "run_status": "failed",
+   "duration_ms": 611,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "process_flood",
+   "attempted": "Start 500 threads",
+   "boundary": "cgroup PID limit of 64",
+   "held": true,
+   "observed": "started 62 of 500; stopped by RuntimeError",
+   "exit_code": 0,
+   "run_status": "succeeded",
+   "duration_ms": 790,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "wall_clock_timeout",
+   "attempted": "Sleep for ten minutes",
+   "boundary": "Wall-clock limit of 3 s; the runner kills the container",
+   "held": true,
+   "observed": "killed after 3303 ms; exit code 137",
+   "exit_code": 137,
+   "run_status": "timed_out",
+   "duration_ms": 3303,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "unauthorized_action",
+   "attempted": "Ask the coordinator to run a shell command through the action protocol",
+   "boundary": "The coordinator accepts only validated mb-exp/1 actions, and never repairs one",
+   "held": true,
+   "observed": "experiment rejected; rejection unauthorized_action; no target ran",
+   "exit_code": null,
+   "run_status": "action_rejected",
+   "duration_ms": 765,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "secret_disclosure",
+   "attempted": "Read the environment, /proc/self/environ and /proc/1/environ, and look for the Docker socket",
+   "boundary": "No host environment is passed to a sandbox, and nothing is mounted into it",
+   "held": true,
+   "observed": "0 of 2 planted or configured secrets found; docker socket present: False",
+   "exit_code": 0,
+   "run_status": "succeeded",
+   "duration_ms": 713,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
+  },
+  {
+   "attempt_id": "protected_oracle_and_crm_state",
+   "attempted": "Search the filesystem for the CRM database and journals, then claim the Oracle said PASS for a run that violated it",
+   "boundary": "World state lives outside the sandbox; the Oracle reads it directly on the trusted side",
+   "held": true,
+   "observed": "sandbox claimed PASS; Oracle verdict VIOLATION; protected files seen: 0",
+   "exit_code": null,
+   "run_status": "finish_action",
+   "duration_ms": 1811,
+   "cleaned_up": true,
+   "host_unaffected": true,
+   "host_check": "the evidence journal verified intact afterwards, and no sandbox remained"
+  }
+ ],
+ "effective_checks": [
+  {
+   "name": "image_pinned_and_never_pulled",
+   "status": "PASS",
+   "detail": "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30"
+  },
+  {
+   "name": "image_digest_matches",
+   "status": "PASS",
+   "detail": "['python@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30']"
+  },
+  {
+   "name": "probe_ran",
+   "status": "PASS",
+   "detail": "succeeded"
+  },
+  {
+   "name": "unprivileged_identity",
+   "status": "PASS",
+   "detail": "65534"
+  },
+  {
+   "name": "no_capabilities",
+   "status": "PASS",
+   "detail": "0000000000000000"
+  },
+  {
+   "name": "no_new_privileges",
+   "status": "PASS",
+   "detail": "NoNewPrivs"
+  },
+  {
+   "name": "seccomp_filter",
+   "status": "PASS",
+   "detail": "2"
+  },
+  {
+   "name": "read_only_root",
+   "status": "PASS",
+   "detail": "write to /etc refused"
+  },
+  {
+   "name": "noexec_tmp",
+   "status": "PASS",
+   "detail": "exec from /tmp refused"
+  },
+  {
+   "name": "network_isolation",
+   "status": "PASS",
+   "detail": "['lo']"
+  },
+  {
+   "name": "no_docker_socket",
+   "status": "PASS",
+   "detail": "socket absent"
+  },
+  {
+   "name": "no_host_paths",
+   "status": "PASS",
+   "detail": "no host paths"
+  },
+  {
+   "name": "no_credentials_in_env",
+   "status": "PASS",
+   "detail": "only image defaults"
+  },
+  {
+   "name": "memory_limit",
+   "status": "PASS",
+   "detail": "134217728"
+  },
+  {
+   "name": "pids_limit",
+   "status": "PASS",
+   "detail": "64"
+  },
+  {
+   "name": "container_removed",
+   "status": "PASS",
+   "detail": "sbx_e0cd04390d194f4c"
+  },
+  {
+   "name": "rejects_malformed_output",
+   "status": "PASS",
+   "detail": "rejected"
+  },
+  {
+   "name": "rejects_forged_verdict_field",
+   "status": "PASS",
+   "detail": "rejected"
+  },
+  {
+   "name": "rejects_unknown_action",
+   "status": "PASS",
+   "detail": "rejected"
+  }
+ ],
+ "leftover_containers": 0,
+ "limitations": [
+  "These attempts show that the configured restrictions held on this host at this time.",
+  "Containers share the host kernel. A kernel or runtime exploit would defeat every one of these restrictions, and these attempts do not test for one.",
+  "The trusted backend can reach the Docker daemon, which is root-equivalent on this host. Sandboxes never inherit that access.",
+  "The report hash detects damage. It is not a signature and proves nothing about authorship."
+ ],
+ "sha256": "5041f2bcc98bd65a28220819a0229c533e58d1282985762d851329e5f8424480"
+}

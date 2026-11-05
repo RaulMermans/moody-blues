@@ -229,6 +229,7 @@ def run_preflight(settings: Settings) -> PreflightReport:
     digest = settings.generated_code_image.partition("@")[2]
     try:
         runner.ping()
+        runner.reap_orphans()  # only expired ones, left by a process that died
         default_runtime, runtimes = runner.runtime_info()
         runner.ensure_image()
         digests = runner.image_digests()

@@ -182,3 +182,12 @@ def test_production_has_no_smoke_route(tmp_path: Path) -> None:
 def test_development_keeps_the_smoke_route(tmp_path: Path) -> None:
     settings = Settings(_env_file=None, artifacts_dir=tmp_path)  # pyright: ignore[reportCallIssue]
     assert "/sandbox/smoke" in create_app(settings).openapi()["paths"]
+
+
+def test_expired_sandboxes_are_reaped_even_with_no_open_job(tmp_path: Path) -> None:
+    """A container on the VM outlived its job and a reboot, as nothing looked (KI-45)."""
+    calls: list[int] = []
+    app = create_app(hosted(tmp_path))
+    with TestClient(app):
+        app.state.jobs.reconcile(lambda: calls.append(1))
+    assert calls == [1]

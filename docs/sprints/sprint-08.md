@@ -3,23 +3,26 @@
 - **Date:** 2026-11-05
 - **Branch:** `sprint/08-vultr-deployment`, from `origin/main` `d4c8c30`, whose tree equals Sprint 7 HEAD
   `71eace8`. Pushed, as [PR #9](https://github.com/RaulMermans/moody-blues/pull/9).
-- **Outcome:** `NOT ACCEPTED`. **Deployment is prepared and rehearsed. Nothing is deployed.** Work stopped at
-  the provisioning boundary for owner approval.
-- **Live spend this sprint:** $0. No provider call was made. No Vultr resource exists.
+- **Outcome:** `NOT YET ACCEPTED`. **MOODY BLUES is live on Vultr** with hosted containment evidence and a real
+  browser pass. One live model run on the VM is still outstanding, pending the owner's approval of that spend.
+- **Public URL:** <https://45-63-119-197.sslip.io>
+- **Inference spend this sprint:** $0. No provider call was made.
+- **VM:** `vc2-4c-8gb`, Frankfurt, `45.63.119.197`, $0.055/hour, running. API id `0ecc6366-233e-4d27-b843-c4dc18b228cd`;
+  the metadata service reports the same VM as `113687293`.
 
 ## Gates
 
 | Gate | Status | Evidence |
 |---|---|---|
-| C8-A Repository integrity | **PASS**, one item blocked | Outside iCloud, 0 dataless files, `git fsck` clean, recorded evidence verified, full-history secret scan clean, pinned image has a linux/amd64 entry. **Billing not inspected:** the key in `.env` is inference-only, and the account API refused it with 401 |
-| C8-B Infrastructure plan | **PASS** | [Provisioning plan](../deployment/sprint-8-provisioning-plan.md), `make vultr-plan` reads live prices, refusal paths tested |
-| C8-C Secure hosted architecture | **BLOCKED_BY_APPROVAL** | Rehearsed locally only |
-| C8-D Sandbox containment | **BLOCKED_BY_APPROVAL** | Eight attempts held on local Docker. That is not Vultr evidence |
-| C8-E Containment demonstration | **BLOCKED_BY_APPROVAL** | Page and report built. It shows `LOCAL DEVELOPMENT, NOT HOSTED` |
-| C8-F Budget governance | **BLOCKED_BY_APPROVAL** | Controls tested offline. Migration and billing comparison not run |
-| C8-G Hosted browser validation | **BLOCKED_BY_APPROVAL** | Suite written; dress rehearsal only |
-| C8-H Operational durability | **NOT_RUN** | Needs the VM. Sprint 7's local restart tests still pass |
-| C8-I Release readiness | **BLOCKED_BY_APPROVAL** | No URL, hosted evidence or live run ID yet |
+| C8-A Repository integrity | **PASS** | `git fsck` clean, evidence verified, secret scan clean, CI green on PR #9, billing read |
+| C8-B Infrastructure plan | **PASS** | [Provisioning plan](../deployment/sprint-8-provisioning-plan.md), executed as written |
+| C8-C Secure hosted architecture | **PASS** | Valid Let's Encrypt certificate; 8000, 3000, 2019 and 2375 closed from outside; two service users; `Secure` cookie observed |
+| C8-D Sandbox containment | **PASS** | 8 of 8 attempts blocked on the VM, 19 of 19 restrictions confirmed from inside: [report](../../evidence/containment/vultr-report.json) |
+| C8-E Containment demonstration | **PASS** | [/containment](https://45-63-119-197.sslip.io/containment) shows `VULTR HOST`. [Screenshot](sprint-08-screenshots/04-containment.png) |
+| C8-F Budget governance | **PASS** | Ledger migrated hash-identical; live off, no key on the VM; survived crash and reboot unchanged. Corrupt-ledger refusal tested offline, not on the VM's real ledger |
+| C8-G Hosted browser validation | **BLOCKED_BY_APPROVAL** | 15 of 15 against the public URL, including a rehearsal in Vultr sandboxes. The live test has not run |
+| C8-H Operational durability | **PASS** | See [Hosted failure tests](#hosted-failure-tests) |
+| C8-I Release readiness | **BLOCKED_BY_APPROVAL** | Needs the live run ID and a public repository. Video and slides are Sprint 9 |
 
 ## What the brief had out of date
 
@@ -45,6 +48,45 @@ record. The ledger shows $6.500182 settled, 814 entries, none open.
 - **CI:** pinned to Ubuntu 24.04, plus secret scan and deployment lint. On PR #9 the Playwright suite
   passed on GitHub for the first time. The move to 24.04 exposed one test that assumed an image store (KI-44).
 
+## Billing
+
+Read from the Vultr account API on 2026-11-05. Credit applied: $200. Pending charges: $3.91 before the VM and
+$3.97 after about 40 minutes of it. The ledger's $6.50 is therefore a real over-estimate, which is the safe
+direction: its prices are ceilings. The ledger is unchanged, because it remains the conservative figure.
+
+## Hosted containment
+
+Report `5041f2bc...` from release `cb28311`: Ubuntu 24.04.5, x86_64, kernel 6.8.0-147, Docker 29.1.3, cgroup v2,
+`systemd` driver, runc, AppArmor and seccomp. gVisor is not installed and was not evaluated.
+
+| Attempt | Observed | Exit |
+|---|---|---|
+| Network, including the metadata service | `ENETUNREACH`; only `lo` | 0 |
+| Protected filesystem writes | `EROFS` | 0 |
+| Memory past 128 MB | OOM killed | 137 |
+| 500 threads | 62 started, then refused | 0 |
+| Ten-minute sleep | Killed at about 3.3 s | 137 |
+| Shell through the protocol | `unauthorized_action`, no target ran | n/a |
+| Environment and Docker socket | 0 of 2 secrets found; no socket | 0 |
+| Forged Oracle PASS | Oracle verdict stayed VIOLATION; 0 protected files seen | n/a |
+
+## Hosted failure tests
+
+All on the VM, and none replayed a job.
+
+| Test | Result |
+|---|---|
+| Redeploy, rollback, return | Each served, with the ledger hash unchanged |
+| Cancel a running job | `cancelled`, no sandbox left |
+| Deploy during a job | Refused; the job completed |
+| SIGKILL before the first experiment | Back in 10 s; `interrupted_before_start` |
+| SIGKILL mid-experiment | Back in 10 s; `interrupted_no_target_run_open`; next mission ran cleanly |
+| Reboot | Site back in about 40 s; firewall active; ledger unchanged |
+
+The `outcome_uncertain` path, a kill while a target run is open, was not hit on the VM: reference runs last
+milliseconds. It stays covered by the local test. Resources after these tests: 667 MB of 8 GB used, load 0.19,
+disk 10%, about 1 MB of evidence, 14 MB of journal, 0.26 to 0.38 s per detail page from Spain.
+
 ## Dress rehearsal
 
 The release from `git archive`, built with `--no-dev` in a fresh Ubuntu 24.04 container, as the two service
@@ -62,9 +104,7 @@ container, without systemd. **This is not hosted evidence.**
 | Smoke route in production | 404 |
 | `systemd-analyze verify`; ufw rule; `dockerd --validate` | Passed |
 
-**Never executed:** `bootstrap.sh`, `remote-install.sh`, `remote-switch.sh`, `deploy.sh`, `rollback.sh`,
-`migrate-ledger.sh`, `live-switch.sh` and `provision.sh apply` or `destroy`. They passed shellcheck, and their
-steps were mirrored by hand. Expect first-run fixes on the VM.
+Every deploy script has since run on the VM, except `live-switch.sh` and `provision.sh destroy`.
 
 ## Problems found and fixed
 
@@ -77,7 +117,11 @@ steps were mirrored by hand. Expect first-run fixes on the VM.
 4. **E2E runs rewrote committed screenshots.** They are now opt-in.
 5. **A secret scan reported clean after reading 0 bytes** (KI-42). The real scan found one false positive,
    recorded by fingerprint.
-6. **A commit landed broken** (`1405f2f`, a missing import) because a chained command did not stop on failure.
+6. **A killed backend could leave a sandbox forever** (KI-45). Found on the VM, fixed and confirmed there.
+7. **The secret count was overstated.** An unset key counted as compared, so the first report said 0 of 3.
+8. **The first health check ran during restart** and was marked failed. It now starts after a release is proven.
+9. **A test assumed one image store** (KI-44), exposed by the move to Ubuntu 24.04.
+10. **A commit landed broken** (`1405f2f`, a missing import) because a chained command did not stop on failure.
    Fixed forward in `1b9cbc4`, since history is not rewritten.
 
 ## Limits
@@ -90,6 +134,8 @@ steps were mirrored by hand. Expect first-run fixes on the VM.
 
 ## Readiness for Sprint 9
 
-Not ready: there is no URL yet. Remaining dependencies, in order: owner approvals, deployment, hosted evidence,
-one live run, then a public repository, demo video and slides. The event page gives a deadline of
+Close. Remaining, in order: one live investigation on the VM (needs the owner's direct approval), commit its run
+ID, make the repository public, then the demo video and slides. The event page gives a deadline of
 2026-11-08 22:00 UTC. The exact submission form sits behind sign-in and has not been checked.
+
+Destroy the VM after judging: only destruction stops billing.

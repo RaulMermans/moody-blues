@@ -131,6 +131,12 @@ def test_a_configured_secret_seen_in_the_sandbox_did_not_hold() -> None:
     assert "real-secret" not in attempt.model_dump_json()
 
 
+def test_an_empty_secret_is_not_counted_as_compared() -> None:
+    body = json.dumps({"env": {}, "docker_socket": False})
+    attempt = containment._secrets(ctx(result(body)), ("", "real-secret"))  # pyright: ignore[reportPrivateUsage]
+    assert attempt.observed.startswith("0 of 2 ")
+
+
 def test_a_visible_docker_socket_did_not_hold() -> None:
     body = json.dumps({"env": {}, "docker_socket": True})
     assert containment._secrets(ctx(result(body)), ()).held is False  # pyright: ignore[reportPrivateUsage]
@@ -225,6 +231,17 @@ def test_the_committed_report_is_valid_and_says_it_is_local() -> None:
     assert committed.status == "PASS"
     assert committed.host.environment == "local_development"
     assert committed.host.instance_id is None
+
+
+def test_the_committed_hosted_report_is_valid_and_came_from_a_vultr_instance() -> None:
+    root = Path(__file__).resolve().parents[2]
+    hosted = read_report(root / "evidence" / "containment" / "vultr-report.json")
+    assert hosted.status == "PASS"
+    assert hosted.host.environment == "vultr_hosted"
+    assert hosted.host.instance_id is not None
+    assert hosted.host.architecture == "x86_64"
+    assert len(hosted.attempts) == 8
+    assert all(a.held and a.cleaned_up and a.host_unaffected for a in hosted.attempts)
 
 
 def test_the_runner_used_is_the_approved_one(tmp_path: Path) -> None:

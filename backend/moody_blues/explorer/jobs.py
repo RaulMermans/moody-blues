@@ -400,6 +400,9 @@ class JobManager:
         """Close jobs a dead process left open. Never resumes or retries. Returns job ids closed."""
         open_jobs = [j for j in self.store.all() if j.status not in TERMINAL_JOB_STATES]
         if not open_jobs:
+            # A sandbox can outlive the job that was closed for it, so expired ones go regardless.
+            if reap_orphans is not None:
+                reap_orphans()
             return []
         try:
             with exclusive(self._investigations):
