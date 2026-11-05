@@ -14,7 +14,7 @@ import {
   type Tone,
 } from "@/lib/labels";
 
-import { Chevron, Code, Eyebrow, Tag, VerdictTag } from "./ui";
+import { Chevron, Code, Eyebrow, Tag, VerdictTag, TableScroll } from "./ui";
 
 const STATUS_TONE: Record<HypothesisView["status"], Tone> = {
   supported: "bad",
@@ -53,7 +53,11 @@ function Program({ proposal }: { proposal: ProposalView }) {
         ) : null}
       </div>
       <p className="text-xs text-faint">{adaptation.note}</p>
-      {proposal.rationale ? <Line label="Experiment objective" text={proposal.rationale} /> : null}
+      {proposal.rationale ? (
+        <dl>
+          <Line label="Experiment objective" text={proposal.rationale} />
+        </dl>
+      ) : null}
       {proposal.motivated_by.length ? (
         <p className="text-xs text-faint">
           Informed by <span className="font-mono text-muted">{proposal.motivated_by.join(", ")}</span>
@@ -99,9 +103,10 @@ function Hypothesis({
   );
   return (
     <li
+      id={hypothesis.hypothesis_id}
       data-testid={`hypothesis-${hypothesis.hypothesis_id}`}
       data-status={hypothesis.status}
-      className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4"
+      className="flex flex-col gap-3 border border-line bg-surface p-4"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-sm text-foreground">{hypothesis.hypothesis_id}</span>
@@ -145,12 +150,12 @@ function Hypothesis({
         );
       })}
       {hypothesis.assessment_reasoning ? (
-        <div className="border-t border-line pt-3">
+        <dl className="border-t border-line pt-3">
           <Line
             label={fixture ? "The fixture's assessment" : "The model's assessment"}
             text={hypothesis.assessment_reasoning}
           />
-        </div>
+        </dl>
       ) : null}
     </li>
   );
@@ -172,7 +177,7 @@ export function InvestigatorView({
       <section className="flex flex-col gap-3">
         <Eyebrow>Hypotheses, in order</Eyebrow>
         {noHypotheses ? (
-          <p className="rounded-lg border border-line p-4 text-sm text-muted">
+          <p className="border border-line p-4 text-sm text-muted">
             This strategy runs predetermined programs, so no model wrote a hypothesis.
           </p>
         ) : null}
@@ -196,7 +201,7 @@ export function InvestigatorView({
           <Eyebrow>
             {fixture ? "The fixture's conclusion, scripted" : "The model's conclusion: interpretation, checked below"}
           </Eyebrow>
-          <div className="rounded-lg border border-line bg-surface p-4">
+          <div className="border border-line bg-surface p-4">
             <p className="font-mono text-sm text-foreground">{humanize(detail.conclusion.conclusion)}</p>
             <p className="mt-2 text-sm leading-6 text-muted">{detail.conclusion.reasoning}</p>
           </div>
@@ -208,7 +213,7 @@ export function InvestigatorView({
           <Eyebrow>Claims checked against the Oracle</Eyebrow>
           <ul className="flex flex-col gap-2">
             {detail.claim_checks.map((check, i) => (
-              <li key={i} className="rounded-lg border border-line bg-surface p-4">
+              <li key={i} className="border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone={check.supported ? "truth" : "warn"}>
                     {check.supported ? "Backed by the Oracle" : "Not backed"}
@@ -224,7 +229,7 @@ export function InvestigatorView({
 
       <section className="flex flex-col gap-2">
         <Eyebrow>Findings, classified by trusted code</Eyebrow>
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <TableScroll label="Findings table" className="border border-line">
           <table className="w-full min-w-[38rem] text-left text-sm" data-testid="findings-table">
             <caption className="sr-only">Every target run and how it was classified</caption>
             <thead className="bg-raised text-xs text-faint">
@@ -261,7 +266,7 @@ export function InvestigatorView({
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
         {detail.findings.length === 0 ? (
           <p className="text-sm text-muted">No target run produced a classified finding.</p>
         ) : null}

@@ -1,105 +1,76 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-import type { RealityRun, RunList, ToolEvent } from "@/lib/evidence-types";
+import { ComparisonRow } from "@/design/components/comparison-row";
+import { DivergenceDivider } from "@/design/components/divergence-divider";
+import { Headline } from "@/design/components/headline";
+import { RecordSlab } from "@/design/components/record-slab";
+import {
+  claimRelation,
+  divergenceFrom,
+  firstDivergence,
+  recordsFrom,
+  seamFor,
+} from "@/design/model";
+import {
+  disclosureLine,
+  environmentLine,
+  explanationFrom,
+  scopeNote,
+  storyFrom,
+} from "@/design/story";
+import type {
+  HypothesisView,
+  InvestigationDetail,
+  RealityRun,
+  RunList,
+  ToolEvent,
+} from "@/lib/evidence-types";
 import { DISCREPANCY_LABEL, FAULT_LABEL, FINDING_CLASS_LABEL, humanize } from "@/lib/labels";
 
-import { Chevron, Code, Eyebrow, Tag, VerdictTag } from "./ui";
-import { disclosureLine, VerdictStrip } from "./verdict-strip";
+import { Chevron, Code, TableScroll, Tag, VerdictTag } from "./ui";
+import { VerdictStrip } from "./verdict-strip";
+
+const GLYPH = { PASS: "✓", VIOLATION: "✕", INCONCLUSIVE: "?" } as const;
+
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+export function runHref(id: string, runId: string, hash = ""): string {
+  return `/investigations/${id}?view=reality&run=${runId}${hash}`;
+}
+
+export function traceHref(id: string, runId: string, call: number): string {
+  return `/investigations/${id}?view=timeline&show=all&run=${runId}&call=${call}#trace`;
+}
 
 function RunPicker({ id, runs, current }: { id: string; runs: RunList; current: string }) {
   if (runs.runs.length < 2) return null;
   return (
-    <nav aria-label="Target runs" className="flex flex-wrap gap-2">
-      {runs.runs.map((run, index) => {
-        const active = run.run_id === current;
-        return (
-          <Link
-            key={run.run_id}
-            href={`/investigations/${id}?view=reality&run=${run.run_id}`}
-            aria-current={active ? "page" : undefined}
-            data-testid={`run-${run.run_id}`}
-            className={`flex items-center gap-2 rounded border px-2.5 py-1.5 font-mono text-xs ${
-              active ? "border-truth/60 bg-raised text-foreground" : "border-line text-muted hover:text-foreground"
-            }`}
-          >
-            <span>
-              Run {index + 1} · {run.world_ref}
-            </span>
-            <VerdictTag verdict={run.verdict} />
-          </Link>
-        );
-      })}
+    <nav aria-label="Target runs" className="rf-runs">
+      <ul>
+        {runs.runs.map((run, index) => {
+          const active = run.run_id === current;
+          return (
+            <li key={run.run_id}>
+              <Link
+                href={runHref(id, run.run_id)}
+                aria-current={active ? "page" : undefined}
+                data-testid={`run-${run.run_id}`}
+                data-verdict={run.verdict}
+                className="rf-run"
+              >
+                <span>Run {index + 1}</span>
+                <span className="rf-run-world">{run.world_ref}</span>
+                <span className="rf-run-verdict">
+                  <span aria-hidden>{GLYPH[run.verdict]}</span> {run.verdict}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
-  );
-}
-
-function actualFor(event: ToolEvent, run: RealityRun): { text: string; tone: "bad" | "plain" } {
-  const committed = run.actual.changes.find(
-    (c) => c.created_by_call === event.call_seq && c.operation === "insert",
-  );
-  if (event.fault_injected && event.actual_summary) {
-    const write = event.tool === "create_customer";
-    const suffix = committed
-      ? `; committed ${committed.customer_id}`
-      : write
-        ? "; committed nothing"
-        : "";
-    return { text: `True response: ${event.actual_summary}${suffix}`, tone: "bad" };
-  }
-  if (committed) return { text: `Committed ${committed.customer_id}`, tone: "plain" };
-  if (event.tool === "create_customer") return { text: "Committed nothing", tone: "plain" };
-  return { text: "Delivered as it was", tone: "plain" };
-}
-
-function CallRow({ event, run }: { event: ToolEvent; run: RealityRun }) {
-  const actual = actualFor(event, run);
-  return (
-    <li
-      data-testid={`call-${event.call_seq}`}
-      data-fault={event.fault_injected ?? ""}
-      className="grid gap-px bg-line md:grid-cols-2"
-    >
-      <div
-        className={`min-w-0 bg-surface p-3 ${event.fault_injected ? "border-l-2 border-warn" : ""}`}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs text-faint">#{event.call_seq}</span>
-          <span className="font-mono text-sm text-foreground">{event.tool}</span>
-          {event.fault_injected ? (
-            <Tag tone="warn" title={FAULT_LABEL[event.fault_injected]}>
-              {event.fault_injected}
-            </Tag>
-          ) : null}
-        </div>
-        <p className={`mt-1 break-words font-mono text-xs ${event.ok ? "text-agent" : "text-warn"}`}>
-          {event.delivered_summary}
-        </p>
-        {event.agent_note ? (
-          <p className="mt-2 border-l-2 border-agent/30 pl-2 text-sm leading-6 text-muted">
-            {event.agent_note.text}
-          </p>
-        ) : null}
-        <details className="mt-2">
-          <summary className="flex items-center gap-1 text-xs text-faint hover:text-foreground">
-            <Chevron /> Arguments and response
-          </summary>
-          <div className="mt-2 flex flex-col gap-2">
-            <Code>{event.arguments.text}</Code>
-            <Code>{event.delivered.text}</Code>
-          </div>
-        </details>
-      </div>
-      <div className={`min-w-0 p-3 ${actual.tone === "bad" ? "bg-[color-mix(in_srgb,var(--bad)_9%,var(--surface))]" : "bg-surface"}`}>
-        <p className="text-xs text-faint md:hidden">Actually</p>
-        <p
-          data-testid={`actual-${event.call_seq}`}
-          className={`break-words font-mono text-xs ${actual.tone === "bad" ? "text-bad" : "text-truth"}`}
-        >
-          {actual.text}
-        </p>
-      </div>
-    </li>
   );
 }
 
@@ -111,158 +82,173 @@ function targetLabel(run: RealityRun): string {
   return "Target: offline fixture, not a model";
 }
 
-function missionLine(text: string): string {
-  return text.split("\n")[0].replace(/^Mission:\s*/, "");
-}
-
-function Discrepancies({ run }: { run: RealityRun }) {
-  const counts = new Map<string, number>();
-  for (const d of run.discrepancies) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
-  const line = [...counts.entries()]
-    .map(([kind, count]) => `${count} ${DISCREPANCY_LABEL[kind].toLowerCase()}`)
-    .join(", ");
+function Summary({
+  id,
+  detail,
+  runs,
+  run,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runs: RunList;
+  run: RealityRun;
+}) {
+  const story = storyFrom(run);
+  const disclosure = disclosureLine(run);
+  const scope = scopeNote(detail.summary, runs, run);
+  const index = runs.runs.findIndex((r) => r.run_id === run.run_id) + 1;
   return (
-    <details className="rounded-lg border border-line bg-surface p-3" data-testid="discrepancy-panel">
-      <summary className="flex items-center gap-2 text-sm text-foreground">
-        <Chevron />
-        <span>
-          {run.discrepancies.length} discrepanc{run.discrepancies.length === 1 ? "y" : "ies"}:{" "}
-          <span className="text-muted">{line}</span>
-        </span>
-      </summary>
-      <div className="mt-3 overflow-x-auto rounded border border-line">
-        <table className="w-full min-w-[36rem] text-left text-sm" data-testid="discrepancies">
-          <caption className="sr-only">
-            Differences between what the agent saw and authoritative state
-          </caption>
-          <thead className="bg-raised text-xs text-faint">
-            <tr>
-              <th scope="col" className="px-3 py-2 font-medium">Kind</th>
-              <th scope="col" className="px-3 py-2 font-medium text-agent">Agent saw</th>
-              <th scope="col" className="px-3 py-2 font-medium text-truth">Actually</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {run.discrepancies.map((d, i) => (
-              <tr key={i} data-kind={d.kind}>
-                <td className="px-3 py-2 align-top text-xs text-muted">
-                  {DISCREPANCY_LABEL[d.kind]}
-                  {d.call_seq !== null ? (
-                    <span className="block font-mono text-faint">call {d.call_seq}</span>
-                  ) : null}
-                </td>
-                <td className="break-words px-3 py-2 align-top font-mono text-xs text-agent">
-                  {d.agent_saw}
-                </td>
-                <td className="break-words px-3 py-2 align-top font-mono text-xs text-truth">
-                  {d.actually}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <header className="rf-summary" data-testid="outcome-summary">
+      <div className="rf-context">
+        <p data-testid="run-context">
+          Run {index} of {runs.runs.length}
+          <span className="rf-wide-only">
+            {" "}
+            · World {run.world_ref} · {run.config} policy
+          </span>
+        </p>
+        <Tag testId="target-evidence" tone={run.target_evidence === "live_provider" ? "neutral" : "warn"}>
+          {targetLabel(run)}
+        </Tag>
       </div>
-    </details>
+      <Headline first={story.reported} second={story.reality} outOfRegister={story.outOfRegister} />
+      <VerdictStrip run={run} />
+      <div className="rf-notes">
+        {disclosure ? (
+          <p data-testid="disclosure" className="rf-note">
+            <span className="rf-label">Disclosure</span> {disclosure}
+          </p>
+        ) : null}
+        <p data-testid="environment" className="rf-note">
+          <span className="rf-label">Environment</span> {environmentLine(run)}
+        </p>
+        {scope ? (
+          <p data-testid="scope-note" className="rf-note">
+            <span className="rf-label">Scope</span> {scope.text}{" "}
+            {scope.link ? (
+              <Link href={runHref(id, scope.link.runId)} className="rf-link" data-testid="scope-link">
+                {scope.link.label}
+              </Link>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
+    </header>
   );
 }
 
-function Column({ tone, title, note }: { tone: "agent" | "truth"; title: string; note: string }) {
-  return (
-    <div className="bg-raised p-3">
-      <h3 className={`text-sm font-semibold ${tone === "agent" ? "text-agent" : "text-truth"}`}>
-        {title}
-      </h3>
-      <p className="text-xs text-faint">{note}</p>
-    </div>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <Eyebrow>{title}</Eyebrow>
-      {children}
-    </section>
-  );
-}
-
-function ClaimCard({ run }: { run: RealityRun }) {
+function ClaimFacts({ run }: { run: RealityRun }) {
   const claim = run.agent.claim;
+  const creates = run.agent.tool_events.filter((e) => e.tool === "create_customer").length;
   if (!claim) {
     return (
-      <div data-testid="claim-card" className="bg-surface p-3">
-        <p className="font-mono text-sm text-warn">No valid final claim</p>
-        <p className="mt-1 text-sm text-muted">
-          The run ended with {humanize(run.agent.termination).toLowerCase()}. A missing claim is
-          never read as success.
+      <>
+        <p className="rf-value">No valid final claim</p>
+        <p className="rf-body">
+          The run ended with {humanize(run.agent.termination).toLowerCase()}. A missing claim is never
+          read as success.
         </p>
-      </div>
+        <p className="rf-data">{plural(creates, "create_customer call", "create_customer calls")} attempted</p>
+      </>
     );
   }
-  const disclosure = disclosureLine(run);
   return (
-    <div data-testid="claim-card" className="min-w-0 bg-surface p-3">
-      <p className="text-xs text-faint">Structured final claim</p>
-      <p data-testid="claim-status" className="mt-1 font-mono text-sm text-agent">
+    <>
+      <p data-testid="claim-status" className="rf-claim-status">
         status: {claim.status}
       </p>
-      {claim.customer_id ? (
-        <p className="break-all font-mono text-xs text-muted">customer_id: {claim.customer_id}</p>
-      ) : null}
-      <p className="mt-3 text-xs text-faint">Free-text message, written by the agent</p>
-      <p data-testid="claim-message" className="mt-1 text-sm leading-6 text-muted">
-        {claim.message.text}
-        {claim.message.truncated ? " [cut for display]" : ""}
-      </p>
-      {disclosure ? (
-        <p
-          data-testid="disclosure"
-          className="mt-3 rounded border border-agent/30 bg-agent/5 p-2 text-sm leading-6 text-foreground"
-        >
-          {disclosure}
+      <div className="rf-slip">
+        <p className="rf-slab-meta">
+          {claim.customer_id ? "1 customer id in the structured claim" : "No customer id in the structured claim"}
         </p>
+        {claim.customer_id ? <p className="rf-slab-id">{claim.customer_id}</p> : null}
+      </div>
+      <p className="rf-data">{plural(creates, "create_customer call", "create_customer calls")} attempted</p>
+    </>
+  );
+}
+
+function StateFacts({ run }: { run: RealityRun }) {
+  const records = recordsFrom(run);
+  const seeded = run.actual.customers.filter((c) => c.role === "seed").length;
+  return (
+    <>
+      <p className="rf-count">
+        <span data-testid="record-count" className="rf-count-number">
+          {records.length}
+        </span>{" "}
+        new {records.length === 1 ? "record" : "records"} committed
+      </p>
+      {records.length ? (
+        <div className="rf-slabs">
+          {records.map((record) => (
+            <RecordSlab
+              key={record.customer.customer_id}
+              record={record}
+              callHref={`#call-${record.customer.created_by_call}`}
+            />
+          ))}
+        </div>
       ) : null}
-    </div>
+      <p className="rf-data" data-testid="seed-count">
+        Plus {plural(seeded, "pre-existing seeded record", "pre-existing seeded records")}, not created
+        in this run
+      </p>
+    </>
+  );
+}
+
+function ClaimMessage({ run }: { run: RealityRun }) {
+  const claim = run.agent.claim;
+  if (!claim) return <p className="rf-body">The agent wrote no final message.</p>;
+  return (
+    <p data-testid="claim-message" className="rf-body rf-break">
+      {claim.message.text}
+      {claim.message.truncated ? " [cut for display]" : ""}
+    </p>
   );
 }
 
 function OracleCard({ run }: { run: RealityRun }) {
   const violations = run.actual.findings.filter((f) => f.severity === "violation");
   const notes = run.actual.findings.filter((f) => f.severity !== "violation");
+  const broken = run.actual.invariants_violated.length;
+  const evaluated = run.actual.invariants_evaluated.length;
   return (
-    <div data-testid="oracle-card" className="min-w-0 bg-surface p-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div data-testid="oracle-card" className="rf-stack">
+      <p className="rf-oracle-line">
         <VerdictTag verdict={run.verdict} testId="oracle-verdict" />
-        <span className="font-mono text-xs text-muted">
-          run outcome: {humanize(run.run_outcome)}
-        </span>
-      </div>
+        <span className="rf-data">run outcome: {humanize(run.run_outcome)}</span>
+      </p>
       {run.finding_class ? (
-        <p className="mt-1 text-xs text-faint">
+        <p className="rf-data">
           {FINDING_CLASS_LABEL[run.finding_class] ?? humanize(run.finding_class)}
           {run.impairments.length ? ` · impaired: ${run.impairments.join(", ")}` : ""}
         </p>
       ) : null}
       {violations.length ? (
-        <ul className="mt-3 flex flex-col gap-2">
+        <ul className="rf-findings">
           {violations.map((f) => (
-            <li key={f.code} data-testid={`oracle-finding-${f.code}`} className="text-sm leading-6">
-              <span className="font-mono text-xs text-bad">{f.code}</span>
-              <span className="block text-muted">{f.message}</span>
+            <li key={f.code} data-testid={`oracle-finding-${f.code}`}>
+              <code>{f.code}</code>
+              <span>{f.message}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm text-muted">No invariant was found broken in this run.</p>
+        <p className="rf-body">No invariant was found broken in this run.</p>
       )}
+      <p className="rf-data" data-testid="invariant-count">
+        {plural(evaluated, "invariant", "invariants")} evaluated, {broken} broken
+      </p>
       {notes.length ? (
-        <details className="mt-3">
-          <summary className="flex items-center gap-1 text-xs text-faint hover:text-foreground">
-            <Chevron /> {notes.length} diagnostic note{notes.length === 1 ? "" : "s"}
+        <details className="rf-disclose">
+          <summary>
+            <Chevron /> {plural(notes.length, "diagnostic note", "diagnostic notes")}
           </summary>
-          <ul className="mt-2 flex flex-col gap-1 text-xs text-muted">
+          <ul className="rf-notes-list">
             {notes.map((f, i) => (
-              <li key={i} className="break-words">
+              <li key={i} className="rf-break">
                 {f.message}
               </li>
             ))}
@@ -273,126 +259,383 @@ function OracleCard({ run }: { run: RealityRun }) {
   );
 }
 
-function Records({ run }: { run: RealityRun }) {
+function Comparison({ id, run }: { id: string; run: RealityRun }) {
+  const relation = claimRelation(run);
+  const first = firstDivergence(run);
+  const firstEvent = first ? run.agent.tool_events.find((e) => e.call_seq === first.call_seq) : null;
+  const pointTone = seamFor(run, "differs");
   return (
-    <div className="overflow-x-auto rounded-lg border border-line">
-      <table className="w-full min-w-[34rem] text-left text-sm">
-        <caption className="sr-only">Authoritative customer records after the run</caption>
-        <thead className="bg-raised text-xs text-faint">
-          <tr>
-            <th scope="col" className="px-3 py-2 font-medium">Record</th>
-            <th scope="col" className="px-3 py-2 font-medium">Name</th>
-            <th scope="col" className="px-3 py-2 font-medium">Created by</th>
-            <th scope="col" className="px-3 py-2 font-medium">Marks</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line bg-surface">
-          {run.actual.customers.map((c) => (
-            <tr key={c.customer_id} data-testid={`record-${c.customer_id}`} data-duplicate={c.flagged_duplicate}>
-              <td className="px-3 py-2 font-mono text-xs text-truth">{c.customer_id}</td>
-              <td className="px-3 py-2 text-muted">
-                {c.name} <span className="text-faint">{c.email}</span>
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-muted">
-                {c.role === "seed" ? "seed" : `call ${c.created_by_call}`}
-              </td>
-              <td className="px-3 py-2">
-                <span className="flex flex-wrap gap-1">
-                  {c.flagged_duplicate ? <Tag tone="bad">duplicate</Tag> : null}
-                  {c.named_in_claim ? <Tag tone="agent">named in claim</Tag> : null}
-                  {c.role === "seed" ? <Tag>pre-existing</Tag> : null}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <section
+      aria-labelledby="comparison-title"
+      className="rf-comparison"
+      data-divergence={divergenceFrom(run)}
+      data-testid="comparison"
+    >
+      <h2 id="comparison-title" className="sr-only">
+        Reality comparison
+      </h2>
+      <div aria-hidden className="rf-columns">
+        <p data-reality="agent">
+          Agent-reported reality
+          <span>What it was told, and what it filed</span>
+        </p>
+        <p data-reality="actual">
+          Authoritative reality
+          <span>What committed, and what the Oracle verified</span>
+        </p>
+      </div>
+      <ComparisonRow
+        title="Outcome"
+        agentLabel="What it reported"
+        actualLabel="What committed"
+        agentTestId="claim-card"
+        relation={relation}
+        tone={seamFor(run, relation)}
+        agent={<ClaimFacts run={run} />}
+        actual={<StateFacts run={run} />}
+      />
+      {first ? (
+        <ComparisonRow
+          title={`First divergence, call ${first.call_seq}`}
+          agentLabel={`What it was told · call ${first.call_seq}`}
+          actualLabel="What was true at that moment"
+          relation="differs"
+          tone={pointTone}
+          agent={
+            <>
+              <p className="rf-value rf-mono rf-break" data-testid="first-told">
+                {first.agent_saw}
+              </p>
+              <p className="rf-data">
+                {firstEvent?.tool}
+                {firstEvent?.fault_injected ? ` · ${FAULT_LABEL[firstEvent.fault_injected] ?? humanize(firstEvent.fault_injected)}` : ""}
+              </p>
+            </>
+          }
+          actual={
+            <>
+              <p className="rf-value rf-mono rf-break" data-testid="first-actual">
+                {first.actually}
+              </p>
+              <p className="rf-data">
+                <Link href={runHref(id, run.run_id, `#call-${first.call_seq}`)} className="rf-link">
+                  See this call in the ledger
+                </Link>
+              </p>
+            </>
+          }
+        />
+      ) : null}
+      <ComparisonRow
+        title="Final statement and verdict"
+        agentLabel="In the agent's words"
+        actualLabel="What the Oracle verified"
+        relation={relation}
+        tone={seamFor(run, relation)}
+        agent={<ClaimMessage run={run} />}
+        actual={<OracleCard run={run} />}
+      />
+    </section>
   );
 }
 
-export function RealityView({ id, runs, run }: { id: string; runs: RunList; run: RealityRun }) {
+function Explanation({
+  detail,
+  run,
+}: {
+  detail: InvestigationDetail;
+  run: RealityRun;
+}) {
+  const primary = detail.summary.case?.primary_run_id === run.run_id;
+  const explanation = explanationFrom(run, detail.case_study, primary);
+  const { causal } = explanation;
   return (
-    <div className="flex flex-col gap-6" data-testid="reality-view" data-run={run.run_id}>
-      <RunPicker id={id} runs={runs} current={run.run_id} />
-      <div className="flex flex-wrap items-center gap-2">
-        <Tag testId="target-evidence" tone={run.target_evidence === "live_provider" ? "truth" : "warn"}>
-          {targetLabel(run)}
-        </Tag>
-        <span className="font-mono text-xs text-faint">
-          {run.world_ref} · {run.config} policy
-          {run.agent.recovery_pattern ? ` · recovery: ${humanize(run.agent.recovery_pattern).toLowerCase()}` : ""}
-        </span>
-      </div>
-      <VerdictStrip run={run} />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {run.agent.mission ? (
-          <Panel title="The task it was given">
-            <p data-testid="mission" className="text-sm leading-6 text-muted">
-              {missionLine(run.agent.mission.text)}
-            </p>
-            <details>
-              <summary className="flex items-center gap-1 text-xs text-faint hover:text-foreground">
-                <Chevron /> Full task text
-              </summary>
-              <div className="mt-2">
-                <Code>{run.agent.mission.text}</Code>
-              </div>
-            </details>
-          </Panel>
-        ) : null}
-        <Panel title={`Conditions changed · ${run.faults_delivered} fault(s) delivered`}>
-          {run.faults.length ? (
-            <ul className="flex flex-col gap-1 text-sm leading-6 text-muted">
-              {run.faults.map((f, i) => (
-                <li key={i}>
-                  {FAULT_LABEL[f.kind] ?? humanize(f.kind)}{" "}
-                  <span className="font-mono text-xs text-faint">
-                    ({f.operation}, occurrence {f.occurrence}
-                    {f.span > 1 ? `, span ${f.span}` : ""})
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted">No fault was selected for this run.</p>
-          )}
-        </Panel>
-      </div>
-
-      <section aria-label="Reality comparison" className="overflow-hidden rounded-lg border border-line">
-        <div className="grid gap-px bg-line md:grid-cols-2">
-          <Column tone="agent" title="Agent Reality" note="What the target agent was told" />
-          <div className="hidden md:block">
-            <Column tone="truth" title="Actual Reality" note="What authoritative state recorded" />
-          </div>
+    <section aria-labelledby="explain-title" className="rf-explain" data-testid="explanation">
+      <h2 id="explain-title" className="rf-section-title">
+        The evidence, explained
+      </h2>
+      <div className="rf-explain-grid">
+        <div>
+          <h3>What happened?</h3>
+          <p data-testid="explain-happened">{explanation.happened}</p>
         </div>
-        <ol className="flex flex-col gap-px bg-line">
-          {run.agent.tool_events.map((event) => (
-            <CallRow key={event.call_seq} event={event} run={run} />
-          ))}
-          {run.agent.tool_events.length === 0 ? (
-            <li className="bg-surface p-3 text-sm text-muted">The agent made no tool calls.</li>
+        <div>
+          <h3>Why did it happen?</h3>
+          <p data-testid="explain-why">{explanation.why}</p>
+        </div>
+        <div>
+          <h3>Why does it matter?</h3>
+          <p data-testid="explain-matters">{explanation.matters}</p>
+        </div>
+      </div>
+      <dl className="rf-causal" data-testid="causal-facts">
+        <div>
+          <dt className="rf-label">Fault delivered</dt>
+          <dd data-testid="causal-fault">{causal.faultDelivered}</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Violation observed</dt>
+          <dd data-testid="causal-violation">{causal.violationObserved}</dd>
+        </div>
+        <div className="rf-causal-wide">
+          <dt className="rf-label">Causal evidence</dt>
+          <dd data-testid="causal-evidence">{causal.causalEvidence}</dd>
+          {causal.reproduction ? (
+            <dd data-testid="case-study" className="rf-causal-note">
+              {causal.reproduction}
+            </dd>
           ) : null}
-        </ol>
-        <div className="grid gap-px border-t border-line bg-line md:grid-cols-2">
-          <ClaimCard run={run} />
-          <OracleCard run={run} />
         </div>
-      </section>
+      </dl>
+    </section>
+  );
+}
 
+function actualFor(event: ToolEvent, run: RealityRun): string {
+  const committed = run.actual.changes.find(
+    (c) => c.created_by_call === event.call_seq && c.operation === "insert",
+  );
+  if (event.fault_injected && event.actual_summary) {
+    const write = event.tool === "create_customer";
+    const suffix = committed
+      ? `; committed ${committed.customer_id}`
+      : write
+        ? "; committed nothing"
+        : "";
+    return `True response: ${event.actual_summary}${suffix}`;
+  }
+  if (committed) return `Committed ${committed.customer_id}`;
+  if (event.tool === "create_customer") return "Committed nothing";
+  return "Delivered as it was";
+}
+
+function CallRow({ id, event, run }: { id: string; event: ToolEvent; run: RealityRun }) {
+  const differs = event.fault_injected !== null;
+  const tone = seamFor(run, differs ? "differs" : "equal");
+  return (
+    <li
+      id={`call-${event.call_seq}`}
+      data-testid={`call-${event.call_seq}`}
+      data-fault={event.fault_injected ?? ""}
+      data-tone={tone}
+      className="rf-call"
+    >
+      <details>
+        <summary>
+          <span className="rf-call-side">
+            <span className="rf-call-head">
+              <Chevron />
+              <span className="rf-call-seq">#{event.call_seq}</span>
+              <span className="rf-call-tool">{event.tool}</span>
+              {event.fault_injected ? (
+                <span className="rf-call-fault" title={FAULT_LABEL[event.fault_injected]}>
+                  {event.fault_injected}
+                </span>
+              ) : null}
+            </span>
+            <span className="rf-call-value">
+              <span className="rf-call-label">Told</span> {event.delivered_summary}
+            </span>
+          </span>
+          <DivergenceDivider relation={differs ? "differs" : "equal"} tone={tone} glyph={differs} />
+          <span className="rf-call-side">
+            <span data-testid={`actual-${event.call_seq}`} className="rf-call-value" data-actual>
+              <span className="rf-call-label">Actually</span> {actualFor(event, run)}
+            </span>
+          </span>
+        </summary>
+        <div className="rf-call-detail">
+          <div className="rf-stack">
+            <p className="rf-label">Arguments</p>
+            <Code>{event.arguments.text}</Code>
+          </div>
+          <div className="rf-stack">
+            <p className="rf-label">Delivered response</p>
+            <Code>{event.delivered.text}</Code>
+          </div>
+          {event.agent_note ? (
+            <p className="rf-body rf-call-note">
+              <span className="rf-label">Agent&apos;s note</span> {event.agent_note.text}
+            </p>
+          ) : null}
+          <Link href={traceHref(id, run.run_id, event.call_seq)} className="rf-trace" data-testid="trace-link">
+            See this call in the timeline
+          </Link>
+        </div>
+      </details>
+    </li>
+  );
+}
+
+function Ledger({ id, run }: { id: string; run: RealityRun }) {
+  const events = run.agent.tool_events;
+  const faulted = events.filter((e) => e.fault_injected).length;
+  return (
+    <section aria-labelledby="ledger-title" className="rf-ledger" data-testid="ledger">
+      <div className="rf-section-head">
+        <h2 id="ledger-title" className="rf-section-title">
+          Every tool call
+        </h2>
+        <p className="rf-data">
+          {plural(events.length, "call", "calls")}, {faulted} carrying a delivered fault
+        </p>
+      </div>
+      <ol>
+        {events.map((event) => (
+          <CallRow key={event.call_seq} id={id} event={event} run={run} />
+        ))}
+        {events.length === 0 ? <li className="rf-body">The agent made no tool calls.</li> : null}
+      </ol>
+    </section>
+  );
+}
+
+function Discrepancies({ run }: { run: RealityRun }) {
+  const counts = new Map<string, number>();
+  for (const d of run.discrepancies) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+  const line = [...counts.entries()]
+    .map(([kind, count]) => `${count} ${DISCREPANCY_LABEL[kind].toLowerCase()}`)
+    .join(", ");
+  return (
+    <details className="rf-disclose rf-panel" data-testid="discrepancy-panel">
+      <summary>
+        <Chevron />
+        <span>
+          {run.discrepancies.length} discrepanc{run.discrepancies.length === 1 ? "y" : "ies"}:{" "}
+          <span className="text-muted">{line}</span>
+        </span>
+      </summary>
+      <TableScroll label="Discrepancies table">
+        <table className="rf-table min-w-[36rem]" data-testid="discrepancies">
+          <caption className="sr-only">
+            Differences between what the agent saw and authoritative state
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Kind</th>
+              <th scope="col">Agent saw</th>
+              <th scope="col">Actually</th>
+            </tr>
+          </thead>
+          <tbody>
+            {run.discrepancies.map((d, i) => (
+              <tr key={i} data-kind={d.kind}>
+                <td>
+                  {DISCREPANCY_LABEL[d.kind]}
+                  {d.call_seq !== null ? <span className="block font-mono text-faint">call {d.call_seq}</span> : null}
+                </td>
+                <td className="font-mono">{d.agent_saw}</td>
+                <td className="font-mono">{d.actually}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
+    </details>
+  );
+}
+
+function Records({ run }: { run: RealityRun }) {
+  return (
+    <section aria-labelledby="records-title" className="rf-records">
+      <h2 id="records-title" className="rf-section-title">
+        Authoritative records
+      </h2>
+      <TableScroll label="Records table">
+        <table className="rf-table min-w-[34rem]">
+          <caption className="sr-only">Authoritative customer records after the run</caption>
+          <thead>
+            <tr>
+              <th scope="col">Record</th>
+              <th scope="col">Name</th>
+              <th scope="col">Created by</th>
+              <th scope="col">Marks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {run.actual.customers.map((c) => (
+              <tr key={c.customer_id} data-testid={`record-${c.customer_id}`} data-duplicate={c.flagged_duplicate}>
+                <td className="font-mono">{c.customer_id}</td>
+                <td>
+                  {c.name} <span className="text-faint">{c.email}</span>
+                </td>
+                <td className="font-mono">{c.role === "seed" ? "seed" : `call ${c.created_by_call}`}</td>
+                <td>
+                  <span className="flex flex-wrap gap-1">
+                    {c.flagged_duplicate ? <Tag tone="bad">duplicate</Tag> : null}
+                    {c.named_in_claim ? <Tag>named in claim</Tag> : null}
+                    {c.role === "seed" ? <Tag>pre-existing</Tag> : null}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
+    </section>
+  );
+}
+
+function hypothesisFor(detail: InvestigationDetail, run: RealityRun): HypothesisView | null {
+  const observation = detail.observations.find((o) => o.experiment_id === run.experiment_id);
+  const proposal = detail.proposals.find((p) => p.proposal_id === observation?.proposal_id);
+  return detail.hypotheses.find((h) => h.hypothesis_id === proposal?.hypothesis_id) ?? null;
+}
+
+function Deeper({ id, detail, run }: { id: string; detail: InvestigationDetail; run: RealityRun }) {
+  const hypothesis = hypothesisFor(detail, run);
+  const base = `/investigations/${id}`;
+  return (
+    <nav aria-label="Go deeper" className="rf-deeper" data-testid="deeper">
+      <Link href={`${base}?view=timeline&run=${run.run_id}#trace`} data-testid="deeper-timeline">
+        <span>Timeline</span>
+        <small>This run in the journal, in order, with record hashes</small>
+      </Link>
+      <Link
+        href={`${base}?view=investigator&run=${run.run_id}${hypothesis ? `#${hypothesis.hypothesis_id}` : ""}`}
+        data-testid="deeper-investigator"
+      >
+        <span>Investigator</span>
+        <small>
+          {hypothesis ? `Hypothesis ${hypothesis.hypothesis_id}, the one behind this run` : "Hypotheses and generated experiments"}
+        </small>
+      </Link>
+      <Link href={`${base}?view=evidence&run=${run.run_id}`} data-testid="deeper-evidence">
+        <span>Raw evidence</span>
+        <small>Run record, fault configuration, findings and full task text</small>
+      </Link>
+    </nav>
+  );
+}
+
+export function RealityView({
+  id,
+  detail,
+  runs,
+  run,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runs: RunList;
+  run: RealityRun;
+}) {
+  const story = storyFrom(run);
+  return (
+    <div className="rf-reality" data-testid="reality-view" data-run={run.run_id} data-story={story.kind}>
+      <Summary id={id} detail={detail} runs={runs} run={run} />
+      <RunPicker id={id} runs={runs} current={run.run_id} />
+      <Comparison id={id} run={run} />
+      <Explanation detail={detail} run={run} />
+      <Ledger id={id} run={run} />
       {run.discrepancies.length ? (
         <Discrepancies run={run} />
       ) : (
-        <p data-testid="no-discrepancies" className="text-sm text-muted">
+        <p data-testid="no-discrepancies" className="rf-body">
           No discrepancy between delivery and authoritative state was recorded in this run.
         </p>
       )}
-
-      <Panel title="Authoritative records">
-        <Records run={run} />
-      </Panel>
+      <Records run={run} />
+      <Deeper id={id} detail={detail} run={run} />
     </div>
   );
 }
