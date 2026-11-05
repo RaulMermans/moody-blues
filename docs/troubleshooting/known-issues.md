@@ -307,3 +307,11 @@ contributor might also hit.
 - **Symptom:** none seen. `bootstrap.sh` writes the generated token with `sed`, so it is briefly in a process
   argument on the VM during first setup.
 - **Status:** open and low risk: it happens once, before any service runs. Not changed in Sprint 9.
+
+### KI-50: The design lab's output leaked into the production build
+- **Symptom:** `pnpm build` failed in `.next-lab/types/validator.ts`, and the product CSS grew from 19,999 to
+  22,124 bytes, in Sprint 10.
+- **Cause:** a custom `distDir` makes Next add its types to `tsconfig.json`, which then checks both route sets
+  at once. Separately, Tailwind scans every file it can see, so words in `e2e-design/` became utilities.
+- **Fix:** `tsconfig.lab.json` for lab builds, and `@source not` lines in `globals.css`.
+- **Check:** after changing anything in the lab, confirm the production CSS hash is unchanged.

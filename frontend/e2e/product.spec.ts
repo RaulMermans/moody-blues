@@ -67,6 +67,15 @@ interface Detail {
 const jobCount = () => (existsSync(JOBS) ? readdirSync(JOBS).length : 0);
 
 test.describe("public, read-only exploration", () => {
+  test("the design lab does not exist in a production build", async ({ page, request }) => {
+    for (const route of ["/design-lab", "/design-lab/comparison", "/design-lab/landing", "/design-lab/system"]) {
+      expect((await request.get(route)).status(), route).toBe(404);
+    }
+    await page.goto("/");
+    await expect(page.locator('a[href^="/design-lab"]')).toHaveCount(0);
+    await expect(page.locator(".rf")).toHaveCount(0);
+  });
+
   test("the dashboard explains itself and labels every case recorded", async ({ page }) => {
     await page.goto("/");
     const listing = await api<{

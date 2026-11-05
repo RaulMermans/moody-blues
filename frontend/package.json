@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "design:dev": "MOODY_DESIGN_LAB=1 next dev --port 3010",
+    "design:build": "MOODY_DESIGN_LAB=1 next build",
+    "test:design": "pnpm design:build && playwright test --config playwright.design.config.ts"
   },
   "dependencies": {
     "next": "16.4.4",
