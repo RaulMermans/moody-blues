@@ -1,11 +1,13 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { expect, type Page, test } from "@playwright/test";
+import { type APIRequestContext, expect, type Page, test } from "@playwright/test";
 
 import {
   BACKEND_URL,
   CANARY_VULTR_KEY,
+  HOSTED_CONFIG_ORIGIN,
+  HOSTED_CONFIG_URL,
   OPERATOR_TOKEN,
   ORPHAN_FRONTEND_URL,
 } from "../playwright.config";
@@ -27,6 +29,8 @@ async function shot(page: Page, name: string, fullPage = false) {
   // Streamed content can be in the DOM before it replaces its loading state, so wait for the
   // loading text to leave. Waiting for network idle is no good here: see KI-38.
   await expect(page.getByText(/^(Loading|Reading|Checking)\b/)).toHaveCount(0);
+  // Opt-in, so running the suite leaves the committed images and the working tree alone.
+  if (!process.env.MOODY_E2E_SHOTS) return;
   mkdirSync(SHOTS, { recursive: true });
   await page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage });
 }
@@ -260,6 +264,7 @@ test.describe("public, read-only exploration", () => {
       `/investigations/${VIOLATION}`,
       `/investigations/${VIOLATION}?view=timeline`,
       `/investigations/${VIOLATION}?view=investigator`,
+      "/containment",
       "/operator",
     ]) {
       await page.goto(url);
@@ -460,6 +465,68 @@ test.describe("operator journey on real Docker, worlds and Oracle", () => {
     await expect(page.getByTestId("job-panel")).toHaveAttribute("data-status", "cancelled", {
       timeout: 60_000,
     });
+  });
+});
+
+test.describe("containment evidence", () => {
+  test("the page shows each real attempt and says where it ran", async ({ page }) => {
+    await page.goto("/containment");
+    const committed = JSON.parse(
+      readFileSync(join(__dirname, "..", "..", "evidence", "containment", "report.json"), "utf-8"),
+    ) as { attempts: { attempt_id: string; observed: string; held: boolean }[] };
+    await expect(page.getByTestId("containment-attempt")).toHaveCount(committed.attempts.length);
+    // The committed report is local, and must never be presented as hosted.
+    await expect(page.getByTestId("containment-environment")).toHaveText(
+      "LOCAL DEVELOPMENT, NOT HOSTED",
+    );
+    for (const attempt of committed.attempts) {
+      const card = page.locator(`[data-attempt="${attempt.attempt_id}"]`);
+      await expect(card).toContainText(attempt.observed);
+      await expect(card.getByTestId("attempt-held")).toHaveText(
+        attempt.held ? "BLOCKED" : "NOT BLOCKED",
+      );
+    }
+  });
+
+  test("the page offers nothing that runs", async ({ page }) => {
+    await page.goto("/containment");
+    await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
+    await expect(page.getByRole("main").locator("form, input, textarea")).toHaveCount(0);
+  });
+});
+
+test.describe("a server behind a TLS proxy", () => {
+  // This instance speaks plain http, as Next.js does behind Caddy. Its public origin is configured.
+  const signIn = (request: APIRequestContext, headers: Record<string, string>) =>
+    request.post(`${HOSTED_CONFIG_URL}/api/operator/session`, {
+      data: { token: OPERATOR_TOKEN },
+      headers,
+    });
+
+  test("the session cookie is Secure although the internal request is http", async ({
+    request,
+  }) => {
+    const res = await signIn(request, { origin: HOSTED_CONFIG_ORIGIN });
+    expect(res.status()).toBe(200);
+    const cookie = res.headers()["set-cookie"];
+    expect(cookie).toMatch(/;\s*Secure/i);
+    expect(cookie).toMatch(/;\s*HttpOnly/i);
+    expect(cookie).toMatch(/;\s*SameSite=Strict/i);
+  });
+
+  test("an origin matching only the Host header is refused", async ({ request }) => {
+    const res = await signIn(request, { origin: HOSTED_CONFIG_URL });
+    expect(res.status()).toBe(403);
+  });
+
+  test("forwarded headers cannot make another origin acceptable", async ({ request }) => {
+    const res = await signIn(request, {
+      origin: "https://evil.example",
+      host: "evil.example",
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "https",
+    });
+    expect(res.status()).toBe(403);
   });
 });
 

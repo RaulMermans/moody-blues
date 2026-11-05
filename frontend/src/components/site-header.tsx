@@ -11,6 +11,9 @@ export function SiteHeader() {
           <Link href="/" className="hover:text-foreground">
             Investigations
           </Link>
+          <Link href="/containment" className="hover:text-foreground">
+            Containment
+          </Link>
           <Link href="/operator" className="hover:text-foreground">
             Operator
           </Link>
