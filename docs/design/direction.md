@@ -1,99 +1,77 @@
 # Design direction
 
-## Concept: two realities, one truth
+## Concept: Beautifully Wrong
 
-The product shows the gap between what an agent reported and what happened. The interface makes that
-gap physical, and keeps one object perfectly still: the Oracle.
+The product shows the gap between what an agent reported and what happened. It looks like a premium
+scientific instrument with an editorial voice, and it is slightly wrong in exactly the places the evidence
+is wrong.
 
-- **Duality.** Two unequal territories, 42/58. They differ in shape as well as colour.
-- **Distortion.** One crack, which exists only where the Oracle recorded a violation.
-- **Verification.** The Oracle is the only light object in a dark system. It is flat, square and never moves.
+The working balance is 80% clear product design, 15% expressive type and composition, and 5% distortion.
+It is a way of judging a screen, not a measurement.
 
-## The three studies
+**Forensic Brutalism is the foundation. Reality Fracture is the exception.**
 
-All three render the same recorded run, `run_cc34d7a6e314`, through the real evidence API.
+## What changed from Sprint 10, and why
 
-| | A: Reality Fracture | B: Mirror Corruption | C: Forensic Brutalism |
-|---|---|---|---|
-| Image | ![A](screenshots/01-direction-a-reality-fracture.png) | ![B](screenshots/02-direction-b-mirror-corruption.png) | ![C](screenshots/03-direction-c-forensic-brutalism.png) |
-| Idea | Overlapping planes split by a crack | A true reflection that fails at the point of disagreement | An evidence dossier with exhibits and a stamp |
-| Palette | Charcoal, violet, amber, coral | Pure negative and positive | Paper, ink, one signal orange |
-| Type | Compressed heavy Archivo | Expanded thin Archivo | Black Archivo, oversized numerals |
+Sprint 10 picked Reality Fracture as the dominant aesthetic. Reviewing the renders, the owner reversed that
+hierarchy: [the Sprint 10 fold](screenshots/05-comparison-fold.png) was memorable, but the effects competed
+with the evidence.
 
-### Selection
+| Sprint 10 | Sprint 11 | Why |
+|---|---|---|
+| Violet and amber territories | Graphite ground; lavender and sand appear only as a label and a rule | Colour is an accent, not a surface |
+| A jagged crack through cut planes | A thin seam, which breaks only at rows with a recorded difference | The seam carries data. The crack carried mood |
+| Moiré, echoes, sliced and misregistered type | Removed | They said nothing the seam does not |
+| Oracle as a full-width paper slab | Oracle as one small paper seal per screen | Light keeps its emphasis when it is rare |
+| Compressed black display type | Archivo at 82% width, semibold | It stays expressive and stops shouting |
+| Fixed study of one signature case | Every state designed from the evidence | A calm case now looks calm by construction |
 
-| Criterion | A | B | C |
-|---|---|---|---|
-| Distinctiveness | High | High, but quiet | Medium: the dossier is a known genre |
-| Concept fit | High: the break is the product | High for duality, weak for verification | High for verification, weak for distortion |
-| Comprehension | High | Medium: mirrored text costs a moment | High |
-| Accessibility | High on solid surfaces | Medium: a mirrored word is decoration only, and the layout depends on the axis | High |
-| Feasibility | High: CSS and SVG | Medium: symmetry fails on uneven data such as 15 tool calls | High |
-| Performance | High | High | High |
-| Fit with evidence screens | High: dark, like the product | Low: half of every screen is light | Medium: a full light theme is a second theme |
+Sprint 10's owner decision is settled: the headline says **reported**, not believed. In the signature run the
+agent's message names both records, so "believed" was never accurate.
 
-**Selected: A as the identity, with three parts of C.** These judgements are the design team's, from the
-rendered studies. They are not measured results.
+## The idea in one glyph
 
-Taken from C, and used only for the Oracle:
+Each row of a comparison ends in a plain symbol: `=` the two sides agree, `≠` they differ, `?` one side holds
+nothing to compare. A reader needs no knowledge of the design to read it, and a screen reader hears it as a
+sentence. Down a ledger of tool calls, the glyphs make the shape of a run visible at a glance.
 
-1. The paper surface. C's weakness as a whole-product theme is its strength on one object: on a dark
-   screen, a light slab is unmistakably the authority.
-2. Heavy square rules and the invariant ledger.
-3. Oversized evidence numerals.
+## The distortion budget
 
-Left out of C: the rotated stamp. It looks forensic, but the Oracle must be the one thing that never tilts.
-Left out of B entirely, though the unequal record counts keep its best idea: the reflection fails at the
-disagreement.
+There are three displacements in the whole system. Each is a small fixed offset, and each needs an Oracle
+`VIOLATION`:
 
-## Prototypes
+| Offset | Where | Exact condition |
+|---|---|---|
+| The seam steps sideways and leaves a gap | A comparison or ledger row | The row holds a recorded difference and the verdict is `VIOLATION` |
+| The second headline line sits out of register | The headline | `false_completion_claim`: report and reality disagree |
+| The extra record slips out of line | A record slab | Flagged duplicate, left out of the structured claim, in a claim that named another flagged record |
 
-| Landing | Reality Comparison |
-|---|---|
-| ![Landing](screenshots/04-landing.png) | ![Comparison](screenshots/05-comparison-fold.png) |
-
-The two statements sit out of register across the crack. Under each sits the same event in its two states:
-the filed status, and the committed rows.
-
-The Comparison reads in one pass: `completed` against `2`, the crack with its count, then the Oracle's
-verdict, all above the fold at 1440×900. Tool calls are one link away and no longer lead.
-
-Full page: [desktop](screenshots/05-comparison-full.png), [tablet](screenshots/06-tablet-comparison.png),
-[phone](screenshots/06-mobile-comparison.png). Clean case: [Recovery](screenshots/08-comparison-clean-case.png).
-Primitives: [system](screenshots/09-system.png).
+An honest report of a real duplicate is the test of this design. The record still slips, because the
+duplicate is real. The headline stays flush and the outcome row reads `=`, because report and reality agree.
 
 ## Visual principles
 
-1. **Distortion is earned.** Only an Oracle `VIOLATION` cracks the frame, ghosts the title or draws moiré.
-   A clean case looks calm, so the crack means something when it appears.
-2. **Decoration around evidence, never on it.** Recorded values are large, but they are never layered,
-   sliced or skewed.
-3. **The Oracle does not move.** Not rotated, not offset, not echoed.
-4. **Shape before colour.** Agent Reality has a dashed edge and Actual Reality a heavy solid rule. Each status
-   has its own glyph, word and form.
-5. **Absence looks like absence.** A missing verdict is hollow. It never resembles a result.
-6. **One accent per moment.** Violet and amber claim territory; coral appears only at the break.
-7. **Depth from planes.** No shadows, blur or glass.
-8. **Unequal on purpose.** The split gives Actual Reality more room, because it is the one that counts.
+1. **The information is the art.** If an effect does not carry a recorded fact, it goes.
+2. **Distortion is earned.** Only an Oracle `VIOLATION` displaces anything. A calm case is calm by rule.
+3. **Evidence is never treated.** Ids, numbers, verdicts and controls are never layered, skewed or sliced. A
+   record may move only as a whole, and nothing is drawn around it.
+4. **The Oracle does not move,** and it is the only light object on a screen.
+5. **Shape before colour.** The agent's side has a broken rule, the authoritative side a solid one. Each status
+   has its own glyph and word.
+6. **Absence looks like absence.** A missing verdict is hollow. It never resembles a result.
+7. **Result, explanation, investigation, raw evidence.** Each step is one move from the last.
+8. **It must survive removal.** With every offset off, the page must read the same:
+   [proof](screenshots/sprint-11/after-violation-effects-off.png), and a test asserts the text is unchanged.
 
-## An evidence finding that shaped the design
+## Evidence findings that shaped the design
 
-The brief's example was one perceived outcome against two committed records. In the signature run that is
-not what the agent believed. Its structured claim says `completed` and names one id, but its message names
-the extra record too. The case note calls this "a false status, not concealment".
-
-So the left side shows what the agent **filed**, and the 1 is labeled as ids in the structured claim. The
-disclosure is always visible, including on the landing page. The record slab says which record the agent
-named where.
-
-The run also holds a real ghost: `cus_539789ad91c7bf14` was reported created at call 1 and never committed.
-That appears in Agent Reality as a dashed phantom write, read from `fault_effect`.
-
-The supplied headline "What the agent believed" stays as editorial copy, with the disclosure beside it.
-"What the agent reported" would be more exact. That is an owner decision for Sprint 11.
-
-## References
-
-Principles were taken from the supplied pages, read as text: brutalist and dark-mode collections, a
-split-screen concept and a split-screen layout catalogue. No artwork or identity was copied. What carried
-over: bluntness as a decision, one accent, depth by lighter surfaces, proportion doing the hierarchy.
+- **A status can be accurate alongside a violation.** `run_e9f3ebda139d` holds a real duplicate and a true
+  `not_completed`. Sprint 10's disclosure line called that a "wrong status": a defect, now fixed.
+- **A run is not its investigation.** `inv_5c9f95de6c09` is Inconclusive and its primary run is a PASS. A scope
+  note says so instead of letting the two disagree silently.
+- **Under-reporting exists.** `run_422f9afbb127` said `not_completed` while the objective was met. It differs
+  from the state, it is `INCONCLUSIVE`, and it must look neither like a failure nor like a success.
+- **Selected is not delivered.** Some faults have the effect `not_applied_nothing_to_hide`. Counts come from
+  delivery records.
+- **Causal evidence exists, and is not in the bundle.** See
+  [Reality Comparison](reality-comparison.md#causality).
