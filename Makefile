@@ -7,7 +7,7 @@ PNPM    ?= pnpm
 FE      := frontend
 PYTEST  := $(UV) run pytest
 
-.PHONY: help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
+.PHONY: design-lab test-design help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
         test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
@@ -54,6 +54,12 @@ test: ## Unit + World + Target Agent + experiment + Investigator + evaluation + 
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
+
+design-lab: ## Local design lab on :3010 (needs make dev-backend; never deployed)
+	cd $(FE) && $(PNPM) design:dev
+
+test-design: ## Build the design lab, then browser-test it against the real recorded evidence (free)
+	cd $(FE) && $(PNPM) test:design
 
 build: ## Production build of the frontend
 	$(PNPM) --dir $(FE) build
@@ -188,4 +194,4 @@ sandbox-clean: ## Force-remove any leftover sandbox containers
 	if [ -n "$$ids" ]; then docker rm -f $$ids; else echo "no sandbox containers"; fi
 
 clean: ## Remove caches and build output (literal paths only)
-	rm -rf .pytest_cache .ruff_cache frontend/.next frontend/playwright-report frontend/test-results
+	rm -rf .pytest_cache .ruff_cache frontend/.next frontend/.next-lab frontend/playwright-report frontend/test-results frontend/test-results-design frontend/.e2e-design

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* The design lab has its own Tailwind entry, so its classes never reach the product stylesheet. */
+@source not "../design";
+@source not "./design-lab";
+@source not "../../e2e-design";
+@source not "../../playwright.design.config.ts";
+
 :root {
   --background: #0a0d13;
   --foreground: #e7ebf2;
