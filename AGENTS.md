@@ -30,12 +30,16 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
+| `frontend/src/design/` | Reality Fracture design system: tokens, primitives, prototypes. Not yet used by the product |
+| `frontend/src/app/design-lab/` | Local design lab. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
 | `frontend/e2e` | Playwright against the real backend + production build |
+| `frontend/e2e-design` | Playwright for the design lab against the real recorded evidence |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
 | `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
 | `evidence/containment/` | The committed containment report, labeled with the host it ran on |
 | `docs/submission/` | Hackathon copy, claim sources, video script, and the tools that build the deck and video |
+| `docs/design/` | Design direction, tokens, components, accessibility and motion |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
 
 ## Commands
@@ -162,6 +166,14 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   investigation. The API has no way to raise a limit. Only ids and fixed codes are streamed as progress.
 - A job is terminal only once its bundle is on disk or the reason it cannot be. Jobs are never retried.
   After a crash a target run that did not report makes the job `outcome_uncertain`.
+
+**Design**
+- Visual state comes only from typed evidence fields (`frontend/src/design/model.ts`). No presentation
+  heuristics. Only an Oracle `VIOLATION` may crack the frame, ghost a title or draw moiré.
+- Decoration never touches evidence: no layering or distortion of ids, numbers, verdicts or controls, and
+  nothing decorative may read as a record. The Oracle seal is never rotated, offset or echoed.
+- A missing verdict never resembles one. Disclosures that qualify an outcome stay visible.
+- `MOODY_DESIGN_LAB` is never set in deployment. See ADR 0009 and `docs/design/`.
 
 **Hosting**
 - One backend process, always. Next.js and FastAPI bind to loopback; Caddy is the only public listener.
