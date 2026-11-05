@@ -28,6 +28,8 @@ python3 docs/submission/tools/build_video.py $S/shots $S/deck $S/video
 
 ## Remaining owner steps
 
-1. Rotate the account key ([checklist](../security/key-rotation.md)).
-2. Sign in to lablab, check limits and tags against [copy.md](copy.md), attach the video and deck, and submit
+1. Make the repository public: `gh repo edit RaulMermans/moody-blues --visibility public --accept-visibility-change-consequences`.
+   Then open it in a private window. Until then the site's GitHub link and the deck's link return 404.
+2. Rotate the account key ([checklist](../security/key-rotation.md)).
+3. Sign in to lablab, check limits and tags against [copy.md](copy.md), attach the video and deck, and submit
    before 2026-11-08 22:00 UTC.

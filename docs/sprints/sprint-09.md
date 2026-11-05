@@ -14,8 +14,8 @@
 | C9-C Product clarity | **PASS** | Deployed at `d592879` |
 | C9-D Video | **PASS** | 4:30, built from the public site |
 | C9-E Slides | **PASS** | 9 pages, working links |
-| C9-F Public repository | see below | |
-| C9-G Hosted release | see below | |
+| C9-F Public repository | **BLOCKED_BY_APPROVAL** | Still private: the permission layer refused the change. Review passed: full-history scan clean, both real keys absent from all history |
+| C9-G Hosted release | **PASS** | 15 hosted tests passed; the live test was skipped because live mode is off. Anonymous start refused; keys absent from client code; ledger unchanged across a restart; 0 sandboxes |
 | C9-H Submission | **BLOCKED_BY_CREDENTIALS** | The lablab form needs the owner's sign-in |
 
 ## What the brief had out of date
@@ -61,3 +61,8 @@ The video is real captures panned with cuts, not a live screen recording. Narrat
 - The hosted run is not on the public site. Showing it would need a curated export, a feature after the gate.
 - KI-49 stays open.
 - Destroy the VM after judging: only destruction stops billing.
+
+## Billing at close
+
+$4.33 pending against $200 of credit, read from the account API on 2026-11-05. The ledger shows $6.604204, an
+over-estimate by design.
