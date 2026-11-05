@@ -70,9 +70,10 @@ def serve(artifacts: Path, port: int) -> subprocess.Popen[bytes]:
     while time.monotonic() < deadline:
         try:
             call(port, "/health")
-            return process
         except (urllib.error.URLError, ConnectionError):
             time.sleep(0.1)
+        else:
+            return process
     process.kill()
     raise AssertionError("the server did not start")
 
