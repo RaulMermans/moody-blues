@@ -77,6 +77,14 @@ def test_projection_is_deterministic(tmp_path: Path) -> None:
     assert recorded.render(one) == recorded.render(two)
 
 
+def test_a_fixture_is_never_called_a_model_in_the_timeline(tmp_path: Path) -> None:
+    """Regression: a rehearsal's timeline said "Model concluded" when no model ran."""
+    directory, experiments = investigated(tmp_path)
+    bundle = build_bundle(directory, experiments, mode=ExecutionMode.REHEARSAL)
+    conclusion = next(e for e in bundle.timeline if e.stage == "conclusion")
+    assert conclusion.title.startswith("Fixture concluded")
+
+
 def test_projection_refuses_an_edited_report(tmp_path: Path) -> None:
     directory, experiments = investigated(tmp_path)
     report = directory / "report.json"

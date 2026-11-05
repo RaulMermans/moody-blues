@@ -521,10 +521,20 @@ class ExperimentList(_Public):
     experiments: list[ExperimentView]
 
 
+class RunSummary(_Public):
+    run_id: str
+    experiment_id: str
+    world_ref: str
+    config: str
+    verdict: Verdict
+    run_outcome: str | None
+    faults_delivered: int
+
+
 class RunList(_Public):
     investigation_id: str
     primary_run_id: str | None
-    run_ids: list[str]
+    runs: list[RunSummary]
 
 
 # --- live execution ----------------------------------------------------------------------

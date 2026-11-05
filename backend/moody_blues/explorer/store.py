@@ -29,6 +29,7 @@ from moody_blues.explorer.recorded import MANIFEST
 from moody_blues.explorer.sanitize import MAX_BUNDLE_BYTES
 
 _INVESTIGATION_ID = re.compile(r"^inv_[0-9a-f]{12}$")
+_MAX_PARSED = 64
 
 
 class EvidenceCorruptError(MoodyBluesError):
@@ -88,6 +89,8 @@ class EvidenceStore:
                 cached = InvestigationBundle.model_validate_json(text)
             except ValidationError:
                 return _Check(None, "schema_invalid")
+            if len(self._parsed) >= _MAX_PARSED:
+                self._parsed.clear()
             self._parsed[digest] = cached
         if cached.summary.investigation_id != investigation_id:
             return _Check(None, "id_mismatch")

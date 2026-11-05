@@ -444,6 +444,11 @@ class _Timeline:
         ]
 
 
+def _author(report: InvestigationReport) -> str:
+    """Who wrote the Investigator's part. A fixture is never called a model."""
+    return "Fixture" if report.model_evidence_source == "offline_fixture" else "Model"
+
+
 def _hypothesis_stage(report: InvestigationReport, hypothesis_id: str) -> TimelineStage:
     record = next(
         (h for h in report.hypotheses if h.hypothesis.hypothesis_id == hypothesis_id), None
@@ -471,7 +476,9 @@ def _add_propose(
             "investigation",
             _hypothesis_stage(report, hypothesis.hypothesis_id),
             Authorship.MODEL,
-            f"Hypothesis {hypothesis.hypothesis_id}",
+            f"Hypothesis {hypothesis.hypothesis_id}, revising {hypothesis.revises}"
+            if hypothesis.revises
+            else f"Hypothesis {hypothesis.hypothesis_id}",
             detail=hypothesis.behavior,
             facts={
                 "cited_observations": list(hypothesis.motivating_observations),
@@ -613,7 +620,8 @@ def _add_decision(
             "investigation",
             TimelineStage.CONCLUSION,
             Authorship.MODEL,
-            f"Model concluded: {conclusion.conclusion if conclusion else 'none recorded'}",
+            f"{_author(report)} concluded: "
+            f"{conclusion.conclusion if conclusion else 'none recorded'}",
             detail=conclusion.reasoning if conclusion else None,
             facts={"reason": payload.get("reason")},
         )

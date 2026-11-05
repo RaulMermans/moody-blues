@@ -16,6 +16,7 @@ from moody_blues.contracts.explorer import (
     InvestigationList,
     RealityRun,
     RunList,
+    RunSummary,
     TimelinePage,
 )
 from moody_blues.explorer.projection import primary_run
@@ -95,7 +96,18 @@ def get_runs(
     return RunList(
         investigation_id=investigation_id,
         primary_run_id=case.primary_run_id if case else (fallback.run_id if fallback else None),
-        run_ids=[r.run_id for r in bundle.runs],
+        runs=[
+            RunSummary(
+                run_id=r.run_id,
+                experiment_id=r.experiment_id,
+                world_ref=r.world_ref,
+                config=r.config,
+                verdict=r.verdict,
+                run_outcome=r.run_outcome,
+                faults_delivered=r.faults_delivered,
+            )
+            for r in bundle.runs
+        ],
     )
 
 

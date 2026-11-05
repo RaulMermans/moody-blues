@@ -3,7 +3,7 @@ import "server-only";
 import type { HealthResponse, ReadinessResponse, SystemStatus } from "./status-types";
 
 // Server-side only. Read at request time so one build works against any backend.
-function backendUrl(): string {
+export function backendUrl(): string {
   return (process.env.MOODY_BACKEND_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 }
 

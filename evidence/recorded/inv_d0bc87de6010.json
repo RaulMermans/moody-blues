@@ -3334,7 +3334,7 @@
    },
    "seq": 24,
    "stage": "hypothesis_revised",
-   "title": "Hypothesis h2"
+   "title": "Hypothesis h2, revising h1"
   },
   {
    "at": "2026-11-05T07:39:33.115799Z",
@@ -3928,7 +3928,7 @@
    },
    "seq": 48,
    "stage": "hypothesis_revised",
-   "title": "Hypothesis h3"
+   "title": "Hypothesis h3, revising h2"
   },
   {
    "at": "2026-11-05T07:39:58.051869Z",
@@ -4334,7 +4334,7 @@
    },
    "seq": 64,
    "stage": "hypothesis_revised",
-   "title": "Hypothesis h4"
+   "title": "Hypothesis h4, revising h3"
   },
   {
    "at": "2026-11-05T07:40:13.482261Z",
@@ -5047,7 +5047,7 @@
    },
    "seq": 93,
    "stage": "hypothesis_revised",
-   "title": "Hypothesis h5"
+   "title": "Hypothesis h5, revising h4"
   },
   {
    "at": "2026-11-05T07:40:39.510507Z",
