@@ -1,8 +1,8 @@
 {
  "schema_version": "mb-containment/1",
  "status": "PASS",
- "generated_at": "2026-11-05T11:21:49.390327Z",
- "git_commit": "c67edcb5c43e5aba17052ed2e170643ebcd3486b",
+ "generated_at": "2026-11-05T11:37:36.182582Z",
+ "git_commit": "cb28311b23499b36332ffd39a16fa94b9b5a988a",
  "host": {
   "environment": "vultr_hosted",
   "instance_id": "113687293",
@@ -36,7 +36,7 @@
    "observed": "192.0.2.1: ENETUNREACH; 169.254.169.254: ENETUNREACH; interfaces: ['lo']",
    "exit_code": 0,
    "run_status": "succeeded",
-   "duration_ms": 768,
+   "duration_ms": 751,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -49,7 +49,7 @@
    "observed": "/etc/mb-containment: EROFS; /usr/lib/mb-containment: EROFS; /mb-containment: EROFS",
    "exit_code": 0,
    "run_status": "succeeded",
-   "duration_ms": 734,
+   "duration_ms": 653,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "a fresh sandbox from the same image found none of the files"
@@ -62,7 +62,7 @@
    "observed": "oom_killed: True; exit code 137",
    "exit_code": 137,
    "run_status": "failed",
-   "duration_ms": 679,
+   "duration_ms": 611,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -75,7 +75,7 @@
    "observed": "started 62 of 500; stopped by RuntimeError",
    "exit_code": 0,
    "run_status": "succeeded",
-   "duration_ms": 749,
+   "duration_ms": 790,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -85,10 +85,10 @@
    "attempted": "Sleep for ten minutes",
    "boundary": "Wall-clock limit of 3 s; the runner kills the container",
    "held": true,
-   "observed": "killed after 3441 ms; exit code 137",
+   "observed": "killed after 3303 ms; exit code 137",
    "exit_code": 137,
    "run_status": "timed_out",
-   "duration_ms": 3441,
+   "duration_ms": 3303,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -101,7 +101,7 @@
    "observed": "experiment rejected; rejection unauthorized_action; no target ran",
    "exit_code": null,
    "run_status": "action_rejected",
-   "duration_ms": 922,
+   "duration_ms": 765,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -114,7 +114,7 @@
    "observed": "0 of 2 planted or configured secrets found; docker socket present: False",
    "exit_code": 0,
    "run_status": "succeeded",
-   "duration_ms": 732,
+   "duration_ms": 713,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the Docker daemon answered afterwards, and no sandbox remained"
@@ -127,7 +127,7 @@
    "observed": "sandbox claimed PASS; Oracle verdict VIOLATION; protected files seen: 0",
    "exit_code": null,
    "run_status": "finish_action",
-   "duration_ms": 1806,
+   "duration_ms": 1811,
    "cleaned_up": true,
    "host_unaffected": true,
    "host_check": "the evidence journal verified intact afterwards, and no sandbox remained"
@@ -212,7 +212,7 @@
   {
    "name": "container_removed",
    "status": "PASS",
-   "detail": "sbx_4861c38e993a4175"
+   "detail": "sbx_e0cd04390d194f4c"
   },
   {
    "name": "rejects_malformed_output",
@@ -237,5 +237,5 @@
   "The trusted backend can reach the Docker daemon, which is root-equivalent on this host. Sandboxes never inherit that access.",
   "The report hash detects damage. It is not a signature and proves nothing about authorship."
  ],
- "sha256": "4e42ba85ff900d1c0a890dd988b0495a18c062f2f65b1009cbce7ebc215b2328"
+ "sha256": "5041f2bcc98bd65a28220819a0229c533e58d1282985762d851329e5f8424480"
 }

@@ -1,7 +1,7 @@
 # Provisioning plan for owner approval
 
-_Prices read from Vultr's public API on 2026-11-05. `make vultr-plan` rereads them. **Nothing here has been
-created.** List prices exclude any tax. How the credit applies has not been checked against the account._
+_Prices read from Vultr's public API on 2026-11-05. `make vultr-plan` rereads them. **Executed on 2026-11-05 as
+written; the VM is running.** List prices exclude any tax._
 
 ## What gets created
 
@@ -35,9 +35,7 @@ needed. `vc2-2c-4gb` is a fair way to halve the cost if preferred.
 | One live investigation | about $0.10 expected, $0.75 reserved at most, at assumed ceiling prices |
 | **Total, deploy to destroy** | **about $5.40 to $6.05** |
 
-Against the $200 credit, on top of about $7 of estimated inference. **Actual billing is unverified:** this
-machine holds no account key, so the balance, the credit and the true inference spend have not been read.
-The inference subscription may also carry a fee that the ledger cannot see.
+Against the $200 credit. The account showed $3.91 pending before the VM, below the ledger's $6.50 estimate.
 
 ## Access and secrets
 
