@@ -24,9 +24,9 @@ const SHOTS = join(__dirname, "..", "..", "docs", "sprints", "sprint-07-screensh
 const JOBS = join(__dirname, "..", ".e2e", "artifacts", "live-jobs");
 
 async function shot(page: Page, name: string, fullPage = false) {
-  // Streamed content can be in the DOM before it replaces its loading state.
-  await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("status")).toHaveCount(0);
+  // Streamed content can be in the DOM before it replaces its loading state, so wait for the
+  // loading text to leave. Waiting for network idle is no good here: see KI-38.
+  await expect(page.getByText(/^(Loading|Reading|Checking)\b/)).toHaveCount(0);
   mkdirSync(SHOTS, { recursive: true });
   await page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage });
 }

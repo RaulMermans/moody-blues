@@ -41,8 +41,12 @@ export function OperatorLogin() {
       body: JSON.stringify({ token }),
     });
     setBusy(false);
-    if (res.ok) router.refresh();
-    else setError(await errorText(res));
+    if (res.ok) {
+      await res.body?.cancel(); // an unread body keeps the request open
+      router.refresh();
+    } else {
+      setError(await errorText(res));
+    }
   }
 
   return (
@@ -233,6 +237,7 @@ export function OperatorConsole() {
   const [transport, setTransport] = useState<"stream" | "polling">("stream");
   const stream = useRef<EventSource | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const settled = useRef<string | null>(null);
 
   const stop = useCallback(() => {
     stream.current?.close();
@@ -257,7 +262,11 @@ export function OperatorConsole() {
       const finished = TERMINAL.has(view.job.status);
       if (finished) {
         stop();
-        void loadStatus();
+        // Several refreshes can be in flight when a job ends. The ledger needs reading once.
+        if (settled.current !== jobId) {
+          settled.current = jobId;
+          void loadStatus();
+        }
       }
       return finished;
     },

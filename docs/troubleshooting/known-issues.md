@@ -233,8 +233,12 @@ contributor might also hit.
   of the loading state although assertions passed.
 - **Cause:** Next keeps the previous route in the DOM, hidden. Streamed content can also exist in the
   DOM before it replaces its fallback.
-- **Fix:** assert through `page.getByRole("main")`, which ignores hidden content, and wait for
-  `networkidle` before a screenshot or a key press. A key pressed before hydration can be lost.
+- **Fix:** assert through `page.getByRole("main")`, which ignores hidden content. Before a screenshot,
+  wait for the loading text to leave. Before a key press, wait for `networkidle`, because a key pressed
+  before hydration can be lost.
+- **Related:** `networkidle` never fired after sign-in because the client did not read the response
+  body, which left that request open. The client now releases it. An unread `fetch` body is worth
+  checking whenever `networkidle` hangs.
 
 ### KI-39: Local `make test-e2e` needs the pinned sandbox image
 - **Symptom:** a rehearsal job ends `failed` with `sandbox_preflight_failed`.
