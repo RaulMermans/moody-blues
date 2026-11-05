@@ -227,6 +227,17 @@ def test_the_committed_report_is_valid_and_says_it_is_local() -> None:
     assert committed.host.instance_id is None
 
 
+def test_the_committed_hosted_report_is_valid_and_came_from_a_vultr_instance() -> None:
+    root = Path(__file__).resolve().parents[2]
+    hosted = read_report(root / "evidence" / "containment" / "vultr-report.json")
+    assert hosted.status == "PASS"
+    assert hosted.host.environment == "vultr_hosted"
+    assert hosted.host.instance_id is not None
+    assert hosted.host.architecture == "x86_64"
+    assert len(hosted.attempts) == 8
+    assert all(a.held and a.cleaned_up and a.host_unaffected for a in hosted.attempts)
+
+
 def test_the_runner_used_is_the_approved_one(tmp_path: Path) -> None:
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     runner = containment.generated_code_runner(settings)
