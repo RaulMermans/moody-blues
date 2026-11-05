@@ -44,7 +44,8 @@ Computed from the rendered tokens. All 23 tested pairs meet AA at 4.5:1.
 - Meaning is always carried by words. Colour and shape reinforce them.
 - A decorative layer is `aria-hidden` with `pointer-events: none`, so it cannot catch a click.
 - Evidence uses a real structure: `section` with a name, `dl`, `ul`, headings.
-- Interactive targets on the prototypes are at least 44px high. The lab's own chrome is not.
+- The CTA and raw evidence links are at least 44px high. The message disclosure and the lab's own chrome are
+  smaller: Sprint 11 should raise the disclosure.
 
 ## Motion language
 
