@@ -64,7 +64,7 @@ from moody_blues.investigator.render import render_report
 from moody_blues.investigator.workflow import ExperimentRunner, InvestigationWorkflow
 from moody_blues.investigator.workspace import verify_investigation
 
-ARTIFACTS = Path(__file__).resolve().parents[3] / ".artifacts"
+ARTIFACTS = default_artifacts()
 EXPERIMENTS = ARTIFACTS / "experiments"
 INVESTIGATIONS = ARTIFACTS / "investigations"
 EVALUATIONS = ARTIFACTS / "investigator-eval"

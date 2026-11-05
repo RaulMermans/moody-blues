@@ -42,6 +42,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from moody_blues.config import Settings
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
+from moody_blues.explorer.paths import default_artifacts
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
     from moody_blues.inference.vultr import VultrInferenceClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ARTIFACTS = REPO_ROOT / ".artifacts"
+ARTIFACTS = default_artifacts()
 
 OK, WARN, FAIL = "PASS", "WARN", "FAIL"
 

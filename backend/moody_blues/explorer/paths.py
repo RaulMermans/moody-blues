@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from moody_blues.config import Settings
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def default_artifacts() -> Path:
+    """For module-level paths. A release directory is read-only on a host, so the setting wins."""
+    configured = os.environ.get("MOODY_ARTIFACTS_DIR")
+    return Path(configured) if configured else REPO_ROOT / ".artifacts"
 
 
 def artifacts_dir(settings: Settings) -> Path:

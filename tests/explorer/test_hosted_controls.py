@@ -122,6 +122,26 @@ def test_the_cli_reads_the_configured_ledger_not_the_release_directory(tmp_path:
     assert '"entries": 2' in done.stdout
 
 
+def test_commands_write_under_the_configured_directory_not_the_release(tmp_path: Path) -> None:
+    """A host's release is read-only: this stopped `investigator-preflight` there (KI-41)."""
+    done = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from moody_blues import cli\n"
+            "from moody_blues.investigator import commands\n"
+            "print(cli.ARTIFACTS, commands.ARTIFACTS, commands.INVESTIGATIONS)",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=tmp_path,
+        env={"MOODY_ARTIFACTS_DIR": str(tmp_path), "PATH": "/usr/bin:/bin"},
+    )
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.split() == [str(tmp_path), str(tmp_path), f"{tmp_path}/investigations"]
+
+
 def test_a_corrupt_ledger_fails_verification(tmp_path: Path) -> None:
     path = tmp_path / "live-spend" / "ledger.jsonl"
     path.parent.mkdir(parents=True)
