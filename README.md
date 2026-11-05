@@ -35,6 +35,15 @@ reruns reproduced it in 4 of 4 eligible runs; 1 impaired run was not counted.
 
 ![The Reality Comparison](docs/submission/screenshots/02-reality-comparison.png)
 
+## Hosted live run
+
+One investigation was started through the production application on 2026-11-05: `inv_cbd07a262444`. The
+Investigator wrote three experiments, which ran in sandboxes on the Vultr VM, with model calls through Vultr
+Serverless Inference. Seven faults reached the agent across three runs. It recovered each time, and the Oracle
+returned `PASS` for all three. The outcome is **no violation found**, a correct recovery. One generated program
+exited non-zero (`sandbox_exit_nonzero`) after its target run was under way; that run still finished with a claim.
+The [exact bundle](evidence/live/README.md) is committed.
+
 ## The benchmark result: `NO_DEMONSTRATED_ADVANTAGE`
 
 Adaptive investigation did **not** beat fixed testing. In the registered comparison, fixed testing found a
@@ -76,8 +85,10 @@ comes from the VM itself, identified by its instance metadata service.
 
 ## Limitations
 
-- **No hosted model-driven investigation has run yet.** The recorded investigations ran on `glm-5.3` through
-  Vultr Serverless Inference before hosting. The hosted site serves their hash-checked records.
+- The five public investigations ran on `glm-5.3` through Vultr Serverless Inference before hosting. The hosted
+  site serves their hash-checked records.
+- One [hosted live investigation](evidence/live/README.md) has run. It found no violation, so the hosted
+  environment has not itself produced a verified failure. Its view is operator-only.
 - Containers share the host kernel. gVisor was not evaluated, and this is not a production security claim.
 - The backend user is root-equivalent through Docker. One VM, no redundancy.
 - The environment is a synthetic CRM. One run is one sample, not a rate, and results cover only the listed

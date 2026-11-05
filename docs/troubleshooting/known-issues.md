@@ -288,20 +288,20 @@ contributor might also hit.
   with zero `running` events.
 - **Cause:** the job record turns `running` before its event is appended. The test polled the status, so its
   kill could land between the two.
-- **Fix:** the test waits for the event. The assertion is unchanged. Not yet confirmed on GitHub CI.
+- **Fix:** the test waits for the event. The assertion is unchanged. Confirmed on GitHub CI, PR #11.
 
 ### KI-47: The live switch put the inference key in a process argument
 - **Symptom:** none seen. Found by review: the key crossed SSH on stdin, then went into a remote `sed` command.
 - **Cause:** any process on the VM could read it from the command line, and `|`, `&` or `\` would corrupt it.
 - **Fix:** `live-env.py` takes it on stdin, replaces the file atomically and quotes for systemd and bash.
-  Quoting was checked against real systemd on the VM with fake values. The switch itself has not run there.
+  Quoting was checked against real systemd on the VM with fake values. Both directions then ran on the VM
+  with the real key: on, one live run, off, with no key or temporary file left.
 
 ### KI-48: ufw allowed SSH from anywhere
 - **Symptom:** `ufw status` showed `22/tcp ALLOW Anywhere`, though the docs say one address.
 - **Cause:** the Vultr image ships that rule, and bootstrap only added its own. The Vultr firewall group does
   enforce one address, so SSH was not publicly reachable.
-- **Fix:** `bootstrap.sh` removes it. **The running VM still has the rule**, pending approval to change it:
-  `ssh root@$IP ufw --force delete allow 22/tcp`.
+- **Fix:** `bootstrap.sh` removes it, and the rule was deleted from the running VM.
 
 ### KI-49: Bootstrap passes the operator token through `sed`
 - **Symptom:** none seen. `bootstrap.sh` writes the generated token with `sed`, so it is briefly in a process

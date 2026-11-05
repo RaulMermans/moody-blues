@@ -68,6 +68,13 @@ SCENES = [
         "Eight of eight attempts were blocked, including a forged Oracle pass.",
         "Containers still share the host kernel. This is evidence about this host, not a guarantee, and the page says so.",
     ]},
+    {"id": "hosted", "shot": "live", "pan": {0: 0, 2: "table", 3: "claim"}, "lines": [
+        "We also ran one live investigation through the hosted application.",
+        "The Investigator wrote three experiments, which ran in sandboxes on the Vultr VM, with model calls through Vultr Serverless Inference.",
+        "Seven faults reached the agent across three runs. One generated program exited with an error, but its target run finished.",
+        "The agent recovered every time, and the Oracle passed all three runs.",
+        "No violation found. A correct recovery is a real result, so we report it as one.",
+    ]},
     {"id": "value", "card": "value", "lines": [
         "This matters wherever agents change business systems.",
         "Duplicate operations and false success reports are state problems, and they are hard to see from the agent's answer alone.",

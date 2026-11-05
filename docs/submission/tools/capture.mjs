@@ -36,5 +36,17 @@ await shot("investigator", { h1: /^Agent's final claim consistency/, h2: /^Agent
 await page.locator("a,button").filter({ hasText: /^Timeline$/ }).first().click();
 await page.waitForLoadState("networkidle");
 await shot("timeline");
+// The hosted live run is operator-only, so this view needs the token. It only reads.
+const token = process.env.MOODY_HOSTED_OPERATOR_TOKEN;
+if (token) {
+  await page.goto(base + "/operator", { waitUntil: "networkidle" });
+  await page.getByLabel(/operator token/i).fill(token);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.getByRole("button", { name: "Sign out" }).waitFor();
+  await page.goto(base + "/investigations/inv_cbd07a262444", { waitUntil: "networkidle" });
+  await shot("live", { table: "Agent Reality", claim: /^Structured final claim$/ });
+  await page.goto(base + "/operator", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Sign out" }).click();
+}
 await browser.close();
 await writeFile(`${out}/anchors.json`, JSON.stringify(anchors, null, 1));

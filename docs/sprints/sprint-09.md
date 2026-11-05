@@ -1,23 +1,22 @@
 # Sprint 9: final release and submission
 
 - **Date:** 2026-11-05
-- **Branch:** `sprint/09-final-submission`, from `origin/main` `36cf89f`. Local only: not pushed.
-- **Outcome:** `NOT YET ACCEPTED`. Assets are built locally. Nothing was pushed, deployed, published or uploaded,
-  on the owner's instruction.
-- **Inference spend this sprint:** $0.
+- **Branch:** `sprint/09-final-submission`, from `origin/main` `36cf89f`, merged as PR #11. Then `sprint/09-release-evidence`.
+- **Outcome:** `NOT YET ACCEPTED`: the official submission is outstanding.
+- **Inference spend this sprint:** $0.104022 by ledger estimate.
 
 ## Gates
 
 | Gate | Status | Evidence |
 |---|---|---|
-| C9-A Release security and integrity | **BLOCKED_BY_APPROVAL** | Fixes are local. `main` CI is still red until the race fix is pushed. The account key is still in iCloud |
-| C9-B Hosted live investigation | **BLOCKED_BY_APPROVAL** | Not run. Readiness checks passed; see below |
-| C9-C Product clarity | **BLOCKED_BY_APPROVAL** | Built and tested locally; not deployed |
-| C9-D Video | **BLOCKED_BY_APPROVAL** | Built from the local release candidate; needs recapture after deployment |
-| C9-E Slides | **BLOCKED_BY_APPROVAL** | Built; the Limits card must be updated after the live run |
-| C9-F Public repository | **BLOCKED_BY_APPROVAL** | Private. No license chosen. Secret scan clean |
-| C9-G Hosted release | **NOT_RUN** | Only the read-only preflight was done |
-| C9-H Submission | **NOT_RUN** | The event rules and form were not read |
+| C9-A Release security and integrity | **PASS** | CI green on PR #11, secret fix verified on the VM. The account key's rotation remains an owner action |
+| C9-B Hosted live investigation | **PASS** | [`inv_cbd07a262444`](../../evidence/live/README.md): no violation found |
+| C9-C Product clarity | **PASS** | Deployed at `d592879` |
+| C9-D Video | **PASS** | 4:30, built from the public site |
+| C9-E Slides | **PASS** | 9 pages, working links |
+| C9-F Public repository | see below | |
+| C9-G Hosted release | see below | |
+| C9-H Submission | **BLOCKED_BY_CREDENTIALS** | The lablab form needs the owner's sign-in |
 
 ## What the brief had out of date
 
@@ -42,18 +41,23 @@
 - **Verdict strip** says "2 records committed, 1 required". "2 duplicate records" suggested two extras.
 - **Submission pack:** [docs/submission](../submission/README.md). Rotation checklist: [key-rotation.md](../security/key-rotation.md).
 
+## Hosted live run
+
+Approved by the owner at a $7.30 limit. One job, no retry. Model calls went to `api.vultrinference.com`. 11 sandbox
+executions ran on the VM with networking off. The agent used real CRM tools and recovered each time; all three
+runs got an Oracle PASS. The third experiment ended `sandbox_exit_nonzero`. Afterwards live mode was off, the key
+gone, the limit back at $5, and no sandbox left.
+
 ## Assets
 
-The public site still runs the earlier UI, so captures came from a local production build of this branch, with no
-provider key, serving the committed evidence and the committed Vultr containment report.
+Captured from the public site. The hosted run's view was captured signed in, because it is operator-only.
 
-The video is real captures panned with cuts, not a live screen recording. Narration is synthetic. It holds no
-hosted live footage, because no hosted live run exists.
+The video is real captures panned with cuts, not a live screen recording. Narration is synthetic.
 
 ## Open
 
 - The event rules and live form were not read. The video's length and format follow the brief's defaults only.
-- No license. Commit history exposes the owner's email address if the repository goes public.
-- Third-party dependency licenses were not reviewed.
+- No license was chosen, so all rights stay reserved. Dependency licenses were reviewed: permissive, plus MPL-2.0 and one LGPL binary (`sharp-libvips`) that is not vendored.
+- The hosted run is not on the public site. Showing it would need a curated export, a feature after the gate.
 - KI-49 stays open.
 - Destroy the VM after judging: only destruction stops billing.
