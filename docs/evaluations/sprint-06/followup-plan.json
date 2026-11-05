@@ -1,0 +1,950 @@
+{
+  "manifest_sha256": "ef57c140199c63839d0868d34c5be66bcd68360762613bf5d5ba9fa858029ef4",
+  "causal_stage_one": [
+    {
+      "trial_id": "c1-clean-hardened",
+      "block": 1,
+      "condition_id": "clean",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c1-full-baseline",
+      "block": 1,
+      "condition_id": "full",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c1-reduced-baseline",
+      "block": 1,
+      "condition_id": "reduced",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c1-stale-only-hardened",
+      "block": 1,
+      "condition_id": "stale-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c1-clean-baseline",
+      "block": 1,
+      "condition_id": "clean",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c1-phantom-only-baseline",
+      "block": 1,
+      "condition_id": "phantom-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c1-full-hardened",
+      "block": 1,
+      "condition_id": "full",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c1-stale-only-baseline",
+      "block": 1,
+      "condition_id": "stale-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c1-reduced-hardened",
+      "block": 1,
+      "condition_id": "reduced",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c1-phantom-only-hardened",
+      "block": 1,
+      "condition_id": "phantom-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-full-baseline",
+      "block": 2,
+      "condition_id": "full",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c2-reduced-baseline",
+      "block": 2,
+      "condition_id": "reduced",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c2-clean-baseline",
+      "block": 2,
+      "condition_id": "clean",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c2-phantom-only-hardened",
+      "block": 2,
+      "condition_id": "phantom-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-phantom-only-baseline",
+      "block": 2,
+      "condition_id": "phantom-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c2-clean-hardened",
+      "block": 2,
+      "condition_id": "clean",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-full-hardened",
+      "block": 2,
+      "condition_id": "full",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-reduced-hardened",
+      "block": 2,
+      "condition_id": "reduced",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-stale-only-hardened",
+      "block": 2,
+      "condition_id": "stale-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c2-stale-only-baseline",
+      "block": 2,
+      "condition_id": "stale-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-full-baseline",
+      "block": 3,
+      "condition_id": "full",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-phantom-only-baseline",
+      "block": 3,
+      "condition_id": "phantom-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-reduced-baseline",
+      "block": 3,
+      "condition_id": "reduced",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-stale-only-baseline",
+      "block": 3,
+      "condition_id": "stale-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-phantom-only-hardened",
+      "block": 3,
+      "condition_id": "phantom-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c3-clean-baseline",
+      "block": 3,
+      "condition_id": "clean",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c3-clean-hardened",
+      "block": 3,
+      "condition_id": "clean",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c3-full-hardened",
+      "block": 3,
+      "condition_id": "full",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c3-stale-only-hardened",
+      "block": 3,
+      "condition_id": "stale-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c3-reduced-hardened",
+      "block": 3,
+      "condition_id": "reduced",
+      "config": "hardened"
+    }
+  ],
+  "causal_stage_two": [
+    {
+      "trial_id": "c4-stale-only-hardened",
+      "block": 4,
+      "condition_id": "stale-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c4-full-baseline",
+      "block": 4,
+      "condition_id": "full",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c4-full-hardened",
+      "block": 4,
+      "condition_id": "full",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c4-clean-baseline",
+      "block": 4,
+      "condition_id": "clean",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c4-phantom-only-hardened",
+      "block": 4,
+      "condition_id": "phantom-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c4-stale-only-baseline",
+      "block": 4,
+      "condition_id": "stale-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c4-phantom-only-baseline",
+      "block": 4,
+      "condition_id": "phantom-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c4-reduced-baseline",
+      "block": 4,
+      "condition_id": "reduced",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c4-reduced-hardened",
+      "block": 4,
+      "condition_id": "reduced",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c4-clean-hardened",
+      "block": 4,
+      "condition_id": "clean",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c5-clean-baseline",
+      "block": 5,
+      "condition_id": "clean",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c5-stale-only-baseline",
+      "block": 5,
+      "condition_id": "stale-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c5-stale-only-hardened",
+      "block": 5,
+      "condition_id": "stale-only",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c5-phantom-only-baseline",
+      "block": 5,
+      "condition_id": "phantom-only",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c5-full-hardened",
+      "block": 5,
+      "condition_id": "full",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c5-reduced-baseline",
+      "block": 5,
+      "condition_id": "reduced",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c5-reduced-hardened",
+      "block": 5,
+      "condition_id": "reduced",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c5-full-baseline",
+      "block": 5,
+      "condition_id": "full",
+      "config": "baseline"
+    },
+    {
+      "trial_id": "c5-clean-hardened",
+      "block": 5,
+      "condition_id": "clean",
+      "config": "hardened"
+    },
+    {
+      "trial_id": "c5-phantom-only-hardened",
+      "block": 5,
+      "condition_id": "phantom-only",
+      "config": "hardened"
+    }
+  ],
+  "strategies": [
+    {
+      "unit_id": "s1-adaptive",
+      "block": 1,
+      "strategy": "adaptive",
+      "fixed_schedule": []
+    },
+    {
+      "unit_id": "s1-one_shot",
+      "block": 1,
+      "strategy": "one_shot",
+      "fixed_schedule": []
+    },
+    {
+      "unit_id": "s1-fixed",
+      "block": 1,
+      "strategy": "fixed",
+      "fixed_schedule": [
+        [
+          "fixed-none-w-e1",
+          "w-e1",
+          {
+            "condition_id": "none",
+            "faults": []
+          }
+        ],
+        [
+          "fixed-phantom-failure-w-e2",
+          "w-e2",
+          {
+            "condition_id": "phantom-failure",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-phantom-success-w-e3",
+          "w-e3",
+          {
+            "condition_id": "phantom-success",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 1
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-2-w-e1",
+          "w-e1",
+          {
+            "condition_id": "stale-2",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 2
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-6-w-e2",
+          "w-e2",
+          {
+            "condition_id": "stale-6",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-failure-and-stale-6-w-e3",
+          "w-e3",
+          {
+            "condition_id": "failure-and-stale-6",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              },
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "unit_id": "s2-one_shot",
+      "block": 2,
+      "strategy": "one_shot",
+      "fixed_schedule": []
+    },
+    {
+      "unit_id": "s2-adaptive",
+      "block": 2,
+      "strategy": "adaptive",
+      "fixed_schedule": []
+    },
+    {
+      "unit_id": "s2-fixed",
+      "block": 2,
+      "strategy": "fixed",
+      "fixed_schedule": [
+        [
+          "fixed-none-w-e2",
+          "w-e2",
+          {
+            "condition_id": "none",
+            "faults": []
+          }
+        ],
+        [
+          "fixed-phantom-failure-w-e3",
+          "w-e3",
+          {
+            "condition_id": "phantom-failure",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-phantom-success-w-e1",
+          "w-e1",
+          {
+            "condition_id": "phantom-success",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 1
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-2-w-e2",
+          "w-e2",
+          {
+            "condition_id": "stale-2",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 2
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-6-w-e3",
+          "w-e3",
+          {
+            "condition_id": "stale-6",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-failure-and-stale-6-w-e1",
+          "w-e1",
+          {
+            "condition_id": "failure-and-stale-6",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              },
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "unit_id": "s3-fixed",
+      "block": 3,
+      "strategy": "fixed",
+      "fixed_schedule": [
+        [
+          "fixed-none-w-e3",
+          "w-e3",
+          {
+            "condition_id": "none",
+            "faults": []
+          }
+        ],
+        [
+          "fixed-phantom-failure-w-e1",
+          "w-e1",
+          {
+            "condition_id": "phantom-failure",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-phantom-success-w-e2",
+          "w-e2",
+          {
+            "condition_id": "phantom-success",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 1
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-2-w-e3",
+          "w-e3",
+          {
+            "condition_id": "stale-2",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 2
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-stale-6-w-e1",
+          "w-e1",
+          {
+            "condition_id": "stale-6",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ],
+        [
+          "fixed-failure-and-stale-6-w-e2",
+          "w-e2",
+          {
+            "condition_id": "failure-and-stale-6",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              },
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "unit_id": "s3-adaptive",
+      "block": 3,
+      "strategy": "adaptive",
+      "fixed_schedule": []
+    },
+    {
+      "unit_id": "s3-one_shot",
+      "block": 3,
+      "strategy": "one_shot",
+      "fixed_schedule": []
+    }
+  ],
+  "adaptation": [
+    {
+      "answer_id": "case-c-recovered-4",
+      "case_id": "case-c",
+      "branch": "recovered",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-violation-1",
+      "case_id": "case-a",
+      "branch": "violation",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-b-blind-4",
+      "case_id": "case-b",
+      "branch": "blind",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-not_reached-3",
+      "case_id": "case-b",
+      "branch": "not_reached",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-c-blind-1",
+      "case_id": "case-c",
+      "branch": "blind",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-c-not_reached-4",
+      "case_id": "case-c",
+      "branch": "not_reached",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-insufficient-3",
+      "case_id": "case-b",
+      "branch": "insufficient",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-b-blind-2",
+      "case_id": "case-b",
+      "branch": "blind",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-c-blind-2",
+      "case_id": "case-c",
+      "branch": "blind",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-a-recovered-3",
+      "case_id": "case-a",
+      "branch": "recovered",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-b-recovered-2",
+      "case_id": "case-b",
+      "branch": "recovered",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-a-not_reached-1",
+      "case_id": "case-a",
+      "branch": "not_reached",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-c-violation-2",
+      "case_id": "case-c",
+      "branch": "violation",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-c-violation-1",
+      "case_id": "case-c",
+      "branch": "violation",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-a-recovered-1",
+      "case_id": "case-a",
+      "branch": "recovered",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-b-insufficient-4",
+      "case_id": "case-b",
+      "branch": "insufficient",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-c-not_reached-1",
+      "case_id": "case-c",
+      "branch": "not_reached",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-a-not_reached-3",
+      "case_id": "case-a",
+      "branch": "not_reached",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-b-recovered-1",
+      "case_id": "case-b",
+      "branch": "recovered",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-a-recovered-4",
+      "case_id": "case-a",
+      "branch": "recovered",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-recovered-2",
+      "case_id": "case-a",
+      "branch": "recovered",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-b-blind-1",
+      "case_id": "case-b",
+      "branch": "blind",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-c-blind-3",
+      "case_id": "case-c",
+      "branch": "blind",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-violation-4",
+      "case_id": "case-a",
+      "branch": "violation",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-blind-2",
+      "case_id": "case-a",
+      "branch": "blind",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-c-recovered-1",
+      "case_id": "case-c",
+      "branch": "recovered",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-b-insufficient-1",
+      "case_id": "case-b",
+      "branch": "insufficient",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-b-not_reached-4",
+      "case_id": "case-b",
+      "branch": "not_reached",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-blind-3",
+      "case_id": "case-b",
+      "branch": "blind",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-insufficient-1",
+      "case_id": "case-a",
+      "branch": "insufficient",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-c-blind-4",
+      "case_id": "case-c",
+      "branch": "blind",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-blind-3",
+      "case_id": "case-a",
+      "branch": "blind",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-c-not_reached-2",
+      "case_id": "case-c",
+      "branch": "not_reached",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-c-violation-3",
+      "case_id": "case-c",
+      "branch": "violation",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-b-recovered-4",
+      "case_id": "case-b",
+      "branch": "recovered",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-c-violation-4",
+      "case_id": "case-c",
+      "branch": "violation",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-blind-1",
+      "case_id": "case-a",
+      "branch": "blind",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-c-recovered-2",
+      "case_id": "case-c",
+      "branch": "recovered",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-b-violation-1",
+      "case_id": "case-b",
+      "branch": "violation",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-b-insufficient-2",
+      "case_id": "case-b",
+      "branch": "insufficient",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-a-insufficient-2",
+      "case_id": "case-a",
+      "branch": "insufficient",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-b-violation-2",
+      "case_id": "case-b",
+      "branch": "violation",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-a-insufficient-4",
+      "case_id": "case-a",
+      "branch": "insufficient",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-a-insufficient-3",
+      "case_id": "case-a",
+      "branch": "insufficient",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-blind-4",
+      "case_id": "case-a",
+      "branch": "blind",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-recovered-3",
+      "case_id": "case-b",
+      "branch": "recovered",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-violation-3",
+      "case_id": "case-a",
+      "branch": "violation",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-violation-2",
+      "case_id": "case-a",
+      "branch": "violation",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-b-not_reached-2",
+      "case_id": "case-b",
+      "branch": "not_reached",
+      "repeat": 2
+    },
+    {
+      "answer_id": "case-c-recovered-3",
+      "case_id": "case-c",
+      "branch": "recovered",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-a-not_reached-4",
+      "case_id": "case-a",
+      "branch": "not_reached",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-violation-4",
+      "case_id": "case-b",
+      "branch": "violation",
+      "repeat": 4
+    },
+    {
+      "answer_id": "case-b-violation-3",
+      "case_id": "case-b",
+      "branch": "violation",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-c-not_reached-3",
+      "case_id": "case-c",
+      "branch": "not_reached",
+      "repeat": 3
+    },
+    {
+      "answer_id": "case-b-not_reached-1",
+      "case_id": "case-b",
+      "branch": "not_reached",
+      "repeat": 1
+    },
+    {
+      "answer_id": "case-a-not_reached-2",
+      "case_id": "case-a",
+      "branch": "not_reached",
+      "repeat": 2
+    }
+  ]
+}
