@@ -13,7 +13,8 @@ PYTEST  := $(UV) run pytest
         investigator-preflight investigator-demo investigator-test investigator-containment \
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
-        live-budget sandbox-clean clean
+        live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
+        test-hosted
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -165,6 +166,22 @@ recorded-verify: ## Verify recorded investigations against the manifest and, if 
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget
+
+containment-report: ## Attempt harmless escapes on this host and write the labeled evidence (free)
+	$(UV) run moody-blues containment-report
+
+ledger-verify: ## Print the spend ledger's hash and totals, or fail if it is corrupt (free)
+	$(UV) run moody-blues ledger-verify
+
+deploy-lint: ## Shellcheck the deploy scripts and validate the Caddyfile (needs Docker; free)
+	docker run --rm -v "$(CURDIR)/infra/vultr:/mnt:ro" -w /mnt koalaman/shellcheck:stable -x -S warning -e SC1091 $(notdir $(wildcard infra/vultr/*.sh)) moody-cli
+	docker run --rm -e MOODY_PUBLIC_HOST=moody.example -v "$(CURDIR)/infra/vultr/config/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+vultr-plan: ## Show the reviewed plan at live list prices (public API; no key; creates nothing)
+	infra/vultr/provision.sh plan
+
+test-hosted: ## Playwright against a running deployment: MOODY_HOSTED_URL=, MOODY_HOSTED_TARGET=vultr|local-tls-proxy
+	$(PNPM) --dir $(FE) exec playwright test --config playwright.hosted.config.ts
 
 sandbox-clean: ## Force-remove any leftover sandbox containers
 	@ids=$$(docker ps -aq --filter label=io.moody-blues.sandbox); \

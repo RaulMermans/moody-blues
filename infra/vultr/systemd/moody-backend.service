@@ -1,0 +1,37 @@
+[Unit]
+Description=MOODY BLUES backend (one process: job state and ledger locks assume it)
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=moody
+Group=moody
+# The daemon is root-equivalent, so this user is too. Sandboxes never inherit it.
+SupplementaryGroups=docker
+WorkingDirectory=/opt/moody-blues/current
+EnvironmentFile=/etc/moody-blues/backend.env
+ExecStart=/opt/moody-blues/current/.venv/bin/uvicorn moody_blues.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-proxy-headers --no-server-header --timeout-graceful-shutdown 30
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGTERM
+# Above uvicorn's 30 s and the 20 s a cancellation needs, so jobs close before any SIGKILL.
+TimeoutStopSec=45
+LimitNOFILE=4096
+MemoryMax=2G
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ReadWritePaths=/var/lib/moody-blues
+
+[Install]
+WantedBy=multi-user.target

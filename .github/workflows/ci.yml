@@ -14,11 +14,29 @@ concurrency:
 
 # No job here talks to Vultr. Provider behavior is covered offline by fixture-based
 # contract tests; live verification is the separate, manual `vultr-live` workflow.
+# Runners are pinned to the deployment's Ubuntu: `ubuntu-latest` moved to 26.04, where Playwright's
+# system dependencies do not exist (KI-39).
 
 jobs:
+  secrets:
+    name: Secret scan · full history
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.0 git /repo --redact --no-banner
+
+  deployment:
+    name: Deployment · shellcheck, Caddyfile
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make deploy-lint
+
   python:
     name: Python · format, lint, types, unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -31,7 +49,7 @@ jobs:
 
   frontend:
     name: Frontend · lint, types, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -52,7 +70,7 @@ jobs:
 
   sandbox:
     name: Docker sandbox · integration + containment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # Fail (not skip) if Docker is unreachable: CI must not report a sandbox pass
       # without actually running containers.
@@ -69,7 +87,7 @@ jobs:
 
   e2e:
     name: Playwright · real backend + production frontend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
