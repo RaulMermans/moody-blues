@@ -162,3 +162,23 @@ only documentation.
 Sprint 5's GitHub Actions line above is superseded: PR #6 passed CI on `cfe74f5` and on its merge to
 `main`, including the Docker and Playwright jobs.
 
+## Sprint 7 results (2026-11-05, macOS arm64, Colima, Docker 29.5.2)
+
+Run with `make check` (exit 0) from `~/dev/Moody-Blues`:
+
+| Check | Result |
+|---|---|
+| `ruff format --check`, `ruff check` | PASS (163 files) |
+| `pyright` (strict) | PASS (0 errors) |
+| ESLint, `tsc` | PASS |
+| `pytest` offline, including `tests/explorer` | PASS (793 passed, 0 skipped) |
+| `pytest -m docker` | PASS (71 passed, real Docker) |
+| `next build` | PASS |
+| Playwright E2E, production build | PASS (28 passed) |
+| `make recorded-verify` with source | PASS, byte-for-byte rebuild |
+| `make eval-verify` | PASS |
+| All 30 investigations and 372 experiments | Intact |
+| Clean clone with no `.env` or `.artifacts` | PASS: 5 cases served, operator routes 403 |
+| Live mission against the real ledger | Refused (409), ledger byte-identical |
+| Real model-driven journey from the app | **NOT_RUN**: needs the owner's authorization |
+| GitHub Actions | **NOT_RUN** |
