@@ -1,0 +1,642 @@
+/* Signature primitives. All colour and geometry comes from tokens.css. */
+
+.rf :focus-visible {
+  outline: 2px solid var(--rf-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--rf-focus-outer);
+}
+
+.rf-micro {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-micro);
+  letter-spacing: var(--rf-tracking-micro);
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--rf-text-muted);
+}
+
+.rf-copy {
+  font-size: var(--rf-type-body);
+  line-height: 1.6;
+  color: var(--rf-text-muted);
+  max-width: var(--rf-measure);
+}
+
+.rf-text-strong {
+  color: var(--rf-text);
+}
+
+.rf-inline-code {
+  font-family: var(--rf-font-tech);
+  font-size: 0.9em;
+  color: var(--rf-text);
+}
+
+/* Evidence words are large but never layered or transformed: they keep their recorded spelling */
+.rf-evidence-word {
+  font-family: var(--rf-font-display);
+  font-stretch: var(--rf-width-compressed);
+  font-weight: 800;
+  font-size: var(--rf-type-poster);
+  line-height: 0.95;
+  color: var(--rf-text);
+  overflow-wrap: anywhere;
+}
+
+.rf-evidence-word-sm {
+  font-size: var(--rf-type-title);
+}
+
+/* DisplayType */
+.rf-display {
+  position: relative;
+  display: inline-block;
+  font-family: var(--rf-font-display);
+  font-stretch: var(--rf-width-compressed);
+  font-weight: 900;
+  line-height: var(--rf-leading-display);
+  letter-spacing: var(--rf-tracking-display);
+  text-transform: uppercase;
+}
+
+.rf-display-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rf-display[data-effect="misregister"] .rf-display-base {
+  position: relative;
+  z-index: 1;
+}
+
+.rf-display[data-effect="misregister"] .rf-display-layer-a {
+  color: var(--rf-agent);
+  transform: translate(var(--rf-misregister), var(--rf-misregister));
+  opacity: 0.75;
+}
+
+.rf-display[data-effect="misregister"] .rf-display-layer-b {
+  color: var(--rf-divergence);
+  transform: translate(calc(var(--rf-misregister) * -1), 0);
+  opacity: 0.55;
+}
+
+/* The word is cut across its middle and the halves disagree */
+/* Transparent, not hidden: this is the text assistive technology reads */
+.rf-display[data-effect="slice"] .rf-display-base {
+  opacity: 0;
+}
+
+.rf-display[data-effect="slice"] .rf-display-layer-a {
+  clip-path: polygon(0 0, 100% 0, 100% 46%, 0 58%);
+}
+
+.rf-display[data-effect="slice"] .rf-display-layer-b {
+  clip-path: polygon(0 58%, 100% 46%, 100% 100%, 0 100%);
+  transform: translateX(0.07em);
+  color: var(--rf-agent);
+}
+
+/* RealityEcho */
+.rf-echo {
+  position: relative;
+  margin: 0 var(--rf-echo-far) var(--rf-echo-far) 0;
+}
+
+.rf-echo-subject {
+  position: relative;
+}
+
+.rf-echo-outline {
+  position: absolute;
+  inset: 0;
+  border: var(--rf-border-hair) dashed var(--rf-agent);
+  pointer-events: none;
+}
+
+.rf-echo-near {
+  transform: translate(var(--rf-echo-near), var(--rf-echo-near));
+  opacity: 0.6;
+}
+
+.rf-echo-far {
+  transform: translate(var(--rf-echo-far), var(--rf-echo-far));
+  opacity: 0.3;
+}
+
+/* Claim slip: the agent's filed object, with a cut corner */
+.rf-slip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-1);
+  padding: var(--rf-space-3) var(--rf-space-4);
+  background: var(--rf-surface-high);
+  clip-path: polygon(0 0, calc(100% - var(--rf-cut)) 0, 100% var(--rf-cut), 100% 100%, 0 100%);
+}
+
+.rf-slip-id {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-data);
+  color: var(--rf-text);
+  overflow-wrap: anywhere;
+}
+
+/* A phantom really is a ghost: delivered to the agent, absent from state */
+.rf-phantom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: var(--rf-space-2) var(--rf-space-3);
+  border: var(--rf-border-hair) dashed var(--rf-text-faint);
+}
+
+.rf-phantom-note {
+  font-size: var(--rf-type-data);
+  color: var(--rf-text-muted);
+}
+
+.rf-disclosure {
+  border-left: var(--rf-border-heavy) solid var(--rf-agent);
+  padding: var(--rf-space-1) 0 var(--rf-space-1) var(--rf-space-3);
+  font-size: var(--rf-type-body);
+  line-height: 1.5;
+  color: var(--rf-text);
+}
+
+.rf-details summary {
+  font-size: var(--rf-type-data);
+  color: var(--rf-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding-block: var(--rf-space-2);
+}
+
+.rf-details summary:hover {
+  color: var(--rf-text);
+}
+
+/* RecordSlab: a hard, physical row. Nothing is ever layered on it */
+.rf-slab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-1);
+  min-width: 0;
+  padding: var(--rf-space-3) var(--rf-space-4);
+  background: var(--rf-surface-base);
+  border: var(--rf-border-rule) solid var(--rf-actual);
+  border-top-width: var(--rf-border-heavy);
+}
+
+.rf-slab-id {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-data);
+  font-weight: 600;
+  color: var(--rf-actual);
+  overflow-wrap: anywhere;
+}
+
+.rf-slab-name {
+  font-size: var(--rf-type-body);
+  color: var(--rf-text);
+}
+
+.rf-slab-email {
+  color: var(--rf-text-muted);
+  font-size: var(--rf-type-data);
+}
+
+.rf-slab-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--rf-space-1) var(--rf-space-3);
+}
+
+.rf-slab-flag {
+  color: var(--rf-divergence);
+  font-weight: 700;
+}
+
+.rf-slab-note {
+  font-size: var(--rf-type-data);
+  color: var(--rf-text-muted);
+}
+
+/* RealityFrame */
+.rf-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-3);
+  min-width: 0;
+}
+
+.rf-frame-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-2);
+}
+
+.rf-frame-title {
+  font-size: var(--rf-type-title);
+}
+
+.rf-frame[data-reality="agent"] .rf-frame-head {
+  padding-top: var(--rf-space-3);
+  border-top: var(--rf-border-rule) dashed var(--rf-agent);
+}
+
+.rf-frame[data-reality="agent"] .rf-frame-title {
+  color: var(--rf-text);
+}
+
+.rf-frame[data-reality="actual"] .rf-frame-head {
+  padding-top: var(--rf-space-3);
+  border-top: var(--rf-border-slab) solid var(--rf-actual);
+}
+
+.rf-frame[data-reality="actual"] .rf-frame-title {
+  color: var(--rf-actual);
+}
+
+/* DivergenceField */
+.rf-field {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rf-plane {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.rf-plane-actual {
+  background: var(--rf-actual-plane);
+}
+
+.rf-plane-agent {
+  background: var(--rf-agent-plane);
+  right: calc(100% - var(--rf-split));
+}
+
+/* Only a violation cuts the plane, so only then may it run the full width behind its clip */
+.rf-field[data-divergence="violation"] .rf-plane-agent {
+  right: 0;
+}
+
+/* Moiré: two line screens a fraction of a degree apart, only over a recorded violation.
+   It dies away from the crack, so the interference reads as coming from the break. */
+@media (min-width: 768px) {
+  .rf-field[data-divergence="violation"] .rf-plane-actual::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: calc(var(--rf-split) - 90px);
+    width: min(40%, 460px);
+    background:
+      repeating-linear-gradient(
+        90.7deg,
+        transparent 0 5px,
+        color-mix(in srgb, var(--rf-actual) 14%, transparent) 5px 6px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 5px,
+        color-mix(in srgb, var(--rf-agent) 14%, transparent) 5px 6px
+      );
+    mask-image: linear-gradient(to right, black 20%, transparent);
+  }
+}
+
+/* Distortion is earned. Without an Oracle violation the frame titles stay still and the echoes
+   stay away: a clean case must look clean. */
+.rf-field:not([data-divergence="violation"]) .rf-display-layer,
+.rf-field:not([data-divergence="violation"]) .rf-echo-outline {
+  display: none;
+}
+
+/* DivergenceDivider */
+.rf-divider {
+  position: relative;
+  min-width: 0;
+}
+
+.rf-crack {
+  display: block;
+  pointer-events: none;
+}
+
+.rf-crack polyline,
+.rf-crack line {
+  fill: none;
+}
+
+.rf-crack-main {
+  stroke: var(--rf-divergence);
+  stroke-width: 2.5;
+}
+
+.rf-crack-ghost-agent {
+  stroke: var(--rf-agent);
+  stroke-width: 1;
+  transform: translateX(-4px);
+  opacity: 0.8;
+}
+
+.rf-crack-ghost-actual {
+  stroke: var(--rf-actual);
+  stroke-width: 1;
+  transform: translateX(4px);
+  opacity: 0.8;
+}
+
+.rf-crack-straight {
+  stroke: var(--rf-text-faint);
+  stroke-width: 1;
+}
+
+.rf-divider[data-state="delivery"] .rf-crack-straight {
+  stroke-dasharray: 10 3 2 3;
+}
+
+.rf-divider[data-state="unresolved"] .rf-crack-straight {
+  stroke: var(--rf-status-inconclusive);
+  stroke-dasharray: 3 7;
+}
+
+.rf-divider-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rf-space-1);
+  text-align: center;
+  background: var(--rf-surface-base);
+  padding: var(--rf-space-2) var(--rf-space-3);
+}
+
+.rf-divider-title {
+  font-family: var(--rf-font-display);
+  font-stretch: var(--rf-width-compressed);
+  font-weight: 800;
+  font-size: 1.125rem;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--rf-text);
+}
+
+.rf-divider[data-state="violation"] .rf-divider-title {
+  color: var(--rf-divergence);
+}
+
+.rf-divider-label .rf-micro {
+  letter-spacing: 0.04em;
+}
+
+.rf-divider-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rf-space-1);
+}
+
+.rf-divider-count {
+  font-family: var(--rf-font-tech);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--rf-text);
+}
+
+.rf-crack-horizontal {
+  width: 100%;
+  height: 56px;
+}
+
+.rf-crack-vertical {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .rf-crack-horizontal {
+    display: none;
+  }
+
+  .rf-crack-vertical {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .rf-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rf-divider-label {
+    padding-inline: var(--rf-space-1);
+    max-width: calc(var(--rf-band) - var(--rf-space-4));
+  }
+}
+
+/* OracleSeal: always square to the grid */
+.rf-seal {
+  --seal-colour: var(--rf-status-unverified);
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  color: var(--rf-status-ink);
+  background: var(--seal-colour);
+  border: var(--rf-border-rule) solid var(--rf-status-ink);
+}
+
+.rf-seal[data-tone="pass"] {
+  --seal-colour: var(--rf-status-pass);
+}
+
+.rf-seal[data-tone="violation"] {
+  --seal-colour: var(--rf-status-violation);
+}
+
+.rf-seal[data-tone="inconclusive"] {
+  --seal-colour: var(--rf-status-inconclusive);
+}
+
+.rf-seal[data-tone="incomplete"],
+.rf-seal[data-tone="unverified"] {
+  background: var(--rf-surface-base);
+  color: var(--rf-text);
+  border-color: var(--seal-colour);
+}
+
+.rf-seal[data-tone="incomplete"] {
+  --seal-colour: var(--rf-status-incomplete);
+  border-style: double;
+  border-width: var(--rf-border-heavy);
+}
+
+.rf-seal[data-tone="unverified"] {
+  border-style: dashed;
+}
+
+.rf-seal-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.2em;
+  font-family: var(--rf-font-tech);
+  font-size: 1.75rem;
+  font-weight: 700;
+  border-right: var(--rf-border-rule) solid currentcolor;
+}
+
+.rf-seal-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.125rem;
+  min-width: 0;
+  padding: var(--rf-space-2) var(--rf-space-4);
+}
+
+.rf-seal-label {
+  font-family: var(--rf-font-display);
+  font-stretch: var(--rf-width-compressed);
+  font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.rf-seal-note {
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-micro);
+  line-height: 1.4;
+}
+
+.rf-seal[data-size="sm"] .rf-seal-mark {
+  font-size: 1.125rem;
+}
+
+.rf-seal[data-size="sm"] .rf-seal-label {
+  font-size: 1.75rem;
+}
+
+.rf-seal[data-size="sm"] .rf-seal-text {
+  padding: var(--rf-space-1) var(--rf-space-3);
+}
+
+/* FractureMarker */
+.rf-marker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-3);
+  min-width: 0;
+  padding: var(--rf-space-3) var(--rf-space-4) var(--rf-space-4);
+  background: var(--rf-surface-raised);
+  border-top: var(--rf-border-rule) solid var(--rf-divergence);
+}
+
+.rf-marker-head {
+  position: relative;
+  padding-left: var(--rf-space-6);
+}
+
+.rf-marker-notch {
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: var(--rf-divergence);
+  clip-path: polygon(0 0, 100% 0, 42% 46%, 100% 100%, 0 100%, 34% 58%);
+}
+
+.rf-marker[data-tone="distortion"] {
+  border-top-color: var(--rf-rule);
+}
+
+.rf-marker[data-tone="distortion"] .rf-marker-notch {
+  background: var(--rf-text-faint);
+  clip-path: none;
+  height: 2px;
+  top: 0.55rem;
+}
+
+.rf-marker-kind {
+  font-size: var(--rf-type-body);
+  font-weight: 600;
+  color: var(--rf-text);
+}
+
+.rf-marker-body {
+  display: grid;
+  gap: var(--rf-space-2);
+  font-family: var(--rf-font-tech);
+  font-size: var(--rf-type-data);
+  line-height: 1.45;
+  color: var(--rf-text);
+  overflow-wrap: anywhere;
+}
+
+.rf-marker-agent {
+  color: var(--rf-agent);
+}
+
+.rf-marker-actual {
+  color: var(--rf-actual);
+}
+
+/* Motion. Off unless the visitor has no reduced-motion preference: the default state is final */
+@media (prefers-reduced-motion: no-preference) {
+  .rf-field[data-divergence="violation"] .rf-plane-agent {
+    animation: rf-plane-shift var(--rf-motion-shift) var(--rf-ease-snap) both;
+  }
+
+  .rf-echo-outline {
+    animation: rf-echo-settle var(--rf-motion-shift) var(--rf-ease-snap) var(--rf-motion-snap) both;
+  }
+
+  .rf-seal[data-kind="verdict"][data-size="lg"] {
+    animation: rf-stamp var(--rf-motion-snap) var(--rf-ease-stamp) var(--rf-motion-shift) both;
+  }
+}
+
+/* From the left, so the plane's outer edge never uncovers the plane beneath it */
+@keyframes rf-plane-shift {
+  from {
+    transform: translateX(-14px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes rf-echo-settle {
+  from {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes rf-stamp {
+  from {
+    transform: scale(1.06);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
