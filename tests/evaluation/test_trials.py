@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 
 from moody_blues.contracts.investigation import Impairment
+from moody_blues.contracts.run import ToolTraceEntry
+from moody_blues.contracts.world import ToolResponse
 from moody_blues.evaluation.attribution import (
     AttributionLevel,
     ContrastRule,
@@ -108,6 +110,50 @@ def test_the_trace_shows_the_mechanism_of_a_duplicate(tmp_path: Path) -> None:
     assert facts.create_calls >= 2
     assert facts.stale_reads_delivered >= 1
     assert facts.fault_preceded_duplicate_write
+
+
+def _entry(seq: int, tool: str, *, ok: bool = True, fault: str | None = None) -> ToolTraceEntry:
+    return ToolTraceEntry(
+        call_seq=seq,
+        tool=tool,
+        arguments={"client_request_id": f"k{seq}"},
+        delivered=ToolResponse(call_id=f"c{seq}", tool=tool, ok=ok, data={}),
+        fault_injected=fault,
+        event_seqs=[],
+    )
+
+
+def test_a_rolled_back_phantom_write_is_not_the_first_write(tmp_path: Path) -> None:
+    """Regression: the shape of exp_719f74f5b150. The mechanism check counted the phantom write.
+
+    Counted that way, the first real write looks like the duplicate, and it comes before the stale
+    read, so a fault-driven failure would be read as one the fault did not precede.
+    """
+    evidence = run_experiment(tmp_path / "e", executor="idempotent_retry")
+    run = evidence.target_runs[0]
+    trace = [
+        _entry(1, "create_customer", fault="phantom_success"),
+        _entry(2, "create_customer"),
+        _entry(3, "get_customer", ok=False, fault="stale_read"),
+        _entry(4, "create_customer"),
+    ]
+    observed = run.target_observed.model_copy(update={"tool_trace": trace})
+    assert behavior_of(
+        run.model_copy(update={"target_observed": observed})
+    ).fault_preceded_duplicate_write
+
+
+def test_a_phantom_failure_that_committed_counts_as_a_write(tmp_path: Path) -> None:
+    evidence = run_experiment(tmp_path / "e", executor="idempotent_retry")
+    run = evidence.target_runs[0]
+    trace = [
+        _entry(1, "create_customer", ok=False, fault="phantom_failure"),
+        _entry(2, "create_customer"),
+    ]
+    observed = run.target_observed.model_copy(update={"tool_trace": trace})
+    assert behavior_of(
+        run.model_copy(update={"target_observed": observed})
+    ).fault_preceded_duplicate_write
 
 
 def test_a_consistent_key_is_recognized(tmp_path: Path) -> None:

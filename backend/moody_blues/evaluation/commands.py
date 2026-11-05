@@ -28,9 +28,18 @@ from moody_blues.contracts.investigation import (
 )
 from moody_blues.evaluation.adaptation import run_answers
 from moody_blues.evaluation.audit import render_audit, run_audit
+from moody_blues.evaluation.followup import (
+    FOLLOWUP_MANIFEST,
+    FOLLOWUP_PLAN,
+    build_followup,
+    followup_results,
+    render_followup,
+)
 from moody_blues.evaluation.journal import Journal, JournalError
 from moody_blues.evaluation.manifest import (
     FROZEN_DIR,
+    MANIFEST_PATH,
+    PLAN_PATH,
     Faults,
     Manifest,
     ManifestError,
@@ -39,8 +48,10 @@ from moody_blues.evaluation.manifest import (
     canonical_sha,
     check_fingerprints,
     committed_head,
+    expand_plan,
     freeze,
     load_frozen,
+    validate_manifest,
 )
 from moody_blues.evaluation.report import build_results, write_results
 from moody_blues.evaluation.suites import SuiteStoppedError, run_causal, run_strategies
@@ -73,6 +84,7 @@ from moody_blues.investigator.workflow import ExperimentRunner, InvestigationWor
 JOURNALS = ARTIFACTS / "sprint-06"
 RESULTS = FROZEN_DIR / "results"
 SUITES = ("causal", "strategies", "adaptation")
+FOLLOWUP = "followup"
 
 
 def _journal(suite: str) -> Journal:
@@ -257,12 +269,14 @@ def _run_adaptation(
     print(json.dumps({"answers": len(records)}), flush=True)
 
 
-def _registered(settings: Settings) -> tuple[Manifest, TrialPlan, str]:
-    manifest, plan = load_frozen()
+def _registered(
+    settings: Settings, paths: tuple[Path, Path] = (MANIFEST_PATH, PLAN_PATH)
+) -> tuple[Manifest, TrialPlan, str]:
+    manifest, plan = load_frozen(*paths)
     drift = check_fingerprints(manifest, settings)
     if drift:
         raise ManifestError(f"the code no longer matches the registration: {drift}")
-    return manifest, plan, committed_head()
+    return manifest, plan, committed_head(paths)
 
 
 def eval_freeze(settings: Settings) -> int:
@@ -284,6 +298,25 @@ def eval_freeze(settings: Settings) -> int:
                 "units": len(plan.strategies),
                 "answers": len(plan.adaptation),
             }
+        )
+    )
+    return 0
+
+
+def eval_freeze_followup() -> int:
+    """Written once, from the frozen main manifest, so it cannot drift from it."""
+    if FOLLOWUP_MANIFEST.exists() or FOLLOWUP_PLAN.exists():
+        print(json.dumps({"status": "BLOCKED", "reason": "already frozen"}))
+        return 2
+    base, _ = load_frozen()
+    manifest = build_followup(base)
+    validate_manifest(manifest)
+    plan = expand_plan(manifest)
+    FOLLOWUP_MANIFEST.write_text(manifest.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    FOLLOWUP_PLAN.write_text(plan.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    print(
+        json.dumps(
+            {"manifest_sha256": plan.manifest_sha256, "stage_one": len(plan.causal_stage_one)}
         )
     )
     return 0
@@ -311,8 +344,9 @@ def eval_verify(settings: Settings) -> int:
 def eval_run(settings: Settings, *, suite: str, confirmed: bool) -> int:
     if not confirmed:
         return not_confirmed("eval-run")
+    paths = (FOLLOWUP_MANIFEST, FOLLOWUP_PLAN) if suite == FOLLOWUP else (MANIFEST_PATH, PLAN_PATH)
     try:
-        manifest, plan, head = _registered(settings)
+        manifest, plan, head = _registered(settings, paths)
     except ManifestError as exc:
         print(json.dumps({"status": "NOT_RUN", "reason": str(exc)[:400]}))
         return 2
@@ -323,14 +357,14 @@ def eval_run(settings: Settings, *, suite: str, confirmed: bool) -> int:
     if not journal.payloads("run"):
         journal.append("run", {"registered_at": head, "manifest_sha256": plan.manifest_sha256})
     try:
-        if suite == "causal":
+        if suite in {"causal", FOLLOWUP}:
             run_causal(
                 manifest,
                 plan,
                 executor=_CausalExecutor(
                     settings,
                     manifest,
-                    ScopedSpend(live.ledger, "s6-causal", manifest.budget.causal_cap_usd),
+                    ScopedSpend(live.ledger, f"s6-{suite}", manifest.budget.causal_cap_usd),
                     live.ledger.prices,
                 ),
                 journal=journal,
@@ -403,9 +437,27 @@ def eval_report(settings: Settings) -> int:
         adaptation_cost_usd=ledger.scope_status("s6-adaptation").settled_usd,
     )
     write_results(RESULTS, results, trials, manifest)
+    _report_followup()
     print(json.dumps({"conclusion": results.conclusion, "reasons": results.conclusion_reasons}))
     print(f"record: {RESULTS}")
     return 0
+
+
+def _report_followup() -> None:
+    journal = _journal(FOLLOWUP)
+    if not journal.trials():
+        return
+    manifest, _ = load_frozen(FOLLOWUP_MANIFEST, FOLLOWUP_PLAN)
+    decisions = journal.payloads("stage_decision")
+    extended = bool(decisions and decisions[0]["extend"])
+    results = followup_results(manifest, journal.trials(), extended=extended)
+    (RESULTS / "followup-results.json").write_text(
+        results.model_dump_json(indent=2) + "\n", "utf-8"
+    )
+    (RESULTS / "followup-results.md").write_text(render_followup(results), "utf-8")
+    (RESULTS / "followup-trials.json").write_text(
+        json.dumps([t.model_dump(mode="json") for t in journal.trials()], indent=1) + "\n", "utf-8"
+    )
 
 
 def evidence_audit() -> int:

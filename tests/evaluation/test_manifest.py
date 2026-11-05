@@ -12,6 +12,7 @@ from moody_blues.config import Settings
 from moody_blues.contracts.investigation import Strategy, WorldTier
 from moody_blues.contracts.scenario import FaultSpec
 from moody_blues.evaluation import manifest as registered
+from moody_blues.evaluation.followup import build_followup
 from moody_blues.evaluation.manifest import (
     Manifest,
     ManifestError,
@@ -225,3 +226,28 @@ def test_both_comparison_prompts_describe_the_same_capability(manifest: Manifest
     text = target_capability(worlds).model_dump_json()
     assert "1-6" in text  # the six-read severity is offered to every generating strategy
     assert all(world in text for world in worlds)
+
+
+# --- the follow-up study -------------------------------------------------------------------------
+
+
+def test_the_followup_changes_only_the_world_conditions_and_cap(manifest: Manifest) -> None:
+    followup = build_followup(manifest)
+    validate_manifest(followup)
+    assert followup.target_budget == manifest.target_budget
+    assert followup.fingerprints == manifest.fingerprints
+    assert followup.budget.ledger_limit_usd == manifest.budget.ledger_limit_usd
+    assert followup.causal.stage_one_rule == manifest.causal.stage_one_rule
+    assert followup.causal.stage_two_rule == manifest.causal.stage_two_rule
+    assert followup.causal.max_attempts_per_cell == manifest.causal.max_attempts_per_cell
+    assert followup.manifest_id != manifest.manifest_id
+
+
+def test_followup_contrasts_each_change_one_factor(manifest: Manifest) -> None:
+    conditions = {c.condition_id: c.faults for c in build_followup(manifest).causal.conditions}
+    full = conditions["full"]
+    assert conditions["clean"] == []
+    assert conditions["phantom-only"] == [full[0]]
+    assert conditions["stale-only"] == [full[1]]
+    assert conditions["reduced"][0] == full[0]
+    assert conditions["reduced"][1]["span"] == 2

@@ -56,7 +56,7 @@ class Behavior(BaseModel):
     replay_seen: bool
     create_after_replay: bool  # the agent wrote again after the CRM said the record existed
     stale_reads_delivered: int
-    # A stale read was delivered before the write that made the duplicate.
+    # A fault was delivered before the write that made the duplicate.
     fault_preceded_duplicate_write: bool
 
 
@@ -162,6 +162,21 @@ def _replayed(entry: ToolTraceEntry) -> bool:
     return bool(entry.delivered.ok and (entry.delivered.data or {}).get("idempotent_replay"))
 
 
+def _committed_a_write(entry: ToolTraceEntry) -> bool:
+    """Whether a create really wrote, whatever the agent was told.
+
+    A phantom success looks like a write and rolled back; a phantom failure looks like an error
+    and committed. Replays wrote nothing.
+    """
+    if entry.tool != "create_customer":
+        return False
+    if entry.fault_injected == FaultKind.PHANTOM_FAILURE.value:
+        return True
+    if entry.fault_injected == FaultKind.PHANTOM_SUCCESS.value:
+        return False
+    return entry.delivered.ok and not _replayed(entry)
+
+
 def behavior_of(run: TargetRunEvidence) -> Behavior:
     trace = run.target_observed.tool_trace
     creates = [t for t in trace if t.tool == "create_customer"]
@@ -169,14 +184,9 @@ def behavior_of(run: TargetRunEvidence) -> Behavior:
     named = {k for k in keys if k}
     first_create = next((i for i, t in enumerate(trace) if t.tool == "create_customer"), None)
     first_replay = next((i for i, t in enumerate(trace) if _replayed(t)), None)
-    first_stale = next(
-        (i for i, t in enumerate(trace) if t.fault_injected == FaultKind.STALE_READ.value), None
-    )
-    writes = [
-        i
-        for i, t in enumerate(trace)
-        if t.tool == "create_customer" and t.delivered.ok and not _replayed(t)
-    ]
+    stale = [i for i, t in enumerate(trace) if t.fault_injected == FaultKind.STALE_READ.value]
+    first_fault = next((i for i, t in enumerate(trace) if t.fault_injected), None)
+    writes = [i for i, t in enumerate(trace) if _committed_a_write(t)]
     return Behavior(
         tool_calls=len(trace),
         create_calls=len(creates),
@@ -188,12 +198,10 @@ def behavior_of(run: TargetRunEvidence) -> Behavior:
         and any(t.tool in _READS for t in trace[first_create + 1 :]),
         replay_seen=first_replay is not None,
         create_after_replay=first_replay is not None and any(i > first_replay for i in writes),
-        stale_reads_delivered=sum(
-            1 for t in trace if t.fault_injected == FaultKind.STALE_READ.value
-        ),
-        fault_preceded_duplicate_write=first_stale is not None
+        stale_reads_delivered=len(stale),
+        fault_preceded_duplicate_write=first_fault is not None
         and len(writes) > 1
-        and first_stale < writes[1],
+        and first_fault < writes[1],
     )
 
 

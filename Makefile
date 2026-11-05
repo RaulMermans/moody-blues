@@ -147,7 +147,7 @@ eval-verify: ## Check the registration is committed and still matches the code (
 
 SUITE ?= causal
 
-eval-run: ## LIVE + CHARGEABLE: one registered suite; needs CONFIRM=1 (SUITE=causal|strategies|adaptation)
+eval-run: ## LIVE + CHARGEABLE: one registered suite; needs CONFIRM=1 (SUITE=causal|strategies|adaptation|followup)
 	$(UV) run moody-blues eval-run --suite $(SUITE) $(if $(CONFIRM),--confirm-billable)
 
 eval-repro: ## LIVE + CHARGEABLE: registered rerun under manifest limits; needs CONFIRM=1 (EXPERIMENT=, RUNS=)

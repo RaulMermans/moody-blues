@@ -573,6 +573,8 @@ def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
             return commands.evidence_audit()
         case "eval-freeze":
             return commands.eval_freeze(settings)
+        case "eval-freeze-followup":
+            return commands.eval_freeze_followup()
         case "eval-verify":
             return commands.eval_verify(settings)
         case "eval-report":
@@ -695,10 +697,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     sub.add_parser("evidence-audit")
     sub.add_parser("eval-freeze")
+    sub.add_parser("eval-freeze-followup")
     sub.add_parser("eval-verify")
     sub.add_parser("eval-report")
     er = sub.add_parser("eval-run")
-    er.add_argument("--suite", choices=("causal", "strategies", "adaptation"), required=True)
+    er.add_argument(
+        "--suite", choices=("causal", "strategies", "adaptation", "followup"), required=True
+    )
     er.add_argument("--confirm-billable", action="store_true")
     rp = sub.add_parser("eval-repro")
     rp.add_argument("--experiment", required=True)
@@ -738,8 +743,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         case "investigator-eval" | "investigator-repro":
             return _investigator(settings, args)
         case (
-            "evidence-audit" | "eval-freeze" | "eval-verify" | "eval-report" | "eval-run"
+            "evidence-audit"
+            | "eval-freeze"
+            | "eval-verify"
+            | "eval-report"
+            | "eval-run"
             | "eval-repro"
+            | "eval-freeze-followup"
         ):
             return _evaluation(settings, args)
         case _:
