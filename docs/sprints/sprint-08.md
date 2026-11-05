@@ -2,7 +2,7 @@
 
 - **Date:** 2026-11-05
 - **Branch:** `sprint/08-vultr-deployment`, from `origin/main` `d4c8c30`, whose tree equals Sprint 7 HEAD
-  `71eace8`. Not pushed.
+  `71eace8`. Pushed, as [PR #9](https://github.com/RaulMermans/moody-blues/pull/9).
 - **Outcome:** `NOT ACCEPTED`. **Deployment is prepared and rehearsed. Nothing is deployed.** Work stopped at
   the provisioning boundary for owner approval.
 - **Live spend this sprint:** $0. No provider call was made. No Vultr resource exists.
@@ -11,7 +11,7 @@
 
 | Gate | Status | Evidence |
 |---|---|---|
-| C8-A Repository integrity | **PASS**, one item blocked | Outside iCloud, 0 dataless files, `git fsck` clean, recorded evidence verified, full-history secret scan clean, pinned image has a linux/amd64 entry. **Billing not inspected:** no account credential here |
+| C8-A Repository integrity | **PASS**, one item blocked | Outside iCloud, 0 dataless files, `git fsck` clean, recorded evidence verified, full-history secret scan clean, pinned image has a linux/amd64 entry. **Billing not inspected:** the key in `.env` is inference-only, and the account API refused it with 401 |
 | C8-B Infrastructure plan | **PASS** | [Provisioning plan](../deployment/sprint-8-provisioning-plan.md), `make vultr-plan` reads live prices, refusal paths tested |
 | C8-C Secure hosted architecture | **BLOCKED_BY_APPROVAL** | Rehearsed locally only |
 | C8-D Sandbox containment | **BLOCKED_BY_APPROVAL** | Eight attempts held on local Docker. That is not Vultr evidence |
@@ -42,7 +42,8 @@ record. The ledger shows $6.500182 settled, 814 entries, none open.
 - **`containment-report`** and the Containment page. Only the instance metadata service can mark a report hosted.
 - **`/sandbox/smoke`** is not mounted in production.
 - **Hosted Playwright suite**, which starts no server, so a pass cannot come from a local one.
-- **CI:** pinned to Ubuntu 24.04, plus secret scan and deployment lint. Not yet run.
+- **CI:** pinned to Ubuntu 24.04, plus secret scan and deployment lint. On PR #9 the Playwright suite
+  passed on GitHub for the first time. The move to 24.04 exposed one test that assumed an image store (KI-44).
 
 ## Dress rehearsal
 

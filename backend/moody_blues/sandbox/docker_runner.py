@@ -191,6 +191,10 @@ class DockerSandboxRunner:
         image = self._docker().images.get(self.image)
         return list(image.attrs.get("RepoDigests") or [])
 
+    def resolved_image_id(self) -> str | None:
+        """What the daemon runs for the configured image. Its form depends on the image store."""
+        return self._docker().images.get(self.image).id
+
     def list_sandbox_containers(self) -> list[Container]:
         """All containers (any state) created by this runner. Used to verify cleanup."""
         return self._docker().containers.list(all=True, filters={"label": SANDBOX_LABEL})

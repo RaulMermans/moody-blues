@@ -268,3 +268,10 @@ contributor might also hit.
 - **Symptom:** `vx1-g-2c-8g` is listed at $0.06/hour, which looks like the right plan.
 - **Cause:** that price excludes storage. `disk` is 1 GB, so it needs paid block storage.
 - **Fix:** use `vc2-4c-8gb`: 160 GB included at $0.055/hour. `provision.sh plan` refuses a plan under 40 GB.
+
+### KI-44: `image_id` is not always the pinned digest
+- **Symptom:** a Docker test failed on `ubuntu-24.04` after passing locally and on 26.04.
+- **Cause:** under the containerd image store an image's id is the digest of its index. Under classic
+  overlay2 it is the hash of its config. Evidence from those hosts records different forms of the id.
+- **Fix:** the test compares with what the daemon resolves for the pin. To check a pin, use `RepoDigests`,
+  as `investigator-preflight` does, and never compare `image_id` with a digest.
