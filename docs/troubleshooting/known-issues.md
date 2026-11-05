@@ -244,3 +244,34 @@ contributor might also hit.
 - **Symptom:** a rehearsal job ends `failed` with `sandbox_preflight_failed`.
 - **Cause:** generated code runs only on the digest-pinned image, which is never pulled implicitly.
 - **Fix:** `docker pull` the value of `generated_code_image`. CI does this in the `e2e` job.
+
+### KI-40: The Playwright CI job failed before running a test
+- **Symptom:** `playwright install --with-deps` ends with `Unable to locate package fonts-unifont`.
+- **Cause:** `ubuntu-latest` moved to 26.04, which lacks those packages. This failed PR #8 and `main`.
+  No test ran, so it said nothing about the product.
+- **Fix:** every job is pinned to `ubuntu-24.04`, which also matches the deployment.
+
+### KI-41: A command wrote into the release directory
+- **Symptom:** `investigator-preflight` died with `PermissionError` on a host, so `remote-switch.sh`
+  would have failed every deploy and rolled it back. CLI commands also read their own empty ledger.
+- **Cause:** module-level paths were fixed to the repository and ignored `MOODY_ARTIFACTS_DIR`.
+- **Fix:** they use `default_artifacts()`, and all ledgers use `ledger_path()`. Found only by rehearsing
+  the release as an unprivileged user in a fresh container, not by any test that existed.
+
+### KI-42: A scan through Docker reported nothing because it read nothing
+- **Symptom:** gitleaks said `no leaks found` with `scanned ~0 bytes`.
+- **Cause:** Colima does not mount `/private/tmp`, so the container saw an empty directory.
+- **Fix:** mount a path under the home directory, and read the byte count. A clean result from zero
+  bytes is not a result.
+
+### KI-43: The cheapest VX1 plan has a 1 GB disk
+- **Symptom:** `vx1-g-2c-8g` is listed at $0.06/hour, which looks like the right plan.
+- **Cause:** that price excludes storage. `disk` is 1 GB, so it needs paid block storage.
+- **Fix:** use `vc2-4c-8gb`: 160 GB included at $0.055/hour. `provision.sh plan` refuses a plan under 40 GB.
+
+### KI-44: `image_id` is not always the pinned digest
+- **Symptom:** a Docker test failed on `ubuntu-24.04` after passing locally and on 26.04.
+- **Cause:** under the containerd image store an image's id is the digest of its index. Under classic
+  overlay2 it is the hash of its config. Evidence from those hosts records different forms of the id.
+- **Fix:** the test compares with what the daemon resolves for the pin. To check a pin, use `RepoDigests`,
+  as `investigator-preflight` does, and never compare `image_id` with a digest.

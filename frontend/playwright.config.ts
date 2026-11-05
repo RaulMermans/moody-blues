@@ -7,10 +7,14 @@ import { defineConfig, devices } from "@playwright/test";
 const BACKEND_PORT = 8100;
 const FRONTEND_PORT = 3100;
 const ORPHAN_FRONTEND_PORT = 3101;
+const HOSTED_CONFIG_FRONTEND_PORT = 3102;
 const DEAD_BACKEND_PORT = 8199;
 
 export const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
 export const ORPHAN_FRONTEND_URL = `http://127.0.0.1:${ORPHAN_FRONTEND_PORT}`;
+// Started as a hosted deployment is: plain http inside, configured with its public https origin.
+export const HOSTED_CONFIG_URL = `http://127.0.0.1:${HOSTED_CONFIG_FRONTEND_PORT}`;
+export const HOSTED_CONFIG_ORIGIN = "https://moody.example";
 // Not a real credential: a canary to prove key material never reaches the browser.
 // It makes the backend report Vultr as configured_unverified; nothing calls Vultr.
 export const CANARY_VULTR_KEY = "e2e-canary-not-a-real-key-7c41";
@@ -19,6 +23,7 @@ export const OPERATOR_TOKEN = "e2e-operator-token-not-a-real-secret-3f9a2";
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: "*.spec.ts",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -38,6 +43,7 @@ export default defineConfig({
         MOODY_OPERATOR_TOKEN: OPERATOR_TOKEN,
         MOODY_RECORDED_EVIDENCE_DIR: "frontend/.e2e/recorded",
         MOODY_ARTIFACTS_DIR: "frontend/.e2e/artifacts",
+        MOODY_CONTAINMENT_REPORT: "frontend/.e2e/containment/report.json",
         // On, so refusal below is the ledger's doing. Its fixture is over the limit, and the key
         // is a canary: a chargeable mission cannot reach a provider from this configuration.
         MOODY_LIVE_RUNS_ENABLED: "true",
@@ -57,6 +63,13 @@ export default defineConfig({
       command: `pnpm start --hostname 127.0.0.1 --port ${ORPHAN_FRONTEND_PORT}`,
       url: `${ORPHAN_FRONTEND_URL}/`,
       env: { MOODY_BACKEND_URL: `http://127.0.0.1:${DEAD_BACKEND_PORT}` },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      command: `pnpm start --hostname 127.0.0.1 --port ${HOSTED_CONFIG_FRONTEND_PORT}`,
+      url: `${HOSTED_CONFIG_URL}/`,
+      env: { MOODY_BACKEND_URL: BACKEND_URL, MOODY_PUBLIC_ORIGIN: HOSTED_CONFIG_ORIGIN },
       reuseExistingServer: false,
       timeout: 60_000,
     },

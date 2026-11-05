@@ -46,6 +46,9 @@ class Settings(BaseSettings):
 
     # Live spending guard. An application-side estimate, NOT a provider billing limit.
     live_spend_limit_usd: float = Field(default=5.0, gt=0, le=200)
+    # A ledger settled below this was lost or replaced, so spending is refused. A hosted deployment
+    # sets it from the migrated ledger: a fresh VM must not restart its history from zero.
+    live_ledger_floor_usd: float = Field(default=0.0, ge=0, le=200)
     # Vultr publishes no per-model price for the models we use, so these are deliberately
     # high assumptions (see docs/deployment/live-budget.md), not quoted prices.
     live_price_ceiling_input_per_million_usd: float = Field(default=1.40, gt=0, le=1_000)
@@ -68,6 +71,8 @@ class Settings(BaseSettings):
     # None means the repository defaults (``evidence/recorded`` and ``.artifacts``).
     recorded_evidence_dir: Path | None = None
     artifacts_dir: Path | None = None
+    # None means the committed ``evidence/containment/report.json``.
+    containment_report: Path | None = None
     # Operator access to the job API. Unset means every operator route refuses.
     operator_token: SecretStr | None = None
     # A separate switch for missions that spend money. Off unless the owner turns it on.

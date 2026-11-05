@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 
 import { backendUrl } from "./backend";
+import type { ContainmentReport } from "./containment-types";
 import type {
   ExperimentView,
   InvestigationDetail,
@@ -66,6 +67,8 @@ async function read<T>(path: string): Promise<Loaded<T>> {
 }
 
 const seg = encodeURIComponent;
+
+export const getContainment = () => read<ContainmentReport>("/containment");
 
 export const listInvestigations = () => read<InvestigationList>("/investigations");
 export const getInvestigation = (id: string) =>

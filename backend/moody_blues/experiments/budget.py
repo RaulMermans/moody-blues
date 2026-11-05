@@ -12,6 +12,8 @@ Rules, all of which err towards refusing:
   books rather than vanishing.
 - Settling with incomplete usage keeps the full reservation.
 - A ledger that cannot be read refuses all further spending.
+- A ledger settled below its floor was lost or replaced, and refuses too. An empty file is not a
+  clean start on a host that is known to have history.
 
 There is one ledger for every live caller. A *scope* adds a second, narrower limit on the same
 records: an investigation's model calls and target runs share one scope, so they share one cap
@@ -115,18 +117,29 @@ class SpendPort(Protocol):
     def settle(self, entry_id: str, tokens: TokenTotals | None) -> float: ...
 
 
+def ledger_path(settings: Settings, default_artifacts: Path) -> Path:
+    """The one ledger. ``MOODY_ARTIFACTS_DIR`` wins, so a CLI and the API on a host share it."""
+    return (settings.artifacts_dir or default_artifacts) / "live-spend" / "ledger.jsonl"
+
+
 class SpendLedger:
-    def __init__(self, path: Path, *, limit_usd: float, prices: PriceCeiling) -> None:
+    def __init__(
+        self, path: Path, *, limit_usd: float, prices: PriceCeiling, floor_usd: float = 0.0
+    ) -> None:
         self.path = path
         self.limit_usd = limit_usd
         self.prices = prices
+        self.floor_usd = floor_usd
 
     @classmethod
-    def from_settings(cls, settings: Settings, path: Path) -> SpendLedger:
+    def from_settings(
+        cls, settings: Settings, path: Path, *, limit_usd: float | None = None
+    ) -> SpendLedger:
         return cls(
             path,
-            limit_usd=settings.live_spend_limit_usd,
+            limit_usd=settings.live_spend_limit_usd if limit_usd is None else limit_usd,
             prices=PriceCeiling.from_settings(settings),
+            floor_usd=settings.live_ledger_floor_usd,
         )
 
     @contextmanager
@@ -170,9 +183,18 @@ class SpendLedger:
             settled_entries=len(settled),
         )
 
+    def _check_floor(self, status: SpendStatus) -> None:
+        if status.settled_usd < self.floor_usd:
+            raise BudgetExceededError(
+                f"spend ledger shows ${status.settled_usd:.4f} settled, below the "
+                f"${self.floor_usd:.2f} this host is known to have; refusing to spend"
+            )
+
     def status(self) -> SpendStatus:
         with self._locked():
-            return self._status(self._records())
+            status = self._status(self._records())
+            self._check_floor(status)
+            return status
 
     def reserve(
         self,
@@ -187,6 +209,7 @@ class SpendLedger:
         with self._locked():
             records = self._records()
             status = self._status(records)
+            self._check_floor(status)
             if scope is not None and scope_limit_usd is not None:
                 inside = self._status([r for r in records if r.scope == scope])
                 committed = inside.settled_usd + inside.open_reservations_usd

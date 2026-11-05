@@ -1,0 +1,6 @@
+[Unit]
+Description=MOODY BLUES health and disk check (reports only; deletes nothing)
+
+[Service]
+Type=oneshot
+ExecStart=/opt/moody-blues/current/infra/vultr/healthcheck.sh

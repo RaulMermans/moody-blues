@@ -21,12 +21,16 @@ Commands:
   investigator-eval       Paired tests and strategy comparison (chargeable; --confirm-billable).
   recorded-export         Rebuild the curated recorded investigations from local records (free).
   recorded-verify         Check the recorded investigations against manifest and source (free).
+  containment-report      Attempt harmless escapes on this host and write the evidence (free).
+  ledger-verify           Print the ledger's hash and totals, or fail if it is corrupt (free).
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -38,6 +42,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from moody_blues.config import Settings
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
+from moody_blues.explorer.paths import default_artifacts
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
@@ -49,7 +54,7 @@ if TYPE_CHECKING:
     from moody_blues.inference.vultr import VultrInferenceClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ARTIFACTS = REPO_ROOT / ".artifacts"
+ARTIFACTS = default_artifacts()
 
 OK, WARN, FAIL = "PASS", "WARN", "FAIL"
 
@@ -167,8 +172,9 @@ def docker_smoke(settings: Settings) -> int:
 
 def _ledger(settings: Settings) -> SpendLedger:
     from moody_blues.experiments.budget import SpendLedger as Ledger
+    from moody_blues.experiments.budget import ledger_path
 
-    return Ledger.from_settings(settings, ARTIFACTS / "live-spend" / "ledger.jsonl")
+    return Ledger.from_settings(settings, ledger_path(settings, ARTIFACTS))
 
 
 def _budget_blocked(message: str) -> int:
@@ -563,6 +569,74 @@ def recorded_verify(settings: Settings) -> int:
     return 1 if problems else 0
 
 
+def _git_commit() -> str | None:
+    """The release id on a host, where there is no ``.git``; the checkout's HEAD otherwise."""
+    release = os.environ.get("MOODY_RELEASE")
+    if release:
+        return release
+    done = subprocess.run(
+        ["git", "rev-parse", "HEAD"],  # noqa: S607 - a developer checkout, for labeling only
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return done.stdout.strip() if done.returncode == 0 else None
+
+
+def containment_report(settings: Settings) -> int:
+    from moody_blues.explorer.containment import run_containment, vultr_instance, write_report
+    from moody_blues.explorer.paths import containment_report_path
+
+    report = run_containment(
+        settings,
+        git_commit=_git_commit(),
+        known_secrets=_known_secrets(settings),
+        instance=vultr_instance(),
+    )
+    write_report(report, containment_report_path(settings))
+    summary = {
+        "status": report.status,
+        "environment": report.host.environment,
+        "attempts": {a.attempt_id: a.held for a in report.attempts},
+        "effective_checks_failed": [c.name for c in report.effective_checks if c.status != "PASS"],
+        "sha256": report.sha256,
+    }
+    print(json.dumps(summary, indent=2))
+    return 0 if report.status == "PASS" else 1
+
+
+def ledger_verify(settings: Settings) -> int:
+    from moody_blues.experiments.budget import BudgetExceededError
+
+    ledger = _ledger(settings)
+    try:
+        entries = ledger.export()  # no floor here: this is what a migration inspects
+    except BudgetExceededError as exc:
+        print(json.dumps({"status": "FAIL", "reason": exc.detail.message}, indent=2))
+        return 1
+    settled = sum(float(str(e["amount_usd"])) for e in entries if e["kind"] == "settle")
+    closed = {e["entry_id"] for e in entries if e["kind"] == "settle"}
+    open_entries = [e for e in entries if e["kind"] == "reserve" and e["entry_id"] not in closed]
+    body = ledger.path.read_bytes() if ledger.path.is_file() else b""
+    print(
+        json.dumps(
+            {
+                "status": "PASS",
+                "path": str(ledger.path),
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "entries": len(entries),
+                "settled_usd": round(settled, 6),
+                "open_reservations": len(open_entries),
+                "floor_usd": ledger.floor_usd,
+                "above_floor": settled >= ledger.floor_usd,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _investigator(settings: Settings, args: argparse.Namespace) -> int:
     from moody_blues.contracts.investigation import Strategy, WorldTier
     from moody_blues.investigator import commands
@@ -704,6 +778,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("experiment-recover")
     sub.add_parser("recorded-export")
     sub.add_parser("recorded-verify")
+    sub.add_parser("containment-report")
+    sub.add_parser("ledger-verify")
     sub.add_parser("investigator-preflight")
     sub.add_parser("investigator-demo")
     il = sub.add_parser("investigator-live")
@@ -775,6 +851,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return recorded_export(settings)
         case "recorded-verify":
             return recorded_verify(settings)
+        case "containment-report":
+            return containment_report(settings)
+        case "ledger-verify":
+            return ledger_verify(settings)
         case "live-budget":
             return live_budget(settings, args.import_report)
         case "investigator-preflight" | "investigator-demo" | "investigator-live":

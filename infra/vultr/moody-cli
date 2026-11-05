@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Runs a moody-blues command as the service does: same user, same settings, same ledger.
+set -euo pipefail
+exec sudo -u moody -- bash -c '
+  set -a; source /etc/moody-blues/backend.env; set +a
+  export MOODY_RELEASE="$(basename "$(readlink -f /opt/moody-blues/current)")"
+  cd /opt/moody-blues/current
+  exec .venv/bin/moody-blues "$@"
+' moody-cli "$@"

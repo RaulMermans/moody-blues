@@ -139,11 +139,14 @@ def test_a_valid_generated_program_runs_end_to_end_on_the_pinned_image(
     assert evidence.status is ExperimentState.COMPLETED
     assert evidence.authorship.value == "model_generated"
     assert report.findings[0].finding_class is FindingClass.CORRECT_RECOVERY
-    digest = settings.generated_code_image.partition("@")[2]
+    # The id's form depends on the image store: the pinned digest under containerd, the config
+    # hash under classic overlay2 (KI-44). The property is that the pin is what actually ran.
+    pinned = generated_code_runner(settings).resolved_image_id()
+    assert pinned is not None
     executions = [e for s in evidence.steps for e in s.sandbox]
     assert len(executions) == 4  # a fresh container for every step
     assert len({e.sandbox_run_id for e in executions}) == 4
-    assert all(e.image_id == digest and not e.network_enabled for e in executions)
+    assert all(e.image_id == pinned and not e.network_enabled for e in executions)
     assert verify_investigation(run.investigations / report.investigation_id, run.experiments) == []
 
 

@@ -2,6 +2,7 @@ import "server-only";
 
 import { backendUrl } from "./backend";
 import { operatorToken } from "./evidence";
+import { publicOrigin } from "./public-origin";
 
 const TIMEOUT_MS = 10_000;
 
@@ -13,11 +14,16 @@ function refused(status: number, category: string, message: string): Response {
 }
 
 // A state-changing request must come from this site. SameSite=Strict already blocks the cookie
-// cross-site; this also refuses anything that sends a mismatched Origin.
+// cross-site; this also refuses anything that sends a mismatched Origin. A hosted deployment compares
+// with its configured origin, so no request header decides what this site is.
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
+  if (!origin) return false;
+  const configured = publicOrigin();
+  if (configured.state === "invalid") return false;
+  if (configured.state === "set") return origin === configured.origin;
   const host = request.headers.get("host");
-  if (!origin || !host) return false;
+  if (!host) return false;
   try {
     return new URL(origin).host === host;
   } catch {

@@ -27,6 +27,13 @@ writeFileSync(join(recorded, file), JSON.stringify(body));
 manifest.cases.push({ ...source, investigation_id: TAMPERED_ID, file });
 writeFileSync(manifestPath, JSON.stringify(manifest));
 
+// A real report, as committed. The page must read its label from the record.
+mkdirSync(join(root, "containment"), { recursive: true });
+cpSync(
+  join(here, "..", "..", "evidence", "containment", "report.json"),
+  join(root, "containment", "report.json"),
+);
+
 const at = "2026-11-05T00:00:00Z";
 const entry = "spend_e2efixture00";
 const line = (kind, extra) =>

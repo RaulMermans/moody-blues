@@ -7,7 +7,9 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 7, product experience.** You can open a real investigation in a browser and compare
+> **Status: Sprint 8, deployment prepared and not yet deployed.** No public URL exists yet. See the
+> [deployment guide](docs/deployment/vultr-deployment.md) and [docs/sprints/sprint-08.md](docs/sprints/sprint-08.md).
+> You can open a real investigation in a browser and compare
 > what an agent claimed with what actually happened. Every result shown comes from a real execution or
 > is labeled as a rehearsal. **The registered benchmark found no demonstrated adaptive advantage:** fixed
 > testing found a verified failure in 2 of 3 investigations, adaptive in 1 of 3, non-adaptive generation
@@ -20,7 +22,9 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
 | Capability | State |
 |---|---|
-| FastAPI backend: `/health`, `/ready`, `/sandbox/smoke` | Implemented and tested |
+| FastAPI backend: `/health`, `/ready`, `/sandbox/smoke` (not in production) | Implemented and tested |
+| Vultr deployment: scripts, Caddy, systemd, hosted test suite | Prepared and rehearsed locally; **not deployed** |
+| Containment report and page: eight real attempts, labeled with the host they ran on | Local evidence only until deployed |
 | Docker sandbox: no network, non-root, read-only, resource-limited, auto-cleanup | Implemented and verified against a real daemon |
 | Vultr Serverless Inference adapter (OpenAI SDK) | Implemented; **verified live** on `glm-5.3` |
 | Next.js status page connected to the backend | Implemented and verified with Playwright |
@@ -121,7 +125,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 
 ## Documentation
 
-- [Product experience](docs/architecture/product-experience.md) · [Evidence API](docs/architecture/evidence-api.md) · [Recorded investigations](docs/architecture/recorded-investigations.md) · [Threat model](docs/security/threat-model.md) · [ADR 0007](docs/adr/0007-investigation-explorer.md) · [Sprint 7 record](docs/sprints/sprint-07.md) · [Hosted readiness](docs/deployment/sprint-8-readiness.md)
+- [Product experience](docs/architecture/product-experience.md) · [Evidence API](docs/architecture/evidence-api.md) · [Recorded investigations](docs/architecture/recorded-investigations.md) · [Threat model](docs/security/threat-model.md) · [ADR 0007](docs/adr/0007-investigation-explorer.md) · [Sprint 7 record](docs/sprints/sprint-07.md) · [Deploying to Vultr](docs/deployment/vultr-deployment.md) · [Provisioning plan](docs/deployment/sprint-8-provisioning-plan.md) · [ADR 0008](docs/adr/0008-single-vm-hosting.md)
 - [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md) · [Target Agent](docs/architecture/target-agent.md) · [Experiment runtime](docs/architecture/experiment-runtime.md) · [Investigator](docs/architecture/investigator.md)
 - [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md) · [ADR 0005](docs/adr/0005-autonomous-investigator.md)
 - [Sprint 6 report](docs/evaluations/sprint-06/report.md) · [Registered evaluation](docs/architecture/evaluation.md) · [ADR 0006](docs/adr/0006-registered-evaluation.md) · [Sprint 6 record](docs/sprints/sprint-06.md)

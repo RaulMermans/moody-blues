@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { backendUrl } from "@/lib/backend";
 import { OPERATOR_COOKIE } from "@/lib/evidence";
 import { crossOrigin, sameOrigin } from "@/lib/operator-proxy";
+import { publicOrigin } from "@/lib/public-origin";
 
 const SESSION_SECONDS = 8 * 60 * 60;
 
@@ -38,7 +39,8 @@ export async function POST(request: Request): Promise<Response> {
   (await cookies()).set(OPERATOR_COOKIE, token, {
     httpOnly: true,
     sameSite: "strict",
-    secure: new URL(request.url).protocol === "https:",
+    // Behind the proxy request.url is plain http, so it cannot decide this.
+    secure: publicOrigin().state === "set",
     path: "/",
     maxAge: SESSION_SECONDS,
   });
