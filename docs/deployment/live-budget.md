@@ -117,7 +117,6 @@ Update this table when a sprint closes.
 
 ## Hosted final run (Sprint 9)
 
-- Proposed: one `live-validation-adaptive` run with the limit at $7.30. Settled is $6.500182, so $0.799818
-  remains against the $0.75 the application requires. **Not approved or run at the time of writing.**
-- The five recorded investigations are estimated at $0.07 to $0.22 each. These are ledger estimates, not billing.
+- Approved by the owner: one `live-validation-adaptive` run at a $7.30 limit. The limit returned to $5 afterwards.
+- `inv_cbd07a262444` settled at $0.104022 on the ledger, which now shows $6.604204. That is an estimate.
 - The ledger is never reset. A limit above $7.30 needs the owner's approval.

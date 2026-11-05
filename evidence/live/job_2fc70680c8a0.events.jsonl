@@ -1,0 +1,7 @@
+{"event_id":1,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:47:14.490442Z","type":"created","code":"job_created","experiment_id":null,"result_class":null}
+{"event_id":2,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:47:14.492934Z","type":"queued","code":"job_queued","experiment_id":null,"result_class":null}
+{"event_id":3,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:47:14.497069Z","type":"running","code":"job_running","experiment_id":null,"result_class":null}
+{"event_id":4,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:49:14.286359Z","type":"experiment_completed","code":"experiment_completed","experiment_id":"exp_8f7ba95e0bb1","result_class":"no_violation_found"}
+{"event_id":5,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:49:54.772137Z","type":"experiment_completed","code":"experiment_completed","experiment_id":"exp_3cf78664c969","result_class":"no_violation_found"}
+{"event_id":6,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:52:04.015747Z","type":"experiment_completed","code":"experiment_completed","experiment_id":"exp_c91df6eb6ef8","result_class":"no_violation_found"}
+{"event_id":7,"job_id":"job_2fc70680c8a0","at":"2026-11-05T16:52:13.624724Z","type":"completed","code":"model_concluded","experiment_id":null,"result_class":null}

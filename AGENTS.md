@@ -33,6 +33,7 @@ covers Next.js API drift; these rules take precedence.)
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
+| `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
 | `evidence/containment/` | The committed containment report, labeled with the host it ran on |
 | `docs/submission/` | Hackathon copy, claim sources, video script, and the tools that build the deck and video |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |

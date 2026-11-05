@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 const require = createRequire(resolve("frontend") + "/");
 const { chromium } = require("@playwright/test");
 const [shots, out] = process.argv.slice(2).map((p) => resolve(p));
-const HOSTED_LIVE = process.env.HOSTED_LIVE_NOTE ?? "a hosted live investigation has not yet run.";
+const HOSTED_LIVE = process.env.HOSTED_LIVE_NOTE ?? "The hosted live run found no violation: the agent recovered in all 3 runs.";
 const html = (await readFile("docs/submission/tools/slides.html", "utf8"))
   .replace("__CROP__", `file://${shots}/reality-crop.png`)
   .replace("__HOSTED_LIVE__", HOSTED_LIVE);

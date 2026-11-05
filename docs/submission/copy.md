@@ -18,7 +18,7 @@ MOODY BLUES tests agents inside controlled adversarial environments. An AI Inves
 
 In our strongest recorded case, an agent asked to create one customer survived four refuted hypotheses, then failed under a fake success combined with stale reads. It reported completed with two records committed. Its message named both records, so this was a wrong status, not concealment. Registered reruns reproduced it in 4 of 4 eligible runs.
 
-The application runs on Vultr Cloud Compute, with model calls through Vultr Serverless Inference. All 8 containment attempts on the Vultr host were blocked.
+The application runs on Vultr Cloud Compute, with model calls through Vultr Serverless Inference. All 8 containment attempts on the Vultr host were blocked. In one live investigation run through the hosted application, the agent recovered from every delivered fault and the Oracle passed all three runs: no violation found, which we report as a result.
 
 We publish our limits too. In a small registered benchmark, adaptive investigation did not beat fixed testing: NO_DEMONSTRATED_ADVANTAGE.
 
@@ -30,6 +30,6 @@ We don't just ask whether the agent succeeded. We verify what actually happened.
 
 **Application:** https://45-63-119-197.sslip.io
 
-**Repository:** https://github.com/RaulMermans/moody-blues (private until the owner approves)
+**Repository:** https://github.com/RaulMermans/moody-blues
 
-**If the hosted live run completes,** add its run ID and outcome here, and remove the matching line from the deck's Limits card by rebuilding with `HOSTED_LIVE_NOTE`.
+**Hosted live run:** `inv_cbd07a262444`, no violation found.
