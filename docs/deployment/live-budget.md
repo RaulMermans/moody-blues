@@ -55,6 +55,16 @@ enforces nothing described here. Check real spending in the Vultr console.
   the owner sets `MOODY_LIVE_SPEND_LIMIT_USD` deliberately, for example to 7.35 for about one
   investigation, for that server process only. Sprint 7's run was done this way, at 7.25.
 
+## Hosted spending (Sprint 8)
+
+- The VM runs with `MOODY_LIVE_RUNS_ENABLED=false`, no provider key, and a $5 limit, so spending is refused
+  three ways as deployed. `live-switch.sh` is the only thing that changes this.
+- `MOODY_LIVE_LEDGER_FLOOR_USD` is set from the migrated ledger. Settled spend below it means the ledger was
+  lost or replaced, and every reservation refuses. A fresh VM cannot restart from zero.
+- The ledger moves once. After that the VM's copy is canonical, so live calls from a laptop would split it.
+- A limit of $7.30 on $6.50 settled admits exactly one investigation: about $0.80 is left against the $0.75
+  required, and a run of about $0.10 leaves too little for a second.
+
 ## How the estimate works
 
 | Situation | What is booked |

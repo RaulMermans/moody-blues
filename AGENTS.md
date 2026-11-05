@@ -20,7 +20,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
 | `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -31,6 +31,9 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
+| `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
+| `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
+| `evidence/containment/` | The committed containment report, labeled with the host it ran on |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
 
 ## Commands
@@ -157,6 +160,15 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   investigation. The API has no way to raise a limit. Only ids and fixed codes are streamed as progress.
 - A job is terminal only once its bundle is on disk or the reason it cannot be. Jobs are never retried.
   After a crash a target run that did not report makes the job `outcome_uncertain`.
+
+**Hosting**
+- One backend process, always. Next.js and FastAPI bind to loopback; Caddy is the only public listener.
+  Trust no forwarded header: the site's address comes from `MOODY_PUBLIC_ORIGIN`.
+- Build every ledger with `SpendLedger.from_settings` and `ledger_path`, so all callers share one file and
+  one floor. Never reset, replace or hand-edit a ledger. After migration the VM's copy is canonical.
+- Only the instance metadata service can make a containment report hosted. Local evidence is never
+  described as hosted, and `local-tls-proxy` test results are never deployment evidence.
+- No route runs a containment attempt, and no anonymous request reaches paid inference.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

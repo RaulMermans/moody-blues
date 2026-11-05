@@ -1,6 +1,7 @@
 # Hosted preflight: readiness for Sprint 8
 
-_Written at the end of Sprint 7. Nothing here has been deployed, and no VM has been created._
+_Written at the end of Sprint 7. Superseded by [vultr-deployment.md](vultr-deployment.md) and the
+[provisioning plan](sprint-8-provisioning-plan.md); kept as the record of what Sprint 8 set out to fix._
 
 ## Decide first
 

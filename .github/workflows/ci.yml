@@ -15,7 +15,7 @@ concurrency:
 # No job here talks to Vultr. Provider behavior is covered offline by fixture-based
 # contract tests; live verification is the separate, manual `vultr-live` workflow.
 # Runners are pinned to the deployment's Ubuntu: `ubuntu-latest` moved to 26.04, where Playwright's
-# system dependencies do not exist (KI-39).
+# system dependencies do not exist (KI-40).
 
 jobs:
   secrets:

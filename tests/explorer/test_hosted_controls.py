@@ -27,18 +27,17 @@ AUTH = {"authorization": f"Bearer {TOKEN}"}
 PRICES = PriceCeiling(input_per_million_usd=1.40, output_per_million_usd=4.40)
 
 
-def hosted(tmp_path: Path, **extra: object) -> Settings:
-    return Settings(  # pyright: ignore[reportCallIssue]
-        _env_file=None,  # pyright: ignore[reportCallIssue]
-        environment="production",
-        artifacts_dir=tmp_path,
-        operator_token=TOKEN,  # pyright: ignore[reportArgumentType]
-        vultr_api_key="fixture-not-a-key",  # pyright: ignore[reportArgumentType]
-        live_runs_enabled=True,
-        live_spend_limit_usd=10.0,
-        live_ledger_floor_usd=1.0,
-        **extra,  # pyright: ignore[reportArgumentType]
-    )
+def hosted(tmp_path: Path, **overrides: object) -> Settings:
+    values: dict[str, object] = {
+        "environment": "production",
+        "artifacts_dir": tmp_path,
+        "operator_token": TOKEN,
+        "vultr_api_key": "fixture-not-a-key",
+        "live_runs_enabled": True,
+        "live_spend_limit_usd": 10.0,
+        "live_ledger_floor_usd": 1.0,
+    }
+    return Settings(_env_file=None, **(values | overrides))  # type: ignore[call-arg]
 
 
 def spend(ledger: SpendLedger, tokens: int) -> None:
@@ -85,6 +84,23 @@ def test_a_lost_ledger_refuses_a_live_mission_before_a_job_exists(tmp_path: Path
         refused = c.post("/operator/jobs", json={"mission_id": live["mission_id"]}, headers=AUTH)
         assert refused.status_code == 409
         assert c.get("/operator/jobs", headers=AUTH).json() == []
+
+
+def test_the_proposed_limit_admits_exactly_one_investigation(tmp_path: Path) -> None:
+    """$7.30 on $6.50 settled: one run of about $0.10 leaves too little for a second."""
+    settings = hosted(tmp_path, live_spend_limit_usd=7.30, live_ledger_floor_usd=6.50)
+    ledger = ledger_for(settings, tmp_path)
+    fixture = SpendLedger(ledger.path, limit_usd=100, prices=PRICES)
+    spend(fixture, 4_642_987)  # $6.500182 at the ceiling price, the figure on the real ledger
+
+    def live_available(c: TestClient) -> bool:
+        status = c.get("/operator/status", headers=AUTH).json()
+        return next(m for m in status["missions"] if m["mode"] == "live")["available"]
+
+    with TestClient(create_app(settings)) as c:
+        assert live_available(c) is True
+        spend(fixture, 71_429)  # about $0.10
+        assert live_available(c) is False
 
 
 def test_every_ledger_in_the_backend_is_built_with_the_floor() -> None:
