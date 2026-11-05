@@ -7,13 +7,14 @@ observes how a target agent behaves, and compares what the agent *reports* with 
 
 Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 
-> **Status: Sprint 6, scientific validation.** Built so far: the backend, the sandbox, the Vultr
-> adapter, a status page, a synthetic CRM with controlled reality distortions, an independent Truth
-> Oracle, a real tool-using LLM Target Agent, an isolated experiment runtime, an Investigator, and a
-> registered evaluation layer. **The registered benchmark found no demonstrated adaptive advantage:**
-> fixed testing found a verified failure in 2 of 3 investigations, adaptive in 1 of 3, non-adaptive
-> generation in 0 of 3, on a small sample. See the [report](docs/evaluations/sprint-06/report.md) and
-> [docs/sprints/sprint-06.md](docs/sprints/sprint-06.md).
+> **Status: Sprint 7, product experience.** You can open a real investigation in a browser and compare
+> what an agent claimed with what actually happened. Every result shown comes from a real execution or
+> is labeled as a rehearsal. **The registered benchmark found no demonstrated adaptive advantage:** fixed
+> testing found a verified failure in 2 of 3 investigations, adaptive in 1 of 3, non-adaptive generation
+> in 0 of 3, on a small sample. See the [report](docs/evaluations/sprint-06/report.md) and
+> [docs/sprints/sprint-07.md](docs/sprints/sprint-07.md).
+
+![The Reality Comparison](docs/sprints/sprint-07-screenshots/04-reality-comparison.png)
 
 ## What works today
 
@@ -32,6 +33,9 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Experiment runtime: sandbox → trusted coordinator → Target Agent → CRM → Oracle | Implemented; containment tested on real Docker; **verified live** on `glm-5.3` ([design](docs/architecture/experiment-runtime.md)) |
 | Investigator: one model writes and revises Python experiments inside a deterministic workflow | Implemented; hostile programs tested on real Docker; **run live** on `glm-5.3` ([design](docs/architecture/investigator.md)) |
 | Registered evaluation: frozen manifests, eligibility, causal contrasts, adaptation scoring | Implemented; **run live** on `glm-5.3` ([design](docs/architecture/evaluation.md)) |
+| Investigation Explorer: overview, timeline, Reality Comparison, Investigator view | Implemented; **real recorded evidence**; verified with Playwright ([design](docs/architecture/product-experience.md)) |
+| Evidence API: read-only, validated, hash-pinned ([contracts](docs/architecture/evidence-api.md)) | Implemented and tested |
+| Operator missions: token-gated, one at a time, SSE progress, restart classification | Rehearsals verified on real Docker. **A live mission has not been run from the app:** it is refused by the ledger as shipped |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
 
 ## Prerequisites
@@ -48,7 +52,20 @@ make doctor           # verify prerequisites (no chargeable calls)
 make dev              # backend :8000 + frontend :3000
 ```
 
-Open http://localhost:3000.
+Open <http://127.0.0.1:3000>. The recorded investigations need no provider key and spend nothing.
+
+To use the Operator page, set `MOODY_OPERATOR_TOKEN` in `.env` (see `.env.example`) and restart. Rehearsal
+missions are free but need Docker and the pinned image; `make investigator-preflight` checks both.
+Chargeable missions also need `MOODY_LIVE_RUNS_ENABLED=true` and a ledger with room:
+[budget policy](docs/deployment/live-budget.md).
+
+To run the production build:
+
+```bash
+make build
+uv run uvicorn moody_blues.main:app --host 127.0.0.1 --port 8000
+pnpm --dir frontend start --hostname 127.0.0.1 --port 3000
+```
 
 ## Commands
 
@@ -60,7 +77,7 @@ Open http://localhost:3000.
 | `make lint` | `ruff format --check`, `ruff check`, ESLint |
 | `make format` | Auto-format and auto-fix Python |
 | `make typecheck` | Pyright (strict) and `tsc` |
-| `make test` | Unit, World Engine, Target Agent, experiment, Investigator and evaluation tests (offline: real SQLite, labeled fixtures, no network) |
+| `make test` | Unit, World Engine, Target Agent, experiment, Investigator, evaluation and Explorer tests (offline: real SQLite, labeled fixtures, no network) |
 | `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
 | `make build` | Production frontend build |
@@ -87,6 +104,7 @@ Open http://localhost:3000.
 | `make eval-verify` / `make eval-report` | Check the registration against the code / recompute results from journals. Free. |
 | `make eval-run SUITE=… CONFIRM=1` | **Live, chargeable:** one registered suite. Refuses unless the registration is committed and matches the code. |
 | `make eval-repro EXPERIMENT=… RUNS=… CONFIRM=1` | **Live, chargeable:** a registered rerun under the manifest's limits. |
+| `make recorded-verify` / `make recorded-export` | Check the recorded investigations / rebuild them from local records. Free. |
 | `make live-budget` | Show the estimated spend ledger. Makes no calls. |
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
@@ -103,6 +121,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 
 ## Documentation
 
+- [Product experience](docs/architecture/product-experience.md) · [Evidence API](docs/architecture/evidence-api.md) · [Recorded investigations](docs/architecture/recorded-investigations.md) · [Threat model](docs/security/threat-model.md) · [ADR 0007](docs/adr/0007-investigation-explorer.md) · [Sprint 7 record](docs/sprints/sprint-07.md) · [Hosted readiness](docs/deployment/sprint-8-readiness.md)
 - [Architecture overview](docs/architecture/overview.md) · [World Engine](docs/architecture/world-engine.md) · [Target Agent](docs/architecture/target-agent.md) · [Experiment runtime](docs/architecture/experiment-runtime.md) · [Investigator](docs/architecture/investigator.md)
 - [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md) · [ADR 0005](docs/adr/0005-autonomous-investigator.md)
 - [Sprint 6 report](docs/evaluations/sprint-06/report.md) · [Registered evaluation](docs/architecture/evaluation.md) · [ADR 0006](docs/adr/0006-registered-evaluation.md) · [Sprint 6 record](docs/sprints/sprint-06.md)
