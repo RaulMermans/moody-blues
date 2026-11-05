@@ -114,3 +114,10 @@ needs a human decision. Estimates at ceiling prices:
 The ledger itself shows $6.50, because Sprint 3's $0.50 predates it.
 
 Update this table when a sprint closes.
+
+## Hosted final run (Sprint 9)
+
+- Proposed: one `live-validation-adaptive` run with the limit at $7.30. Settled is $6.500182, so $0.799818
+  remains against the $0.75 the application requires. **Not approved or run at the time of writing.**
+- The five recorded investigations are estimated at $0.07 to $0.22 each. These are ledger estimates, not billing.
+- The ledger is never reset. A limit above $7.30 needs the owner's approval.

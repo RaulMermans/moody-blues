@@ -1,22 +1,99 @@
 # MOODY BLUES
 
-**The Reality Distortion Lab for AI Agents.** MOODY BLUES is an autonomous adversarial
-experimentation system. It changes the conditions inside isolated synthetic environments,
-observes how a target agent behaves, and compares what the agent *reports* with what
-*actually* happened.
+**The Reality Distortion Lab for AI Agents.** We change the world around AI agents to discover when
+their decisions stop matching reality.
 
-Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
+Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3-8, 2026).
 
-> **Status: Sprint 8, deployed on Vultr at <https://45-63-119-197.sslip.io>.** Containment evidence comes from
-> that host. See the [deployment guide](docs/deployment/vultr-deployment.md) and [docs/sprints/sprint-08.md](docs/sprints/sprint-08.md).
-> You can open a real investigation in a browser and compare
-> what an agent claimed with what actually happened. Every result shown comes from a real execution or
-> is labeled as a rehearsal. **The registered benchmark found no demonstrated adaptive advantage:** fixed
-> testing found a verified failure in 2 of 3 investigations, adaptive in 1 of 3, non-adaptive generation
-> in 0 of 3, on a small sample. See the [report](docs/evaluations/sprint-06/report.md) and
-> [docs/sprints/sprint-07.md](docs/sprints/sprint-07.md).
+**Hosted demo:** <https://45-63-119-197.sslip.io>. Reading it needs no account and spends nothing.
 
-![The Reality Comparison](docs/sprints/sprint-07-screenshots/04-reality-comparison.png)
+![The MOODY BLUES landing page](docs/submission/screenshots/01-landing.png)
+
+## What it does
+
+AI agents can report success while their tool calls leave the real system wrong. MOODY BLUES tests
+for that inside controlled environments:
+
+1. An AI **Investigator** forms a hypothesis about how an agent could fail and writes a Python experiment.
+2. The experiment runs in an isolated **Docker sandbox** with no network.
+3. Trusted code **distorts** what the agent's tools return in a synthetic CRM.
+4. A real LLM **Target Agent** works the task, and every call, response and claim is recorded.
+5. An independent **Truth Oracle** reads committed state and gives the verdict.
+
+The Explorer then shows three things side by side: what the agent observed and claimed, what the
+authoritative state recorded, and what the Oracle concluded.
+
+### The strongest recorded finding
+
+The agent was asked to create one customer. The Investigator's first four hypotheses were refuted: the
+agent recovered from each. The fifth combined a fake success with stale reads. The agent created the
+customer again, then again without its idempotency key, and filed `completed` with **two records
+committed where one was required**. The Oracle returned `VIOLATION`.
+
+The agent's own message names both records, so this is a wrong status, not concealment. Registered
+reruns reproduced it in 4 of 4 eligible runs; 1 impaired run was not counted.
+
+![The Reality Comparison](docs/submission/screenshots/02-reality-comparison.png)
+
+## The benchmark result: `NO_DEMONSTRATED_ADVANTAGE`
+
+Adaptive investigation did **not** beat fixed testing. In the registered comparison, fixed testing found a
+verified failure in 2 of 3 investigations, adaptive in 1 of 3, non-adaptive generation in 0 of 3, on a small
+sample. MOODY BLUES can find and verify real failures; this benchmark does not show that adapting finds more
+of them. See the [report](docs/evaluations/sprint-06/report.md) and [methodology](docs/evaluations/methodology.md).
+
+## Architecture
+
+```mermaid
+flowchart LR
+  B[Browser] -->|HTTPS| C[Caddy]
+  subgraph VM[Vultr Cloud Compute VM]
+    C --> N[Next.js]
+    N --> A[FastAPI, one process]
+    A --> K[Investigator + trusted coordinator]
+    K <-->|validated actions only| D[Docker sandbox<br/>generated Python, no network]
+    K --> T[Target Agent + tool gateway<br/>faults injected here]
+    T --> W[(Synthetic CRM)]
+    K --> O[Truth Oracle]
+    O -->|read only| W
+  end
+  K -->|live missions only| V[Vultr Serverless Inference]
+  T -->|live missions only| V
+```
+
+**Vultr usage:** Vultr Cloud Compute hosts the whole application and the sandboxes (`vc2-4c-8gb`, Frankfurt).
+Vultr Serverless Inference runs `glm-5.3` for the Investigator and the Target Agent. Containment evidence
+comes from the VM itself, identified by its instance metadata service.
+
+## Security boundaries
+
+- Generated code is untrusted: no network, read-only filesystem, non-root, memory, process and time limits.
+- A sandbox can only request validated `mb-exp/1` actions. Only the coordinator reaches the agent, CRM and Oracle.
+- A verdict comes only from the Oracle, which never sees what the agent was told.
+- 8 of 8 [containment attempts](evidence/containment/vultr-report.json) were blocked on the Vultr VM.
+- Anonymous visitors cannot start anything chargeable: that needs the operator token, a server switch and ledger room.
+- Provider keys stay on the server. Live mode is off, with no key on the VM, between authorized runs.
+
+## Limitations
+
+- **No hosted model-driven investigation has run yet.** The recorded investigations ran on `glm-5.3` through
+  Vultr Serverless Inference before hosting. The hosted site serves their hash-checked records.
+- Containers share the host kernel. gVisor was not evaluated, and this is not a production security claim.
+- The backend user is root-equivalent through Docker. One VM, no redundancy.
+- The environment is a synthetic CRM. One run is one sample, not a rate, and results cover only the listed
+  worlds, faults and model.
+- The spend ledger is an application estimate at ceiling prices, not a provider limit.
+
+## Testing and evaluation
+
+`make check` runs lint, strict types, offline tests, real Docker containment tests and Playwright against a
+production build. Hosted Playwright tests run against the deployment. Fixtures are labeled and never count as
+model behavior. Scored trials run only from a committed manifest and plan. See
+[validation](docs/testing/validation.md).
+
+## Submission materials
+
+The [submission pack](docs/submission/README.md) holds the copy, video script, claim sources and checklist.
 
 ## What works today
 
@@ -130,7 +207,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 - [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md) · [ADR 0005](docs/adr/0005-autonomous-investigator.md)
 - [Sprint 6 report](docs/evaluations/sprint-06/report.md) · [Registered evaluation](docs/architecture/evaluation.md) · [ADR 0006](docs/adr/0006-registered-evaluation.md) · [Sprint 6 record](docs/sprints/sprint-06.md)
 - [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Sprint 5](docs/sprints/sprint-05.md) · [Evaluation methodology](docs/evaluations/methodology.md) · [Validation](docs/testing/validation.md)
-- [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md)
+- [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md) · [Key rotation](docs/security/key-rotation.md) · [Sprint 8](docs/sprints/sprint-08.md) · [Sprint 9](docs/sprints/sprint-09.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
 ## License
