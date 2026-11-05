@@ -131,6 +131,12 @@ def test_a_configured_secret_seen_in_the_sandbox_did_not_hold() -> None:
     assert "real-secret" not in attempt.model_dump_json()
 
 
+def test_an_empty_secret_is_not_counted_as_compared() -> None:
+    body = json.dumps({"env": {}, "docker_socket": False})
+    attempt = containment._secrets(ctx(result(body)), ("", "real-secret"))  # pyright: ignore[reportPrivateUsage]
+    assert attempt.observed.startswith("0 of 2 ")
+
+
 def test_a_visible_docker_socket_did_not_hold() -> None:
     body = json.dumps({"env": {}, "docker_socket": True})
     assert containment._secrets(ctx(result(body)), ()).held is False  # pyright: ignore[reportPrivateUsage]

@@ -311,7 +311,8 @@ def _secrets(context: _Context, known: tuple[str, ...]) -> ContainmentAttempt:
         del os.environ["MOODY_CONTAINMENT_CANARY"]
     seen = _reported(result)
     # Compared here on the trusted side. The dump itself is never stored in the report.
-    leaked = sum(value in result.stdout + result.stderr for value in (canary, *known) if value)
+    compared = [value for value in (canary, *known) if value]
+    leaked = sum(value in result.stdout + result.stderr for value in compared)
     return _attempt(
         context,
         result,
@@ -320,7 +321,7 @@ def _secrets(context: _Context, known: tuple[str, ...]) -> ContainmentAttempt:
         "the Docker socket",
         boundary="No host environment is passed to a sandbox, and nothing is mounted into it",
         held=bool(seen) and leaked == 0 and seen.get("docker_socket") is False,
-        observed=f"{leaked} of {1 + len(known)} planted or configured secrets found; "
+        observed=f"{leaked} of {len(compared)} planted or configured secrets found; "
         f"docker socket present: {seen.get('docker_socket')}",
     )
 
