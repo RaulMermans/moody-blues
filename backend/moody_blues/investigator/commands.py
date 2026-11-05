@@ -38,6 +38,7 @@ from moody_blues.experiments.budget import (
 from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import AgentTarget, ReferenceTarget
 from moody_blues.experiments.workspace import EVIDENCE
+from moody_blues.explorer.paths import default_artifacts
 from moody_blues.inference.vultr import PROVIDER, VultrInferenceClient
 from moody_blues.investigator.catalog import WORLD_TIERS, target_capability
 from moody_blues.investigator.evaluation import (
