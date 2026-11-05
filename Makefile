@@ -12,7 +12,7 @@ PYTEST  := $(UV) run pytest
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
-        eval-verify eval-run eval-report eval-test live-budget sandbox-clean clean
+        eval-verify eval-run eval-repro eval-report eval-test live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -149,6 +149,9 @@ SUITE ?= causal
 
 eval-run: ## LIVE + CHARGEABLE: one registered suite; needs CONFIRM=1 (SUITE=causal|strategies|adaptation)
 	$(UV) run moody-blues eval-run --suite $(SUITE) $(if $(CONFIRM),--confirm-billable)
+
+eval-repro: ## LIVE + CHARGEABLE: registered rerun under manifest limits; needs CONFIRM=1 (EXPERIMENT=, RUNS=)
+	$(UV) run moody-blues eval-repro --experiment $(EXPERIMENT) --runs $(RUNS) $(if $(CONFIRM),--confirm-billable)
 
 eval-report: ## Recompute results from the journals into docs/evaluations/sprint-06/results (free)
 	$(UV) run moody-blues eval-report

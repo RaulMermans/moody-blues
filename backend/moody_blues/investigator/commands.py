@@ -45,7 +45,7 @@ from moody_blues.investigator.evaluation import (
     strategy_row,
     write_json,
 )
-from moody_blues.investigator.findings import classify_run, reproduction_status
+from moody_blues.investigator.findings import classify_run, impairments_of, reproduction_status
 from moody_blues.investigator.fixtures import FIXTURE_MODEL, ObservationDrivenFixture
 from moody_blues.investigator.model import InvestigatorModel
 from moody_blues.investigator.observations import violation_codes
@@ -352,7 +352,15 @@ def evaluate(
     return _finish_live(live, reports)
 
 
-def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: int) -> int:
+def reproduce(
+    settings: Settings,
+    *,
+    confirmed: bool,
+    experiment_id: str,
+    runs: int,
+    budget: AgentBudget = LIVE_TARGET_BUDGET,
+    limit_usd: float | None = None,
+) -> int:
     """Rerun one generated program unchanged in fresh worlds, to estimate how often it recurs."""
     if not confirmed:
         return not_confirmed("investigator-repro")
@@ -369,7 +377,7 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
     if verify_experiment(directory):
         print(json.dumps({"status": "NOT_RUN", "reason": "original evidence does not verify"}))
         return 2
-    live = open_live(settings)
+    live = open_live(settings, limit_usd=limit_usd)
     if live is None:
         return 2
     code = (directory / original.source_path).read_text(encoding="utf-8")
@@ -383,7 +391,7 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
             evidence="live_provider",
             provider=PROVIDER,
             model=settings.investigator_target_model,
-            budget=LIVE_TARGET_BUDGET,
+            budget=budget,
             ledger=spend,
         ),
         root=EXPERIMENTS,
@@ -421,6 +429,9 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
             if run and run.target_observed.claim
             else None,
             "truncated_model_steps": run.truncated_model_steps if run else None,
+            "impairments": [i.value for i in impairments_of(run, evidence_intact=True)]
+            if run
+            else None,
             "tokens": run.tokens.total_tokens if run and run.tokens else None,
         }
         rows.append(row)

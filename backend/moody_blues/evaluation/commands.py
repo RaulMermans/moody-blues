@@ -63,6 +63,7 @@ from moody_blues.investigator.commands import (
     LiveContext,
     not_confirmed,
     open_live,
+    reproduce,
     target_client,
 )
 from moody_blues.investigator.model import InvestigatorModel
@@ -362,6 +363,25 @@ def eval_run(settings: Settings, *, suite: str, confirmed: bool) -> int:
         )
     )
     return 0
+
+
+def eval_repro(settings: Settings, *, experiment_id: str, runs: int, confirmed: bool) -> int:
+    """A registered rerun, under the manifest's target limits and inside the sprint's limit."""
+    if not confirmed:
+        return not_confirmed("eval-repro")
+    try:
+        manifest, _, _ = _registered(settings)
+    except ManifestError as exc:
+        print(json.dumps({"status": "NOT_RUN", "reason": str(exc)[:400]}))
+        return 2
+    return reproduce(
+        settings,
+        confirmed=True,
+        experiment_id=experiment_id,
+        runs=runs,
+        budget=manifest.target_budget,
+        limit_usd=manifest.budget.ledger_limit_usd,
+    )
 
 
 def eval_report(settings: Settings) -> int:

@@ -577,6 +577,13 @@ def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
             return commands.eval_verify(settings)
         case "eval-report":
             return commands.eval_report(settings)
+        case "eval-repro":
+            return commands.eval_repro(
+                settings,
+                experiment_id=args.experiment,
+                runs=args.runs,
+                confirmed=args.confirm_billable,
+            )
         case _:
             return commands.eval_run(settings, suite=args.suite, confirmed=args.confirm_billable)
 
@@ -693,6 +700,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     er = sub.add_parser("eval-run")
     er.add_argument("--suite", choices=("causal", "strategies", "adaptation"), required=True)
     er.add_argument("--confirm-billable", action="store_true")
+    rp = sub.add_parser("eval-repro")
+    rp.add_argument("--experiment", required=True)
+    rp.add_argument("--runs", type=int, default=5)
+    rp.add_argument("--confirm-billable", action="store_true")
     args = parser.parse_args(argv)
     color = sys.stdout.isatty() and not getattr(args, "no_color", False)
 
@@ -726,7 +737,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _investigator(settings, args)
         case "investigator-eval" | "investigator-repro":
             return _investigator(settings, args)
-        case "evidence-audit" | "eval-freeze" | "eval-verify" | "eval-report" | "eval-run":
+        case (
+            "evidence-audit" | "eval-freeze" | "eval-verify" | "eval-report" | "eval-run"
+            | "eval-repro"
+        ):
             return _evaluation(settings, args)
         case _:
             parser.error(f"unknown command {args.command}")
