@@ -87,7 +87,12 @@ def test_a_killed_server_closes_its_job_on_restart_and_never_retries(
     try:
         job = call(port, "/operator/jobs", method="POST", body={"mission_id": "rehearsal-recovery"})
         deadline = time.monotonic() + 30
-        while call(port, f"/operator/jobs/{job['job_id']}")["job"]["status"] != "running":
+        # Wait for the event, not the status: the status lands first, and a kill between the two
+        # leaves no event to count.
+        while not any(
+            event["type"] == "running"
+            for event in call(port, f"/operator/jobs/{job['job_id']}")["events"]
+        ):
             assert time.monotonic() < deadline
             time.sleep(0.02)
     finally:
