@@ -12,18 +12,31 @@ import { STRATEGY_LABEL } from "@/lib/labels";
 
 const STEPS = [
   {
+    title: "Investigate",
+    body: "An AI Investigator forms a hypothesis about how an agent could fail, writes a Python experiment to test it, and picks its next step from what it observed.",
+  },
+  {
+    title: "Contain",
+    body: "Generated code is untrusted. It runs in a disposable Docker sandbox with no network, and can only request validated actions from trusted code.",
+  },
+  {
     title: "Distort",
     body: "Trusted code changes what the agent's tools return: a save that reports failure but committed, a success that rolled back, a read from an old snapshot.",
   },
   {
     title: "Observe",
-    body: "A real agent works through the task in a synthetic CRM. Every call, response and final claim is recorded.",
+    body: "A real LLM agent works through the task in a synthetic CRM. Every call, response and final claim is recorded.",
   },
   {
     title: "Verify",
     body: "An independent Oracle reads committed state. It never sees what the agent was told, so a claim cannot change the verdict.",
   },
 ];
+
+/** The first sentence of the mission the agent was really given, from the run's own record. */
+function taskLine(mission: string): string {
+  return mission.replace(/^Mission:\s*/, "").split(/(?<=\.)\s/)[0];
+}
 
 async function Signature({ list }: { list: InvestigationList }) {
   const lead = list.items.find((i) => i.summary?.case?.kind === "verified_violation")?.summary;
@@ -42,6 +55,15 @@ async function Signature({ list }: { list: InvestigationList }) {
           Recorded run · {run.data.reported_models.join(", ")} · {run.data.world_ref}
         </p>
       </div>
+      <p className="max-w-3xl text-sm leading-6 text-muted" data-testid="signature-story">
+        {run.data.agent.mission ? (
+          <>
+            <span className="text-foreground">The task:</span>{" "}
+            {taskLine(run.data.agent.mission.text)}{" "}
+          </>
+        ) : null}
+        {lead.case?.summary}
+      </p>
       <VerdictStrip run={run.data} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         {disclosure ? <p className="max-w-2xl text-sm text-muted">{disclosure}</p> : <span />}
@@ -109,25 +131,23 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-4 py-10 sm:px-6">
       <header className="flex flex-col gap-3">
         <h1 className="font-mono text-sm font-semibold tracking-[0.18em] text-truth">MOODY BLUES</h1>
+        <p className="text-sm text-muted">The Reality Distortion Lab for AI Agents</p>
         <p className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
           What an AI agent believes, checked against what really happened.
         </p>
         <p className="max-w-3xl text-base leading-7 text-muted">
-          An autonomous adversarial experimentation system for AI agents. It distorts the tools an
-          agent depends on, watches how the agent responds, and has an independent Oracle check its
-          claims against authoritative state.
+          AI agents can report success while their tool calls leave the real system wrong. MOODY
+          BLUES is an autonomous adversarial experimentation system that changes the world around
+          an agent to find those moments: an AI Investigator designs experiments, a sandbox contains
+          them, and an independent Oracle checks the agent&apos;s claims against authoritative state.
         </p>
       </header>
 
-      <Suspense fallback={<LoadingPanel label="Loading investigations from the evidence API" />}>
-        <Evidence />
-      </Suspense>
-
       <section aria-labelledby="how" className="flex flex-col gap-3">
         <h2 id="how" className="text-lg font-semibold text-foreground">
-          Environmental distortion
+          How it works
         </h2>
-        <ol className="grid gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-3">
+        <ol className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
           {STEPS.map((step) => (
             <li key={step.title} className="bg-surface p-4">
               <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
@@ -136,6 +156,10 @@ export default function Home() {
           ))}
         </ol>
       </section>
+
+      <Suspense fallback={<LoadingPanel label="Loading investigations from the evidence API" />}>
+        <Evidence />
+      </Suspense>
 
       <StatusPanel />
     </main>

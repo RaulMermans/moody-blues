@@ -33,6 +33,14 @@ function Dot({ className }: { className: string }) {
   return <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full ${className}`} />;
 }
 
+/** Without a key the hosted site makes no model calls at all; the backend's detail stays below. */
+function stateLabel(item: IntegrationStatus): string {
+  if (item.name === "vultr_inference" && item.state === "not_configured") {
+    return "Off between authorized runs";
+  }
+  return STATE_LABEL[item.state];
+}
+
 function IntegrationRow({ item }: { item: IntegrationStatus }) {
   return (
     <li
@@ -46,7 +54,7 @@ function IntegrationRow({ item }: { item: IntegrationStatus }) {
       </span>
       <span className="text-right">
         <span className="block font-mono text-xs uppercase tracking-wide text-slate-300">
-          {STATE_LABEL[item.state]}
+          {stateLabel(item)}
         </span>
         <span className="block text-xs text-slate-500">{item.detail}</span>
       </span>
