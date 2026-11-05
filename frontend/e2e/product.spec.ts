@@ -75,7 +75,7 @@ test.describe("public, read-only exploration", () => {
 
     await expect(page.getByTestId("strip-claim")).toHaveText("completed");
     await expect(page.getByTestId("strip-verdict")).toHaveText("VIOLATION");
-    await expect(page.getByTestId("strip-state")).toContainText("2 duplicate records");
+    await expect(page.getByTestId("strip-state")).toContainText("2 records committed, 1 required");
     await expect(page.getByText("not concealment").first()).toBeVisible();
 
     for (const item of listing.items.filter((i) => i.integrity === "verified")) {

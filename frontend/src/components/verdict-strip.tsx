@@ -5,7 +5,7 @@ import { VerdictTag } from "./ui";
 function stateLine(run: RealityRun): string {
   const flagged = run.actual.customers.filter((c) => c.flagged_duplicate).length;
   const created = run.actual.new_customer_ids.length;
-  if (flagged > 1) return `${flagged} duplicate records committed`;
+  if (flagged > 1) return `${flagged} records committed, 1 required`;
   return `${created} new record${created === 1 ? "" : "s"} committed`;
 }
 

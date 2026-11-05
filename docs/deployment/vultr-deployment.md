@@ -31,6 +31,7 @@ firewall group and by ufw.
 | `infra/vultr/rollback.sh` | laptop | Returns to the previous release |
 | `infra/vultr/migrate-ledger.sh` | laptop | Moves the ledger once and proves it arrived unchanged |
 | `infra/vultr/live-switch.sh` | laptop | The owner's switch for chargeable missions |
+| `infra/vultr/live-env.py` | VM, sent by the switch | Rewrites `backend.env` atomically; the key arrives on stdin |
 | `infra/vultr/moody-cli` | VM | Runs a command as the service does |
 
 ## Steps
@@ -116,3 +117,6 @@ infra/vultr/provision.sh destroy --confirm "$(python3 -c "import json;print(json
 ```
 
 Then confirm in the console that no instance, snapshot or block storage remains.
+
+Keep the VM until judging has finished. It costs $0.055/hour, about $1.32/day. Afterwards, follow
+[key rotation](../security/key-rotation.md) for the credentials.

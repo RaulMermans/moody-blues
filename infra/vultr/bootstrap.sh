@@ -85,6 +85,8 @@ grep -qF 'mb_web' /etc/ufw/before.rules || sed -i "/^# allow all on loopback/i #
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow from "$ADMIN_CIDR" to any port 22 proto tcp
+# The Vultr image ships with SSH open to everyone; only the rule above should remain.
+ufw --force delete allow 22/tcp || true
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
