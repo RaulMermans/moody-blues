@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MOODY BLUES</title>
+<style>
+:root{--bg:#0a0d13;--fg:#e7ebf2;--surface:#11151d;--raised:#171c26;--line:#242b37;--muted:#9aa5b8;--faint:#6f7a8d;--agent:#b8a7ff;--truth:#63d2e6;--bad:#ff7b7b;--good:#63d69a;--warn:#eebb5a;
+--sans:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;--mono:Menlo,Consolas,monospace}
+@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.slide{width:1920px;height:1080px;padding:84px 110px 70px;background:var(--bg);color:var(--fg);font-family:var(--sans);position:relative;overflow:hidden;display:flex;flex-direction:column;page-break-after:always;break-after:page}
+.slide:last-child{page-break-after:auto;break-after:auto}
+.kicker{font:600 24px var(--mono);letter-spacing:.18em;color:var(--truth);text-transform:uppercase}
+h1{font-size:62px;line-height:1.1;letter-spacing:-.02em;font-weight:650;margin-top:20px;max-width:1600px}
+.lead{font-size:32px;line-height:1.4;color:var(--muted);margin-top:22px;max-width:1500px}
+.foot{position:absolute;left:110px;right:110px;bottom:34px;font:20px var(--mono);color:var(--faint);display:flex;justify-content:space-between}
+.grow{flex:1;min-height:0;margin-top:40px;display:flex;flex-direction:column;justify-content:center;padding-bottom:30px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:14px;overflow:hidden}
+.pair>div{background:var(--surface);padding:46px 50px}
+.lab{font-size:25px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.big{font:500 66px/1.15 var(--mono);margin-top:18px}
+.sub{font-size:27px;line-height:1.4;color:var(--muted);margin-top:18px}
+.tag{display:inline-block;font:500 24px var(--mono);padding:5px 14px;border:2px solid;border-radius:7px}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--line);border:2px solid var(--line);border-radius:14px;overflow:hidden}
+.steps>div{background:var(--surface);padding:40px 30px;min-height:560px}
+.steps b{display:block;font-size:36px;margin-bottom:16px}
+.steps p{font-size:31px;line-height:1.38;color:var(--muted)}
+.steps i{display:block;font:500 24px var(--mono);color:var(--truth);margin-bottom:14px;font-style:normal}
+.cols{display:grid;gap:30px}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:34px 38px}
+.card h3{font-size:34px;margin-bottom:14px}
+.card p,.card li{font-size:28px;line-height:1.4;color:var(--muted)}
+.card ul{list-style:none}.card li{margin-top:12px}
+.stat{font:500 74px var(--mono);line-height:1}
+.roomy{justify-content:flex-start;margin-top:56px}.roomy .card{padding:42px 46px}.roomy .card h3{font-size:40px}.roomy .card li{font-size:33px;margin-top:16px}
+.quote{font-size:84px;line-height:1.14;font-weight:650;letter-spacing:-.02em;max-width:1620px}
+a{color:var(--truth);text-decoration:none}
+/* architecture */
+.arch{position:relative;width:1700px;height:690px;margin:26px auto 0}
+.vm{position:absolute;left:300px;top:0;width:1060px;height:690px;border:2px dashed var(--truth);border-radius:16px}
+.vm>span{position:absolute;left:24px;top:14px;font:600 25px var(--mono);color:var(--truth)}
+.bx{position:absolute;background:var(--raised);border:2px solid var(--line);border-radius:12px;padding:14px 18px;font-size:27px;font-weight:600;line-height:1.2}
+.bx small{display:block;font-size:22px;font-weight:400;color:var(--muted);margin-top:6px;line-height:1.25}
+.bx.un{border-color:var(--warn)}.bx.tr{border-color:var(--truth)}.bx.ag{border-color:var(--agent)}
+.arch svg{position:absolute;inset:0;width:100%;height:100%}
+</style></head><body>
+
+<section class="slide" id="title" style="justify-content:center">
+  <div class="kicker">Vultr Agent Rush · Blast Radius Zero</div>
+  <h1 style="font-size:124px;margin-top:30px;font-family:var(--mono);letter-spacing:.06em;font-weight:600">MOODY BLUES</h1>
+  <p class="lead" style="color:var(--truth);font-size:44px">The Reality Distortion Lab for AI Agents</p>
+  <p class="lead" style="font-size:38px;margin-top:40px">We change the world around AI agents to discover when their decisions stop matching reality.</p>
+</section>
+
+<section class="slide" id="problem">
+  <div class="kicker">The problem</div>
+  <h1>An agent can report success while the real system is wrong.</h1>
+  <div class="grow">
+    <div class="pair">
+      <div><div class="lab" style="color:var(--agent)">The agent reported</div><div class="big">completed</div><p class="sub">Its task: create one new customer record and verify it exists.</p></div>
+      <div><div class="lab" style="color:var(--truth)">The system recorded</div><div class="big">2 records committed, 1 required</div><p class="sub"><span class="tag" style="color:var(--bad)">VIOLATION</span>&nbsp; confirmed from authoritative state</p></div>
+    </div>
+    <p class="lead" style="font-size:29px">Misleading tool responses, inconsistent reads and ambiguous commits push agents into recovery decisions that tests of the final answer can miss.</p>
+    <p style="font:22px var(--mono);color:var(--faint);margin-top:16px">Recorded run run_cc34d7a6e314 · target glm-5.3</p>
+  </div>
+</section>
+
+<section class="slide" id="solution">
+  <div class="kicker">Our solution</div>
+  <h1>Test the agent in a world we control, then verify what happened.</h1>
+  <div class="grow" style="justify-content:flex-start;margin-top:56px"><div class="steps">
+    <div><i>1</i><b>Investigate</b><p>An AI Investigator forms a hypothesis and writes a Python experiment.</p></div>
+    <div><i>2</i><b>Contain</b><p>The code runs in a disposable sandbox with no network.</p></div>
+    <div><i>3</i><b>Distort</b><p>Trusted code changes what the agent's tools return.</p></div>
+    <div><i>4</i><b>Observe</b><p>A real LLM agent works the task in a synthetic CRM.</p></div>
+    <div><i>5</i><b>Verify</b><p>An independent Oracle reads committed state. A claim cannot change its verdict.</p></div>
+  </div></div>
+</section>
+
+<section class="slide" id="architecture" style="padding-top:60px">
+  <div class="kicker">How it works</div>
+  <h1 style="font-size:50px;margin-top:12px">Untrusted code on one side, truth on the other.</h1>
+  <div class="arch">
+    <svg viewBox="0 0 1700 690" fill="none" stroke="#6f7a8d" stroke-width="3">
+      <defs><marker id="as" markerWidth="9" markerHeight="9" refX="1" refY="4" orient="auto"><path d="M8 0L0 4L8 8z" fill="#6f7a8d" stroke="none"/></marker><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#6f7a8d" stroke="none"/></marker></defs>
+      <path d="M210 110H336" marker-end="url(#a)"/>
+      <path d="M580 110H640" marker-end="url(#a)"/>
+      <path d="M1000 158V212" marker-end="url(#a)"/>
+      <path d="M770 310H640" marker-end="url(#a)" marker-start="url(#as)"/>
+      <path d="M1228 346H1280V600" marker-end="url(#a)"/>
+      <path d="M1000 366V420" marker-end="url(#a)"/>
+      <path d="M1000 530V566H820V600" marker-end="url(#a)"/>
+      <path d="M1230 310H1396" marker-end="url(#a)"/>
+    </svg>
+    <div class="bx" style="left:0;top:58px;width:208px">Browser<small>HTTPS only</small></div>
+    <div class="vm"><span>Vultr Cloud Compute VM</span></div>
+    <div class="bx" style="left:340px;top:58px;width:238px">Caddy<small>only public listener</small></div>
+    <div class="bx" style="left:644px;top:58px;width:680px">Next.js → FastAPI<small>both on loopback, one backend process</small></div>
+    <div class="bx tr" style="left:772px;top:216px;width:456px;height:150px">Investigator + Coordinator<small>trusted code validates every action and holds limits and the ledger</small></div>
+    <div class="bx un" style="left:336px;top:216px;width:298px;height:206px">Docker sandbox<small>generated Python: no network, read-only, non-root; requests only validated actions</small></div>
+    <div class="bx ag" style="left:772px;top:424px;width:456px;height:106px">Target Agent + tool gateway<small>faults injected here</small></div>
+    <div class="bx" style="left:640px;top:604px;width:330px;height:76px;padding:8px 18px">Synthetic CRM<small>SQLite, per world</small></div>
+    <div class="bx tr" style="left:1000px;top:604px;width:328px;height:76px;padding:8px 18px">Truth Oracle<small>reads committed state</small></div>
+    <div class="bx ag" style="left:1400px;top:216px;width:300px;height:206px">Vultr Serverless Inference<small>glm-5.3 for the Investigator and Target Agent</small></div>
+    <svg viewBox="0 0 1700 690" fill="none" stroke="#63d2e6" stroke-width="3" style="pointer-events:none"><path d="M1000 642H974" marker-end="url(#b)"/><defs><marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#63d2e6" stroke="none"/></marker></defs></svg>
+  </div>
+</section>
+
+<section class="slide" id="product" style="padding-top:60px">
+  <div class="kicker">The product</div>
+  <h1 style="font-size:50px;margin-top:12px">Reality Comparison: what the agent was told, beside what was true.</h1>
+  <div style="display:grid;grid-template-columns:1240px 1fr;gap:34px;margin-top:28px;flex:1;min-height:0">
+    <img src="__CROP__" style="width:1240px;height:770px;object-fit:cover;object-position:top;border:2px solid var(--line);border-radius:12px" alt="Reality Comparison screen">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card" style="padding:24px 26px"><p><b style="color:var(--agent)">Agent Reality</b><br>Each tool response exactly as delivered.</p></div>
+      <div class="card" style="padding:24px 26px"><p><b style="color:var(--truth)">Actual Reality</b><br>The true response and what really committed.</p></div>
+      <div class="card" style="padding:24px 26px"><p><b style="color:var(--warn)">Distorted calls</b><br>Marked with the fault that changed them.</p></div>
+      <div class="card" style="padding:24px 26px"><p><b>Real evidence</b><br>Recorded run, hash-checked on load.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="evidence" style="padding-top:64px">
+  <div class="kicker">Verified evidence, and its limits</div>
+  <h1 style="font-size:52px;margin-top:14px">What we can show, and what we cannot.</h1>
+  <div class="cols" style="grid-template-columns:1fr 1fr 1fr;margin-top:34px">
+    <div class="card"><div class="stat" style="color:var(--bad)">2 of 5</div><p style="margin-top:14px">recorded investigations ended in a verified violation. 2 found none, 1 was inconclusive.</p></div>
+    <div class="card"><div class="stat" style="color:var(--truth)">4 of 4</div><p style="margin-top:14px">eligible registered reruns reproduced the signature failure. 1 impaired run was not counted.</p></div>
+    <div class="card"><div class="stat" style="color:var(--good)">8 of 8</div><p style="margin-top:14px">containment attempts blocked on the Vultr VM, including a forged Oracle pass.</p></div>
+  </div>
+  <div class="cols" style="grid-template-columns:1.25fr 1fr;margin-top:30px">
+    <div class="card"><h3 style="font:600 31px var(--mono)">NO_DEMONSTRATED_ADVANTAGE</h3><p>Our registered benchmark found a verified failure in 2 of 3 fixed, 1 of 3 adaptive and 0 of 3 non-adaptive investigations. Adaptive did not beat fixed testing on this small sample.</p></div>
+    <div class="card"><h3>Limits</h3><p>Containers share the host kernel. One run is one sample, not a rate. Recorded runs predate hosting: __HOSTED_LIVE__</p></div>
+  </div>
+</section>
+
+<section class="slide" id="value">
+  <div class="kicker">Who needs it</div>
+  <h1>For teams letting agents change business systems.</h1>
+  <div class="grow roomy"><div class="cols" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h3>Users</h3><ul><li>AI agent developers</li><li>Applied AI engineering teams</li><li>AI reliability and evaluation teams</li><li>Companies running tool-using agents in business workflows</li></ul></div>
+    <div class="card"><h3>Value</h3><ul><li>Find business-state violations before deployment</li><li>See how an agent recovers when tools mislead it</li><li>Reduce risk from duplicate operations and false success reports</li><li>Explainable evidence, call by call</li></ul></div>
+  </div></div>
+</section>
+
+<section class="slide" id="roadmap">
+  <div class="kicker">Differentiation and direction</div>
+  <h1>The combination is the point.</h1>
+  <div class="grow roomy"><div class="cols" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h3>Together, in one system</h3><ul><li>Model-generated experiments</li><li>Controlled environmental distortion</li><li>Real sandboxed execution</li><li>Stateful agent-tool interaction</li><li>Independent truth verification</li><li>Perceived and actual reality, side by side</li></ul></div>
+    <div class="card"><h3>Next</h3><ul><li>More realistic business environments</li><li>SDK and framework adapters</li><li>CI integration and reliability gates</li><li>More models and tool ecosystems</li><li>Stronger sandbox isolation</li></ul></div>
+  </div></div>
+</section>
+
+<section class="slide" id="closing" style="justify-content:center">
+  <p class="quote">We don't just ask whether the agent succeeded.<br><span style="color:var(--truth)">We verify what actually happened.</span></p>
+  <div style="margin-top:70px;font:500 34px/1.7 var(--mono)">
+    <div><span style="color:var(--faint)">App&nbsp;&nbsp;</span><a href="https://45-63-119-197.sslip.io">45-63-119-197.sslip.io</a></div>
+    <div><span style="color:var(--faint)">Code&nbsp;</span><a href="https://github.com/RaulMermans/moody-blues">github.com/RaulMermans/moody-blues</a></div>
+  </div>
+</section>
+</body></html>
