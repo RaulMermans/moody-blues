@@ -18,7 +18,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-run`, `eval-report`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -130,11 +130,12 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   on the record, and every rate shows attempted and eligible counts.
 - `fault_attributable` is exposure. Say a fault raised the chance of a failure only from a registered
   contrast of eligible runs, and never call stochastic causation deterministic.
+- Before reading any contrast, check the fault reached the arm that was meant to hold it.
 - Repeated answers to one prompt are repetitions, not independent units. No significance tests on
   these samples. If a comparison cannot show superiority, say so.
 - `w-e1`-`w-e3` are used up: their results are regression evidence. `w-r1`-`w-r3` are used once, by
   their registered test. Do not tune on them and report them as unseen.
-- `make eval-run` is live and chargeable. Suites run one at a time, within the manifest's caps.
+- `make eval-run` and `make eval-repro` are live and chargeable. Suites run one at a time, within the manifest's caps.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

@@ -196,3 +196,21 @@ contributor might also hit.
 - **Fix:** none needed if the change is wanted: register a new manifest id with a stated reason. Do
   not edit `manifest.json`.
 
+### KI-34: iCloud eviction stalls reads and crashes git
+- **Symptom:** `uv run` or a plain read hangs; git exits with no message (138, SIGBUS), leaving
+  `index.lock`; a reset moves files but not the ref.
+- **Cause:** the repo is in iCloud Drive and the disk is nearly full, so macOS evicts files (`ls -lO`,
+  `find -flags +dataless`). Git memory-maps objects, so an evicted one raises SIGBUS.
+- **Fix:** move the repo out of iCloud or free disk space. Until then: `brctl download <file>` and wait
+  for `find .git -type f -flags +dataless` to return nothing, then `git fsck`. Run live work from a
+  `git archive` export outside iCloud, symlinking `.artifacts` so the ledger stays put. Remove a lock
+  only after `lsof` shows no holder and no git process is working in this repo. Other apps' git
+  processes are unrelated.
+
+### KI-35: A selected fault can fail to fire
+- **Symptom:** a control arm looks clean, but it never received its fault.
+- **Cause:** `stale_read` occurrence 2 needs a second read, and an untroubled agent may read once. A
+  stale window also expires on reads with nothing to hide, so a short one can end before the write.
+- **Fix:** check `Runs a fault reached` and `Control runs a fault reached` before reading any
+  contrast. A met rule against an unexposed arm says nothing about that fault.
+

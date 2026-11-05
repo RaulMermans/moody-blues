@@ -1,6 +1,6 @@
 # Architecture overview
 
-_Last updated: Sprint 5 (2026-11-04). Covers only what is implemented; planned components are
+_Last updated: Sprint 6 (2026-11-05). Measurement is described in [evaluation.md](evaluation.md). Covers only what is implemented; planned components are
 marked as planned._
 
 ## Shape

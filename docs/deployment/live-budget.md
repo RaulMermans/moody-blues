@@ -30,6 +30,18 @@ enforces nothing described here. Check real spending in the Vultr console.
   reservation does not multiply, because it is far above real usage, but a retried request that was
   billed without reporting usage would not appear here.
 
+## Registered evaluations (Sprint 6)
+
+- The sprint's $5 sits on the same ledger: `eval-run` sets the limit to what was settled at registration
+  ($2.44414) plus $5, or $7.44414. Nothing is reset. Other commands keep their own limit, so they now
+  refuse until a sprint raises `MOODY_LIVE_SPEND_LIMIT_USD`.
+- Suites have their own caps through the existing scopes. Caps are never raised during a run.
+- Target limits come from the manifest: 14 steps, 24 tool calls, 40,000 tokens, 8,192 per step, 240 s.
+  That reserves $0.39 per run.
+- A target run with a failed provider request keeps its full reservation, because the request may be
+  billed and reports no usage. The ledger is append-only, so a past under-booking is corrected by a
+  labeled `adjustment` entry.
+
 ## How the estimate works
 
 | Situation | What is booked |
@@ -72,6 +84,7 @@ needs a human decision. Estimates at ceiling prices:
 | Sprint 3 single run and smoke checks | about 8,000 | $0.02 |
 | Sprint 4 (ledger: `make live-budget`) | 61,526 | $0.11 |
 | Sprint 5 (ledger: `make live-budget`) | 1,043,673 | $2.33 |
-| **Total** | **about 1.38 million** | **about $2.94** |
+| Sprint 6 (ledger: `make live-budget`) | 1,903,319 | $3.96 |
+| **Total** | **about 3.28 million** | **about $6.90** |
 
 Update this table when a sprint closes.
