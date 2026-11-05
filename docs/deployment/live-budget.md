@@ -51,9 +51,9 @@ enforces nothing described here. Check real spending in the Vultr console.
 - One job at a time, refused rather than queued. Each model call and target run still reserves its worst
   case first, on the same shared ledger, under the same per-investigation scope.
 - **The default limit is below what is already settled, so chargeable missions are refused as shipped:**
-  $5.00 against $6.40 on the ledger. The application cannot change this. To allow one verification run,
-  the owner sets `MOODY_LIVE_SPEND_LIMIT_USD` deliberately, for example to 7.25 for about one
-  investigation, and clears it afterwards.
+  $5.00 against $6.50 on the ledger. The application cannot change this. To allow one verification run,
+  the owner sets `MOODY_LIVE_SPEND_LIMIT_USD` deliberately, for example to 7.35 for about one
+  investigation, for that server process only. Sprint 7's run was done this way, at 7.25.
 
 ## How the estimate works
 
@@ -98,9 +98,9 @@ needs a human decision. Estimates at ceiling prices:
 | Sprint 4 (ledger: `make live-budget`) | 61,526 | $0.11 |
 | Sprint 5 (ledger: `make live-budget`) | 1,043,673 | $2.33 |
 | Sprint 6 (ledger: `make live-budget`) | 1,903,319 | $3.96 |
-| Sprint 7 | 0 | $0.00 |
-| **Total** | **about 3.28 million** | **about $6.90** |
+| Sprint 7 (one verification run) | 53,744 | $0.10 |
+| **Total** | **about 3.33 million** | **about $7.00** |
 
-The ledger itself shows $6.40, because Sprint 3's $0.50 predates it.
+The ledger itself shows $6.50, because Sprint 3's $0.50 predates it.
 
 Update this table when a sprint closes.

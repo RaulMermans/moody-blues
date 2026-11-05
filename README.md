@@ -35,7 +35,7 @@ Built for the Vultr Agent Rush Hackathon, *Blast Radius Zero* (Nov 3–8, 2026).
 | Registered evaluation: frozen manifests, eligibility, causal contrasts, adaptation scoring | Implemented; **run live** on `glm-5.3` ([design](docs/architecture/evaluation.md)) |
 | Investigation Explorer: overview, timeline, Reality Comparison, Investigator view | Implemented; **real recorded evidence**; verified with Playwright ([design](docs/architecture/product-experience.md)) |
 | Evidence API: read-only, validated, hash-pinned ([contracts](docs/architecture/evidence-api.md)) | Implemented and tested |
-| Operator missions: token-gated, one at a time, SSE progress, restart classification | Rehearsals verified on real Docker. **A live mission has not been run from the app:** it is refused by the ledger as shipped |
+| Operator missions: token-gated, one at a time, SSE progress, restart classification | Rehearsals verified on real Docker; **one live mission run** from the browser on `glm-5.3`. Refused by the ledger as shipped until the owner raises the limit |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
 
 ## Prerequisites

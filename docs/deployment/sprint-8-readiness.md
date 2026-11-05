@@ -7,8 +7,7 @@ _Written at the end of Sprint 7. Nothing here has been deployed, and no VM has b
 - [ ] Owner approves creating a Vultr VM and the spend it implies.
 - [ ] Owner decides whether the hosted demo offers chargeable missions at all. Recorded evidence and
       rehearsals need neither a key nor any credit.
-- [ ] Owner authorizes one real live verification run, locally, before any hosting. **Until that run
-      happens, no real model-driven investigation has been started from this application.**
+- [x] One real live verification run, locally: `inv_ab4479c3fe80`.
 
 ## Blockers
 
@@ -17,8 +16,8 @@ _Written at the end of Sprint 7. Nothing here has been deployed, and no VM has b
 | 1 | The backend must not be public | `POST /sandbox/smoke` needs no token and starts a container | Bind FastAPI to a private interface; expose only Next.js |
 | 2 | No TLS or reverse proxy | The operator cookie must be `secure` | Terminate TLS, forward the protocol, and decide `secure` from that rather than `request.url` |
 | 3 | Docker on the host | Rehearsals and live missions need a daemon and the pinned image | Install Docker; `docker pull` the value of `generated_code_image`; run `make investigator-preflight` on the VM |
-| 4 | The ledger is a local file | A fresh VM would start from zero and forget $6.40 of recorded spend | Copy the ledger across, or set the limit from what the provider console shows |
-| 5 | Actual billing is unverified | $6.90 is an estimate at assumed prices | Read the Vultr console before raising any limit |
+| 4 | The ledger is a local file | A fresh VM would start from zero and forget $6.50 of recorded spend | Copy the ledger across, or set the limit from what the provider console shows |
+| 5 | Actual billing is unverified | About $7.00 is an estimate at assumed prices | Read the Vultr console before raising any limit |
 | 6 | No process supervision | A crash leaves the site down, though jobs reconcile on restart | systemd units for both services; `Restart=on-failure`; a stop timeout above 20 s so cancellation can finish |
 | 7 | No public rate limiting | Evidence reads are cheap, but unbounded | Limit at the proxy |
 | 8 | Disk retention | `live-jobs/` and experiment records grow without limit | Set a retention policy, and exclude `.artifacts` from anything public |

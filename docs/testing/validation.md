@@ -180,5 +180,5 @@ Run with `make check` (exit 0) from `~/dev/Moody-Blues`:
 | All 30 investigations and 372 experiments | Intact |
 | Clean clone with no `.env` or `.artifacts` | PASS: 5 cases served, operator routes 403 |
 | Live mission against the real ledger | Refused (409), ledger byte-identical |
-| Real model-driven journey from the app | **NOT_RUN**: needs the owner's authorization |
+| Real model-driven journey from the app | PASS, once: `inv_ab4479c3fe80`, $0.097352, evidence intact |
 | GitHub Actions | **NOT_RUN** |
