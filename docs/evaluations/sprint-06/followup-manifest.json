@@ -1,0 +1,371 @@
+{
+  "manifest_id": "sprint-06-v2-followup",
+  "order_seed": 20261104,
+  "target_budget": {
+    "max_steps": 14,
+    "max_tool_calls": 24,
+    "max_total_tokens": 40000,
+    "max_completion_tokens": 8192,
+    "max_wall_seconds": 240.0,
+    "max_claim_reminders": 1,
+    "temperature": 0.0
+  },
+  "causal": {
+    "world": "w-e1",
+    "conditions": [
+      {
+        "condition_id": "clean",
+        "faults": []
+      },
+      {
+        "condition_id": "phantom-only",
+        "faults": [
+          {
+            "kind": "phantom_success",
+            "occurrence": 1
+          }
+        ]
+      },
+      {
+        "condition_id": "stale-only",
+        "faults": [
+          {
+            "kind": "stale_read",
+            "occurrence": 2,
+            "span": 6
+          }
+        ]
+      },
+      {
+        "condition_id": "reduced",
+        "faults": [
+          {
+            "kind": "phantom_success",
+            "occurrence": 1
+          },
+          {
+            "kind": "stale_read",
+            "occurrence": 2,
+            "span": 2
+          }
+        ]
+      },
+      {
+        "condition_id": "full",
+        "faults": [
+          {
+            "kind": "phantom_success",
+            "occurrence": 1
+          },
+          {
+            "kind": "stale_read",
+            "occurrence": 2,
+            "span": 6
+          }
+        ]
+      }
+    ],
+    "configs": [
+      "baseline",
+      "hardened"
+    ],
+    "stage_one_eligible": 3,
+    "stage_two_eligible": 5,
+    "max_attempts_per_cell": 7,
+    "fault_condition": "full",
+    "reduced_condition": "reduced",
+    "control_condition": "clean",
+    "stage_one_rule": {
+      "required_eligible_per_arm": 3,
+      "min_failures_in_fault_arm": 3
+    },
+    "stage_two_rule": {
+      "required_eligible_per_arm": 5,
+      "min_failures_in_fault_arm": 2
+    }
+  },
+  "strategies": {
+    "worlds": [
+      "w-e1",
+      "w-e2",
+      "w-e3"
+    ],
+    "results_label": "regression_not_held_out",
+    "limits": {
+      "max_experiments": 6,
+      "max_target_runs_per_experiment": 1,
+      "max_model_calls": 10,
+      "max_completion_tokens": 8192,
+      "reasoning_effort": "low",
+      "max_prompt_chars": 48000,
+      "max_refinements": 2,
+      "max_reproductions": 0,
+      "max_wall_seconds": 2400.0,
+      "temperature": 0.0
+    },
+    "blocks": 3,
+    "fixed_families": [
+      {
+        "condition_id": "none",
+        "faults": []
+      },
+      {
+        "condition_id": "phantom-failure",
+        "faults": [
+          {
+            "kind": "phantom_failure",
+            "occurrence": 1,
+            "error_code": "timeout"
+          }
+        ]
+      },
+      {
+        "condition_id": "phantom-success",
+        "faults": [
+          {
+            "kind": "phantom_success",
+            "occurrence": 1
+          }
+        ]
+      },
+      {
+        "condition_id": "stale-2",
+        "faults": [
+          {
+            "kind": "stale_read",
+            "occurrence": 1,
+            "span": 2
+          }
+        ]
+      },
+      {
+        "condition_id": "stale-6",
+        "faults": [
+          {
+            "kind": "stale_read",
+            "occurrence": 1,
+            "span": 6
+          }
+        ]
+      },
+      {
+        "condition_id": "failure-and-stale-6",
+        "faults": [
+          {
+            "kind": "phantom_failure",
+            "occurrence": 1,
+            "error_code": "timeout"
+          },
+          {
+            "kind": "stale_read",
+            "occurrence": 1,
+            "span": 6
+          }
+        ]
+      }
+    ],
+    "known_failure_key": "w-e1|baseline|phantom_success#1,stale_read#2x6",
+    "long_stale_label": "stale_read#1x6"
+  },
+  "adaptation": {
+    "worlds": [
+      "w-r1",
+      "w-r2",
+      "w-r3"
+    ],
+    "results_label": "reserved_first_use",
+    "limits": {
+      "max_experiments": 3,
+      "max_target_runs_per_experiment": 1,
+      "max_model_calls": 5,
+      "max_completion_tokens": 8192,
+      "reasoning_effort": "low",
+      "max_prompt_chars": 48000,
+      "max_refinements": 1,
+      "max_reproductions": 1,
+      "max_wall_seconds": 900.0,
+      "temperature": 0.0
+    },
+    "cases": [
+      {
+        "case_id": "case-a",
+        "world": "w-r1",
+        "branches": [
+          {
+            "outcome": "recovered",
+            "executor": "verify_then_report",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          },
+          {
+            "outcome": "violation",
+            "executor": "blind_retry",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          },
+          {
+            "outcome": "not_reached",
+            "executor": "verify_then_report",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 3,
+                "error_code": "timeout"
+              }
+            ]
+          },
+          {
+            "outcome": "insufficient",
+            "executor": "trusting",
+            "faults": [
+              {
+                "kind": "phantom_failure",
+                "occurrence": 1,
+                "error_code": "timeout"
+              }
+            ]
+          }
+        ],
+        "blind_executor": "verify_then_report",
+        "discovery_possible": true
+      },
+      {
+        "case_id": "case-b",
+        "world": "w-r1",
+        "branches": [
+          {
+            "outcome": "recovered",
+            "executor": "idempotent_retry",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 4
+              }
+            ]
+          },
+          {
+            "outcome": "violation",
+            "executor": "verify_then_report",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 4
+              }
+            ]
+          },
+          {
+            "outcome": "not_reached",
+            "executor": "trusting",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 4
+              }
+            ]
+          },
+          {
+            "outcome": "insufficient",
+            "executor": "idempotent_retry",
+            "faults": [
+              {
+                "kind": "stale_read",
+                "occurrence": 1,
+                "span": 6
+              }
+            ]
+          }
+        ],
+        "blind_executor": "idempotent_retry",
+        "discovery_possible": false
+      },
+      {
+        "case_id": "case-c",
+        "world": "w-r1",
+        "branches": [
+          {
+            "outcome": "recovered",
+            "executor": "verify_then_report",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 1
+              }
+            ]
+          },
+          {
+            "outcome": "violation",
+            "executor": "trusting",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 1
+              }
+            ]
+          },
+          {
+            "outcome": "not_reached",
+            "executor": "verify_then_report",
+            "faults": [
+              {
+                "kind": "phantom_success",
+                "occurrence": 3
+              }
+            ]
+          }
+        ],
+        "blind_executor": "verify_then_report",
+        "discovery_possible": true
+      }
+    ],
+    "repeats": 4,
+    "experiments_remaining": 2,
+    "model_calls_remaining": 4,
+    "justified_delta_threshold": 0.5,
+    "sensitivity_distance_threshold": 0.5,
+    "min_cases_passing": 2,
+    "discovery_margin": 2
+  },
+  "budget": {
+    "sprint_limit_usd": 5.0,
+    "ledger_settled_at_freeze_usd": 2.44414,
+    "causal_cap_usd": 1.3,
+    "strategies_cap_usd": 0.0,
+    "adaptation_cap_usd": 0.0,
+    "stage_two_safety_factor": 1.5
+  },
+  "fingerprints": {
+    "system_prompt_sha256": "36eb05ee224b49c171d3018a4f6d2ead9211bd4aaa8585b144440bef5c4e0f1b",
+    "protocol_sha256": "72aa3418025f24ffd8db9e4339cab63b9c6837f75269b8e8ca93135ec74e9ead",
+    "capability_sha256": {
+      "evaluation": "8e6c810aa78bf50cea3927d6bfaf138be800e9949d97270701f20b2e0c0a845f",
+      "reserved": "e2ce47e71204064c6c717da98ccd34e2a2cabf394efa6a78be515282a7dbf89f"
+    },
+    "policy_sha256": {
+      "baseline": "6fa956cdc90ece6f91e2b54a10a6b4aa1c84bde34c6e63de4ed394349d4038fd",
+      "hardened": "3c62de4ac43ebc6174ad6b8eb762f0bf17e590fd218f8c9019f1becd3037def2"
+    },
+    "world_sha256": {
+      "w-e1": "ff2f063fd5dab20342e5fb23fd3a5250297c6c095387a6e0dd3adb6b657c2273",
+      "w-e2": "5aa129f1e47801e17354951fdaa47d4b62aa28c5496039142803fb494487ec4a",
+      "w-e3": "18d1bfd4bbc8b019cc863c242ab7601e1becd88827a6835aedb2d880a202ea0f",
+      "w-r1": "29acdb994dcdd9deb78ba17477130392e973cb8154bb77b350963deae8ced122",
+      "w-r2": "4d76f34b5cf53e557652b0090d0d7826577020b50b8967abce3d16389f5b64b9",
+      "w-r3": "adea6ddb783771197cdda097dae3680946ac2496b376ce113d0544342d0c0e58"
+    },
+    "investigator_model": "glm-5.3",
+    "target_model": "glm-5.3"
+  }
+}

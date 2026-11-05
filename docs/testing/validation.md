@@ -9,6 +9,7 @@
 | Investigator | `tests/investigator` | nothing (real SQLite worlds) | state machine, contracts, limits, bounded refinement, shared budget, corrupt ledger, Oracle authority, reproduction, injection and leak boundaries, evidence linkage, the paired test's ability to tell adaptation from noise | Yes, labeled: scripted model and sandbox. Never evidence of containment or model behavior. Hostile generated programs run on real Docker in `tests/security/test_generated_code.py`. |
 | Integration | `tests/integration` (`-m docker`) | Docker | real execution: success, Python error, exit code, timeout + kill, memory/PID/CPU limits, output truncation, cleanup after every test, `/sandbox/smoke` + `/ready` against real Docker | No |
 | Security | `tests/security` (`-m docker`) | Docker | inside the container: uid 65534, zero capabilities, NoNewPrivs, loopback-only network, read-only rootfs, noexec `/tmp`, no host-env leakage (canary), no Docker socket or host mounts | No |
+| Evaluation | `tests/evaluation` | nothing (real SQLite worlds) | manifests and frozen plans, eligibility, attribution, adaptation scoring, journals, reports, budget refusal, leakage, planning isolation | scripted sandbox and reference targets (labeled) |
 | Target Agent | `tests/agent` | nothing (real SQLite worlds) | agent loop, tool validation, budgets, termination, cancellation, claim parsing, policy selection, prompt isolation, Oracle integration and assessment, eval harness, live-command preflight, exactly-once execution through the real adapter under SDK retries | Yes, labeled **provider fixtures** (`ScriptedModel`, `provider="fixture"`; HTTP fixtures via `MockTransport`). Never evidence of model behavior. |
 | World Engine | `tests/world` | nothing (real SQLite files in temp dirs) | CRM validation and transactions, pre-commit rollback, CHECK constraints, append-only evidence, `mode=ro` Oracle access, fault semantics and targeting, Oracle verdicts, tamper resistance, isolation, reset, deterministic replay, CLI | No. Executors are deterministic **scripts** (`world/reference.py`), labeled as not LLM agents. |
 | E2E | `frontend/e2e` | Docker, uv, Chromium | real browser → Next.js production server → FastAPI: identity renders, UI states equal backend-reported states, no key material or backend URL reaches the browser (canary key), genuine backend-down state | No (no request mocking) |
@@ -137,3 +138,26 @@ the live commands.
 
 `make check` last ran in full (562 offline) before the final test and CI edits. The offline suite,
 lint and types were rerun afterwards.
+
+## Sprint 6 results (2026-11-05, same host)
+
+Run on code commit `4a648a4`, from a `git archive` export outside iCloud (KI-34). Later commits change
+only documentation.
+
+| Check | Result |
+|---|---|
+| Baseline before changes, at `cfe74f5` | PASS: 563 offline, 67 Docker, 4 Playwright |
+| `ruff format --check` / `ruff check`, `pyright` (strict), ESLint, `tsc`, `next build` | PASS |
+| `pytest` offline (`make test`) | PASS (692, including 117 evaluation tests) |
+| `pytest tests/integration tests/security -m docker` | PASS (70, including 3 evaluation boundary tests) |
+| Playwright E2E | PASS (4) |
+| `make investigator-preflight`, `make docker-smoke` | PASS |
+| Evidence hashes, Sprint 6 trials | 114 of 114 match; 5 rerun records have no stored hash |
+| Journal chains | 4 of 4 verify; no unfinished trial |
+| `git fsck --connectivity-only` | PASS |
+| `make eval-run`, `make eval-repro` | Run live; see the [report](../evaluations/sprint-06/report.md) |
+| GitHub Actions, this branch | NOT_RUN: pushing needs the owner's approval |
+
+Sprint 5's GitHub Actions line above is superseded: PR #6 passed CI on `cfe74f5` and on its merge to
+`main`, including the Docker and Playwright jobs.
+

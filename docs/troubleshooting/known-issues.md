@@ -177,3 +177,40 @@ contributor might also hit.
   to duplicate it and said so.
 - **Fix:** identical-twin worlds state that a new record is required. Check `fault_attributable` and
   read the trace before describing any violation.
+
+### KI-31: Our limits can bite exactly where the failure is
+- **Symptom:** at `stale_read` span 6, 3 of 10 Sprint 5 runs on `w-e3` ended on our limits, and 2 of
+  those 3 were duplicates. They looked like ordinary samples.
+- **Cause:** long lag makes the agent read and reason more, so step and token caps bind in that cell.
+- **Fix:** `impairments_of` and `TrialRecord.eligible` keep such runs out of rates without touching
+  their verdicts. Sprint 6 raised the target's limits for every arm alike.
+
+### KI-32: A report could say "no violation" beside a real one
+- **Symptom:** `statement()` counted only `oracle_confirmed_violation`, so a report holding only
+  `impaired_violation` findings said none had been discovered.
+- **Fix:** impaired violations are now stated as such.
+
+### KI-33: Editing a prompt blocks the registered evaluation
+- **Symptom:** `make eval-run` answers `NOT_RUN` and names a changed fingerprint.
+- **Cause:** a prompt, policy, world or model changed after registration.
+- **Fix:** none needed if the change is wanted: register a new manifest id with a stated reason. Do
+  not edit `manifest.json`.
+
+### KI-34: iCloud eviction stalls reads and crashes git
+- **Symptom:** `uv run` or a plain read hangs; git exits with no message (138, SIGBUS), leaving
+  `index.lock`; a reset moves files but not the ref.
+- **Cause:** the repo is in iCloud Drive and the disk is nearly full, so macOS evicts files (`ls -lO`,
+  `find -flags +dataless`). Git memory-maps objects, so an evicted one raises SIGBUS.
+- **Fix:** move the repo out of iCloud or free disk space. Until then: `brctl download <file>` and wait
+  for `find .git -type f -flags +dataless` to return nothing, then `git fsck`. Run live work from a
+  `git archive` export outside iCloud, symlinking `.artifacts` so the ledger stays put. Remove a lock
+  only after `lsof` shows no holder and no git process is working in this repo. Other apps' git
+  processes are unrelated.
+
+### KI-35: A selected fault can fail to fire
+- **Symptom:** a control arm looks clean, but it never received its fault.
+- **Cause:** `stale_read` occurrence 2 needs a second read, and an untroubled agent may read once. A
+  stale window also expires on reads with nothing to hide, so a short one can end before the write.
+- **Fix:** check `Runs a fault reached` and `Control runs a fault reached` before reading any
+  contrast. A met rule against an unexposed arm says nothing about that fault.
+

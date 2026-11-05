@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
+from collections import deque
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -197,9 +198,13 @@ class InvestigationWorkflow:
         cancel: Event | None = None,
         monotonic: Callable[[], float] = time.monotonic,
         capability: TargetCapability | None = None,
+        fixed_schedule: Sequence[tuple[str, str]] | None = None,
+        repair_unrun_programs: bool = False,
     ) -> None:
         if request.strategy is not Strategy.FIXED and model is None:
             raise ValueError("this strategy needs a model")
+        if fixed_schedule is not None and request.strategy is not Strategy.FIXED:
+            raise ValueError("only the fixed strategy follows a schedule")
         self.request = request
         self.investigation_id = investigation_id or f"inv_{uuid4().hex[:12]}"
         self._runner = runner
@@ -209,6 +214,8 @@ class InvestigationWorkflow:
         self._cancel = cancel
         self._monotonic = monotonic
         self._capability = capability or target_capability(request.world_ids)
+        self._fixed_schedule = fixed_schedule
+        self._repair_unrun_programs = repair_unrun_programs
         self._limits = request.limits
         self._state = InvestigationState.CREATED
         self._termination: str | None = None
@@ -364,7 +371,7 @@ class InvestigationWorkflow:
                 return outcome
             diagnostic = None
             if isinstance(outcome, ProposeExperiment):
-                outcome = self._check_proposal(outcome)
+                outcome = self._check_proposal(outcome, planning=True)
             if isinstance(outcome, GenerationDiagnostic):
                 proposal_id = self._record_rejected(outcome, replaces)
                 if self._refinements_used >= self._limits.max_refinements:
@@ -388,19 +395,83 @@ class InvestigationWorkflow:
                 proposal_id=proposal.proposal_id,
             )
             planned.append((proposal, outcome.experiment.python_code))
-        for proposal, code in planned:
+        queue = deque(planned)
+        while queue:
             stop = self._guard()
             if stop is not None:
                 return stop
-            _, observation = self._execute(proposal, code)
-            self._slots_used += 1
+            proposal, code = queue.popleft()
+            evidence, observation = self._execute(proposal, code)
             stop = self._stop_for(observation)
             if stop is not None:
+                self._slots_used += 1
                 return stop
+            result = observation.result_class
+            if (
+                self._repair_unrun_programs
+                and recoverable(evidence, result)
+                and self._refinements_used < self._limits.max_refinements
+            ):
+                replacement = self._replace_planned(proposal, observation, len(queue))
+                if isinstance(replacement, _Stop):
+                    return replacement
+                if replacement is not None:
+                    queue.appendleft(replacement)
+                    continue
+            self._slots_used += 1
         return self._plan_finished()
 
+    def _replace_planned(
+        self, failed: ProposalRecord, observation: InvestigationObservation, queued: int
+    ) -> tuple[ProposalRecord, str] | _Stop | None:
+        """Opt-in, for matched comparisons: a program that never reached the target is replaced.
+
+        Adaptive runs always have this repair, so without it a broken program would cost this
+        strategy a slot and the adaptive one nothing. The diagnostic is about the program. No
+        target ran, so it carries nothing about behavior, and ``_ask`` still shows no observations.
+        """
+        if len(self._calls) >= self._limits.max_model_calls:
+            return None
+        self._refinements_used += 1
+        self._decide(
+            DecisionKind.REFINE, observation.result_class.value, proposal_id=failed.proposal_id
+        )
+        outcome = self._ask(
+            [PROPOSE_TOOL],
+            "plan",
+            diagnostic_for(observation),
+            planned=self._slots_used + queued,
+        )
+        if isinstance(outcome, _Stop):
+            return outcome
+        if isinstance(outcome, ProposeExperiment):
+            outcome = self._check_proposal(outcome, failed.proposal_id, planning=True)
+        if isinstance(outcome, GenerationDiagnostic):
+            proposal_id = self._record_rejected(outcome, failed.proposal_id)
+            self._decide(DecisionKind.INVALID, outcome.problem, proposal_id=proposal_id)
+            return None
+        if not isinstance(outcome, ProposeExperiment):  # pragma: no cover - not offered
+            raise TypeError("only proposals are offered while planning")
+        self._hypotheses[outcome.hypothesis.hypothesis_id] = HypothesisRecord(
+            hypothesis=outcome.hypothesis
+        )
+        proposal = self._record_generated(
+            outcome.hypothesis, outcome.experiment, failed.proposal_id
+        )
+        self._decide(
+            DecisionKind.PROPOSE,
+            "model_planned_experiment",
+            hypothesis_id=outcome.hypothesis.hypothesis_id,
+            proposal_id=proposal.proposal_id,
+        )
+        return proposal, outcome.experiment.python_code
+
     def _fixed(self) -> _Stop:
-        plan = fixed_plan(self.request.world_ids, self._limits.max_experiments)
+        plan = (
+            list(self._fixed_schedule[: self._limits.max_experiments])
+            if self._fixed_schedule is not None
+            else fixed_plan(self.request.world_ids, self._limits.max_experiments)
+        )
         for index, (label, code) in enumerate(plan, start=1):
             stop = self._guard()
             if stop is not None:
@@ -452,7 +523,8 @@ class InvestigationWorkflow:
             - (self._slots_used if planned is None else planned),
             model_calls_remaining=self._limits.max_model_calls - len(self._calls),
             hypotheses=list(self._hypotheses.values()),
-            observations=self._observations,
+            # Planning sees no result by construction, however far execution has got.
+            observations=self._observations if planned is None else [],
             diagnostic=diagnostic,
             planning_without_results=planned is not None,
         )
@@ -479,10 +551,10 @@ class InvestigationWorkflow:
         return {o.observation_id for o in self._observations}
 
     def _check_proposal(
-        self, proposal: ProposeExperiment, replaces: str | None = None
+        self, proposal: ProposeExperiment, replaces: str | None = None, *, planning: bool = False
     ) -> ProposeExperiment | GenerationDiagnostic:
         """References must be real. Causal claims cannot be checked here; see evaluation.py."""
-        known = self._known_observations()
+        known = set[str]() if planning else self._known_observations()
         hypothesis, experiment = proposal.hypothesis, proposal.experiment
         if len(experiment.python_code.encode()) > MAX_EXPERIMENT_CODE_BYTES:
             return invalid("code_too_long", ["python_code"])

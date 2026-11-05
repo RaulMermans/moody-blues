@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scenario_id": "w-r3",
+  "version": "1.0.0",
+  "title": "World R3",
+  "description": "",
+  "seed": 703,
+  "clock": {
+    "start": "2026-01-01T09:00:00Z",
+    "tick_seconds": 1
+  },
+  "initial_state": {
+    "customers": [
+      {
+        "customer_id": "cus_seed_r3_a",
+        "name": "Tony Hoare",
+        "email": "tony@csp.example",
+        "metadata": {
+          "tier": "gold"
+        }
+      },
+      {
+        "customer_id": "cus_seed_r3_b",
+        "name": "Shafi Goldwasser",
+        "email": "shafi@zk.example",
+        "metadata": {
+          "tier": "silver"
+        }
+      }
+    ]
+  },
+  "objective": {
+    "customer": {
+      "name": "Sophie Wilson",
+      "email": "sophie@arm.example",
+      "metadata": {
+        "tier": "gold",
+        "region": "eu-west"
+      }
+    }
+  },
+  "faults": []
+}

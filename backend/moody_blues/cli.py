@@ -565,6 +565,31 @@ def _investigator(settings: Settings, args: argparse.Namespace) -> int:
             )
 
 
+def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.evaluation import commands
+
+    match args.command:
+        case "evidence-audit":
+            return commands.evidence_audit()
+        case "eval-freeze":
+            return commands.eval_freeze(settings)
+        case "eval-freeze-followup":
+            return commands.eval_freeze_followup()
+        case "eval-verify":
+            return commands.eval_verify(settings)
+        case "eval-report":
+            return commands.eval_report(settings)
+        case "eval-repro":
+            return commands.eval_repro(
+                settings,
+                experiment_id=args.experiment,
+                runs=args.runs,
+                confirmed=args.confirm_billable,
+            )
+        case _:
+            return commands.eval_run(settings, suite=args.suite, confirmed=args.confirm_billable)
+
+
 def live_budget(settings: Settings, reports: list[Path]) -> int:
     from moody_blues.contracts.agent import AgentRunReport as Report
 
@@ -670,6 +695,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=[],
         help="book a saved agent run report made outside the ledger",
     )
+    sub.add_parser("evidence-audit")
+    sub.add_parser("eval-freeze")
+    sub.add_parser("eval-freeze-followup")
+    sub.add_parser("eval-verify")
+    sub.add_parser("eval-report")
+    er = sub.add_parser("eval-run")
+    er.add_argument(
+        "--suite", choices=("causal", "strategies", "adaptation", "followup"), required=True
+    )
+    er.add_argument("--confirm-billable", action="store_true")
+    rp = sub.add_parser("eval-repro")
+    rp.add_argument("--experiment", required=True)
+    rp.add_argument("--runs", type=int, default=5)
+    rp.add_argument("--confirm-billable", action="store_true")
     args = parser.parse_args(argv)
     color = sys.stdout.isatty() and not getattr(args, "no_color", False)
 
@@ -703,6 +742,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _investigator(settings, args)
         case "investigator-eval" | "investigator-repro":
             return _investigator(settings, args)
+        case (
+            "evidence-audit"
+            | "eval-freeze"
+            | "eval-verify"
+            | "eval-report"
+            | "eval-run"
+            | "eval-repro"
+            | "eval-freeze-followup"
+        ):
+            return _evaluation(settings, args)
         case _:
             parser.error(f"unknown command {args.command}")
     return 2

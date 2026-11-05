@@ -11,7 +11,8 @@ PYTEST  := $(UV) run pytest
         test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
-        investigator-live investigator-eval investigator-repro live-budget sandbox-clean clean
+        investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
+        eval-verify eval-run eval-repro eval-report eval-test live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -46,8 +47,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit + World + Target Agent + experiment + Investigator tests (offline; fixtures; no network)
-	$(PYTEST) tests/unit tests/world tests/agent tests/experiment tests/investigator
+test: ## Unit + World + Target Agent + experiment + Investigator + evaluation tests (offline; no network)
+	$(PYTEST) tests/unit tests/world tests/agent tests/experiment tests/investigator tests/evaluation
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
@@ -131,6 +132,29 @@ RUNS ?= 6
 
 investigator-repro: ## LIVE + CHARGEABLE: rerun one generated program; needs CONFIRM=1 (EXPERIMENT=, RUNS=)
 	$(UV) run moody-blues investigator-repro --experiment $(EXPERIMENT) --runs $(RUNS) $(if $(CONFIRM),--confirm-billable)
+
+evidence-audit: ## Reclassify existing live evidence by eligibility (free; reads records only)
+	$(UV) run moody-blues evidence-audit
+
+eval-test: ## Offline evaluation tests (fixture sandbox; no Docker; no network)
+	$(PYTEST) tests/evaluation
+
+eval-freeze: ## Write the registered manifest and trial plan once (free; refuses to overwrite)
+	$(UV) run moody-blues eval-freeze
+
+eval-verify: ## Check the registration is committed and still matches the code (free)
+	$(UV) run moody-blues eval-verify
+
+SUITE ?= causal
+
+eval-run: ## LIVE + CHARGEABLE: one registered suite; needs CONFIRM=1 (SUITE=causal|strategies|adaptation|followup)
+	$(UV) run moody-blues eval-run --suite $(SUITE) $(if $(CONFIRM),--confirm-billable)
+
+eval-repro: ## LIVE + CHARGEABLE: registered rerun under manifest limits; needs CONFIRM=1 (EXPERIMENT=, RUNS=)
+	$(UV) run moody-blues eval-repro --experiment $(EXPERIMENT) --runs $(RUNS) $(if $(CONFIRM),--confirm-billable)
+
+eval-report: ## Recompute results from the journals into docs/evaluations/sprint-06/results (free)
+	$(UV) run moody-blues eval-report
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget

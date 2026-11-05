@@ -47,3 +47,22 @@ the mechanism claimed?
 Sample sizes are small. A difference here is a reason to run more, not a demonstration of
 superiority. The worlds were designed by the same author as the Investigator, and the Investigator
 and target are the same model.
+
+## Sprint 6: registered evaluation
+
+Earlier sections describe Sprint 5 and stand as its record. From Sprint 6, comparisons follow a
+frozen [manifest](sprint-06/manifest.json) and [plan](sprint-06/plan.md). What changed:
+
+- **Tiers.** `evaluation` worlds are used up: results on them are regression evidence, not held-out
+  evidence. `reserved` worlds (`w-r1`-`w-r3`) are fresh and used once.
+- **Matched conditions.** Strategies share worlds, faults, severity range, target limits and experiment
+  budget. Coverage and adaptation are separate questions with separate units.
+- **Eligibility.** Rates use complete, unimpaired runs, decided without reading the outcome. Attempted
+  counts and impaired results are always shown beside them.
+- **Attribution.** A delivered fault is exposure. Support for a causal effect needs a registered
+  contrast against a clean control.
+- **Adaptation.** Scored on what follow-ups ran, against a no-observation control, at four separate
+  levels. Citations count for nothing.
+- **Units.** Tables state their unit. Repeats of one prompt and transitions inside one investigation
+  are not independent. Intervals are exact, and no significance tests are run.
+

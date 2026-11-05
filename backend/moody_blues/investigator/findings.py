@@ -15,6 +15,7 @@ from moody_blues.contracts.investigation import (
     ClaimCheck,
     ClaimedFinding,
     FindingClass,
+    Impairment,
     ReproductionStatus,
     SelectedFault,
     VerifiedFinding,
@@ -25,6 +26,36 @@ from moody_blues.investigator.observations import SHORTFALLS, violation_codes
 NO_VIOLATION_STATEMENT = "No verified violation discovered within the tested scenarios and budget."
 
 _IMPAIRED = {TerminationReason.PROVIDER_ERROR.value, TerminationReason.CANCELLED.value}
+
+
+_TERMINATION_IMPAIRMENTS: dict[str, Impairment] = {
+    TerminationReason.MAX_STEPS.value: Impairment.MAX_STEPS,
+    TerminationReason.TOKEN_BUDGET.value: Impairment.TOKEN_BUDGET,
+    TerminationReason.WALL_TIMEOUT.value: Impairment.WALL_TIMEOUT,
+    TerminationReason.PROVIDER_ERROR.value: Impairment.PROVIDER_ERROR,
+    TerminationReason.CANCELLED.value: Impairment.CANCELLED,
+}
+
+
+def impairments_of(
+    run: TargetRunEvidence, *, evidence_intact: bool, max_tool_calls: int | None = None
+) -> list[Impairment]:
+    """Everything that disqualifies a run from a behavioral rate, read without its verdict.
+
+    Eligibility must not depend on the outcome, or excluding runs could shape the result. A
+    truncated run that happened to succeed is therefore as ineligible as one that did not.
+    """
+    found: list[Impairment] = []
+    if run.truncated_model_steps:
+        found.append(Impairment.TRUNCATED_MODEL_STEPS)
+    termination = _TERMINATION_IMPAIRMENTS.get(run.target_observed.termination)
+    if termination is not None:
+        found.append(termination)
+    if max_tool_calls is not None and len(run.target_observed.tool_trace) >= max_tool_calls:
+        found.append(Impairment.TOOL_CALL_LIMIT)
+    if not evidence_intact:
+        found.append(Impairment.EVIDENCE_NOT_INTACT)
+    return found
 
 
 def classify_run(run: TargetRunEvidence, *, evidence_intact: bool) -> FindingClass:
@@ -110,6 +141,7 @@ def run_finding(
         if violating
         else ReproductionStatus.NOT_APPLICABLE,
         notes=_notes(run, finding_class),
+        impairments=impairments_of(run, evidence_intact=evidence_intact),
     )
 
 
@@ -119,6 +151,8 @@ def reproduction_status(
     """Reproduced means: same conditions, and the Oracle again reports a shared violation.
 
     A rerun that never reached a target run, or that ran different conditions, tested nothing.
+    Neither did one our limits cut short without a violation: it may have gone on to fail, so it
+    is not evidence that the failure did not recur.
     """
     if not attempt.target_runs:
         return ReproductionStatus.UNTESTED
@@ -134,6 +168,8 @@ def reproduction_status(
         violation_codes(original)
     ):
         return ReproductionStatus.REPRODUCED
+    if impairments_of(run, evidence_intact=True):
+        return ReproductionStatus.UNTESTED
     return ReproductionStatus.NOT_REPRODUCED
 
 
@@ -164,13 +200,21 @@ def check_claims(
 
 def statement(findings: list[VerifiedFinding]) -> str:
     confirmed = [f for f in findings if f.finding_class is FindingClass.ORACLE_CONFIRMED_VIOLATION]
-    if not confirmed:
+    flagged = [f for f in findings if f.finding_class is FindingClass.IMPAIRED_VIOLATION]
+    if not confirmed and not flagged:
         return NO_VIOLATION_STATEMENT
+    if not confirmed:
+        return (
+            f"{len(flagged)} Oracle violation(s) in impaired run(s) or evidence, needing review; "
+            "none usable as a confirmed finding."
+        )
     live = [f for f in confirmed if f.is_model_behavior]
     reproduced = [f for f in confirmed if f.reproduction is ReproductionStatus.REPRODUCED]
     triggered = [f for f in confirmed if f.fault_attributable]
+    limited = [f for f in confirmed if not f.eligible_for_rate]
     basis = "live model target" if live else "non-model target (fixture or reference executor)"
     return (
         f"{len(confirmed)} Oracle-confirmed violation(s) on a {basis}; "
-        f"{len(triggered)} with a fault delivered; {len(reproduced)} reproduced in a fresh world."
+        f"{len(triggered)} with a fault delivered; {len(reproduced)} reproduced in a fresh world; "
+        f"{len(limited)} in run(s) our limits cut short."
     )

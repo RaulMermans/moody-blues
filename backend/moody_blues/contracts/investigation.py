@@ -65,7 +65,9 @@ TERMINAL_INVESTIGATION_STATES: frozenset[InvestigationState] = frozenset(
 
 class Strategy(StrEnum):
     FIXED = "fixed"  # Strategy A: approved programs chosen in advance. No model.
-    ONE_SHOT = "one_shot"  # Strategy B: one model call writes every experiment, with no feedback.
+    # Strategy B: non-adaptive generation. Several planning calls, none of which sees any result.
+    # The value stays "one_shot" so earlier evidence still parses; it is not one model call.
+    ONE_SHOT = "one_shot"
     ADAPTIVE = "adaptive"  # Strategy C: each experiment is written after seeing earlier results.
 
 
@@ -73,6 +75,7 @@ class WorldTier(StrEnum):
     DEVELOPMENT = "development"
     VALIDATION = "validation"
     EVALUATION = "evaluation"
+    RESERVED = "reserved"
 
 
 class InvestigationLimits(BaseModel):
@@ -449,6 +452,24 @@ class FindingClass(StrEnum):
     CLEAN_SUCCESS = "clean_success"  # no fault delivered, and the run succeeded
 
 
+class Impairment(StrEnum):
+    """Why a run cannot enter a behavioral rate. Never depends on what the Oracle concluded.
+
+    The first five are limits we set; ``provider_error`` and ``cancelled`` came from outside the
+    agent. An impaired run's Oracle verdict stands: this says how far the *run* can be read as the
+    agent's unconstrained behavior, not whether committed state is what the Oracle found.
+    """
+
+    TRUNCATED_MODEL_STEPS = "truncated_model_steps"
+    MAX_STEPS = "max_steps"
+    TOKEN_BUDGET = "token_budget"  # noqa: S105 - a reason, not a credential
+    WALL_TIMEOUT = "wall_timeout"
+    TOOL_CALL_LIMIT = "tool_call_limit"
+    PROVIDER_ERROR = "provider_error"
+    CANCELLED = "cancelled"
+    EVIDENCE_NOT_INTACT = "evidence_not_intact"
+
+
 class ReproductionStatus(StrEnum):
     REPRODUCED = "reproduced"
     NOT_REPRODUCED = "not_reproduced"
@@ -478,6 +499,12 @@ class VerifiedFinding(BaseModel):
     reproduction: ReproductionStatus
     reproduction_experiment_id: str | None = None
     notes: list[str] = Field(default_factory=list[str])
+    impairments: list[Impairment] = Field(default_factory=list[Impairment])
+
+    @property
+    def eligible_for_rate(self) -> bool:
+        """Whether this run may enter a behavioral rate. Its verdict stands either way."""
+        return not self.impairments
 
     @property
     def is_model_behavior(self) -> bool:
@@ -485,7 +512,11 @@ class VerifiedFinding(BaseModel):
 
     @property
     def fault_attributable(self) -> bool:
-        """Whether any perturbation reached the target. Required to blame one for a violation."""
+        """Whether any perturbation reached the target. Necessary to blame one, not sufficient.
+
+        This is exposure. It says nothing about whether the fault caused the violation; only a
+        controlled comparison can (see ``moody_blues.evaluation.attribution``).
+        """
         return self.faults_delivered > 0
 
 

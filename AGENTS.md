@@ -16,14 +16,16 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
+| `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
 | `tests/agent` | Target Agent with labeled provider fixtures over real SQLite worlds; offline; part of `make test` |
 | `tests/experiment` | Experiment runtime with a labeled scripted sandbox and real SQLite worlds; offline; part of `make test` |
 | `tests/investigator` | Investigator with a labeled scripted model and sandbox, real SQLite worlds; offline; part of `make test` |
+| `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `docs/` | Architecture, ADRs, sprint records, validation, troubleshooting, deployment |
@@ -120,6 +122,20 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - Keep tool schemas flat. Reservation comes before every model call, and failed calls stay reserved.
 - Reserved evaluation worlds run only after their plan is committed. Their ids and titles stay
   neutral, and expected outcomes never enter a prompt. `offline_fixture` is never model behavior.
+
+**Evaluation**
+- Scored trials run only from a committed manifest and plan (`make eval-verify`). Never edit a
+  registered plan, manifest or results file. A change needs a new manifest id and a stated reason.
+- Eligibility is read without the outcome and never changes the Oracle's verdict. Impaired runs stay
+  on the record, and every rate shows attempted and eligible counts.
+- `fault_attributable` is exposure. Say a fault raised the chance of a failure only from a registered
+  contrast of eligible runs, and never call stochastic causation deterministic.
+- Before reading any contrast, check the fault reached the arm that was meant to hold it.
+- Repeated answers to one prompt are repetitions, not independent units. No significance tests on
+  these samples. If a comparison cannot show superiority, say so.
+- `w-e1`-`w-e3` are used up: their results are regression evidence. `w-r1`-`w-r3` are used once, by
+  their registered test. Do not tune on them and report them as unseen.
+- `make eval-run` and `make eval-repro` are live and chargeable. Suites run one at a time, within the manifest's caps.
 
 **Code**
 - Python 3.12, Pydantic v2 at every boundary, Pyright strict, Ruff. TypeScript strict.

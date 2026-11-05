@@ -45,7 +45,7 @@ from moody_blues.investigator.evaluation import (
     strategy_row,
     write_json,
 )
-from moody_blues.investigator.findings import classify_run, reproduction_status
+from moody_blues.investigator.findings import classify_run, impairments_of, reproduction_status
 from moody_blues.investigator.fixtures import FIXTURE_MODEL, ObservationDrivenFixture
 from moody_blues.investigator.model import InvestigatorModel
 from moody_blues.investigator.observations import violation_codes
@@ -154,12 +154,12 @@ def demo(settings: Settings) -> int:
 
 
 @dataclass(frozen=True, slots=True)
-class _Live:
+class LiveContext:
     ledger: SpendLedger
     client: VultrInferenceClient
 
 
-def _live(settings: Settings) -> _Live | None:
+def open_live(settings: Settings, *, limit_usd: float | None = None) -> LiveContext | None:
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
     if not key:
         print(json.dumps({"status": "BLOCKED_BY_CREDENTIALS"}))
@@ -168,7 +168,7 @@ def _live(settings: Settings) -> _Live | None:
         return None
     ledger = SpendLedger(
         ARTIFACTS / "live-spend" / "ledger.jsonl",
-        limit_usd=settings.live_spend_limit_usd,
+        limit_usd=limit_usd if limit_usd is not None else settings.live_spend_limit_usd,
         prices=PriceCeiling.from_settings(settings),
     )
     try:
@@ -189,10 +189,10 @@ def _live(settings: Settings) -> _Live | None:
         print(json.dumps({"status": "BLOCKED", "models_not_in_catalog": sorted(missing)}))
         return None
     print(f"ledger before: ${status.settled_usd:.4f} of ${status.limit_usd:.2f} (estimate)")
-    return _Live(ledger, client)
+    return LiveContext(ledger, client)
 
 
-def _target_client(settings: Settings, key: str) -> VultrInferenceClient:
+def target_client(settings: Settings, key: str) -> VultrInferenceClient:
     return VultrInferenceClient(
         api_key=key,
         model=settings.investigator_target_model,
@@ -204,7 +204,7 @@ def _target_client(settings: Settings, key: str) -> VultrInferenceClient:
 
 def _workflow(
     settings: Settings,
-    live: _Live,
+    live: LiveContext,
     *,
     strategy: Strategy,
     tier: WorldTier,
@@ -215,7 +215,7 @@ def _workflow(
     spend = ScopedSpend(live.ledger, investigation_id, settings.investigator_max_spend_usd)
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
     target = AgentTarget(
-        inference=_target_client(settings, key),
+        inference=target_client(settings, key),
         evidence="live_provider",
         provider=PROVIDER,
         model=settings.investigator_target_model,
@@ -256,7 +256,7 @@ def _workflow(
     )
 
 
-def _not_confirmed(command: str) -> int:
+def not_confirmed(command: str) -> int:
     print(
         json.dumps(
             {
@@ -269,7 +269,7 @@ def _not_confirmed(command: str) -> int:
     return 2
 
 
-def _finish_live(live: _Live, reports: list[InvestigationReport]) -> int:
+def _finish_live(live: LiveContext, reports: list[InvestigationReport]) -> int:
     status = live.ledger.status()
     print(
         f"ledger after: ${status.settled_usd:.4f} settled, ${status.remaining_usd:.4f} of "
@@ -283,8 +283,8 @@ def investigate_live(
     settings: Settings, *, confirmed: bool, tier: WorldTier, strategy: Strategy
 ) -> int:
     if not confirmed:
-        return _not_confirmed("investigator-live")
-    live = _live(settings)
+        return not_confirmed("investigator-live")
+    live = open_live(settings)
     if live is None:
         return 2
     workflow = _workflow(
@@ -314,11 +314,11 @@ def evaluate(
     repeats: int = 2,
 ) -> int:
     if not confirmed:
-        return _not_confirmed("investigator-eval")
+        return not_confirmed("investigator-eval")
     if not 1 <= trials <= MAX_EVAL_TRIALS:
         print(json.dumps({"status": "NOT_RUN", "reason": f"trials must be 1-{MAX_EVAL_TRIALS}"}))
         return 2
-    live = _live(settings)
+    live = open_live(settings)
     if live is None:
         return 2
     limits = InvestigationLimits()
@@ -352,10 +352,18 @@ def evaluate(
     return _finish_live(live, reports)
 
 
-def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: int) -> int:
+def reproduce(
+    settings: Settings,
+    *,
+    confirmed: bool,
+    experiment_id: str,
+    runs: int,
+    budget: AgentBudget = LIVE_TARGET_BUDGET,
+    limit_usd: float | None = None,
+) -> int:
     """Rerun one generated program unchanged in fresh worlds, to estimate how often it recurs."""
     if not confirmed:
-        return _not_confirmed("investigator-repro")
+        return not_confirmed("investigator-repro")
     if not 1 <= runs <= MAX_REPRO_RUNS:
         print(json.dumps({"status": "NOT_RUN", "reason": f"runs must be 1-{MAX_REPRO_RUNS}"}))
         return 2
@@ -369,7 +377,7 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
     if verify_experiment(directory):
         print(json.dumps({"status": "NOT_RUN", "reason": "original evidence does not verify"}))
         return 2
-    live = _live(settings)
+    live = open_live(settings, limit_usd=limit_usd)
     if live is None:
         return 2
     code = (directory / original.source_path).read_text(encoding="utf-8")
@@ -379,11 +387,11 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
     runner = ExperimentRunner(
         sandbox=generated_code_runner(settings),
         target=AgentTarget(
-            inference=_target_client(settings, key),
+            inference=target_client(settings, key),
             evidence="live_provider",
             provider=PROVIDER,
             model=settings.investigator_target_model,
-            budget=LIVE_TARGET_BUDGET,
+            budget=budget,
             ledger=spend,
         ),
         root=EXPERIMENTS,
@@ -421,6 +429,9 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
             if run and run.target_observed.claim
             else None,
             "truncated_model_steps": run.truncated_model_steps if run else None,
+            "impairments": [i.value for i in impairments_of(run, evidence_intact=True)]
+            if run
+            else None,
             "tokens": run.tokens.total_tokens if run and run.tokens else None,
         }
         rows.append(row)
@@ -436,7 +447,7 @@ def reproduce(settings: Settings, *, confirmed: bool, experiment_id: str, runs: 
 
 def _evaluate_pairs(
     settings: Settings,
-    live: _Live,
+    live: LiveContext,
     limits: InvestigationLimits,
     directory: Path,
     tier: WorldTier,

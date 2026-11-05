@@ -158,7 +158,7 @@ def selection_of(evidence: ExperimentEvidence) -> str | None:
     return f"{grant.scenario_id}|{grant.config.value}|{grant.fault_source}|{','.join(faults)}"
 
 
-def _follow_up(
+def follow_up(
     *,
     model: InvestigatorModel,
     context: InvestigationContext,
@@ -289,7 +289,7 @@ def run_pair(
         for _ in range(repeats):
             seq += 1
             answers[branch].append(
-                _follow_up(
+                follow_up(
                     model=model,
                     context=contexts[branch],
                     runner=runner_for(executor),
@@ -351,6 +351,8 @@ class StrategyRow(BaseModel):
     hypothesis_revisions: int
     live_confirmed_violations: int
     fault_triggered_violations: int  # the same, restricted to runs a fault actually reached
+    # The same, restricted to runs no limit of ours cut short. Only these enter a rate.
+    eligible_violations: int = 0
     reproduced: int
     not_reproduced: int
     violation_codes: list[str]
@@ -398,6 +400,7 @@ def strategy_row(report: InvestigationReport, trial: int) -> StrategyRow:
         hypothesis_revisions=sum(1 for h in r.hypotheses if h.hypothesis.revises is not None),
         live_confirmed_violations=len(confirmed),
         fault_triggered_violations=sum(1 for f in confirmed if f.fault_attributable),
+        eligible_violations=sum(1 for f in confirmed if f.eligible_for_rate),
         reproduced=sum(1 for f in confirmed if f.reproduction is ReproductionStatus.REPRODUCED),
         not_reproduced=sum(
             1 for f in confirmed if f.reproduction is ReproductionStatus.NOT_REPRODUCED
