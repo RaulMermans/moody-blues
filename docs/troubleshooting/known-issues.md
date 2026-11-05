@@ -275,3 +275,10 @@ contributor might also hit.
   overlay2 it is the hash of its config. Evidence from those hosts records different forms of the id.
 - **Fix:** the test compares with what the daemon resolves for the pin. To check a pin, use `RepoDigests`,
   as `investigator-preflight` does, and never compare `image_id` with a digest.
+
+### KI-45: A killed backend could leave a sandbox forever
+- **Symptom:** a container in state `Created` survived a backend SIGKILL and then a reboot, found on the VM.
+- **Cause:** the reaper ran only while a job was open, and the first restart came before the container
+  expired. Nothing ever looked again. The health check counted `exited` containers only.
+- **Fix:** expired sandboxes are reaped at every start and before every mission, and the health check
+  also counts `created`.
