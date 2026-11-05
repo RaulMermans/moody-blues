@@ -27,6 +27,13 @@ _DOMAIN_STATUS: dict[ErrorCategory, int] = {
     ErrorCategory.SANDBOX_IMAGE_UNAVAILABLE: 503,
     ErrorCategory.PROVIDER_RATE_LIMITED: 503,
     ErrorCategory.PROVIDER_TIMEOUT: 504,
+    ErrorCategory.UNAUTHORIZED: 401,
+    ErrorCategory.FORBIDDEN: 403,
+    ErrorCategory.RATE_LIMITED: 429,
+    ErrorCategory.CONFLICT: 409,
+    ErrorCategory.BUDGET_EXCEEDED: 409,
+    # The record exists and failed verification: the server's data is bad, not the request.
+    ErrorCategory.EVIDENCE_INTEGRITY: 500,
 }
 
 

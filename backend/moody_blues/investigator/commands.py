@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import Event
 from uuid import uuid4
 
 from moody_blues.config import Settings
@@ -202,7 +203,7 @@ def target_client(settings: Settings, key: str) -> VultrInferenceClient:
     )
 
 
-def _workflow(
+def live_workflow(
     settings: Settings,
     live: LiveContext,
     *,
@@ -210,8 +211,11 @@ def _workflow(
     tier: WorldTier,
     worlds: tuple[str, ...],
     limits: InvestigationLimits,
+    investigation_id: str | None = None,
+    cancel: Event | None = None,
+    artifacts: Path = ARTIFACTS,
 ) -> InvestigationWorkflow:
-    investigation_id = f"inv_{uuid4().hex[:12]}"
+    investigation_id = investigation_id or f"inv_{uuid4().hex[:12]}"
     spend = ScopedSpend(live.ledger, investigation_id, settings.investigator_max_spend_usd)
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
     target = AgentTarget(
@@ -246,13 +250,14 @@ def _workflow(
         runner=ExperimentRunner(
             sandbox=generated_code_runner(settings),
             target=target,
-            root=EXPERIMENTS,
+            root=artifacts / "experiments",
             sandbox_limits=sandbox_limits(settings),
         ),
-        root=INVESTIGATIONS,
+        root=artifacts / "investigations",
         model=None if strategy is Strategy.FIXED else model,
         spend=spend,
         investigation_id=investigation_id,
+        cancel=cancel,
     )
 
 
@@ -287,7 +292,7 @@ def investigate_live(
     live = open_live(settings)
     if live is None:
         return 2
-    workflow = _workflow(
+    workflow = live_workflow(
         settings,
         live,
         strategy=strategy,
@@ -333,7 +338,7 @@ def evaluate(
         rows: list[StrategyRow] = []
         for trial in range(1, trials + 1):
             for strategy in (Strategy.FIXED, Strategy.ONE_SHOT, Strategy.ADAPTIVE):
-                report = _workflow(
+                report = live_workflow(
                     settings,
                     live,
                     strategy=strategy,

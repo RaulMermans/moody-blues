@@ -12,7 +12,8 @@ PYTEST  := $(UV) run pytest
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
-        eval-verify eval-run eval-repro eval-report eval-test live-budget sandbox-clean clean
+        eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
+        live-budget sandbox-clean clean
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -47,8 +48,8 @@ typecheck: ## Pyright (strict) + tsc
 	$(UV) run pyright
 	$(PNPM) --dir $(FE) typecheck
 
-test: ## Unit + World + Target Agent + experiment + Investigator + evaluation tests (offline; no network)
-	$(PYTEST) tests/unit tests/world tests/agent tests/experiment tests/investigator tests/evaluation
+test: ## Unit + World + Target Agent + experiment + Investigator + evaluation + explorer tests (offline; no network)
+	$(PYTEST) tests/unit tests/world tests/agent tests/experiment tests/investigator tests/evaluation tests/explorer
 
 test-integration: ## Docker sandbox integration + containment tests (needs a Docker daemon)
 	$(PYTEST) tests/integration tests/security -m docker
@@ -155,6 +156,12 @@ eval-repro: ## LIVE + CHARGEABLE: registered rerun under manifest limits; needs 
 
 eval-report: ## Recompute results from the journals into docs/evaluations/sprint-06/results (free)
 	$(UV) run moody-blues eval-report
+
+recorded-export: ## Rebuild the curated recorded investigations from local .artifacts (free)
+	$(UV) run moody-blues recorded-export
+
+recorded-verify: ## Verify recorded investigations against the manifest and, if present, source (free)
+	$(UV) run moody-blues recorded-verify
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget
