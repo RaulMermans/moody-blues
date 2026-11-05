@@ -81,7 +81,7 @@ Measured on the local production build after 200 page loads:
 
 ## Limits
 
-- The reachable-by-people claim is unmeasured: no judge has used this.
+- No person has used this yet, so the 30-second goal is a design target, not a measurement.
 - `offline_fixture` rehearsals prove the job path, not model behavior.
 - The restart test on real Docker kills the server while running, at whatever point it has reached. The
   specific case of a target run left open is proven by a separate SIGKILL test with a scripted sandbox.
