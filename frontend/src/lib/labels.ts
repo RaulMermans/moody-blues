@@ -34,6 +34,7 @@ export const MODE_LABEL: Record<ExecutionMode, string> = {
   recorded: "Recorded investigation",
   live: "Live investigation",
   rehearsal: "Rehearsal, no model",
+  local: "Local model run",
 };
 
 export const MODE_NOTE: Record<ExecutionMode, string> = {
@@ -41,6 +42,7 @@ export const MODE_NOTE: Record<ExecutionMode, string> = {
   live: "A real model-driven investigation started from this application.",
   rehearsal:
     "Real sandboxes, world and Oracle, driven by a fixture and a reference script. Not evidence of model behavior.",
+  local: "A real model on the operator's machine took part. No hosted provider, and nothing paid.",
 };
 
 /** The id of an external agent under test, read from the recorded target. */
@@ -49,7 +51,17 @@ export function externalAgent(summary: { target_model: string }): string | null 
 }
 
 /** The mode note, with the target named correctly: an external agent is no reference script. */
-export function modeNote(summary: { mode: ExecutionMode; target_model: string }): string {
+export function modeNote(summary: {
+  mode: ExecutionMode;
+  target_model: string;
+  investigator_evidence?: string | null;
+  investigator_model?: string;
+}): string {
+  if (summary.mode === "local") {
+    return summary.investigator_evidence === "local_ollama"
+      ? `A real local model (${summary.investigator_model}, through Ollama) chose the tests, and an external agent ran them. No hosted provider, and nothing paid.`
+      : "A real local model drove the agent, through Ollama. A labeled fixture chose the faults, so the tests themselves were not a model's. Nothing paid.";
+  }
   if (summary.mode === "rehearsal" && externalAgent(summary)) {
     return "Real sandboxes, world and Oracle. A fixture chose the tests, and an external agent ran them.";
   }

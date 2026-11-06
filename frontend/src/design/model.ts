@@ -4,6 +4,7 @@
 // and nothing is computed that the Oracle did not record: a component is told what to draw, so a
 // distortion can only appear where this mapping was given a recorded reason for one.
 import type { CustomerView, Discrepancy, ProductOutcome, RealityRun, Verdict } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 
 /**
  * What a seal may say. Only `verdict` is the Oracle speaking. `incomplete` and `unverified` mean no
@@ -105,7 +106,7 @@ export type TargetNoun = "agent" | "script" | "fixture";
 
 /** What ran. Read from the evidence field, so a script is never described as an agent. */
 export function targetNoun(run: RealityRun): TargetNoun {
-  if (run.target_evidence === "live_provider") return "agent";
+  if (isModelEvidence(run.target_evidence)) return "agent";
   const scripted = run.target_evidence === "reference_executor" || run.target_evidence === "external_scripted";
   return scripted ? "script" : "fixture";
 }

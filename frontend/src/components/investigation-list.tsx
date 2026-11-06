@@ -34,6 +34,7 @@ function targetLabel(
   external: string | null,
   live: boolean,
 ): string {
+  if (summary.target_evidence.includes("local_ollama")) return "External agent on a local model (Ollama)";
   if (live) return `AI agent, ${summary.target_model}`;
   if (!external) return "Reference script, not a model";
   return summary.target_evidence.includes("external_scripted")

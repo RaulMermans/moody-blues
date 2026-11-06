@@ -144,9 +144,11 @@ function Confirm({
 }
 
 // In a rehearsal the concluding step is a fixture. The recorded code keeps its name; the label
-// must not call it a model.
+// must not call it a model. A local run may have had a real target and a fixture choosing the tests,
+// and a job does not say which, so it names neither.
 function endLabel(job: JobRecord): string {
   const label = humanize(job.code);
+  if (job.mode === "local") return label.replace("Model concluded", "Concluded");
   return job.mode === "rehearsal" ? label.replace("Model", "Fixture") : label;
 }
 

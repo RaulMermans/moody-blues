@@ -143,9 +143,11 @@ function About({ detail, note = true }: { detail: InvestigationDetail; note?: bo
         <Fact label="Investigator">
           {summary.investigator_evidence === "offline_fixture"
             ? "labeled fixture, no model"
-            : summary.investigator_evidence
-              ? summary.investigator_model
-              : "none (fixed programs)"}
+            : summary.investigator_evidence === "local_ollama"
+              ? `${summary.investigator_model}, local model (Ollama)`
+              : summary.investigator_evidence
+                ? summary.investigator_model
+                : "none (fixed programs)"}
         </Fact>
         <Fact label="Worlds">{summary.world_ids.join(", ")}</Fact>
         <Fact label="Started">{formatWhen(summary.started_at)}</Fact>

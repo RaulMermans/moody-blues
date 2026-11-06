@@ -4,6 +4,7 @@
 // runs differ, so the number and kinds of step differ. No step gives a reason. The Investigator's steps
 // appear only when a model produced them, and they are labeled as its proposal or decision.
 import type { InvestigationDetail, RealityRun } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 import { humanize } from "@/lib/labels";
 
 import type { Cycle } from "./journey";
@@ -132,7 +133,7 @@ const present = <T,>(items: (T | null)[]): T[] => items.filter((item): item is T
  * neither, so it opens on the operation. The Investigator's steps are a model's, never a fixture's.
  */
 export function stepsFrom(run: RealityRun, detail: InvestigationDetail, cycle: Cycle | undefined): StoryStep[] {
-  const modelLed = detail.summary.investigator_evidence === "live_provider" && cycle !== undefined;
+  const modelLed = isModelEvidence(detail.summary.investigator_evidence) && cycle !== undefined;
   return present([
     modelLed ? hypothesisStep(cycle) : attemptStep(run),
     faultStep(run),

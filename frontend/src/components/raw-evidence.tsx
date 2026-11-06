@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { InvestigationDetail, RealityRun } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 import { FAULT_LABEL, humanize, inRehearsal } from "@/lib/labels";
 
 import { runHref } from "./reality-view";
@@ -36,6 +37,14 @@ export function RawEvidence({ detail, run }: { detail: InvestigationDetail; run:
               <Fact label="execution_mode">{run.external.execution_mode}</Fact>
               <Fact label="model_calls_brokered">{String(run.external.model_calls)}</Fact>
               <Fact label="model_calls_uncertain">{String(run.external.model_calls_uncertain)}</Fact>
+              {run.external.model_provider ? (
+                <Fact label="model_provider">{run.external.model_provider}</Fact>
+              ) : null}
+              {run.external.model_digest ? (
+                <Fact label="model_digest">
+                  <span className="break-all">{run.external.model_digest}</span>
+                </Fact>
+              ) : null}
               <Fact label="bundle_sha256">{run.external.bundle_sha256}</Fact>
               <Fact label="transcript_sha256">{run.external.transcript_sha256}</Fact>
             </>
@@ -58,7 +67,7 @@ export function RawEvidence({ detail, run }: { detail: InvestigationDetail; run:
           <ul data-testid="fault-list" className="flex flex-col gap-1 text-sm leading-6 text-muted">
             {run.faults.map((f, i) => (
               <li key={i}>
-                {run.target_evidence === "live_provider" ? (FAULT_LABEL[f.kind] ?? humanize(f.kind)) : inRehearsal(FAULT_LABEL[f.kind] ?? humanize(f.kind))}{" "}
+                {isModelEvidence(run.target_evidence) ? (FAULT_LABEL[f.kind] ?? humanize(f.kind)) : inRehearsal(FAULT_LABEL[f.kind] ?? humanize(f.kind))}{" "}
                 <span className="font-mono text-xs text-faint">
                   ({f.operation}, occurrence {f.occurrence}
                   {f.span > 1 ? `, span ${f.span}` : ""})
