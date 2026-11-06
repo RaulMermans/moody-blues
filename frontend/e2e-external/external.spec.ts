@@ -34,6 +34,11 @@ test("the list names the external agent", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId(`investigation-${ids().unsafe}`)).toContainText("Test of external agent acme-crm-unsafe");
   await expect(page.getByTestId(`investigation-${ids().careful}`)).toContainText("Test of external agent acme-crm-careful");
+  // The target line must not call an external agent a reference script.
+  await expect(page.getByTestId(`investigation-${ids().unsafe}`)).toContainText("External script, not a model");
+  const llm = page.getByTestId(`investigation-${ids().llm}`);
+  await expect(llm).toContainText("External agent on an offline fixture, not a model");
+  await expect(llm).not.toContainText("Reference script");
 });
 
 test("the unsafe script shows its name, its verdict, and that it is no model", async ({ page }) => {

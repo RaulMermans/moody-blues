@@ -29,6 +29,18 @@ function Corrupt({ item }: { item: ListedInvestigation }) {
   );
 }
 
+function targetLabel(
+  summary: NonNullable<ListedInvestigation["summary"]>,
+  external: string | null,
+  live: boolean,
+): string {
+  if (live) return `AI agent, ${summary.target_model}`;
+  if (!external) return "Reference script, not a model";
+  return summary.target_evidence.includes("external_scripted")
+    ? "External script, not a model"
+    : "External agent on an offline fixture, not a model";
+}
+
 function Row({ item }: { item: ListedInvestigation }) {
   const summary = item.summary;
   if (!summary) return <Corrupt item={item} />;
@@ -68,7 +80,7 @@ function Row({ item }: { item: ListedInvestigation }) {
         <div className="flex gap-1.5">
           <dt>target</dt>
           <dd className="text-muted">
-            {live ? `AI agent, ${summary.target_model}` : "Reference script, not a model"}
+            {targetLabel(summary, external, live)}
           </dd>
         </div>
         <div className="flex gap-1.5">
