@@ -316,7 +316,8 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
     )
     print(f"  evidence verification: {problems or 'intact'}")
     if job_id is not None:
-        print(f"  published as {job_id}. With `make dev` and the operator token, open:")
+        print(f"  published as {job_id}. With MOODY_ARTIFACTS_DIR={artifacts}, `make dev` and the")
+        print("  operator token, open:")
         print(f"  http://127.0.0.1:3000/investigations/{report.investigation_id}")
 
 

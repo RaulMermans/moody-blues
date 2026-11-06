@@ -58,6 +58,7 @@ from moody_blues.investigator.catalog import (
     world_of,
 )
 from moody_blues.investigator.context import system_prompt
+from moody_blues.investigator.model import InvestigatorModel
 from moody_blues.investigator.workflow import ExperimentRunner, InvestigationWorkflow
 from moody_blues.investigator.workspace import verify_investigation
 from moody_blues.world.registry import load_any_scenario, world_plugin
@@ -545,11 +546,12 @@ def _investigate(
     agent: str,
     world: str,
     sequence: list[list[dict[str, Any]]] = REHEARSAL,
+    model: InvestigatorModel | None = None,
 ) -> InvestigationReport:
-    limits = InvestigationLimits(max_experiments=2, max_model_calls=3, max_wall_seconds=120)
+    limits = InvestigationLimits(max_experiments=2, max_model_calls=4, max_wall_seconds=120)
     (tmp_path / "experiments").mkdir(exist_ok=True)
     bundle = build_bundle(QUEUE_EXAMPLES / f"{agent}.agent.toml")
-    model = fixture_investigator(world, limits, sequence)
+    model = model or fixture_investigator(world, limits, sequence)
     return InvestigationWorkflow(
         request=InvestigationRequest(
             objective=QUEUE.investigation_objective(),

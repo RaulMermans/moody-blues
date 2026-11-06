@@ -238,7 +238,7 @@ pnpm --dir frontend start --hostname 127.0.0.1 --port 3000
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
 
-`make world-demo` writes JSON run reports to `.artifacts/world-demo/`. To run a single case,
+`make world-demo` writes JSON run reports to `world-demo/` under `MOODY_ARTIFACTS_DIR`, or a printed scratch directory if that is unset. To run a single case,
 use `uv run moody-blues world-run --scenario phantom-failure --executor blind_retry [--json]`.
 Live smoke output is written to `.artifacts/` (git-ignored). Without a key, the live commands
 exit `2` with `BLOCKED_BY_CREDENTIALS`.

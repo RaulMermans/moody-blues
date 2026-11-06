@@ -89,7 +89,7 @@ function Identity({ detail, run }: { detail: InvestigationDetail; run: RealityRu
   return (
     <div className="rf-identity" data-testid="overview-identity">
       {run ? (
-        <Tag testId="target-evidence" tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
+        <Tag testId="target-evidence" wrap tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
           {targetLabel(run)}
         </Tag>
       ) : null}

@@ -8,7 +8,7 @@ Quick orientation:
   the environment.
 - `make vultr-smoke` / `make vultr-models` / `make agent-run` / `make agent-eval` / `make external-investigate LIVE=1` /
   `make experiment-live` / `make investigator-live` / `make investigator-eval` / `make eval-run` / `make eval-repro` make **live** calls (all but `vultr-models` are chargeable). Run them
-  only when asked. `make live-budget` shows the estimated spend.
+  only when asked. `make bench-run` runs a real local model: free, but only when asked. `make live-budget` shows the estimated spend.
 - Latest sprint record: [docs/sprints/sprint-18.md](docs/sprints/sprint-18.md) (earlier: [sprint-17.md](docs/sprints/sprint-17.md), [sprint-15.md](docs/sprints/sprint-15.md), [sprint-14.md](docs/sprints/sprint-14.md), [sprint-13.md](docs/sprints/sprint-13.md), [sprint-12.md](docs/sprints/sprint-12.md), [sprint-11.md](docs/sprints/sprint-11.md), [sprint-10.md](docs/sprints/sprint-10.md), [sprint-07.md](docs/sprints/sprint-07.md), [sprint-06.md](docs/sprints/sprint-06.md), [sprint-05.md](docs/sprints/sprint-05.md), [sprint-04.md](docs/sprints/sprint-04.md), [sprint-03.md](docs/sprints/sprint-03.md), [sprint-02.md](docs/sprints/sprint-02.md), [sprint-01.md](docs/sprints/sprint-01.md)).
 - `make local-preflight`, `make local-smoke`, `make local-eval` use a model on this machine through Ollama. Free, but they load a model: run them only when asked.
 - Deployment: [docs/deployment/vultr-deployment.md](docs/deployment/vultr-deployment.md). `provision.sh apply`, `deploy.sh` and `live-switch.sh` act on real resources: run them only when asked.

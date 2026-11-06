@@ -25,7 +25,11 @@ pip install ./sdk/python
 
 ## 2. See it work
 
+Runs write to a fresh scratch directory unless you choose one. To keep them and open them in the pages, set the same directory for your runs
+and for `make dev`:
+
 ```sh
+export MOODY_ARTIFACTS_DIR=$HOME/moody-runs
 make external-demo
 ```
 
@@ -152,7 +156,7 @@ never shown publicly.
 
 ## 8. Find the evidence
 
-Under `.artifacts/` (or `MOODY_ARTIFACTS_DIR`):
+Under `MOODY_ARTIFACTS_DIR`, or the scratch directory the run printed:
 
 | Path | Holds |
 |---|---|

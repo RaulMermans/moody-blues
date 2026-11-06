@@ -153,7 +153,7 @@ function Summary({
             {run.external ? null : ` · ${run.config} policy`}
           </span>
         </p>
-        <Tag testId="target-evidence" tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
+        <Tag testId="target-evidence" wrap tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
           {targetLabel(run)}
         </Tag>
       </div>
