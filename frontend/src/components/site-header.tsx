@@ -10,14 +10,14 @@ export function SiteHeader() {
           MOODY BLUES
         </Link>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-x-3 text-[13px] text-muted sm:gap-x-4 sm:text-sm">
-          <Link href="/" className={`${NAV} max-sm:hidden`}>
+          <Link href="/#investigations" className={NAV}>
             Investigations
+          </Link>
+          <Link href="/operator" className={NAV}>
+            Run a test
           </Link>
           <Link href="/containment" className={NAV}>
             Containment
-          </Link>
-          <Link href="/operator" className={NAV}>
-            Operator
           </Link>
           <a href="https://github.com/RaulMermans/moody-blues" className={NAV}>
             GitHub

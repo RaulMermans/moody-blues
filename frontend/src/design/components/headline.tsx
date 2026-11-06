@@ -17,7 +17,7 @@ export function Headline({
   second: string;
   outOfRegister?: boolean;
   as?: ElementType;
-  size?: "headline" | "poster";
+  size?: "headline" | "poster" | "compact";
 }) {
   return (
     <Tag

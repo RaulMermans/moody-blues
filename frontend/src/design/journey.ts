@@ -15,7 +15,9 @@ import type {
   TimelineEntry,
   Verdict,
 } from "@/lib/evidence-types";
-import { humanize } from "@/lib/labels";
+import { humanize, inRehearsal } from "@/lib/labels";
+
+import { targetNoun } from "./model";
 
 export interface Trial {
   experiment: ExperimentView;
@@ -57,7 +59,7 @@ export interface Cycle {
   decision: Decision;
 }
 
-const FAULT_PLAIN: Record<string, string> = {
+export const FAULT_PLAIN: Record<string, string> = {
   phantom_failure: "a save reports failure although it committed",
   phantom_success: "a save reports success although it rolled back",
   stale_read: "reads come from an old snapshot",
@@ -81,7 +83,9 @@ export function plainQuestion(cycle: Cycle): string | null {
   const kinds = faultKinds(firstRun(cycle));
   if (!kinds.length) return null;
   if (kinds.some((k) => !FAULT_PLAIN[k])) return null;
-  return `In plain terms: what does the agent do when ${joined(kinds.map((k) => FAULT_PLAIN[k]))}?`;
+  const run = firstRun(cycle);
+  const noun = run ? targetNoun(run) : "target";
+  return `In plain terms: what does the ${noun} do when ${joined(kinds.map((k) => FAULT_PLAIN[k]))}?`;
 }
 
 function changeLine(from: Cycle, to: Cycle): string {
@@ -374,6 +378,11 @@ const list = (value: unknown): string[] => (Array.isArray(value) ? value.map(Str
 
 /** One sentence on what an event is and how far it can be trusted. */
 export function explainEvent(entry: TimelineEntry, fixture: boolean): string {
+  const line = eventLine(entry, fixture);
+  return fixture ? inRehearsal(line) : line;
+}
+
+function eventLine(entry: TimelineEntry, fixture: boolean): string {
   const facts = entry.facts;
   const author = fixture ? "fixture" : "model";
   const cited = list(facts.cited_observations);

@@ -1,5 +1,8 @@
 # Reality Comparison: UX specification
 
+> Sprint 14: the first mismatch now leads, the status-and-records row stays in view only when it carries the finding, and
+> the ledger, discrepancies and records are folded. See [product-experience-architecture.md](product-experience-architecture.md).
+
 The primary screen of an investigation: `/investigations/{id}?view=reality&run={run}`.
 
 ## The north star

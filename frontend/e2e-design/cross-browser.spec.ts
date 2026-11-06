@@ -16,7 +16,7 @@ for (const { width, height } of [
 ]) {
   test(`the comparison lays out at ${width}px`, async ({ page, browserName }) => {
     await page.setViewportSize({ width, height });
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await expect(page.getByText(/^Loading\b/)).toHaveCount(0);
     await page.evaluate(() => document.fonts.ready);
 
@@ -30,6 +30,7 @@ for (const { width, height } of [
       expect(box!.y + box!.height, id).toBeLessThanOrEqual(height);
     }
 
+    await page.getByTestId("ledger-panel").locator("summary").first().click();
     // The summary of a ledger row is a grid: its two sides sit level from tablet up.
     const row = page.getByTestId("call-5").locator("summary");
     const sides = await row.locator(".rf-call-side").evaluateAll((els) =>

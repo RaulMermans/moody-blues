@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import type { JobEvent, JobRecord, JobView, LiveStatus, MissionView } from "@/lib/evidence-types";
+import { type TestEntry, testEntry } from "@/lib/test-catalog";
 import {
   BLOCKED_LABEL,
   formatClock,
@@ -15,6 +16,7 @@ import {
   MODE_LABEL,
 } from "@/lib/labels";
 
+import { TestCard } from "./test-card";
 import { Tag } from "./ui";
 
 const TERMINAL = new Set(["completed", "failed", "cancelled", "budget_exhausted", "outcome_uncertain"]);
@@ -65,7 +67,7 @@ export function OperatorLogin() {
       <button
         type="submit"
         disabled={busy}
-        className="self-start bg-truth px-3 py-1.5 text-sm font-medium text-background disabled:opacity-50"
+        className="rf-cta self-start disabled:opacity-50"
       >
         {busy ? "Checking" : "Sign in"}
       </button>
@@ -78,67 +80,66 @@ export function OperatorLogin() {
   );
 }
 
-function Mission({
+function fallbackEntry(mission: MissionView): TestEntry {
+  return {
+    missionId: mission.mission_id,
+    mode: mission.mode,
+    label: mission.title,
+    summary: mission.description,
+    target: mission.mode === "live" ? "AI agent" : "Reference script",
+    scenario: mission.worlds.join(", "),
+    cost: mission.mode === "live" ? "Paid inference" : "Free",
+    inference: mission.mode === "live" ? "Yes" : "None",
+    maxExperiments: mission.max_experiments,
+    executes: mission.description,
+  };
+}
+
+function availabilityOf(mission: MissionView): string {
+  if (mission.available) return "Available now";
+  return BLOCKED_LABEL[mission.blocked_by ?? ""] ?? humanize(mission.blocked_by);
+}
+
+/** Says what will execute and what it can cost, before anything does. */
+function Confirm({
   mission,
-  onStart,
+  entry,
   required,
+  onStart,
+  onClose,
 }: {
   mission: MissionView;
-  onStart: (id: string) => void;
+  entry: TestEntry;
   required: number | null;
+  onStart: () => void;
+  onClose: () => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => heading.current?.focus(), [mission.mission_id]);
   const chargeable = mission.mode === "live";
+  const limit = required === null ? "the cap" : formatUsd(required);
   return (
-    <li
-      data-testid={`mission-${mission.mission_id}`}
-      data-available={mission.available}
-      className="flex flex-col gap-2 p-4"
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-semibold text-foreground">{mission.title}</h3>
-        <Tag tone={chargeable ? "warn" : "neutral"}>{MODE_LABEL[mission.mode]}</Tag>
-      </div>
-      <p className="text-sm leading-6 text-muted">{mission.description}</p>
-      <p className="font-mono text-xs text-faint">
-        worlds {mission.worlds.join(", ")} · up to {mission.max_experiments} experiments
+    <section aria-labelledby="confirm-title" className="rf-confirm" data-testid="confirm-panel">
+      <h2 id="confirm-title" ref={heading} tabIndex={-1} className="rf-section-title">
+        Run the {entry.label.toLowerCase()}?
+      </h2>
+      <p className="rf-body" data-testid="confirm-executes">
+        {entry.executes}
       </p>
-      {mission.blocked_by ? (
-        <p data-testid={`blocked-${mission.mission_id}`} className="text-sm text-warn">
-          {BLOCKED_LABEL[mission.blocked_by] ?? humanize(mission.blocked_by)}
-        </p>
-      ) : null}
-      <div className="flex flex-wrap gap-2">
-        {chargeable && confirming ? (
-          <>
-            <button
-              type="button"
-              onClick={() => onStart(mission.mission_id)}
-              className="bg-warn px-3 py-1.5 text-sm font-medium text-background"
-            >
-              Confirm: may spend up to {required === null ? "the cap" : formatUsd(required)}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              className="border border-line px-3 py-1.5 text-sm text-muted"
-            >
-              Keep it off
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            disabled={!mission.available}
-            data-testid={`start-${mission.mission_id}`}
-            onClick={() => (chargeable ? setConfirming(true) : onStart(mission.mission_id))}
-            className="border border-line px-3 py-1.5 text-sm text-foreground hover:bg-raised disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Start
-          </button>
-        )}
+      <p className="rf-body" data-testid="confirm-spend">
+        {chargeable
+          ? `This spends real inference budget: up to ${limit}, estimated, against the ledger.`
+          : "No inference spending. Nothing is charged."}
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={onStart} className="rf-cta" data-testid={`confirm-${mission.mission_id}`}>
+          {chargeable ? `Confirm: may spend up to ${limit}` : "Start test"}
+        </button>
+        <button type="button" onClick={onClose} className="rf-cta rf-cta-quiet" data-testid="confirm-back">
+          {chargeable ? "Keep it off" : "Back"}
+        </button>
       </div>
-    </li>
+    </section>
   );
 }
 
@@ -195,7 +196,7 @@ function Progress({
             data-testid="cancel-job"
             disabled={job.cancel_requested}
             onClick={onCancel}
-            className="border border-line px-3 py-1.5 text-sm text-muted hover:text-foreground disabled:opacity-40"
+            className="rf-cta rf-cta-quiet disabled:opacity-40"
           >
             {job.cancel_requested ? "Cancelling" : "Cancel"}
           </button>
@@ -205,24 +206,20 @@ function Progress({
         </div>
       ) : null}
       {finished ? (
-        <p className="text-sm text-muted">
-          Ended as{" "}
-          <span data-testid="job-code" className="font-mono">
-            {endLabel(job)}
-          </span>
-          .{" "}
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-muted">
+            Ended as{" "}
+            <span data-testid="job-code" className="font-mono">
+              {endLabel(job)}
+            </span>
+            .{job.evidence_available ? "" : " No verified evidence is available for this job."}
+          </p>
           {job.evidence_available ? (
-            <Link
-              data-testid="open-job-evidence"
-              href={`/investigations/${job.investigation_id}`}
-              className="text-truth hover:underline"
-            >
-              Open the evidence
+            <Link data-testid="open-job-evidence" href={`/investigations/${job.investigation_id}`} className="rf-cta">
+              See the result <span aria-hidden>→</span>
             </Link>
-          ) : (
-            "No verified evidence is available for this job."
-          )}
-        </p>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );
@@ -235,6 +232,7 @@ export function OperatorConsole() {
   const [job, setJob] = useState<JobRecord | null>(null);
   const [events, setEvents] = useState<JobEvent[]>([]);
   const [transport, setTransport] = useState<"stream" | "polling">("stream");
+  const [selected, setSelected] = useState<string | null>(null);
   const stream = useRef<EventSource | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const settled = useRef<string | null>(null);
@@ -322,6 +320,7 @@ export function OperatorConsole() {
 
   async function start(missionId: string) {
     setError(null);
+    setSelected(null);
     const res = await fetch("/api/operator/jobs", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -365,38 +364,10 @@ export function OperatorConsole() {
   }
 
   const budget = status.budget;
+  const chosen = status.missions.find((m) => m.mission_id === selected);
+  const running = job !== null && !TERMINAL.has(job.status);
   return (
     <div className="flex flex-col gap-6" data-testid="operator-console">
-      <section aria-label="Spend ledger" className="border border-line bg-surface p-4">
-        {budget ? (
-          <>
-            <dl className="grid grid-cols-2 gap-3 font-mono text-sm sm:grid-cols-4">
-              <div>
-                <dt className="font-sans text-xs text-faint">Limit</dt>
-                <dd data-testid="budget-limit">{formatUsd(budget.limit_usd)}</dd>
-              </div>
-              <div>
-                <dt className="font-sans text-xs text-faint">Settled</dt>
-                <dd>{formatUsd(budget.settled_usd)}</dd>
-              </div>
-              <div>
-                <dt className="font-sans text-xs text-faint">Remaining</dt>
-                <dd data-testid="budget-remaining">{formatUsd(budget.remaining_usd)}</dd>
-              </div>
-              <div>
-                <dt className="font-sans text-xs text-faint">One investigation needs</dt>
-                <dd>{formatUsd(budget.required_usd)}</dd>
-              </div>
-            </dl>
-            <p className="mt-2 text-xs text-faint">{budget.note}</p>
-          </>
-        ) : (
-          <p className="text-sm text-warn">
-            {BLOCKED_LABEL[status.budget_problem ?? ""] ?? "The ledger could not be read."}
-          </p>
-        )}
-      </section>
-
       {error ? (
         <p role="alert" data-testid="operator-error" className="text-sm text-warn">
           {error}
@@ -407,23 +378,70 @@ export function OperatorConsole() {
         <Progress job={job} events={events} transport={transport} onCancel={() => void cancel()} />
       ) : null}
 
-      <section aria-label="Missions">
-        <ul className="divide-y divide-line border border-line bg-surface">
-          {status.missions.map((mission) => (
-            <Mission
-              key={mission.mission_id}
-              mission={mission}
-              required={budget?.required_usd ?? null}
-              onStart={(id) => void start(id)}
-            />
-          ))}
-        </ul>
+      <ul aria-label="Missions" className="rf-tests">
+        {status.missions.map((mission) => {
+          const entry = testEntry(mission.mission_id) ?? fallbackEntry(mission);
+          return (
+            <li key={mission.mission_id} className="flex">
+              <TestCard
+                entry={entry}
+                availability={availabilityOf(mission)}
+                maxExperiments={mission.max_experiments}
+                available={mission.available}
+                blocked={mission.blocked_by !== null}
+                selected={selected === mission.mission_id}
+              >
+                <button
+                  type="button"
+                  disabled={!mission.available || running}
+                  data-testid={`start-${mission.mission_id}`}
+                  onClick={() => setSelected(mission.mission_id)}
+                  className="rf-cta rf-cta-quiet"
+                >
+                  Review this test
+                </button>
+              </TestCard>
+            </li>
+          );
+        })}
+      </ul>
+
+      {chosen ? (
+        <Confirm
+          mission={chosen}
+          entry={testEntry(chosen.mission_id) ?? fallbackEntry(chosen)}
+          required={budget?.required_usd ?? null}
+          onStart={() => void start(chosen.mission_id)}
+          onClose={() => setSelected(null)}
+        />
+      ) : null}
+
+      <section aria-label="Spend ledger" className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line pt-3 text-xs text-faint">
+        {budget ? (
+          <>
+            <span>
+              Inference budget: <span data-testid="budget-remaining" className="font-mono text-muted">{formatUsd(budget.remaining_usd)}</span> left of{" "}
+              <span data-testid="budget-limit" className="font-mono text-muted">{formatUsd(budget.limit_usd)}</span>
+            </span>
+            <span>
+              Settled <span className="font-mono text-muted">{formatUsd(budget.settled_usd)}</span>
+            </span>
+            <span>
+              One live investigation needs <span className="font-mono text-muted">{formatUsd(budget.required_usd)}</span>
+            </span>
+            <span>{budget.note}</span>
+          </>
+        ) : (
+          <span className="text-sm text-warn">
+            {BLOCKED_LABEL[status.budget_problem ?? ""] ?? "The ledger could not be read."}
+          </span>
+        )}
       </section>
 
       <button
         type="button"
         onClick={() => void signOut()}
-        className="self-start text-sm text-muted hover:text-foreground"
+        className="inline-flex min-h-11 items-center self-start text-sm text-muted hover:text-foreground"
       >
         Sign out
       </button>

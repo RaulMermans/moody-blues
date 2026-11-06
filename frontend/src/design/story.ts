@@ -12,7 +12,7 @@ import type {
 } from "@/lib/evidence-types";
 import { humanize, OUTCOME_LABEL } from "@/lib/labels";
 
-import { claimRelation } from "./model";
+import { claimRelation, targetNoun } from "./model";
 
 export type StoryKind =
   | "false_completion"
@@ -35,7 +35,11 @@ export interface RunStory {
   outOfRegister: boolean;
 }
 
-const hasFinding = (run: RealityRun, code: string) => run.actual.findings.some((f) => f.code === code);
+export const hasFinding = (run: RealityRun, code: string) =>
+  run.actual.findings.some((f) => f.code === code);
+
+/** "The agent", or "The script" when no model ran. Every sentence below names what really acted. */
+const subject = (run: RealityRun) => `The ${targetNoun(run)}`;
 
 function storyKind(run: RealityRun): StoryKind {
   const claim = run.agent.claim;
@@ -46,7 +50,11 @@ function storyKind(run: RealityRun): StoryKind {
   }
   if (run.verdict === "PASS") {
     if (run.run_outcome === "state_correct_claim_missing") return "correct_without_claim";
-    if (run.run_outcome !== "success") return "passed";
+    // A reference script's run never has a `run_outcome`: there the recorded finding class says the same.
+    // On any other run a missing outcome stays unknown, so the copy stays narrow.
+    const scripted = run.target_evidence === "reference_executor" && run.run_outcome === null;
+    const succeeded = run.run_outcome === "success" || (scripted && run.finding_class === "correct_recovery");
+    if (!succeeded) return "passed";
     return run.faults_delivered > 0 ? "recovered" : "clean";
   }
   if (!claim) return "no_claim";
@@ -55,10 +63,11 @@ function storyKind(run: RealityRun): StoryKind {
 
 function reportedSentence(run: RealityRun): string {
   const claim = run.agent.claim;
-  if (!claim) return "The agent filed no final report.";
-  if (claim.status === "completed") return "The agent reported completion.";
-  if (claim.status === "not_completed") return "The agent reported the task not completed.";
-  return `The agent reported the status ${claim.status}.`;
+  const who = subject(run);
+  if (!claim) return `${who} filed no final report.`;
+  if (claim.status === "completed") return `${who} reported completion.`;
+  if (claim.status === "not_completed") return `${who} reported the task not completed.`;
+  return `${who} reported the status ${claim.status}.`;
 }
 
 function realitySentence(kind: StoryKind, run: RealityRun): string {
@@ -114,9 +123,9 @@ export function disclosureLine(run: RealityRun): string | null {
   if (!disclosure) return null;
   const { flagged_customer_ids: flagged, not_mentioned_in_message: missing } = disclosure;
   if (missing.length > 0) {
-    return `The agent's message does not name ${missing.length} of ${flagged.length} flagged records. This is an id match and says nothing about intent.`;
+    return `The ${targetNoun(run)}'s message does not name ${missing.length} of ${flagged.length} flagged records. This is an id match and says nothing about intent.`;
   }
-  const names = `The agent's message names all ${flagged.length} flagged records.`;
+  const names = `The ${targetNoun(run)}'s message names all ${flagged.length} flagged records.`;
   if (hasFinding(run, "false_completion_claim")) {
     return `${names} That makes this a wrong status, not concealment.`;
   }
@@ -154,7 +163,7 @@ export function environmentLine(run: RealityRun): string {
   const delivered = run.faults_delivered;
   if (delivered === 0) {
     return run.faults.length
-      ? "A fault was selected for this run, but none reached the agent."
+      ? `A fault was selected for this run, but none reached the ${targetNoun(run)}.`
       : "No fault was selected for this run.";
   }
   const count = `${delivered} fault${delivered === 1 ? "" : "s"} delivered`;
@@ -179,7 +188,7 @@ const RECOVERY_NOTE: Record<string, string> = {
 function attempts(run: RealityRun): string {
   const creates = run.agent.tool_events.filter((e) => e.tool === "create_customer").length;
   const commits = run.actual.new_customer_ids.length;
-  return `The agent made ${creates} create call${creates === 1 ? "" : "s"}, and ${commits} committed.`;
+  return `${subject(run)} made ${creates} create call${creates === 1 ? "" : "s"}, and ${commits} committed.`;
 }
 
 function happened(kind: StoryKind, run: RealityRun): string {
@@ -203,20 +212,22 @@ function happened(kind: StoryKind, run: RealityRun): string {
     case "correct_without_claim":
       return `The objective is satisfied in authoritative state, but the run ended as ${humanize(run.agent.termination).toLowerCase()}, with no valid final claim.`;
     case "passed":
-      return `The Oracle found no violation. The recorded run outcome is ${humanize(run.run_outcome).toLowerCase()}.`;
+      return run.run_outcome
+        ? `The Oracle found no violation. The recorded run outcome is ${humanize(run.run_outcome).toLowerCase()}.`
+        : "The Oracle found no violation. This record holds no separate run outcome.";
     case "no_claim":
       return `The run ended as ${humanize(run.agent.termination).toLowerCase()} after ${calls} tool call${calls === 1 ? "" : "s"}, with no valid final claim. ${attempts(run)}`;
     case "under_reported":
-      return `The agent filed status ${status}, while the objective is satisfied in authoritative state.`;
+      return `${subject(run)} filed status ${status}, while the objective is satisfied in authoritative state.`;
     case "inconclusive":
-      return `The agent filed status ${status}. The Oracle returned INCONCLUSIVE.`;
+      return `${subject(run)} filed status ${status}. The Oracle returned INCONCLUSIVE.`;
   }
 }
 
 function sequence(run: RealityRun): string {
   const tally = faultTally(run);
   if (run.faults_delivered === 0 || tally.length === 0) {
-    return "No fault reached the agent in this run, so no distortion precedes the outcome.";
+    return `No fault reached the ${targetNoun(run)} in this run, so no distortion precedes the outcome.`;
   }
   const faults = tally
     .map((t) => `${capital(listCalls(t.calls))} delivered ${t.calls.length === 1 ? "a " : ""}${faultNoun(t.kind, t.calls.length)}.`)
@@ -229,7 +240,7 @@ function sequence(run: RealityRun): string {
   const writes = commits.length
     ? `${capital(listCalls(commits))} committed ${commits.length === 1 ? "a write" : "writes"}.`
     : "No write committed.";
-  return `${faults} ${writes} That is the recorded order. It does not show why the agent took each step.`;
+  return `${faults} ${writes} That is the recorded order. It does not show why the ${targetNoun(run)} took each step.`;
 }
 
 const MATTERS: Record<StoryKind, string> = {
@@ -240,8 +251,8 @@ const MATTERS: Record<StoryKind, string> = {
   unreported_violation: "The side effect is real and nothing in a final report says so.",
   violation: "The status reads as done while the Oracle records a broken invariant.",
   recovered:
-    "A delivered fault is not by itself a failure. This run is one sample, and it does not show the agent is safe.",
-  clean: "This run is one sample, and it does not show the agent is safe.",
+    "A delivered fault is not by itself a failure. This run is one sample, and it does not show the target is safe.",
+  clean: "This run is one sample, and it does not show the target is safe.",
   correct_without_claim: "A missing claim is never read as success, even when the state is correct.",
   passed: "A PASS covers this run only.",
   no_claim: "A missing claim is never read as success. Nothing is concluded from this run.",
@@ -290,7 +301,7 @@ export function explanationFrom(run: RealityRun, study: CaseStudy | null, primar
   return {
     happened: happened(kind, run),
     why: sequence(run),
-    matters: MATTERS[kind],
+    matters: MATTERS[kind].replace("the target is safe", `the ${targetNoun(run)} is safe`),
     causal: {
       faultDelivered: run.faults_delivered ? `Yes, ${run.faults_delivered}` : "No",
       violationObserved: OBSERVED[run.verdict],

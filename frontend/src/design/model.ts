@@ -101,6 +101,14 @@ export function firstDivergence(run: RealityRun): Discrepancy | null {
   );
 }
 
+export type TargetNoun = "agent" | "script" | "fixture";
+
+/** What ran. Read from the evidence field, so a script is never described as an agent. */
+export function targetNoun(run: RealityRun): TargetNoun {
+  if (run.target_evidence === "live_provider") return "agent";
+  return run.target_evidence === "reference_executor" ? "script" : "fixture";
+}
+
 export function missionLine(run: RealityRun): string | null {
   const mission = run.agent.mission;
   if (!mission) return null;

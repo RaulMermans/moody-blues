@@ -11,6 +11,7 @@ import {
   OPERATOR_TOKEN,
   ORPHAN_FRONTEND_URL,
 } from "../playwright.config";
+import { TEST_CATALOG } from "../src/lib/test-catalog";
 
 // Everything here runs against the real backend and a production build. Nothing is mocked: the
 // expected values are read from the backend's API, not written into the test.
@@ -116,6 +117,7 @@ test.describe("public, read-only exploration", () => {
     await expect(main.getByTestId("target-evidence")).toHaveText("Target: live model glm-5.3");
 
     // Timeline: real order, each step backed by a named record.
+    await main.getByTestId("tab-evidence").click();
     await main.getByTestId("tab-timeline").click();
     const timeline = await api<Timeline>(`/investigations/${VIOLATION}/timeline`);
     await page.getByRole("link", { name: `Show all ${timeline.total} records` }).click();
@@ -165,7 +167,7 @@ test.describe("public, read-only exploration", () => {
   test("the comparison shows the claim and the state together", async ({ page }) => {
     const runs = await api<Runs>(`/investigations/${VIOLATION}/runs`);
     const run = await api<Run>(`/investigations/${VIOLATION}/runs/${runs.primary_run_id}`);
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
 
     await expect(page.getByTestId("claim-status")).toHaveText("status: completed");
     await expect(page.getByTestId("oracle-verdict")).toHaveText(run.verdict);
@@ -176,7 +178,9 @@ test.describe("public, read-only exploration", () => {
     await expect(page.getByTestId("claim-message")).toHaveText(run.agent.claim!.message.text);
     await expect(page.getByTestId("disclosure")).toContainText("not concealment");
 
-    // Call 1 said success. The Oracle says nothing committed.
+    // Call 1 said success. The Oracle says nothing committed. The ledger and records are one click down.
+    await page.getByTestId("ledger-panel").locator("summary").first().click();
+    await page.getByTestId("records-panel").locator("summary").first().click();
     await expect(page.getByTestId("call-1")).toHaveAttribute("data-fault", "phantom_success");
     await expect(page.getByTestId("actual-1")).toContainText("committed nothing");
 
@@ -212,7 +216,7 @@ test.describe("public, read-only exploration", () => {
   });
 
   test("an honest report of a real duplicate is not shown as a false claim", async ({ page }) => {
-    await page.goto(`/investigations/${HONEST}`);
+    await page.goto(`/investigations/${HONEST}?view=reality`);
     await expect(page.getByTestId("outcome")).toHaveText("Violation verified");
     await expect(page.getByTestId("claim-status")).toHaveText("status: not_completed");
     await expect(page.getByTestId("oracle-finding-duplicate_side_effect")).toBeVisible();
@@ -231,7 +235,7 @@ test.describe("public, read-only exploration", () => {
       await expect(page.getByTestId("verified-count")).toHaveText("0");
       await expect(page.getByTestId("oracle-verdict")).toHaveText("PASS");
     }
-    await expect(page.getByText("not a claim that the agent is safe")).toBeVisible();
+    await expect(page.getByTestId("target-note")).toContainText("does not show the agent is safe");
   });
 
   test("a run with no claim is inconclusive, never a success", async ({ page }) => {
@@ -431,6 +435,7 @@ test.describe("operator journey on real Docker, worlds and Oracle", () => {
     test.slow();
     await signIn(page);
     await page.getByTestId("start-rehearsal-blind-retry").click();
+    await page.getByTestId("confirm-rehearsal-blind-retry").click();
     const panel = page.getByTestId("job-panel");
     await expect(panel).toBeVisible();
     await expect(page.getByTestId("job-event-experiment_completed").first()).toBeVisible({
@@ -450,6 +455,7 @@ test.describe("operator journey on real Docker, worlds and Oracle", () => {
       "Target: reference script, not a model",
     );
     await shot(page, "11-rehearsal-evidence");
+    await main.getByTestId("tab-evidence").click();
     await main.getByTestId("tab-timeline").click();
     await expect(main.getByTestId("timeline-view")).toContainText("Fixture concluded");
     await expect(main.getByTestId("timeline-view")).toContainText("Investigator fixture");
@@ -467,11 +473,85 @@ test.describe("operator journey on real Docker, worlds and Oracle", () => {
     expect((await fetch(`${BACKEND_URL}/investigations/${id}`)).status).toBe(404);
   });
 
+  test("the catalog on screen is the catalog the server offers", async ({ page }) => {
+    await signIn(page);
+    const status = (await (await page.request.get("/api/operator/status")).json()) as {
+      missions: { mission_id: string; mode: string; max_experiments: number }[];
+    };
+    expect(status.missions.map((m) => m.mission_id).sort()).toEqual(TEST_CATALOG.map((t) => t.missionId).sort());
+    for (const mission of status.missions) {
+      const entry = TEST_CATALOG.find((t) => t.missionId === mission.mission_id)!;
+      expect(entry.mode).toBe(mission.mode);
+      expect(entry.maxExperiments).toBe(mission.max_experiments);
+      await expect(page.getByTestId(`experiments-${mission.mission_id}`)).toHaveText(`Up to ${mission.max_experiments}`);
+      await expect(page.getByTestId(`target-${mission.mission_id}`)).toHaveText(
+        mission.mode === "live" ? "AI agent" : "Reference script",
+      );
+      await expect(page.getByTestId(`inference-${mission.mission_id}`)).toHaveText(
+        mission.mode === "live" ? "Investigator and target" : "None",
+      );
+    }
+  });
+
+  test("nothing starts until the confirmation, which states what runs and what it costs", async ({ page }) => {
+    await signIn(page);
+    await expect(page.getByTestId("start-rehearsal-recovery")).toBeEnabled({ timeout: 30_000 });
+    const before = jobCount();
+    await page.getByTestId("start-rehearsal-recovery").click();
+    await expect(page.getByTestId("confirm-executes")).toContainText("No AI model runs");
+    await expect(page.getByTestId("confirm-spend")).toHaveText("No inference spending. Nothing is charged.");
+    expect(jobCount()).toBe(before);
+    await page.getByTestId("confirm-back").click();
+    await expect(page.getByTestId("confirm-panel")).toHaveCount(0);
+    expect(jobCount()).toBe(before);
+  });
+
+  test("a safe rehearsal reads as a script that recovered, with a verdict from the record", async ({ page }) => {
+    test.slow();
+    await signIn(page);
+    await expect(page.getByTestId("start-rehearsal-recovery")).toBeEnabled({ timeout: 30_000 });
+    await page.getByTestId("start-rehearsal-recovery").click();
+    await page.getByTestId("confirm-rehearsal-recovery").click();
+    await expect(page.getByTestId("job-panel")).toHaveAttribute("data-status", "completed", { timeout: 90_000 });
+    await page.getByTestId("open-job-evidence").click();
+    const main = page.getByRole("main");
+    await expect(main.getByTestId("oracle-verdict")).toHaveText("PASS");
+    await expect(main.getByTestId("outcome-headline")).toHaveText("The script handled a misleading response correctly.");
+    await expect(main.getByTestId("target-note")).toContainText("No AI model ran here");
+    await expect(main.getByTestId("tested")).toContainText("checks the CRM before it reports");
+    await expect(main.getByText("from the test catalog, not this record", { exact: false })).toBeVisible();
+    await expect(main.getByTestId("story-hypothesis")).toHaveCount(0);
+    await expect(main.getByTestId("story-decision")).toHaveCount(0);
+    await expect(main.getByTestId("story-response")).toContainText("Recovery observed");
+    // Nothing on a script's result calls it an agent or a model's behavior.
+    const text = await main.getByTestId("result").innerText();
+    expect(text).not.toMatch(/\bthe agent\b/i);
+    await main.getByTestId("tab-reality").click();
+    await expect(main.getByTestId("first-told")).toHaveText("error: timeout");
+    await expect(main.getByTestId("relation-line")).toContainText("These do not conflict");
+    expect(await main.getByTestId("reality-view").innerText()).not.toMatch(/\bthe agent reported\b/i);
+    await expect(main.getByText("run outcome: none")).toHaveCount(0);
+
+    // Every level of a rehearsal, fully opened. The objective and a recorded protocol name are quoted
+    // from the record, so only the app's own words are held to this.
+    const id = await main.getByTestId("investigation-id").innerText();
+    for (const view of ["overview", "reality", "investigator", "timeline&show=all", "evidence"]) {
+      await page.goto(`/investigations/${id}?view=${view}`);
+      await page.waitForLoadState("networkidle");
+      await page.locator("details").evaluateAll((all) => all.forEach((d) => ((d as HTMLDetailsElement).open = true)));
+      const words = await page.getByRole("main").innerText();
+      for (const phrase of ["the agent reported", "The agent ended", "the agent was told", "written by the model", "Investigator model", "Target agent\n"]) {
+        expect(words, `${view}: ${phrase}`).not.toContain(phrase);
+      }
+    }
+  });
+
   test("a running job can be cancelled and ends as cancelled", async ({ page }) => {
     test.slow();
     await signIn(page);
     await expect(page.getByTestId("start-rehearsal-recovery")).toBeEnabled({ timeout: 30_000 });
     await page.getByTestId("start-rehearsal-recovery").click();
+    await page.getByTestId("confirm-rehearsal-recovery").click();
     await page.getByTestId("cancel-job").click();
     await expect(page.getByTestId("job-event-cancel_requested")).toBeVisible();
     await expect(page.getByTestId("job-panel")).toHaveAttribute("data-status", "cancelled", {

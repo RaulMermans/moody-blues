@@ -25,3 +25,5 @@ make test-design    # browser, rule, axe and WebKit checks on the real recorded 
 
 To refresh the images in [screenshots/sprint-12/](screenshots/sprint-12/):
 `MOODY_DESIGN_SHOTS=1 make test-design`. `sprint-11/` and the images directly in `screenshots/` are earlier records.
+
+The product's structure since Sprint 14: [product-experience-architecture.md](product-experience-architecture.md).

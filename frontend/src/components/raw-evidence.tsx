@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { InvestigationDetail, RealityRun } from "@/lib/evidence-types";
-import { FAULT_LABEL, humanize } from "@/lib/labels";
+import { FAULT_LABEL, humanize, inRehearsal } from "@/lib/labels";
 
 import { runHref } from "./reality-view";
 import { Code, Fact, TableScroll } from "./ui";
@@ -47,7 +47,7 @@ export function RawEvidence({ detail, run }: { detail: InvestigationDetail; run:
           <ul data-testid="fault-list" className="flex flex-col gap-1 text-sm leading-6 text-muted">
             {run.faults.map((f, i) => (
               <li key={i}>
-                {FAULT_LABEL[f.kind] ?? humanize(f.kind)}{" "}
+                {run.target_evidence === "live_provider" ? (FAULT_LABEL[f.kind] ?? humanize(f.kind)) : inRehearsal(FAULT_LABEL[f.kind] ?? humanize(f.kind))}{" "}
                 <span className="font-mono text-xs text-faint">
                   ({f.operation}, occurrence {f.occurrence}
                   {f.span > 1 ? `, span ${f.span}` : ""})

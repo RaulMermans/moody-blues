@@ -10,7 +10,7 @@ import {
   traceLine,
 } from "@/design/journey";
 import type { InvestigationDetail, TimelineEntry, TimelinePage, Verdict } from "@/lib/evidence-types";
-import { AUTHOR_LABEL, AUTHOR_NOTE, FINDING_CLASS_LABEL, formatClock, humanize } from "@/lib/labels";
+import { AUTHOR_LABEL, AUTHOR_NOTE, FINDING_CLASS_LABEL, formatClock, humanize, inRehearsal } from "@/lib/labels";
 
 import { Chevron, Fact, VerdictTag } from "./ui";
 
@@ -27,8 +27,7 @@ const PREVIEW_STAGES = new Set([
 type Focus = "exact" | "run" | null;
 
 function authorLabel(entry: TimelineEntry, fixture: boolean): string {
-  if (fixture && entry.authorship === "investigator_model") return "Investigator fixture";
-  return AUTHOR_LABEL[entry.authorship];
+  return fixture ? inRehearsal(AUTHOR_LABEL[entry.authorship]) : AUTHOR_LABEL[entry.authorship];
 }
 
 /** How trusted code classified the verdict's run: a recovery, a shortfall, a violation. */
@@ -91,7 +90,7 @@ function Entry({
         <summary>
           <span className="rf-step-meta">
             <Chevron />
-            <span className="rf-step-category">{categoryOf(entry)}</span>
+            <span className="rf-step-category">{fixture ? inRehearsal(categoryOf(entry)) : categoryOf(entry)}</span>
             <time dateTime={entry.at}>{formatClock(entry.at)}</time>
           </span>
           <span className="rf-step-main">
@@ -101,7 +100,7 @@ function Entry({
                   ≠{" "}
                 </span>
               ) : null}
-              {eventTitle(entry)}
+              {fixture ? inRehearsal(eventTitle(entry)) : eventTitle(entry)}
             </span>
             {line ? <span className="rf-step-line">{line}</span> : null}
           </span>
@@ -248,7 +247,7 @@ export function TimelineView({
                   <details open={focused}>
                     <summary>
                       <Chevron />
-                      <span>{traceLine(node.entries)}</span>
+                      <span>{fixture ? inRehearsal(traceLine(node.entries)) : traceLine(node.entries)}</span>
                     </summary>
                     <ol aria-label="Records of this run" className="rf-steps">
                       {node.entries.map(step)}

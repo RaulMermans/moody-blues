@@ -1,4 +1,4 @@
-import type { RecordMention, RecordView } from "../model";
+import type { RecordMention, TargetNoun, RecordView } from "../model";
 
 const MENTION_LABEL: Record<RecordMention, string | null> = {
   structured_claim: "Named in the structured claim",
@@ -12,9 +12,17 @@ const MENTION_LABEL: Record<RecordMention, string | null> = {
  * records. The extra record of a duplicate slips out of line as a whole: no second outline, nothing
  * layered, the text untouched. That is the only displacement a record ever gets.
  */
-export function RecordSlab({ record, callHref }: { record: RecordView; callHref?: string }) {
+export function RecordSlab({
+  record,
+  callHref,
+  noun = "agent",
+}: {
+  record: RecordView;
+  callHref?: string;
+  noun?: TargetNoun;
+}) {
   const { customer, mention, extra } = record;
-  const note = MENTION_LABEL[mention];
+  const note = MENTION_LABEL[mention]?.replace("agent", noun);
   return (
     <article
       className="rf-slab"
