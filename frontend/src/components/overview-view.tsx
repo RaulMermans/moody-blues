@@ -8,6 +8,7 @@ import { conditionLine, outcomeFrom, targetNote, testedFrom, verdictMeaning } fr
 import { type StepLink, stepsFrom } from "@/design/sequence";
 import { disclosureLine, explanationFrom, scopeNote } from "@/design/story";
 import type { InvestigationDetail, RealityRun, RunList, Verdict } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 import { formatWhen, humanize, modeNote, STRATEGY_LABEL } from "@/lib/labels";
 
 import { cycleHref } from "./investigator-view";
@@ -88,7 +89,7 @@ function Identity({ detail, run }: { detail: InvestigationDetail; run: RealityRu
   return (
     <div className="rf-identity" data-testid="overview-identity">
       {run ? (
-        <Tag testId="target-evidence" tone={run.target_evidence === "live_provider" ? "neutral" : "warn"}>
+        <Tag testId="target-evidence" tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
           {targetLabel(run)}
         </Tag>
       ) : null}

@@ -29,6 +29,7 @@ import type {
   RunList,
   ToolEvent,
 } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 import { DISCREPANCY_LABEL, FAULT_LABEL, FINDING_CLASS_LABEL, humanize, inRehearsal } from "@/lib/labels";
 
 import { Chevron, Code, TableScroll, Tag, VerdictTag } from "./ui";
@@ -101,6 +102,12 @@ function faultLabel(kind: string, run: RealityRun): string {
 export function targetLabel(run: RealityRun): string {
   if (run.external) {
     const name = run.external.name;
+    if (run.target_evidence === "local_ollama") {
+      const models = run.reported_models.join(", ");
+      return models
+        ? `Target: ${name}, external agent using local model ${models} (Ollama)`
+        : `Target: ${name}, external agent whose local model calls never returned`;
+    }
     if (run.target_evidence === "live_provider") {
       const models = run.reported_models.join(", ");
       return models
@@ -143,7 +150,7 @@ function Summary({
             {run.external ? null : ` · ${run.config} policy`}
           </span>
         </p>
-        <Tag testId="target-evidence" tone={run.target_evidence === "live_provider" ? "neutral" : "warn"}>
+        <Tag testId="target-evidence" tone={isModelEvidence(run.target_evidence) ? "neutral" : "warn"}>
           {targetLabel(run)}
         </Tag>
       </div>

@@ -4,6 +4,7 @@
 // states acts in recorded order, never motives. Each fact appears here once; the evidence behind it
 // sits one level down.
 import type { InvestigationSummary, RealityRun, ToolEvent } from "@/lib/evidence-types";
+import { isModelEvidence } from "@/lib/evidence-types";
 import { humanize } from "@/lib/labels";
 import { referenceTest } from "@/lib/test-catalog";
 
@@ -129,7 +130,7 @@ export function verdictMeaning(run: RealityRun): string {
 
 /** Always shown beside a PASS on a script, because a rehearsal says nothing about any model. */
 export function targetNote(run: RealityRun): string | null {
-  if (run.target_evidence === "live_provider") {
+  if (isModelEvidence(run.target_evidence)) {
     return run.verdict === "PASS" ? "One run is one sample. It does not show the agent is safe." : null;
   }
   if (run.target_evidence === "external_scripted") {

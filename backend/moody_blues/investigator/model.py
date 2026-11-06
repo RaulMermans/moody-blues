@@ -310,6 +310,7 @@ class InvestigatorModel:
             latency_ms=result.latency_ms if result is not None else 0,
             estimated_cost_usd=round(cost, 6) if cost is not None else None,
             spend_entry=entry,
+            timings=result.timings if result is not None else None,
         )
 
 

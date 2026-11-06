@@ -15,6 +15,7 @@ recovery and verification apply to them unchanged. They are linked by id and evi
 from __future__ import annotations
 
 import fcntl
+import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -99,6 +100,26 @@ class InvestigationWorkspace:
         )
 
 
+def _verify_model_calls(directory: Path, report: InvestigationReport) -> list[str]:
+    """What the model was asked and what it answered, against the hashes in the report."""
+    problems: list[str] = []
+    for call in report.model_calls:
+        path = directory / call.artifact_path
+        if not path.exists():
+            problems.append(f"{call.artifact_path} is missing")
+            continue
+        try:
+            artifact = json.loads(path.read_text(encoding="utf-8"))
+            request, response = artifact["request"], artifact.get("response")
+        except (ValueError, KeyError, TypeError):
+            problems.append(f"{call.artifact_path} cannot be read")
+            continue
+        answered = sha256_text(response) if response is not None else None
+        if sha256_text(request) != call.prompt_sha256 or answered != call.response_sha256:
+            problems.append(f"{call.artifact_path} does not match its recorded hash")
+    return problems
+
+
 def verify_investigation(directory: Path, experiment_root: Path) -> list[str]:
     """Check the journal, the report, every source and every linked experiment.
 
@@ -125,6 +146,7 @@ def verify_investigation(directory: Path, experiment_root: Path) -> list[str]:
             problems.append(f"{proposal.source_path} is missing")
         elif sha256_text(source.read_text(encoding="utf-8")) != proposal.source_sha256:
             problems.append(f"{proposal.source_path} does not match its recorded hash")
+    problems.extend(_verify_model_calls(directory, report))
     known = {p.proposal_id: p for p in report.proposals}
     for ref in report.experiments:
         experiment = experiment_root / ref.experiment_id

@@ -1,6 +1,6 @@
 // Mirrors backend/moody_blues/contracts/explorer.py. The backend owns these contracts.
 
-export type ExecutionMode = "recorded" | "live" | "rehearsal";
+export type ExecutionMode = "recorded" | "live" | "rehearsal" | "local";
 export type Verdict = "PASS" | "VIOLATION" | "INCONCLUSIVE";
 export type ProductOutcome =
   | "violation_verified"
@@ -17,7 +17,17 @@ export type CaseKind =
   | "successful_recovery"
   | "negative_result"
   | "inconclusive";
-export type TargetEvidence = "live_provider" | "offline_fixture" | "reference_executor" | "external_scripted";
+export type TargetEvidence =
+  | "live_provider"
+  | "local_ollama"
+  | "offline_fixture"
+  | "reference_executor"
+  | "external_scripted";
+
+/** A real model answered: hosted or on this machine. Only these say anything about model behavior. */
+export function isModelEvidence(evidence: string | null | undefined): boolean {
+  return evidence === "live_provider" || evidence === "local_ollama";
+}
 
 /** Who an external run was. `uses_model` is what the host observed, never what the agent said. */
 export interface ExternalTarget {
@@ -33,6 +43,9 @@ export interface ExternalTarget {
   model_calls: number;
   /** No answer to trust: each may have run, and may be billed. */
   model_calls_uncertain: number;
+  /** Present only when a local model answered, read from the running provider. */
+  model_provider?: string;
+  model_digest?: string;
 }
 
 export interface BoundedText {
@@ -61,7 +74,7 @@ export interface InvestigationSummary {
   world_ids: string[];
   investigator_model: string;
   target_model: string;
-  investigator_evidence: "live_provider" | "offline_fixture" | null;
+  investigator_evidence: "live_provider" | "local_ollama" | "offline_fixture" | null;
   target_evidence: TargetEvidence[];
   experiment_count: number;
   target_run_count: number;

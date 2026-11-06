@@ -186,6 +186,8 @@ def render_evidence(evidence: ExperimentEvidence, *, title: str, root: Path) -> 
             "reference_executor": f"DETERMINISTIC reference executor `{run.executor}` (not an LLM)",
             "live_provider": f"LIVE model {run.requested_model} via {run.provider} "
             f"(reported: {', '.join(run.reported_models) or 'n/a'}), policy {run.policy_version}",
+            "local_ollama": f"LOCAL model {run.requested_model} via {run.provider} "
+            f"(reported: {', '.join(run.reported_models) or 'n/a'}), policy {run.policy_version}",
             "offline_fixture": "OFFLINE provider fixture (not model behavior)",
         }[run.evidence_source]
         lines.append(f"   target {run.run_ref} {run.run_id}: {origin}")

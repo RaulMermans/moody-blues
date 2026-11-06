@@ -128,8 +128,9 @@ The [submission pack](docs/submission/README.md) holds the copy, video script, c
 | Investigation Explorer: result, story, comparison, Investigator view, timeline and raw evidence | Implemented; **real recorded evidence**; verified with Playwright ([design](docs/architecture/product-experience.md)) |
 | Evidence API: read-only, validated, hash-pinned ([contracts](docs/architecture/evidence-api.md)) | Implemented and tested |
 | Operator missions: token-gated, one at a time, SSE progress, restart classification | Rehearsals verified on real Docker; **one live mission run** from the browser on `glm-5.3`. Refused by the ledger as shipped until the owner raises the limit |
-| External agents: `mb-agent/1` over stdio, Python SDK, one long-lived process in the sandbox per run | Implemented and **verified on real Docker with scripted agents, and with an LLM agent whose model is a labeled fixture**. No real model has driven an external agent yet ([record](docs/sprints/sprint-16.md)) |
-| Investigator against external targets: validated selection, real workflow and coordinator | Implemented and verified on real Docker. **The Investigator's model was a labeled fixture**: no model has yet written a hypothesis about an external target |
+| External agents: `mb-agent/1` over stdio, Python SDK, one long-lived process in the sandbox per run | Implemented and **verified on real Docker with scripted agents, and with a real local model driving an independent agent** ([record](docs/sprints/sprint-17.md)). A real hosted model has not driven one |
+| Investigator against external targets: validated selection, real workflow and coordinator | Implemented and verified on real Docker. **A real local 4B model wrote hypotheses and experiments against an external agent**, which ran through the real coordinator. Its reasoning was weak ([results](docs/evaluations/sprint-17/README.md)) |
+| Local inference through Ollama, loopback only, separate from the paid ledger | **Experimental.** Verified on one Mac with one small model ([guide](docs/external-agents/local-models.md)) |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
 
 ## Bring your own agent
@@ -145,14 +146,16 @@ make external-investigate TARGET=external_llm MANIFEST=examples/external-agent/l
 
 Start with the [quickstart](docs/external-agents/quickstart.md), then the
 [LLM adapter guide](docs/external-agents/llm-adapter-guide.md) and the
-[Investigator guide](docs/external-agents/investigator-integration.md).
+[Investigator guide](docs/external-agents/investigator-integration.md). To use a model on your own machine, see
+[local models](docs/external-agents/local-models.md).
 
 **Works today:** Python agents you run locally, on the CRM tools and existing worlds, through the real sandbox,
-broker, gateway and Oracle. A labeled fixture stands in for every model.
+broker, gateway and Oracle. By default a labeled fixture stands in for every model, and those runs say nothing about
+any LLM. A real local model can take its place, on your own machine and for free.
 
-**Not yet:** a real model driving an external agent ([approval needed](docs/external-agents/live-validation-approval.md)),
-external agents on the hosted VM, anything but Python, and any public way to submit an agent. These runs say nothing
-about any LLM, and nothing here shows the Investigator beats fixed testing.
+**Not yet:** a real hosted model driving an external agent ([approval needed](docs/external-agents/live-validation-approval.md)),
+external agents on the hosted VM, anything but Python, and any public way to submit an agent. Nothing here shows the
+Investigator beats fixed testing.
 
 ## Prerequisites
 

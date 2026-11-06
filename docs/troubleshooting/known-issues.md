@@ -438,6 +438,30 @@ invisible because the only provider it had met answered at once. Fixed in Sprint
 `evidence_source` came from answers delivered, so a provider that was asked, and may bill, left no trace of a model.
 A Sprint 15 test asserted this. It now comes from requests that reached a provider.
 
+### KI-71: `think: false` does not stop a thinking build reasoning
+
+**Found in Sprint 17, with real runs.** `qwen3:4b` reasoned aloud in `content` with `think: false`, and hid the same
+tokens with `think: true`, so it spent 2,048 tokens on turn one either way and called no tool. The tag is a thinking build.
+A capability of `thinking` is no guide: the instruct build reports it too. Measure a model before selecting it.
+
+### KI-72: A rehearsal label read "no model" on a run a local model drove
+
+**Found in Sprint 17.** With a real model as target and a fixture Investigator, a run would have published as
+`Rehearsal, no model`, with a cost note saying no model was used. Both false. `ExecutionMode.LOCAL` and the local cost
+notes fix this for local runs. A hosted target with a fixture Investigator still publishes as a rehearsal: not fixed here.
+
+### KI-73: A small local model adds optional arguments of its own
+
+**Found in Sprint 17, with real runs.** `qwen3:4b-instruct` sometimes sends `client_request_id: "1"`, which the schema
+refuses (8 to 64 characters), and then gives up. The refusal is correct and the fault never fires, so read
+`faults_delivered` before reading anything into an INCONCLUSIVE.
+
+### KI-74: An edited model answer passed verification
+
+**Found in Sprint 17, by tampering with real local evidence.** The report held a hash of each model call, but nothing
+compared it with `calls/call-NN.json`, so the record of what a model wrote could change unnoticed. `verify_investigation`
+now checks both sides. All 31 earlier real investigations still verify.
+
 ### KI-70: The Investigator was told every target was an LLM
 
 `target_capability` was written for the internal agent and also used for external scripts, so a live model would

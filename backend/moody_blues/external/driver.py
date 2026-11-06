@@ -70,6 +70,7 @@ from moody_blues.contracts.inference import (
     ConversationMessage,
     InferenceRequest,
     InferenceResult,
+    LocalModelIdentity,
     ToolCall,
     ToolSpec,
 )
@@ -121,6 +122,10 @@ class InferenceBroker:
     max_completion_tokens: int
     max_prompt_bytes: int = DEFAULT_MAX_PROMPT_BYTES
     call_timeout_seconds: float = DEFAULT_MODEL_CALL_TIMEOUT_SECONDS
+    # Sprint 17. Stops a generation the host gave up on, where the provider can. Without it an
+    # abandoned local call would keep the machine busy after the run had moved on.
+    abort: Callable[[], None] | None = None
+    identity: LocalModelIdentity | None = None
 
 
 class _Stopped(Exception):
@@ -557,6 +562,7 @@ class AdapterDriver:
             prompt_tokens=usage.prompt_tokens if usage is not None else None,
             completion_tokens=usage.completion_tokens if usage is not None else None,
             latency_ms=latency_ms,
+            timings=result.timings if result is not None else None,
         )
         self._outcome.model_requests.append(record)
         self._write_intent({"request_id": request_id, "status": status.value})
@@ -788,6 +794,8 @@ class AdapterDriver:
         while not finished.wait(_POLL_SECONDS):
             self._check_cancel()
             if self._cancel_deadline is not None or self._monotonic() >= limit:
+                if broker.abort is not None:
+                    broker.abort()
                 return None
         return answers[0] if answers else None
 

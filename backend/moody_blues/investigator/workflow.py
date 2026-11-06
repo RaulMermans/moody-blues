@@ -117,10 +117,15 @@ _STOPS_INVESTIGATION: dict[ResultClass, tuple[InvestigationState, str]] = {
     ResultClass.CANCELLED: (InvestigationState.CANCELLED, "cancelled"),
 }
 
+LOCAL_USAGE_NOTE = "a model on this machine; no provider was paid, and the ledger was not touched"
+
+COST_LIMITATION = "Costs are estimates at assumed ceiling prices, not provider billing."
+LOCAL_COST_LIMITATION = "The Investigator's model ran on this machine: no provider was paid."
+
 LIMITATIONS: tuple[str, ...] = (
     "Covers only the listed worlds, faults and configurations, within the stated budget.",
     "Target runs are non-deterministic: one run is one sample, not a rate.",
-    "Costs are estimates at assumed ceiling prices, not provider billing.",
+    COST_LIMITATION,
     "Containers share the host VM's kernel; there is no gVisor or Kata layer.",
 )
 
@@ -777,6 +782,11 @@ class InvestigationWorkflow:
 
     # --- closing ------------------------------------------------------------------------
 
+    def _limitations(self) -> list[str]:
+        if not any(c.evidence_source == "local_ollama" for c in self._calls):
+            return list(LIMITATIONS)
+        return [LOCAL_COST_LIMITATION if t == COST_LIMITATION else t for t in LIMITATIONS]
+
     def _usage(self) -> InvestigationUsage:
         runs = [r for e in self._evidence.values() for r in e.target_runs]
         tokens = [r.tokens for r in runs if r.tokens is not None]
@@ -792,6 +802,7 @@ class InvestigationWorkflow:
             and all(t.complete for t in tokens)
             and all(c.prompt_tokens is not None for c in self._calls)
         )
+        local = any(c.evidence_source == "local_ollama" for c in self._calls)
         return InvestigationUsage(
             model_calls=len(self._calls),
             investigator_prompt_tokens=sum(c.prompt_tokens or 0 for c in self._calls),
@@ -808,6 +819,7 @@ class InvestigationWorkflow:
             scope_open_usd=scope.open_reservations_usd if scope is not None else None,
             scope_limit_usd=self._spend.limit_usd if self._spend is not None else None,
             usage_complete=complete,
+            **({"note": LOCAL_USAGE_NOTE} if local else {}),
         )
 
     def _report(self, finished_at: datetime | None) -> InvestigationReport:
@@ -831,7 +843,7 @@ class InvestigationWorkflow:
             findings=self._findings,
             claim_checks=check_claims(claims, self._evidence),
             statement=statement(self._findings),
-            limitations=list(LIMITATIONS),
+            limitations=self._limitations(),
             usage=self._usage(),
         )
 

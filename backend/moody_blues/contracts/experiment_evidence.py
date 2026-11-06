@@ -137,7 +137,7 @@ class GenerationRecord(BaseModel):
 
     proposal_id: str = Field(max_length=64)
     model: str = Field(max_length=120)
-    evidence_source: Literal["live_provider", "offline_fixture"]
+    evidence_source: Literal["live_provider", "offline_fixture", "local_ollama"]
 
 
 class ExperimentSpec(BaseModel):
@@ -249,9 +249,13 @@ class TargetRunEvidence(BaseModel):
     # ``RunOutcome`` for agent runs. Read this with the verdict: an Oracle PASS only says the
     # state is right, and an agent that never claimed anything is not a success.
     run_outcome: str | None = None  # absent in records written before this field existed
-    # Only "live_provider" is evidence of model behavior.
+    # Only ``MODEL_EVIDENCE`` values are evidence of model behavior.
     evidence_source: Literal[
-        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+        "live_provider",
+        "local_ollama",
+        "offline_fixture",
+        "reference_executor",
+        "external_scripted",
     ]
     executor: str | None
     provider: str | None

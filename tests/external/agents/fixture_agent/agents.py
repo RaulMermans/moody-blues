@@ -325,6 +325,12 @@ class Probes(_Fixture):
             "internet": attempt(lambda: connect("1.1.1.1", 443)),
             "dns": attempt(lambda: socket.gethostbyname("example.com")),
             "gateway": attempt(lambda: connect("172.17.0.1", 8000)),
+            # Ollama, by every address a container could try: its loopback, the bridge, the VM's
+            # host (Colima), and Docker Desktop's name for the host.
+            "ollama_loopback": attempt(lambda: connect("127.0.0.1", 11434)),
+            "ollama_bridge": attempt(lambda: connect("172.17.0.1", 11434)),
+            "ollama_vm_host": attempt(lambda: connect("192.168.5.2", 11434)),
+            "ollama_host_name": attempt(lambda: connect("host.docker.internal", 11434)),
             "interfaces": sorted(os.listdir("/sys/class/net")),
             "write_root": attempt(lambda: write("/etc/x")),
             "write_app": attempt(lambda: write("/x")),

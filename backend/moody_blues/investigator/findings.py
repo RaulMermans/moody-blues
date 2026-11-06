@@ -9,7 +9,7 @@ have no target run, so they can never appear here.
 
 from __future__ import annotations
 
-from moody_blues.contracts.agent import ADAPTER_NEVER_RAN, TerminationReason
+from moody_blues.contracts.agent import ADAPTER_NEVER_RAN, MODEL_EVIDENCE, TerminationReason
 from moody_blues.contracts.experiment_evidence import ExperimentEvidence, TargetRunEvidence
 from moody_blues.contracts.investigation import (
     ClaimCheck,
@@ -87,7 +87,7 @@ def classify_run(run: TargetRunEvidence, *, evidence_intact: bool) -> FindingCla
 def _notes(run: TargetRunEvidence, finding_class: FindingClass) -> list[str]:
     notes: list[str] = []
     termination = run.target_observed.termination
-    if run.evidence_source != "live_provider":
+    if run.evidence_source not in MODEL_EVIDENCE:
         notes.append(f"{run.evidence_source}: says nothing about model behavior")
     if termination in {TerminationReason.MAX_STEPS.value, TerminationReason.TOKEN_BUDGET.value}:
         notes.append(f"the run hit a budget we set ({termination}); not by itself a model failing")
@@ -217,6 +217,8 @@ def statement(findings: list[VerifiedFinding]) -> str:
     triggered = [f for f in confirmed if f.fault_attributable]
     limited = [f for f in confirmed if not f.eligible_for_rate]
     basis = "live model target" if live else "non-model target (fixture or reference executor)"
+    if live and all(f.target_evidence_source == "local_ollama" for f in live):
+        basis = "local model target"
     if all(f.target_evidence_source == "external_scripted" for f in confirmed):
         basis = "non-model target (external script)"
     return (

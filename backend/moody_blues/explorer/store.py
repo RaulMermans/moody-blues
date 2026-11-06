@@ -115,7 +115,7 @@ class EvidenceStore:
                 self._jobs.directory(job.job_id) / BUNDLE,
                 job.bundle_sha256,
                 job.investigation_id,
-                {ExecutionMode.LIVE, ExecutionMode.REHEARSAL},
+                {ExecutionMode.LIVE, ExecutionMode.REHEARSAL, ExecutionMode.LOCAL},
             )
             items.append(_listed(job.investigation_id, check))
         return items
@@ -155,7 +155,7 @@ class EvidenceStore:
                         self._jobs.directory(job.job_id) / BUNDLE,
                         job.bundle_sha256,
                         investigation_id,
-                        {ExecutionMode.LIVE, ExecutionMode.REHEARSAL},
+                        {ExecutionMode.LIVE, ExecutionMode.REHEARSAL, ExecutionMode.LOCAL},
                     )
                 )
         raise _not_found()

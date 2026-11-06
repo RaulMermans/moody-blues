@@ -193,7 +193,12 @@ class AgentTrajectory(BaseModel):
     wall_ms: int
 
 
-EvidenceSource = Literal["live_provider", "offline_fixture"]
+# ``live_provider`` is a hosted, paid provider (Vultr). ``local_ollama`` is a model on this machine,
+# reached through the same broker. Neither is ever relabeled as the other, and records written
+# before Sprint 17 keep the value they were written with.
+EvidenceSource = Literal["live_provider", "offline_fixture", "local_ollama"]
+# A real model answered. Only these say anything about model behavior.
+MODEL_EVIDENCE: frozenset[str] = frozenset({"live_provider", "local_ollama"})
 # ``external_scripted``: an external agent during which the host brokered no model call. An
 # external agent that does use a model carries ``EvidenceSource`` like any other model run.
 ExternalEvidenceSource = EvidenceSource | Literal["external_scripted"]

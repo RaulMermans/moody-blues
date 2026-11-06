@@ -369,7 +369,7 @@ def test_a_finished_investigation_links_to_its_real_evidence(tmp_path: Path) -> 
     assert json.loads((directory / "calls" / "call-01.json").read_text())["request"]
 
 
-@pytest.mark.parametrize("victim", ["sources/prop_1.py", "report.json"])
+@pytest.mark.parametrize("victim", ["sources/prop_1.py", "report.json", "calls/call-01.json"])
 def test_tampering_with_the_record_is_detected(tmp_path: Path, victim: str) -> None:
     h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=experiment())
     report = h.run()
@@ -377,6 +377,20 @@ def test_tampering_with_the_record_is_detected(tmp_path: Path, victim: str) -> N
     path = directory / victim
     path.write_text(path.read_text().replace("prop_1", "prop_x", 1) + "#", encoding="utf-8")
     assert verify_investigation(directory, h.experiments)
+
+
+@pytest.mark.parametrize("field", ["request", "response"])
+def test_a_well_formed_edit_of_a_model_call_is_detected(tmp_path: Path, field: str) -> None:
+    """The record of what a model was told and what it wrote. Regression for KI-74."""
+    h = Harness(tmp_path, replies=[propose(1, CODE), conclude()], steps=experiment())
+    report = h.run()
+    directory = h.investigations / report.investigation_id
+    path = directory / "calls" / "call-01.json"
+    artifact = json.loads(path.read_text())
+    artifact[field] = artifact[field].replace("h1", "h9")
+    path.write_text(json.dumps(artifact), encoding="utf-8")
+    problems = verify_investigation(directory, h.experiments)
+    assert problems == ["calls/call-01.json does not match its recorded hash"]
 
 
 def test_tampering_with_linked_evidence_is_detected(tmp_path: Path) -> None:

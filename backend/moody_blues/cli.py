@@ -19,6 +19,7 @@ Commands:
   investigator-demo       Fixture model, real sandboxes and worlds (free).
   investigator-live       One live investigation (chargeable; --confirm-billable).
   investigator-eval       Paired tests and strategy comparison (chargeable; --confirm-billable).
+  local-preflight         What Ollama has installed; --smoke generates once (free, local).
   recorded-export         Rebuild the curated recorded investigations from local records (free).
   recorded-verify         Check the recorded investigations against manifest and source (free).
   containment-report      Attempt harmless escapes on this host and write the evidence (free).
@@ -699,7 +700,7 @@ def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
 
 def _external(settings: Settings, args: argparse.Namespace) -> int:
     from moody_blues.contracts.investigation import TargetKind
-    from moody_blues.external import commands
+    from moody_blues.external import commands, local
 
     match args.command:
         case "external-preflight":
@@ -712,6 +713,8 @@ def _external(settings: Settings, args: argparse.Namespace) -> int:
                 live_inference=args.live_inference,
                 confirm_billable=args.confirm_billable,
                 approved_spend_usd=args.approved_spend_usd,
+                local_inference=args.local_inference,
+                fault=args.fault,
             )
         case "external-investigate":
             return commands.investigate(
@@ -724,8 +727,12 @@ def _external(settings: Settings, args: argparse.Namespace) -> int:
                     investigator=args.live_investigator,
                     confirmed=args.confirm_billable,
                     approved_spend_usd=args.approved_spend_usd,
+                    local_target=args.local_inference,
+                    local_investigator=args.local_investigator,
                 ),
             )
+        case "local-preflight":
+            return local.preflight(settings, smoke=args.smoke)
         case _:
             return commands.demo(settings)
 
@@ -817,6 +824,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     xr.add_argument("--live-inference", action="store_true")
     xr.add_argument("--confirm-billable", action="store_true")
     xr.add_argument("--approved-spend-usd", type=float)
+    xr.add_argument("--local-inference", action="store_true")
+    xr.add_argument("--fault", choices=["none", "phantom_failure", "phantom_success"])
     xi = sub.add_parser("external-investigate")
     xi.add_argument(
         "--target", required=True, choices=["internal_llm", "external_scripted", "external_llm"]
@@ -827,7 +836,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     xi.add_argument("--live-investigator", action="store_true")
     xi.add_argument("--confirm-billable", action="store_true")
     xi.add_argument("--approved-spend-usd", type=float)
+    xi.add_argument("--local-inference", action="store_true")
+    xi.add_argument("--local-investigator", action="store_true")
     sub.add_parser("external-demo")
+    lp = sub.add_parser("local-preflight")
+    lp.add_argument("--smoke", action="store_true", help="also generate once, on this machine")
     sub.add_parser("recorded-export")
     sub.add_parser("recorded-verify")
     sub.add_parser("containment-report")
@@ -899,7 +912,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return experiment_live(settings, args)
         case "experiment-recover":
             return experiment_recover(settings)
-        case "external-preflight" | "external-run" | "external-investigate" | "external-demo":
+        case (
+            "external-preflight"
+            | "external-run"
+            | "external-investigate"
+            | "external-demo"
+            | "local-preflight"
+        ):
             return _external(settings, args)
         case "recorded-export":
             return recorded_export(settings)

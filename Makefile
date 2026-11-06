@@ -15,7 +15,8 @@ PYTEST  := $(UV) run pytest
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
         test-hosted release release-check external-preflight external-run external-investigate external-demo \
-        external-test external-containment external-bench external-eval external-investigator-eval external-ui
+        external-test external-containment external-bench external-eval external-investigator-eval external-ui \
+        local-preflight local-smoke local-eval local-ui
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -59,14 +60,28 @@ test-integration: ## Docker sandbox integration + containment tests (needs a Doc
 external-preflight: ## Check an external agent's manifest and handshake in the real sandbox (MANIFEST=path)
 	$(UV) run moody-blues external-preflight --manifest $(MANIFEST)
 
-external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd)
+external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd. LOCAL=1 uses Ollama, FAULT=none|phantom_failure|phantom_success)
 	$(UV) run moody-blues external-run --manifest $(MANIFEST) $(if $(WORLD),--world $(WORLD)) \
-		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
+		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND)) \
+		$(if $(LOCAL),--local-inference) $(if $(FAULT),--fault $(FAULT))
 
-external-investigate: ## The real Investigator workflow against one target (TARGET=external_scripted|external_llm|internal_llm MANIFEST=path WORLD=name). Free: models are labeled fixtures
+external-investigate: ## The real Investigator workflow against one target (TARGET=external_scripted|external_llm|internal_llm MANIFEST=path WORLD=name). Free: models are labeled fixtures, or local with LOCAL=1 LOCAL_INVESTIGATOR=1
 	$(UV) run moody-blues external-investigate --target $(TARGET) $(if $(MANIFEST),--manifest $(MANIFEST)) \
 		$(if $(WORLD),--world $(WORLD)) $(if $(LIVE),--live-inference) $(if $(LIVE_INVESTIGATOR),--live-investigator) \
-		$(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
+		$(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND)) \
+		$(if $(LOCAL),--local-inference) $(if $(LOCAL_INVESTIGATOR),--local-investigator)
+
+local-preflight: ## What Ollama has installed, and whether the selected model can be used. Generates nothing
+	$(UV) run moody-blues local-preflight
+
+local-eval: ## REAL local model: KITE scenarios and two investigations, checked from the evidence (MANIFEST=path OUT=dir). Free; no provider is paid
+	$(UV) run python -m tests.external.evaluate_local --manifest $(MANIFEST) $(if $(OUT),--out $(OUT))
+
+local-ui: ## The pages against real local evidence, in a real browser (MOODY_E2E_LOCAL_ARTIFACTS=dir). Starts no model
+	cd $(FE) && $(PNPM) design:build && $(PNPM) exec playwright test --config playwright.local.config.ts
+
+local-smoke: ## local-preflight, then one real generation on this machine. Free; no provider is paid
+	$(UV) run moody-blues local-preflight --smoke
 
 external-demo: ## Run both example agents through the real sandbox and Oracle. Scripts, not models; free
 	$(UV) run moody-blues external-demo

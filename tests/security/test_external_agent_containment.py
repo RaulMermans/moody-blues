@@ -123,6 +123,13 @@ def test_no_network(probe: tuple[dict[str, Any], TargetResult]) -> None:
     assert report["interfaces"] == ["lo"]
 
 
+def test_a_local_model_server_cannot_be_reached(probe: tuple[dict[str, Any], TargetResult]) -> None:
+    """Model calls go through the host. There is no other way to Ollama from a sandbox."""
+    report, _ = probe
+    for attempt in ("ollama_loopback", "ollama_bridge", "ollama_vm_host", "ollama_host_name"):
+        assert _denied(report[attempt]), report[attempt]
+
+
 def test_no_writes_outside_tmp_and_no_executing_there(
     probe: tuple[dict[str, Any], TargetResult],
 ) -> None:

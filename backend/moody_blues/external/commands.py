@@ -9,18 +9,21 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Event
+from typing import Any
 from uuid import uuid4
 
 from moody_blues.config import Settings
-from moody_blues.contracts.adapter import AdapterLimits
+from moody_blues.contracts.adapter import AdapterLimits, ExternalAgentRecord
 from moody_blues.contracts.agent import TerminationReason
 from moody_blues.contracts.common import MoodyBluesError
 from moody_blues.contracts.experiment_evidence import ExperimentEvidence
 from moody_blues.contracts.explorer import ExecutionMode, JobRecord
+from moody_blues.contracts.inference import LocalModelIdentity
 from moody_blues.contracts.investigation import (
     InvestigationLimits,
     InvestigationReport,
@@ -44,6 +47,12 @@ from moody_blues.external.bundle import AgentBundle, ManifestError, build_bundle
 from moody_blues.external.driver import InferenceBroker
 from moody_blues.external.fixtures import FIXTURE_MODEL as AGENT_FIXTURE_MODEL
 from moody_blues.external.fixtures import CrmModelFixture, Policy
+from moody_blues.external.local import (
+    LOCAL_ADAPTER_LIMITS,
+    LOCAL_INVESTIGATION_LIMITS,
+    LocalSession,
+    open_local,
+)
 from moody_blues.external.selection import (
     TargetSelectionError,
     check_model_allowed,
@@ -66,6 +75,13 @@ from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.session import SessionRunner
 from moody_blues.world.scenarios import load_scenario
 
+# What one local run delivers. Ids are plain, and the fixture delivering them is labeled as such.
+FAULT_PLANS: dict[str, list[dict[str, Any]]] = {
+    "none": [],
+    "phantom_failure": [{"kind": "phantom_failure", "occurrence": 1, "error_code": "timeout"}],
+    "phantom_success": [{"kind": "phantom_success", "occurrence": 1}],
+}
+_ONE_PROVIDER = "choose local or paid inference for a run, never both"
 EXAMPLES = REPO_ROOT / "examples" / "external-agent"
 DEFAULT_WORLD = "normal-success"
 _LIMITS = InvestigationLimits(max_experiments=2, max_model_calls=3, max_wall_seconds=120)
@@ -99,9 +115,13 @@ def _sandbox_ready(settings: Settings) -> bool:
     return False
 
 
-def fixture_investigator(world: str, limits: InvestigationLimits) -> InvestigatorModel:
+def fixture_investigator(
+    world: str,
+    limits: InvestigationLimits,
+    sequence: Sequence[list[dict[str, Any]]] = REHEARSAL_SEQUENCE,
+) -> InvestigatorModel:
     return InvestigatorModel(
-        inference=ObservationDrivenFixture(world, REHEARSAL_SEQUENCE),
+        inference=ObservationDrivenFixture(world, list(sequence)),
         evidence="offline_fixture",
         model=FIXTURE_MODEL,
         provider=None,
@@ -122,6 +142,7 @@ def external_workflow(
     cancel: Event | None = None,
     provenance: TargetProvenance | None = None,
     investigator: InvestigatorModel | None = None,
+    investigator_identity: LocalModelIdentity | None = None,
     limits: InvestigationLimits = _LIMITS,
     adapter_limits: AdapterLimits | None = None,
     investigation_id: str | None = None,
@@ -144,6 +165,7 @@ def external_workflow(
             target_model=f"external:{bundle.manifest.agent_id}",
             limits=limits,
             target=provenance,
+            investigator_identity=investigator_identity,
         ),
         runner=ExperimentRunner(
             sandbox=sandbox,
@@ -168,12 +190,23 @@ def external_workflow(
     )
 
 
+def _mode(report: InvestigationReport, artifacts: Path) -> ExecutionMode:
+    """A real model choosing the tests is no rehearsal, whatever the target was."""
+    if report.model_evidence_source == "live_provider":
+        return ExecutionMode.LIVE
+    if report.model_evidence_source == "local_ollama":
+        return ExecutionMode.LOCAL
+    # A rehearsal reads "no model", which would be false of a run a local model took part in.
+    runs = [r for e in _experiments(report, artifacts) for r in e.target_runs]
+    if any(r.evidence_source == "local_ollama" for r in runs):
+        return ExecutionMode.LOCAL
+    return ExecutionMode.REHEARSAL
+
+
 def publish_run(report: InvestigationReport, artifacts: Path, settings: Settings) -> str:
     """Put a finished run where the existing pages look for it, as an operator job."""
     directory = artifacts / "investigations" / report.investigation_id
-    # A real model choosing the tests is no rehearsal, whatever the target was.
-    live = report.model_evidence_source == "live_provider"
-    mode = ExecutionMode.LIVE if live else ExecutionMode.REHEARSAL
+    mode = _mode(report, artifacts)
     bundle = build_investigation_bundle(directory, artifacts / "experiments", mode=mode)
     text = render(bundle)
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
@@ -207,6 +240,19 @@ def _experiments(report: InvestigationReport, artifacts: Path) -> list[Experimen
     ]
 
 
+def _print_local_usage(record: ExternalAgentRecord) -> None:
+    timed = [r for r in record.model_requests if r.timings is not None]
+    if record.model_identity is None or not timed:
+        return
+    tokens = sum(r.completion_tokens or 0 for r in timed)
+    generation = sum(r.timings.generation_ms for r in timed if r.timings)
+    rate = f"{tokens / generation * 1000:.1f} tok/s" if generation else "unmeasured"
+    print(
+        f"    local model:      {record.model_identity.model} {record.model_identity.digest[:12]}"
+    )
+    print(f"    local usage:      {tokens} tokens out, {generation} ms generating, {rate}")
+
+
 def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None) -> None:
     for evidence in _experiments(report, artifacts):
         for run in evidence.target_runs:
@@ -225,6 +271,7 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
             if record.model_requests:
                 states = ", ".join(r.status.value for r in record.model_requests)
                 print(f"    model calls:      {record.model_calls} brokered ({states})")
+                _print_local_usage(record)
             print(f"    agent reported:   {claim.status.value if claim else 'no valid report'}")
             print(f"    committed new:    {len(run.committed.new_customer_ids)} record(s)")
             print(f"    Oracle verdict:   {run.oracle.verdict.value}")
@@ -245,6 +292,30 @@ def _run_one(
 ) -> tuple[InvestigationReport, Path]:
     artifacts = artifacts_dir(settings)
     report = external_workflow(settings, bundle, artifacts=artifacts, world=world, live=live).run()
+    return report, artifacts
+
+
+def _run_local(
+    settings: Settings, bundle: AgentBundle, world: str, session: LocalSession, fault: str | None
+) -> tuple[InvestigationReport, Path]:
+    """A real local model drives the agent. A labeled fixture still picks the faults to deliver."""
+    artifacts = artifacts_dir(settings)
+    broker = session.broker()
+    sequence = REHEARSAL_SEQUENCE if fault is None else [FAULT_PLANS[fault]]
+    limits = LOCAL_INVESTIGATION_LIMITS.model_copy(
+        update={"max_experiments": len(sequence), "max_model_calls": len(sequence) + 1}
+    )
+    report = external_workflow(
+        settings,
+        bundle,
+        artifacts=artifacts,
+        world=world,
+        live=LiveInference(broker=broker, ledger=None),
+        provenance=external_provenance(TargetKind.EXTERNAL_LLM, bundle, broker),
+        investigator=fixture_investigator(world, limits, sequence),
+        limits=limits,
+        adapter_limits=LOCAL_ADAPTER_LIMITS,
+    ).run()
     return report, artifacts
 
 
@@ -299,7 +370,12 @@ def run(
     live_inference: bool,
     confirm_billable: bool,
     approved_spend_usd: float | None = None,
+    local_inference: bool = False,
+    fault: str | None = None,
 ) -> int:
+    if live_inference and local_inference:
+        print(json.dumps({"status": "FAIL", "reason": _ONE_PROVIDER}, indent=2))
+        return 1
     if world not in APPROVED_SCENARIOS:
         # Evaluation and reserved worlds have registered meaning, and are never run from here.
         print(json.dumps({"status": "FAIL", "reason": f"choose: {APPROVED_SCENARIOS}"}, indent=2))
@@ -309,6 +385,8 @@ def run(
     except ManifestError as exc:
         print(json.dumps({"status": "FAIL", "reason": str(exc)}, indent=2))
         return 1
+    if local_inference:
+        return _run_with_local_model(settings, bundle, world, fault)
     live: LiveInference | None = None
     if live_inference:
         opened = _open_live(
@@ -325,6 +403,27 @@ def run(
     if live is None:
         print("No model is available to this agent, so this says nothing about any LLM.")
     report, artifacts = _run_one(settings, bundle, world, live)
+    job_id = publish_run(report, artifacts, settings)
+    _print_run(report, artifacts, job_id)
+    return 0
+
+
+def _run_with_local_model(
+    settings: Settings, bundle: AgentBundle, world: str, fault: str | None
+) -> int:
+    session = open_local(settings)
+    if session is None:
+        return 2
+    if not _sandbox_ready(settings):
+        return 2
+    print(f"EXTERNAL AGENT: {bundle.manifest.name} ({bundle.manifest.agent_id})")
+    print(f"A real local model drives this agent: {session.identity.model} through Ollama.")
+    print("A labeled fixture chose the faults. Sandboxes, worlds and the Oracle are real.")
+    try:
+        report, artifacts = _run_local(settings, bundle, world, session, fault)
+    except TargetSelectionError as exc:
+        print(json.dumps({"status": "FAIL", "reason": str(exc)}, indent=2))
+        return 1
     job_id = publish_run(report, artifacts, settings)
     _print_run(report, artifacts, job_id)
     return 0
@@ -468,10 +567,17 @@ class LiveRequest:
     investigator: bool = False
     confirmed: bool = False
     approved_spend_usd: float | None = None
+    # A model on this machine. Nothing is paid, so no confirmation, and it never mixes with paid.
+    local_target: bool = False
+    local_investigator: bool = False
 
     @property
     def any(self) -> bool:
         return self.target or self.investigator
+
+    @property
+    def any_local(self) -> bool:
+        return self.local_target or self.local_investigator
 
 
 def _print_summary(report: InvestigationReport) -> None:
@@ -492,11 +598,14 @@ def investigate(
     live: LiveRequest,
 ) -> int:
     """One investigation by the real workflow, against one validated target."""
+    if live.any and live.any_local:
+        print(json.dumps({"status": "FAIL", "reason": _ONE_PROVIDER}, indent=2))
+        return 1
     if world not in APPROVED_SCENARIOS:
         print(json.dumps({"status": "FAIL", "reason": f"choose: {APPROVED_SCENARIOS}"}, indent=2))
         return 1
     if kind is TargetKind.INTERNAL_LLM:
-        if live.any or manifest is not None:
+        if live.any or live.any_local or manifest is not None:
             reason = "the internal target has no bundle; a live one is make investigator-live"
             print(json.dumps({"status": "FAIL", "reason": reason}, indent=2))
             return 1
@@ -510,7 +619,7 @@ def investigate(
     if manifest is None:
         print(json.dumps({"status": "FAIL", "reason": "--manifest is required"}, indent=2))
         return 1
-    if live.target and kind is not TargetKind.EXTERNAL_LLM:
+    if (live.target or live.local_target) and kind is not TargetKind.EXTERNAL_LLM:
         print(json.dumps({"status": "FAIL", "reason": "only an LLM target uses a model"}, indent=2))
         return 1
     investigation_id = f"inv_{uuid4().hex[:12]}"
@@ -524,9 +633,14 @@ def investigate(
         )
         if opened is None:
             return 2
+    local = open_local(settings) if live.any_local else None
+    if live.any_local and local is None:
+        return 2
     broker = None
     if kind is TargetKind.EXTERNAL_LLM:
         broker = opened[0].broker if opened and live.target else fixture_broker(world)
+        if local is not None and live.local_target:
+            broker = local.broker()
     try:
         bundle = build_bundle(manifest)
         provenance = external_provenance(kind, bundle, broker)
@@ -541,6 +655,9 @@ def investigate(
         lent = LiveInference(broker=broker, ledger=ledger)
     limits = LIVE_INVESTIGATION_LIMITS if live.any else _LIMITS
     adapter_limits = LIVE_ADAPTER_LIMITS if live.target else None
+    if live.any_local:
+        limits = LOCAL_INVESTIGATION_LIMITS
+        adapter_limits = LOCAL_ADAPTER_LIMITS if live.local_target else None
     # Discovery: the agent's real hello, in its sandbox, before anything can cost money.
     hello = ExternalAgentTarget(
         runner=generated_code_runner(settings),
@@ -554,6 +671,11 @@ def investigate(
         return 1
     artifacts = artifacts_dir(settings)
     print(f"TARGET: {kind.value} {bundle.manifest.agent_id} (bundle {bundle.sha256[:12]})")
+    investigator = None
+    if opened and live.investigator:
+        investigator = _investigator_live(settings, opened[1], limits)
+    elif local is not None and live.local_investigator:
+        investigator = local.investigator(limits)
     report = external_workflow(
         settings,
         bundle,
@@ -561,9 +683,8 @@ def investigate(
         world=world,
         live=lent,
         provenance=provenance,
-        investigator=_investigator_live(settings, opened[1], limits)
-        if opened and live.investigator
-        else None,
+        investigator=investigator,
+        investigator_identity=local.identity if local and live.local_investigator else None,
         limits=limits,
         adapter_limits=adapter_limits,
         investigation_id=investigation_id,
@@ -572,7 +693,7 @@ def investigate(
     job_id = publish_run(report, artifacts, settings)
     _print_summary(report)
     _print_run(report, artifacts, job_id)
-    if not live.any:
+    if not live.any and not live.any_local:
         print("  Every model here was a labeled fixture: this says nothing about any LLM.")
     return 0
 
