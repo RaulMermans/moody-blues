@@ -27,7 +27,7 @@ moody-blues = "moody_blues.cli:main"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["backend", "tests"]
+src = ["backend", "tests", "sdk/python", "examples/external-agent"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "RUF", "SIM", "PT", "TRY"]
@@ -40,7 +40,8 @@ ignore = ["TRY003"]
 "backend/moody_blues/sandbox/docker_runner.py" = ["S108"]
 
 [tool.pyright]
-include = ["backend", "tests"]
+include = ["backend", "tests", "sdk/python", "examples/external-agent"]
+extraPaths = ["sdk/python", "examples/external-agent"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 venvPath = "."
@@ -49,6 +50,7 @@ reportMissingTypeStubs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["sdk/python", "."]
 addopts = "-ra --strict-markers"
 markers = [
   "docker: requires a reachable local Docker daemon",

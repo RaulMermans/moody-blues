@@ -25,6 +25,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
+from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.agent import AgentConfigName, TokenTotals
 from moody_blues.contracts.common import ErrorDetail, ExecutionStatus
 from moody_blues.contracts.oracle import OracleReport
@@ -37,7 +38,10 @@ from moody_blues.contracts.run import ToolTraceEntry
 from moody_blues.contracts.scenario import FaultSpec
 from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
 
+# Version 2 is version 1 plus external target runs. A record without one stays at version 1, so
+# nothing written before Sprint 15, and nothing written since by an internal target, changes.
 EVIDENCE_SCHEMA_VERSION = 1
+EXTERNAL_EVIDENCE_SCHEMA_VERSION = 2
 
 
 class ExperimentAuthorship(StrEnum):
@@ -241,12 +245,14 @@ class TargetRunEvidence(BaseModel):
 
     run_ref: str
     run_id: str
-    target_kind: Literal["llm_agent", "reference_executor"]
+    target_kind: Literal["llm_agent", "reference_executor", "external_agent"]
     # ``RunOutcome`` for agent runs. Read this with the verdict: an Oracle PASS only says the
     # state is right, and an agent that never claimed anything is not a success.
     run_outcome: str | None = None  # absent in records written before this field existed
-    # "reference_executor" and "offline_fixture" are never evidence of model behavior.
-    evidence_source: Literal["live_provider", "offline_fixture", "reference_executor"]
+    # Only "live_provider" is evidence of model behavior.
+    evidence_source: Literal[
+        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+    ]
     executor: str | None
     provider: str | None
     requested_model: str | None
@@ -269,6 +275,14 @@ class TargetRunEvidence(BaseModel):
     report_sha256: str
     # Model steps cut off by a token limit we set. Absent in earlier records.
     truncated_model_steps: int = 0
+    # Sprint 15: who ran, on what, under which limits. Left out when absent.
+    external: ExternalAgentRecord | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @model_validator(mode="after")
+    def _external_is_recorded(self) -> Self:
+        if (self.target_kind == "external_agent") != (self.external is not None):
+            raise ValueError("an external run needs its provenance, and only an external run")
+        return self
 
 
 class UnresolvedTargetRun(BaseModel):
@@ -307,7 +321,7 @@ class ResourceUsage(BaseModel):
 class ExperimentEvidence(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal[1] = EVIDENCE_SCHEMA_VERSION
+    schema_version: Literal[1, 2] = EVIDENCE_SCHEMA_VERSION
     experiment_id: str
     parent_investigation_id: str | None
     label: str
@@ -334,3 +348,10 @@ class ExperimentEvidence(BaseModel):
     source_path: str | None = None  # the original program, relative to the experiment directory
     # Exactly what the sandbox was shown, in order. The Investigator's view is built from these.
     observations: list[Observation] = Field(default_factory=list[Observation])
+
+    @model_validator(mode="after")
+    def _version_fits_runs(self) -> Self:
+        external = any(r.external is not None for r in self.target_runs)
+        if external and self.schema_version < EXTERNAL_EVIDENCE_SCHEMA_VERSION:
+            raise ValueError("an external target run needs schema version 2")
+        return self

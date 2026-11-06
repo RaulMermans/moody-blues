@@ -67,6 +67,11 @@ def _no_constants(name: str) -> NoReturn:
     raise ValueError(f"non-standard JSON constant {name}")
 
 
+def strict_loads(text: str) -> Any:
+    """One standard JSON document. Duplicate keys and NaN-style constants raise ``ValueError``."""
+    return json.loads(text, object_pairs_hook=_no_duplicates, parse_constant=_no_constants)
+
+
 def parse_action(
     result: SandboxResult,
 ) -> RunTargetAgent | InspectObservation | FinishExperiment | ProtocolRejection:
@@ -90,7 +95,7 @@ def parse_action(
     if not text:
         return _reject(RejectionCode.OUTPUT_EMPTY, "the step produced no action")
     try:
-        document = json.loads(text, object_pairs_hook=_no_duplicates, parse_constant=_no_constants)
+        document = strict_loads(text)
     except (ValueError, RecursionError) as exc:  # includes JSONDecodeError and duplicates
         return _reject(RejectionCode.MALFORMED_JSON, f"not one JSON document: {exc}")
     if not isinstance(document, dict):

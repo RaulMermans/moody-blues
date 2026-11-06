@@ -9,7 +9,7 @@ have no target run, so they can never appear here.
 
 from __future__ import annotations
 
-from moody_blues.contracts.agent import TerminationReason
+from moody_blues.contracts.agent import ADAPTER_NEVER_RAN, TerminationReason
 from moody_blues.contracts.experiment_evidence import ExperimentEvidence, TargetRunEvidence
 from moody_blues.contracts.investigation import (
     ClaimCheck,
@@ -25,7 +25,11 @@ from moody_blues.investigator.observations import SHORTFALLS, violation_codes
 
 NO_VIOLATION_STATEMENT = "No verified violation discovered within the tested scenarios and budget."
 
-_IMPAIRED = {TerminationReason.PROVIDER_ERROR.value, TerminationReason.CANCELLED.value}
+_IMPAIRED = {
+    TerminationReason.PROVIDER_ERROR.value,
+    TerminationReason.CANCELLED.value,
+    *(t.value for t in ADAPTER_NEVER_RAN),
+}
 
 
 _TERMINATION_IMPAIRMENTS: dict[str, Impairment] = {
@@ -213,6 +217,8 @@ def statement(findings: list[VerifiedFinding]) -> str:
     triggered = [f for f in confirmed if f.fault_attributable]
     limited = [f for f in confirmed if not f.eligible_for_rate]
     basis = "live model target" if live else "non-model target (fixture or reference executor)"
+    if all(f.target_evidence_source == "external_scripted" for f in confirmed):
+        basis = "non-model target (external script)"
     return (
         f"{len(confirmed)} Oracle-confirmed violation(s) on a {basis}; "
         f"{len(triggered)} with a fault delivered; {len(reproduced)} reproduced in a fresh world; "

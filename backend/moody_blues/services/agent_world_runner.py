@@ -12,6 +12,7 @@ assessment) is assembled here, after the agent has finished.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Event
@@ -22,6 +23,7 @@ from pydantic import JsonValue
 
 from moody_blues.agents.policies import policy_for
 from moody_blues.agents.target import InferencePort, TargetAgent
+from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.agent import (
     INFRASTRUCTURE_TERMINATIONS,
     AgentBudget,
@@ -30,6 +32,7 @@ from moody_blues.contracts.agent import (
     AgentTrajectory,
     BehaviorMetrics,
     EvidenceSource,
+    ExternalEvidenceSource,
     RecoveryPattern,
     RunAssessment,
     RunOutcome,
@@ -38,7 +41,15 @@ from moody_blues.contracts.agent import (
 )
 from moody_blues.contracts.oracle import FindingCode, OracleReport, Verdict
 from moody_blues.contracts.scenario import Scenario
-from moody_blues.contracts.world import ClaimStatus, EventKind, ToolName, WorldEvent
+from moody_blues.contracts.world import (
+    ClaimStatus,
+    CommittedChange,
+    CustomerRecord,
+    EventKind,
+    FinalClaim,
+    ToolName,
+    WorldEvent,
+)
 from moody_blues.services.world_runner import tool_trace
 from moody_blues.world.engine import World
 from moody_blues.world.oracle import TruthOracle
@@ -67,46 +78,97 @@ def run_agent_scenario(
             policy=policy_for(config), inference=inference, budget=budget, model=model
         )
         trajectory = agent.run(world.gateway, scenario.objective, cancel=cancel)
-
-        claim_seq = world.record_claim(trajectory.claim)
-        with world.view() as view:
-            oracle = TruthOracle().evaluate(view, scenario, trajectory.claim)
-        verdict_seq = world.record_verdict(oracle)
-        with world.view() as view:
-            customers = view.all_customers()
-            changes = view.committed_changes()
-            events = view.events()
+        observed = observe_world(world, trajectory.claim)
     finally:
         world.close(remove=not keep)
-
-    fault_events = [
-        e for e in events if e.kind in {EventKind.FAULT_INJECTED, EventKind.FAULT_SKIPPED}
-    ]
     cost, note = estimate_cost(trajectory.tokens.total_tokens, price_per_million_tokens_usd)
     if not trajectory.tokens.complete:
         note += "; token totals include estimates for steps without reported usage"
-    return AgentRunReport(
+    return build_report(
+        scenario,
+        world.world_id,
+        trajectory,
+        observed,
         run_id=f"run_{uuid4().hex[:12]}",
+        started_at=started_at,
+        evidence=evidence,
+        provider=provider,
+        model=model,
+        cost=cost,
+        cost_note=note,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class WorldObservation:
+    """What trusted code read back after the target finished."""
+
+    oracle: OracleReport
+    claim_seq: int
+    verdict_seq: int
+    customers: list[CustomerRecord]
+    changes: list[CommittedChange]
+    events: list[WorldEvent]
+
+
+def observe_world(world: World, claim: FinalClaim | None) -> WorldObservation:
+    """Record the claim, then let the Oracle read committed state. Truth ordering lives here."""
+    claim_seq = world.record_claim(claim)
+    with world.view() as view:
+        oracle = TruthOracle().evaluate(view, world.scenario, claim)
+    verdict_seq = world.record_verdict(oracle)
+    with world.view() as view:
+        return WorldObservation(
+            oracle,
+            claim_seq,
+            verdict_seq,
+            view.all_customers(),
+            view.committed_changes(),
+            view.events(),
+        )
+
+
+def build_report(
+    scenario: Scenario,
+    world_id: str,
+    trajectory: AgentTrajectory,
+    observed: WorldObservation,
+    *,
+    run_id: str,
+    started_at: datetime,
+    evidence: ExternalEvidenceSource,
+    provider: str | None,
+    model: str | None,
+    cost: float | None,
+    cost_note: str,
+    external: ExternalAgentRecord | None = None,
+) -> AgentRunReport:
+    fault_events = [
+        e for e in observed.events if e.kind in {EventKind.FAULT_INJECTED, EventKind.FAULT_SKIPPED}
+    ]
+    return AgentRunReport(
+        run_id=run_id,
         started_at=started_at,
         evidence_source=evidence,
         scenario_ref=scenario.ref,
         scenario_id=scenario.scenario_id,
         scenario_version=scenario.version,
-        world_id=world.world_id,
+        world_id=world_id,
         provider=provider,
         requested_model=model,
         reported_models=sorted({s.reported_model for s in trajectory.steps if s.reported_model}),
         agent=trajectory,
-        world_trace=tool_trace(events),
-        final_state=customers,
-        committed_changes=changes,
+        world_trace=tool_trace(observed.events),
+        final_state=observed.customers,
+        committed_changes=observed.changes,
         fault_events=fault_events,
-        claim_event_seq=claim_seq,
-        verdict_event_seq=verdict_seq,
-        oracle=oracle,
-        assessment=assess(trajectory, oracle, fault_events),
+        claim_event_seq=observed.claim_seq,
+        verdict_event_seq=observed.verdict_seq,
+        oracle=observed.oracle,
+        assessment=assess(trajectory, observed.oracle, fault_events),
         estimated_cost_usd=cost,
-        cost_note=note,
+        cost_note=cost_note,
+        external=external,
     )
 
 

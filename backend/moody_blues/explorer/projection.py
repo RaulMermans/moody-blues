@@ -43,6 +43,7 @@ from moody_blues.contracts.explorer import (
     ExecutionMode,
     ExperimentProvenance,
     ExperimentView,
+    ExternalTargetView,
     FaultView,
     FindingView,
     HypothesisView,
@@ -139,7 +140,7 @@ def _load_experiment(directory: Path) -> _Loaded:
     for run in evidence.target_runs:
         raw = (directory / run.report_path).read_text(encoding="utf-8")
         hashes.append(sha256_text(raw))
-        if run.target_kind == "llm_agent":
+        if run.target_kind != "reference_executor":
             reports[run.run_id] = AgentRunReport.model_validate_json(raw)
     return _Loaded(evidence, sha256_text(text), records, reports, hashes)
 
@@ -296,6 +297,22 @@ def _mission(report: AgentRunReport | None) -> str | None:
     return None
 
 
+def _external_view(run: TargetRunEvidence) -> ExternalTargetView | None:
+    record = run.external
+    if record is None:
+        return None
+    return ExternalTargetView(
+        agent_id=record.agent_id,
+        name=record.name,
+        agent_version=record.agent_version,
+        protocol=record.protocol,
+        uses_model=record.model_calls > 0,
+        execution_mode=record.environment.execution_mode if record.environment else "not_started",
+        bundle_sha256=record.bundle_sha256,
+        transcript_sha256=record.transcript_sha256,
+    )
+
+
 def _reality(
     run: TargetRunEvidence,
     experiment_id: str,
@@ -331,6 +348,7 @@ def _reality(
             for f in run.authorized.faults
         ],
         faults_delivered=run.target_observed.faults_delivered,
+        external=_external_view(run),
         agent=AgentReality(
             mission=bounded(mission, MAX_MESSAGE_CHARS) if mission else None,
             tool_events=[_tool_event(t, actual, notes) for t in run.target_observed.tool_trace],
@@ -747,6 +765,7 @@ def _add_run_finished(line: _Timeline, record: JournalRecord, experiment_id: str
 
 def _experiment_entries(line: _Timeline, loaded: _Loaded) -> None:
     experiment_id = loaded.evidence.experiment_id
+    external = any(r.external is not None for r in loaded.evidence.target_runs)
     for record in loaded.journal:
         match record.kind:
             case "step_completed":
@@ -761,7 +780,8 @@ def _experiment_entries(line: _Timeline, loaded: _Loaded) -> None:
                     Authorship.COORDINATOR,
                     f"Target run authorized in {authorized.get('scenario_id')}",
                     facts={
-                        "config": authorized.get("config"),
+                        # An external agent's behavior is its own: it has no policy of ours.
+                        "config": None if external else authorized.get("config"),
                         "faults": [str(f.get("kind")) for f in faults],
                     },
                     experiment_id=experiment_id,

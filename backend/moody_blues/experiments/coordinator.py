@@ -28,9 +28,17 @@ from pathlib import Path
 from threading import Event
 from uuid import uuid4
 
-from moody_blues.contracts.agent import AgentConfigName, TerminationReason
+from moody_blues.contracts.adapter import AdapterEventKind
+from moody_blues.contracts.agent import (
+    ADAPTER_NEVER_RAN,
+    ADAPTER_SHORTFALLS,
+    AgentConfigName,
+    TerminationReason,
+)
 from moody_blues.contracts.common import ExecutionStatus
 from moody_blues.contracts.experiment_evidence import (
+    EVIDENCE_SCHEMA_VERSION,
+    EXTERNAL_EVIDENCE_SCHEMA_VERSION,
     TERMINAL_STATES,
     ActionDecision,
     AuthorizedRun,
@@ -109,7 +117,9 @@ _TARGET_SHORTFALLS = {
     TerminationReason.TOKEN_BUDGET.value,
     TerminationReason.WALL_TIMEOUT.value,
     TerminationReason.INVALID_MODEL_RESPONSE.value,
+    *(t.value for t in ADAPTER_SHORTFALLS | ADAPTER_NEVER_RAN),
 }
+_ADAPTER_NEVER_RAN = {t.value for t in ADAPTER_NEVER_RAN}
 
 
 class InvalidTransitionError(RuntimeError):
@@ -646,8 +656,19 @@ class ExperimentCoordinator:
             report_path=f"runs/{name}",
             report_sha256=report_sha,
             truncated_model_steps=result.truncated_model_steps,
+            external=result.external,
         )
         session.workspace.journal("target_run_finished", run.model_dump(mode="json"))
+        if run.external is not None:
+            log.info(
+                "adapter_event",
+                extra={
+                    "kind": AdapterEventKind.EVIDENCE_PERSISTED.value,
+                    "run_id": run.run_id,
+                    "agent_id": run.external.agent_id,
+                    "report_sha256": report_sha,
+                },
+            )
         return run
 
     @staticmethod
@@ -668,6 +689,14 @@ class ExperimentCoordinator:
                 ExperimentState.CANCELLED,
                 ExperimentTermination.CANCELLED,
                 (OutcomeClass.CANCELLATION,),
+            )
+        if termination in _ADAPTER_NEVER_RAN:
+            # Asking again would fail the same way, and it never touched the world.
+            return _Stop(
+                ExperimentState.FAILED,
+                ExperimentTermination.TARGET_FAILED,
+                (OutcomeClass.TARGET_AGENT_FAILURE,),
+                termination,
             )
         return None
 
@@ -704,7 +733,11 @@ class ExperimentCoordinator:
         self._transition(session, ExperimentState.FINALIZING)
         check_transition(session.state, stop.status)
         session.state = stop.status
+        external = any(r.external is not None for r in session.runs)
         evidence = ExperimentEvidence(
+            schema_version=EXTERNAL_EVIDENCE_SCHEMA_VERSION
+            if external
+            else EVIDENCE_SCHEMA_VERSION,
             experiment_id=session.experiment_id,
             parent_investigation_id=session.spec.parent_investigation_id,
             label=session.spec.label,

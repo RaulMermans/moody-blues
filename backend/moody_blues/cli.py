@@ -697,6 +697,24 @@ def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
             return commands.eval_run(settings, suite=args.suite, confirmed=args.confirm_billable)
 
 
+def _external(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.external import commands
+
+    match args.command:
+        case "external-preflight":
+            return commands.preflight(settings, args.manifest)
+        case "external-run":
+            return commands.run(
+                settings,
+                args.manifest,
+                world=args.world,
+                live_inference=args.live_inference,
+                confirm_billable=args.confirm_billable,
+            )
+        case _:
+            return commands.demo(settings)
+
+
 def live_budget(settings: Settings, reports: list[Path]) -> int:
     from moody_blues.contracts.agent import AgentRunReport as Report
 
@@ -776,6 +794,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     el.add_argument("--max-tool-calls", type=int, default=16)
     el.add_argument("--max-run-tokens", type=int, default=20_000)
     sub.add_parser("experiment-recover")
+    xp = sub.add_parser("external-preflight")
+    xp.add_argument("--manifest", type=Path, required=True)
+    xr = sub.add_parser("external-run")
+    xr.add_argument("--manifest", type=Path, required=True)
+    xr.add_argument("--world", default="normal-success")
+    xr.add_argument("--live-inference", action="store_true")
+    xr.add_argument("--confirm-billable", action="store_true")
+    sub.add_parser("external-demo")
     sub.add_parser("recorded-export")
     sub.add_parser("recorded-verify")
     sub.add_parser("containment-report")
@@ -847,6 +873,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return experiment_live(settings, args)
         case "experiment-recover":
             return experiment_recover(settings)
+        case "external-preflight" | "external-run" | "external-demo":
+            return _external(settings, args)
         case "recorded-export":
             return recorded_export(settings)
         case "recorded-verify":

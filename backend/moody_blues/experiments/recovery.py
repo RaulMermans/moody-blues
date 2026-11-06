@@ -17,6 +17,8 @@ from typing import cast
 from pydantic import JsonValue, ValidationError
 
 from moody_blues.contracts.experiment_evidence import (
+    EVIDENCE_SCHEMA_VERSION,
+    EXTERNAL_EVIDENCE_SCHEMA_VERSION,
     ExperimentAuthorship,
     ExperimentEvidence,
     ExperimentLimits,
@@ -108,7 +110,9 @@ def _close(directory: Path, records: list[JournalRecord]) -> ExperimentEvidence:
     costs = [r.estimated_cost_usd for r in runs if r.estimated_cost_usd is not None]
     executions = [e for s in steps for e in s.sandbox]
     now = datetime.now(UTC)
+    external = any(r.external is not None for r in runs)
     evidence = ExperimentEvidence(
+        schema_version=EXTERNAL_EVIDENCE_SCHEMA_VERSION if external else EVIDENCE_SCHEMA_VERSION,
         experiment_id=str(created["experiment_id"]),
         parent_investigation_id=cast(str | None, created.get("parent_investigation_id")),
         label=str(created["label"]),

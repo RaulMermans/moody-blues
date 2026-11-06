@@ -495,7 +495,9 @@ class VerifiedFinding(BaseModel):
     termination: str
     violation_codes: list[str]
     faults_delivered: int
-    target_evidence_source: Literal["live_provider", "offline_fixture", "reference_executor"]
+    target_evidence_source: Literal[
+        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+    ]
     reproduction: ReproductionStatus
     reproduction_experiment_id: str | None = None
     notes: list[str] = Field(default_factory=list[str])
