@@ -22,6 +22,7 @@ import {
   getTimeline,
 } from "@/lib/evidence";
 import type { InvestigationDetail, RealityRun, RunList } from "@/lib/evidence-types";
+import { referenceTest } from "@/lib/test-catalog";
 import {
   CASE_LABEL,
   formatDuration,
@@ -31,26 +32,31 @@ import {
   STRATEGY_LABEL,
 } from "@/lib/labels";
 
-// `short` is what a phone shows, so all five fit in one row with nothing scrolled out of sight.
-const VIEWS = [
-  { key: "overview", label: "Overview", short: "Overview" },
-  { key: "reality", label: "Reality Comparison", short: "Reality" },
-  { key: "timeline", label: "Timeline", short: "Timeline" },
-  { key: "investigator", label: "Investigator", short: "Investigator" },
-  { key: "evidence", label: "Raw evidence", short: "Evidence" },
+// Four places a reader moves between, named for what they answer. The URLs are the published contract
+// and stay exactly as they were: a label changes here, a `?view=` never does.
+const TABS = [
+  { key: "overview", label: "Result", views: ["overview"] },
+  { key: "reality", label: "What happened", views: ["reality"] },
+  { key: "investigator", label: "Investigation", views: ["investigator"] },
+  { key: "evidence", label: "Evidence", views: ["evidence", "timeline"] },
 ] as const;
-type View = (typeof VIEWS)[number]["key"];
+type View = (typeof TABS)[number]["views"][number];
+const ALL_VIEWS: readonly View[] = TABS.flatMap((t) => t.views);
 
 function asView(value: string | string[] | undefined): View {
-  return VIEWS.find((v) => v.key === value)?.key ?? "reality";
+  return ALL_VIEWS.find((v) => v === value) ?? "overview";
 }
 
 function titleOf(detail: InvestigationDetail): string {
   const { summary } = detail;
-  return summary.case?.title ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
+  return (
+    summary.case?.title ??
+    referenceTest(summary.target_model)?.label ??
+    `${STRATEGY_LABEL[summary.strategy]} investigation`
+  );
 }
 
-/** Where the reader is. The Reality view states its own result, so only other views repeat a title. */
+/** Where the reader is. The investigation's name is always here; Result and What happened own the h1. */
 function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
   const { summary } = detail;
   return (
@@ -75,7 +81,13 @@ function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
           <ModeTag mode={summary.mode} />
         </span>
       </div>
-      {view === "reality" ? null : <h1 className="rf-page-title">{titleOf(detail)}</h1>}
+      {view === "reality" || view === "overview" ? (
+        <p className="rf-crumb-title" data-testid="investigation-title">
+          {titleOf(detail)}
+        </p>
+      ) : (
+        <h1 className="rf-page-title">{titleOf(detail)}</h1>
+      )}
     </header>
   );
 }
@@ -145,18 +157,37 @@ function Tabs({ id, view, runId }: { id: string; view: View; runId: string | und
   const run = runId ? `&run=${runId}` : "";
   return (
     <nav aria-label="Investigation views" className="rf-tabs">
-      {VIEWS.map((v) => (
+      {TABS.map((tab) => (
         <Link
-          key={v.key}
-          href={`/investigations/${id}?view=${v.key}${run}`}
-          aria-current={view === v.key ? "page" : undefined}
-          aria-label={v.label}
-          data-testid={`tab-${v.key}`}
+          key={tab.key}
+          href={`/investigations/${id}?view=${tab.key}${run}`}
+          aria-current={(tab.views as readonly View[]).includes(view) ? "page" : undefined}
+          data-testid={`tab-${tab.key}`}
         >
-          <span className="rf-tab-long">{v.label}</span>
-          <span className="rf-tab-short" aria-hidden>
-            {v.short}
-          </span>
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/** The Evidence tab holds both exact forms of the record: its fields, and the journal in order. */
+function EvidenceNav({ id, view, runId }: { id: string; view: View; runId: string | undefined }) {
+  const run = runId ? `&run=${runId}` : "";
+  const links = [
+    { key: "evidence", label: "Raw evidence" },
+    { key: "timeline", label: "Timeline" },
+  ] as const;
+  return (
+    <nav aria-label="Evidence views" className="rf-subtabs">
+      {links.map((link) => (
+        <Link
+          key={link.key}
+          href={`/investigations/${id}?view=${link.key}${run}`}
+          aria-current={view === link.key ? "page" : undefined}
+          data-testid={link.key === "timeline" ? "tab-timeline" : "tab-raw"}
+        >
+          {link.label}
         </Link>
       ))}
     </nav>
@@ -353,7 +384,7 @@ function RunLine({ id, runs, runId, view }: { id: string; runs: RunList; runId: 
   );
 }
 
-/** The same record on every view. Only the Comparison leads with it open. */
+/** The same record on every view, folded: what it holds is reference, and nothing on it qualifies a result. */
 function AboutPanel({ detail }: { detail: InvestigationDetail }) {
   return (
     <details className="rf-disclose rf-panel" data-testid="about-panel">
@@ -383,6 +414,7 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
     <>
       <Header detail={detail.data} view={view} />
       <Tabs id={id} view={view} runId={runId} />
+      {view === "evidence" || view === "timeline" ? <EvidenceNav id={id} view={view} runId={runId} /> : null}
       {runId && view !== "reality" ? <RunContext id={id} runId={runId} view={view} /> : null}
       {view === "overview" ? <Overview id={id} detail={detail.data} runId={runId} /> : null}
       {view === "reality" ? <Reality id={id} detail={detail.data} runId={runId} /> : null}
@@ -400,14 +432,7 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
         <Investigator id={id} detail={detail.data} runId={runId} cycle={cycle} />
       ) : null}
       {view === "evidence" ? <Evidence id={id} detail={detail.data} runId={runId} /> : null}
-      {view === "reality" ? (
-        <>
-          <About detail={detail.data} note={view === "reality"} />
-          <EvidencePanel detail={detail.data} />
-        </>
-      ) : (
-        <AboutPanel detail={detail.data} />
-      )}
+      <AboutPanel detail={detail.data} />
       <HashFocus />
     </>
   );

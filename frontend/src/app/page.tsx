@@ -4,32 +4,22 @@ import { Suspense } from "react";
 import { FailurePanel } from "@/components/failure-panel";
 import { InvestigationListView } from "@/components/investigation-list";
 import { StatusPanel } from "@/components/status-panel";
-import { Eyebrow, LoadingPanel } from "@/components/ui";
-import { VerdictStrip } from "@/components/verdict-strip";
+import { HashFocus } from "@/components/hash-focus";
+import { Chevron, Eyebrow, LoadingPanel } from "@/components/ui";
 import { Headline } from "@/design/components/headline";
-import { disclosureLine } from "@/design/story";
+import { OracleSeal } from "@/design/components/oracle-seal";
+import { sealFromRun } from "@/design/model";
+import { disclosureLine, stateLine } from "@/design/story";
 import { getRun, listInvestigations } from "@/lib/evidence";
-import type { InvestigationList, StudyContext } from "@/lib/evidence-types";
+import type { StudyContext } from "@/lib/evidence-types";
 import { STRATEGY_LABEL } from "@/lib/labels";
 
-const STEPS = [
-  {
-    title: "Hypothesize",
-    body: "An AI Investigator proposes how an agent could fail. A hypothesis is a question, not a finding.",
-  },
-  {
-    title: "Experiment",
-    body: "It writes Python that runs in a disposable sandbox with no network. Trusted code then changes what the agent's tools return: a save that reports failure but committed, a success that rolled back, a read from an old snapshot.",
-  },
-  {
-    title: "Observe",
-    body: "A real LLM agent works through the task in a synthetic CRM. Every call, response and final claim is recorded.",
-  },
-  {
-    title: "Verify",
-    body: "An independent Oracle reads committed state. It never sees what the agent was told, so a claim cannot change the verdict.",
-  },
-];
+const FLOW = [
+  ["Choose a test", "A scenario with a controlled fault."],
+  ["Run it", "In an isolated sandbox, against a synthetic CRM."],
+  ["See what happened", "What the target saw and what was really saved."],
+  ["Explore the evidence", "Every call, record and hash behind the result."],
+] as const;
 
 const METHODOLOGY = "https://github.com/RaulMermans/moody-blues/blob/main/docs/evaluations/methodology.md";
 
@@ -39,66 +29,111 @@ function HowItWorks() {
       <h2 id="how-title" className="rf-section-title">
         How it works
       </h2>
-      <p className="rf-lead">
-        MOODY BLUES is an autonomous adversarial experimentation system. An AI Investigator designs
-        experiments, a sandbox contains them, and an independent Oracle checks the agent&apos;s claims
-        against authoritative state.
-      </p>
-      <ol>
-        {STEPS.map((step) => (
-          <li key={step.title}>
-            <h3>{step.title}</h3>
-            <p>{step.body}</p>
+      <ol className="rf-how-steps">
+        {FLOW.map(([title, body]) => (
+          <li key={title}>
+            <strong>{title}</strong>
+            {body}
           </li>
         ))}
       </ol>
-      <div id="method" className="rf-method" data-testid="method">
-        <h3>What a verdict does not show</h3>
-        <p>
-          A verdict states what is true of one run&apos;s committed state. It does not say why. A delivered
-          fault is exposure, and saying a fault raised the chance of a failure needs a registered contrast
-          against a clean control. A rerun is not a control. An investigation record holds no such contrast,
-          so its page says that instead of guessing.{" "}
-          <a href={METHODOLOGY} className="rf-link">
-            Evaluation methodology
-          </a>
-        </p>
-      </div>
+      <details id="method" className="rf-fold" data-testid="method">
+        <summary>
+          <Chevron />
+          <span className="rf-fold-title">What a verdict does not show</span>
+        </summary>
+        <div className="rf-fold-body">
+          <p className="rf-body">
+            A verdict states what is true of one run&apos;s committed state. It does not say why. A delivered
+            fault is exposure, and saying a fault raised the chance of a failure needs a registered contrast
+            against a clean control. A rerun is not a control. An investigation record holds no such contrast,
+            so its page says that instead of guessing.{" "}
+            <a href={METHODOLOGY} className="rf-link">
+              Evaluation methodology
+            </a>
+          </p>
+        </div>
+      </details>
     </section>
   );
 }
 
-async function Signature({ list }: { list: InvestigationList }) {
-  const lead = list.items.find((i) => i.summary?.case?.kind === "verified_violation")?.summary;
-  const primary = lead?.case?.primary_run_id;
-  if (!lead || !primary) return null;
-  const run = await getRun(lead.investigation_id, primary);
-  if (!run.ok) return null;
-  const disclosure = disclosureLine(run.data);
+function SampleEntry() {
   return (
-    <section aria-labelledby="signature" className="rf-signature" data-testid="signature">
-      <div className="rf-section-head">
-        <h2 id="signature" className="rf-section-title">
-          {lead.case?.title}
-        </h2>
-        <p className="rf-data">
-          Recorded run · {run.data.reported_models.join(", ")} · {run.data.world_ref}
-        </p>
-      </div>
-      <p className="rf-lead" data-testid="signature-story">
-        {lead.case?.summary}
+    <section aria-labelledby="sample-title" className="rf-entry-card" data-testid="entry-sample">
+      <p className="rf-label">Free · No AI model</p>
+      <h3 id="sample-title">Try a sample test</h3>
+      <p className="rf-body">
+        A safe rehearsal. A reference script, not an AI agent, works through a controlled failure.
       </p>
-      <VerdictStrip run={run.data} />
-      <div className="rf-signature-foot">
-        {disclosure ? <p className="rf-body">{disclosure}</p> : <span />}
-        <Link
-          href={`/investigations/${lead.investigation_id}`}
-          data-testid="open-signature"
-          className="rf-cta rf-cta-quiet"
-        >
-          Compare the two realities
-        </Link>
-      </div>
+      <dl className="rf-entry-facts">
+        <div>
+          <dt className="rf-label">Target</dt>
+          <dd>Reference script</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Cost</dt>
+          <dd>Free, no inference</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Tests</dt>
+          <dd>Safe recovery, failure detection</dd>
+        </div>
+        <div>
+          <dt className="rf-label">To run one</dt>
+          <dd>Operator token</dd>
+        </div>
+      </dl>
+      <Link href="/operator" className="rf-cta rf-cta-quiet" data-testid="hero-sample">
+        Choose a test <span aria-hidden>→</span>
+      </Link>
+    </section>
+  );
+}
+
+/** The recorded case a visitor can open now. With none available, it says so by going to the list. */
+async function RecordedEntry() {
+  const list = await listInvestigations();
+  const lead = list.ok
+    ? list.data.items.find((i) => i.summary?.case?.kind === "verified_violation")?.summary
+    : undefined;
+  const primary = lead?.case?.primary_run_id;
+  const run = lead && primary ? await getRun(lead.investigation_id, primary) : null;
+  const shown = run?.ok ? run.data : null;
+  const disclosure = shown ? disclosureLine(shown) : null;
+  return (
+    <section aria-labelledby="signature" className="rf-entry-card" data-testid="signature">
+      <p className="rf-label">Recorded evidence{shown ? ` · ${shown.reported_models.join(", ")}` : ""}</p>
+      <h3 id="signature">Explore a real AI investigation</h3>
+      <p className="rf-body" data-testid="signature-story">
+        An authentic past run of an LLM agent, exported from its records. It is not running now.
+      </p>
+      {shown && lead ? (
+        <>
+          <p className="rf-crumb-title">{lead.case?.title}</p>
+          <dl className="rf-entry-facts" data-testid="outcome-strip">
+            <div>
+              <dt className="rf-label">Agent reported</dt>
+              <dd data-testid="strip-claim">{shown.agent.claim ? shown.agent.claim.status : "no valid claim"}</dd>
+            </div>
+            <div>
+              <dt className="rf-label">Actual outcome</dt>
+              <dd data-testid="strip-state">{stateLine(shown)}</dd>
+            </div>
+          </dl>
+          <div className="flex">
+            <OracleSeal state={sealFromRun(shown)} size="sm" labelTestId="strip-verdict" />
+          </div>
+          {disclosure ? <p className="rf-data">{disclosure}</p> : null}
+        </>
+      ) : null}
+      <Link
+        href={lead ? `/investigations/${lead.investigation_id}` : "#investigations"}
+        className="rf-cta"
+        data-testid="open-signature"
+      >
+        Open the recorded run <span aria-hidden>→</span>
+      </Link>
     </section>
   );
 }
@@ -128,11 +163,6 @@ function StudyNote({ study }: { study: StudyContext }) {
   );
 }
 
-async function LeadCase() {
-  const list = await listInvestigations();
-  return list.ok ? <Signature list={list.data} /> : null;
-}
-
 async function Evidence() {
   const list = await listInvestigations();
   if (!list.ok) return <FailurePanel failure={list} />;
@@ -154,58 +184,24 @@ async function Evidence() {
   );
 }
 
-/** The primary action needs a real case to point at. Without one it says so by going to the list. */
-async function PrimaryAction() {
-  const list = await listInvestigations();
-  const lead = list.ok
-    ? list.data.items.find((i) => i.summary?.case?.kind === "verified_violation")
-    : undefined;
-  return (
-    <Link
-      href={lead ? `/investigations/${lead.investigation_id}` : "#investigations"}
-      className="rf-cta"
-      data-testid="hero-cta"
-    >
-      Explore a verified failure <span aria-hidden>→</span>
-    </Link>
-  );
-}
-
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-4 pb-16 pt-10 sm:px-6 sm:pt-16">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 pb-16 pt-6 sm:px-6 sm:pt-10">
       <header className="rf-hero" data-testid="hero">
         <h1 className="rf-label">MOODY BLUES</h1>
-        <Headline
-          as="h2"
-          first="What the agent reported."
-          second="What reality recorded."
-          outOfRegister
-          size="poster"
-        />
+        <Headline as="h2" first="Test what agents do." second="Verify what actually happened." />
         <p className="rf-hero-lead">
-          MOODY BLUES investigates the gap between an AI agent&apos;s reported outcome and what
-          actually happened.
+          Put AI agents through controlled failures and see whether they recover, make mistakes or report
+          incorrect outcomes.
         </p>
-        <div className="rf-hero-actions">
-          <Suspense
-            fallback={
-              <Link href="#investigations" className="rf-cta" data-testid="hero-cta">
-                Explore a verified failure <span aria-hidden>→</span>
-              </Link>
-            }
-          >
-            <PrimaryAction />
-          </Suspense>
-          <Link href="#how" className="rf-cta rf-cta-quiet" data-testid="hero-how">
-            How it works
-          </Link>
-        </div>
       </header>
 
-      <Suspense fallback={<div className="rf-signature-hold" />}>
-        <LeadCase />
-      </Suspense>
+      <div className="rf-entry" data-testid="entry">
+        <SampleEntry />
+        <Suspense fallback={<div className="rf-signature-hold" />}>
+          <RecordedEntry />
+        </Suspense>
+      </div>
 
       <HowItWorks />
 
@@ -221,6 +217,7 @@ export default function Home() {
       </Suspense>
 
       <StatusPanel />
+      <HashFocus />
     </main>
   );
 }

@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import type { ListedInvestigation } from "@/lib/evidence-types";
-import { CASE_LABEL, formatDuration, formatUsd, humanize, OUTCOME_LABEL, STRATEGY_LABEL } from "@/lib/labels";
+import { CASE_LABEL, formatUsd, humanize, OUTCOME_LABEL, STRATEGY_LABEL } from "@/lib/labels";
+import { referenceTest } from "@/lib/test-catalog";
 
 import { ModeTag, OutcomeTag, Tag } from "./ui";
 
@@ -31,7 +32,9 @@ function Corrupt({ item }: { item: ListedInvestigation }) {
 function Row({ item }: { item: ListedInvestigation }) {
   const summary = item.summary;
   if (!summary) return <Corrupt item={item} />;
-  const title = summary.case?.title ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
+  const reference = referenceTest(summary.target_model);
+  const title = summary.case?.title ?? reference?.label ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
+  const live = summary.target_evidence.includes("live_provider");
   return (
     <li
       data-testid={`investigation-${item.investigation_id}`}
@@ -55,24 +58,18 @@ function Row({ item }: { item: ListedInvestigation }) {
         </Link>
       </h3>
       {summary.case ? (
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">{summary.case.summary}</p>
+        <p className="mt-1 line-clamp-2 max-w-3xl text-sm leading-6 text-muted">{summary.case.summary}</p>
       ) : null}
-      <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-faint">
+      <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-faint">
         <div className="flex gap-1.5">
           <dt>target</dt>
-          <dd className="text-muted">{summary.target_model}</dd>
+          <dd className="text-muted">
+            {live ? `AI agent, ${summary.target_model}` : "Reference script, not a model"}
+          </dd>
         </div>
         <div className="flex gap-1.5">
           <dt>experiments</dt>
           <dd className="text-muted">{summary.experiment_count}</dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>verified findings</dt>
-          <dd className="text-muted">{summary.verified_finding_count}</dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>runtime</dt>
-          <dd className="text-muted">{formatDuration(summary.runtime_ms)}</dd>
         </div>
         <div className="flex gap-1.5" title={summary.cost_note}>
           <dt>est. inference</dt>

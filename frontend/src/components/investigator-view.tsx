@@ -10,12 +10,13 @@ import {
   plainQuestion,
   type Trial,
 } from "@/design/journey";
-import { sealFromRun } from "@/design/model";
+import { sealFromRun, targetNoun } from "@/design/model";
 import { stateLine, storyFrom } from "@/design/story";
 import type { HypothesisView, InvestigationDetail, ProposalView } from "@/lib/evidence-types";
 import {
   ADAPTATION_LABEL,
   FAULT_LABEL,
+  inRehearsal,
   FINDING_CLASS_LABEL,
   humanize,
   REPRODUCTION_LABEL,
@@ -172,17 +173,17 @@ function Program({ proposal, sandbox }: { proposal: ProposalView; sandbox: strin
   );
 }
 
-function sandboxLine(proposal: ProposalView, trial: Trial | undefined): string | null {
+function sandboxLine(proposal: ProposalView, trial: Trial | undefined, fixture: boolean): string | null {
   if (!trial) return null;
   const { sandbox_executions: steps, sandbox_network_enabled: network } = trial.experiment;
   const who =
     proposal.authorship === "model_generated"
-      ? "Executable Python written by the model"
+      ? `Executable Python written by the ${fixture ? "fixture" : "model"}`
       : "A developer script, not written by a model";
   return `${who}, run in ${steps} sandbox step${steps === 1 ? "" : "s"} with networking ${network ? "on" : "off"}.`;
 }
 
-function ExperimentStage({ cycle }: { cycle: Cycle }) {
+function ExperimentStage({ cycle, fixture }: { cycle: Cycle; fixture: boolean }) {
   const first = cycle.trials.find((t) => !t.rerun);
   const run = first?.run ?? null;
   return (
@@ -191,7 +192,7 @@ function ExperimentStage({ cycle }: { cycle: Cycle }) {
         <Program
           key={proposal.proposal_id}
           proposal={proposal}
-          sandbox={sandboxLine(proposal, cycle.trials.find((t) => t.experiment.proposal_id === proposal.proposal_id))}
+          sandbox={sandboxLine(proposal, cycle.trials.find((t) => t.experiment.proposal_id === proposal.proposal_id), fixture)}
         />
       ))}
       {cycle.proposals.length === 0 ? (
@@ -207,7 +208,7 @@ function ExperimentStage({ cycle }: { cycle: Cycle }) {
             </dd>
             {run.faults.map((fault, i) => (
               <dd key={i} className="rf-body">
-                {FAULT_LABEL[fault.kind] ?? humanize(fault.kind)}{" "}
+                {fixture ? inRehearsal(FAULT_LABEL[fault.kind] ?? humanize(fault.kind)) : (FAULT_LABEL[fault.kind] ?? humanize(fault.kind))}{" "}
                 <span className="rf-data">
                   {fault.operation}, occurrence {fault.occurrence}, span {fault.span}
                 </span>
@@ -246,7 +247,7 @@ function TrialResult({ id, trial }: { id: string; trial: Trial }) {
       </p>
       <dl className="rf-trial-facts">
         <div>
-          <dt className="rf-label">Agent reported</dt>
+          <dt className="rf-label">{targetNoun(run) === "agent" ? "Agent reported" : "Script reported"}</dt>
           <dd data-testid="trial-claim">{run.agent.claim?.status ?? "no valid claim"}</dd>
         </div>
         <div>
@@ -297,7 +298,7 @@ function DecisionStage({
   const check = assessmentCheck(cycle);
   const citedNote = ADAPTATION_LABEL.cited_prior_observations.note.split(";")[0];
   return (
-    <Stage id={`decision-${cycle.key}`} label="Decision" source="The record, then the model's reasoning">
+    <Stage id={`decision-${cycle.key}`} label="Decision" source={`The record, then the ${fixture ? "fixture" : "model"}'s reasoning`}>
       <p className="rf-stage-lead" data-testid={`decision-${cycle.key}`} data-kind={decision.kind}>
         {decision.title}
       </p>
@@ -385,8 +386,8 @@ function CycleItem({
         </summary>
         <div className="rf-cycle-body">
           <HypothesisStage id={id} cycle={cycle} from={from} fixture={fixture} runId={runId} />
-          <ExperimentStage cycle={cycle} />
-          <Stage label="Observation" source="Recorded evidence, not the model's words">
+          <ExperimentStage cycle={cycle} fixture={fixture} />
+          <Stage label="Observation" source={`Recorded evidence, not the ${fixture ? "fixture" : "model"}'s words`}>
             {cycle.trials.map((trial) => (
               <TrialResult key={`${trial.experiment.experiment_id}-${trial.run?.run_id}`} id={id} trial={trial} />
             ))}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { ComparisonRow } from "@/design/components/comparison-row";
 import { DivergenceDivider } from "@/design/components/divergence-divider";
@@ -10,12 +11,15 @@ import {
   firstDivergence,
   recordsFrom,
   seamFor,
+  targetNoun,
 } from "@/design/model";
+import { relationLine, testedFrom } from "@/design/outcome";
 import {
   disclosureLine,
   environmentLine,
   explanationFrom,
   scopeNote,
+  stateLine,
   storyFrom,
 } from "@/design/story";
 import type {
@@ -25,7 +29,7 @@ import type {
   RunList,
   ToolEvent,
 } from "@/lib/evidence-types";
-import { DISCREPANCY_LABEL, FAULT_LABEL, FINDING_CLASS_LABEL, humanize } from "@/lib/labels";
+import { DISCREPANCY_LABEL, FAULT_LABEL, FINDING_CLASS_LABEL, humanize, inRehearsal } from "@/lib/labels";
 
 import { Chevron, Code, TableScroll, Tag, VerdictTag } from "./ui";
 import { VerdictStrip } from "./verdict-strip";
@@ -47,8 +51,20 @@ export function traceHref(id: string, runId: string, call: number): string {
   return `/investigations/${id}?view=timeline&show=all&run=${runId}&call=${call}#trace`;
 }
 
-function RunPicker({ id, runs, current }: { id: string; runs: RunList; current: string }) {
+export function RunPicker({
+  id,
+  runs,
+  current,
+  view = "reality",
+}: {
+  id: string;
+  runs: RunList;
+  current: string;
+  view?: "reality" | "overview";
+}) {
   if (runs.runs.length < 2) return null;
+  const hrefOf = (runId: string) =>
+    view === "reality" ? runHref(id, runId) : `/investigations/${id}?view=overview&run=${runId}`;
   return (
     <nav aria-label="Target runs" className="rf-runs">
       <ul>
@@ -57,7 +73,7 @@ function RunPicker({ id, runs, current }: { id: string; runs: RunList; current: 
           return (
             <li key={run.run_id}>
               <Link
-                href={runHref(id, run.run_id)}
+                href={hrefOf(run.run_id)}
                 aria-current={active ? "page" : undefined}
                 data-testid={`run-${run.run_id}`}
                 data-verdict={run.verdict}
@@ -77,7 +93,12 @@ function RunPicker({ id, runs, current }: { id: string; runs: RunList; current: 
   );
 }
 
-function targetLabel(run: RealityRun): string {
+function faultLabel(kind: string, run: RealityRun): string {
+  const label = FAULT_LABEL[kind] ?? humanize(kind);
+  return targetNoun(run) === "agent" ? label : inRehearsal(label);
+}
+
+export function targetLabel(run: RealityRun): string {
   if (run.target_evidence === "live_provider") {
     return `Target: live model ${run.reported_models.join(", ")}`;
   }
@@ -114,8 +135,13 @@ function Summary({
           {targetLabel(run)}
         </Tag>
       </div>
-      <Headline first={story.reported} second={story.reality} outOfRegister={story.outOfRegister} />
-      <VerdictStrip run={run} />
+      <Headline
+        first={story.reported}
+        second={story.reality}
+        outOfRegister={story.outOfRegister}
+        size="compact"
+      />
+      <VerdictStrip run={run} tested={testedFrom(run, detail.summary)} />
       <div className="rf-notes">
         {disclosure ? (
           <p data-testid="disclosure" className="rf-note">
@@ -188,6 +214,7 @@ function StateFacts({ run }: { run: RealityRun }) {
             <RecordSlab
               key={record.customer.customer_id}
               record={record}
+              noun={targetNoun(run)}
               callHref={`#call-${record.customer.created_by_call}`}
             />
           ))}
@@ -203,7 +230,7 @@ function StateFacts({ run }: { run: RealityRun }) {
 
 function ClaimMessage({ run }: { run: RealityRun }) {
   const claim = run.agent.claim;
-  if (!claim) return <p className="rf-body">The agent wrote no final message.</p>;
+  if (!claim) return <p className="rf-body">The {targetNoun(run)} wrote no final message.</p>;
   return (
     <p data-testid="claim-message" className="rf-body rf-break">
       {claim.message.text}
@@ -218,10 +245,10 @@ function OracleCard({ run }: { run: RealityRun }) {
   const broken = run.actual.invariants_violated.length;
   const evaluated = run.actual.invariants_evaluated.length;
   return (
-    <div data-testid="oracle-card" className="rf-stack">
+    <div id="oracle" data-testid="oracle-card" className="rf-stack">
       <p className="rf-oracle-line">
         <VerdictTag verdict={run.verdict} testId="oracle-verdict" />
-        <span className="rf-data">run outcome: {humanize(run.run_outcome)}</span>
+        {run.run_outcome ? <span className="rf-data">run outcome: {humanize(run.run_outcome)}</span> : null}
       </p>
       {run.finding_class ? (
         <p className="rf-data">
@@ -262,11 +289,37 @@ function OracleCard({ run }: { run: RealityRun }) {
   );
 }
 
+/**
+ * The status-and-records row repeats the strip above unless it carries the finding. So it stays in view
+ * for a violation, where the records are the evidence, and when no earlier row exists. Otherwise it folds.
+ */
+const outcomeLeads = (run: RealityRun) => run.verdict === "VIOLATION" || firstDivergence(run) === null;
+
+function OutcomeRow({ run }: { run: RealityRun }) {
+  const relation = claimRelation(run);
+  const noun = targetNoun(run);
+  return (
+    <ComparisonRow
+      title="Outcome"
+      agentLabel={`${noun.charAt(0).toUpperCase() + noun.slice(1)}'s final status`}
+      actualLabel="What committed"
+      agentTestId="claim-card"
+      relation={relation}
+      tone={seamFor(run, relation)}
+      agent={<ClaimFacts run={run} />}
+      actual={<StateFacts run={run} />}
+    />
+  );
+}
+
+/** The most important moment first: a recorded mismatch if there is one, and the outcome after it. */
 function Comparison({ id, run }: { id: string; run: RealityRun }) {
   const relation = claimRelation(run);
   const first = firstDivergence(run);
   const firstEvent = first ? run.agent.tool_events.find((e) => e.call_seq === first.call_seq) : null;
   const pointTone = seamFor(run, "differs");
+  const noun = targetNoun(run);
+  const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
   return (
     <section
       aria-labelledby="comparison-title"
@@ -279,29 +332,19 @@ function Comparison({ id, run }: { id: string; run: RealityRun }) {
       </h2>
       <div aria-hidden className="rf-columns">
         <p data-reality="agent">
-          Agent-reported reality
-          <span>What it was told, and what it filed</span>
+          {Noun}-reported reality
+          <span>What it saw, and what it reported</span>
         </p>
         <p data-reality="actual">
           Authoritative reality
-          <span>What committed, and what the Oracle verified</span>
+          <span>What actually happened</span>
         </p>
       </div>
-      <ComparisonRow
-        title="Outcome"
-        agentLabel="What it reported"
-        actualLabel="What committed"
-        agentTestId="claim-card"
-        relation={relation}
-        tone={seamFor(run, relation)}
-        agent={<ClaimFacts run={run} />}
-        actual={<StateFacts run={run} />}
-      />
       {first ? (
         <ComparisonRow
           title={`First divergence, call ${first.call_seq}`}
-          agentLabel={`What it was told · call ${first.call_seq}`}
-          actualLabel="What was true at that moment"
+          agentLabel={`Tool response · call ${first.call_seq}`}
+          actualLabel="Actual operation"
           relation="differs"
           tone={pointTone}
           agent={
@@ -311,7 +354,7 @@ function Comparison({ id, run }: { id: string; run: RealityRun }) {
               </p>
               <p className="rf-data">
                 {firstEvent?.tool}
-                {firstEvent?.fault_injected ? ` · ${FAULT_LABEL[firstEvent.fault_injected] ?? humanize(firstEvent.fault_injected)}` : ""}
+                {firstEvent?.fault_injected ? ` · ${faultLabel(firstEvent.fault_injected, run)}` : ""}
               </p>
             </>
           }
@@ -329,16 +372,46 @@ function Comparison({ id, run }: { id: string; run: RealityRun }) {
           }
         />
       ) : null}
+      {outcomeLeads(run) ? <OutcomeRow run={run} /> : null}
       <ComparisonRow
         title="Final statement and verdict"
-        agentLabel="In the agent's words"
-        actualLabel="What the Oracle verified"
+        agentLabel={`In the ${noun}'s words`}
+        actualLabel="Oracle verdict"
         relation={relation}
         tone={seamFor(run, relation)}
         agent={<ClaimMessage run={run} />}
         actual={<OracleCard run={run} />}
       />
+      <p className="rf-relation" data-testid="relation-line">
+        {relationLine(run)}
+      </p>
     </section>
+  );
+}
+
+/** Level 3. Closed by default and reachable by link: a deep link into one opens it. */
+function Fold({
+  id,
+  testId,
+  title,
+  meta,
+  children,
+}: {
+  id: string;
+  testId: string;
+  title: string;
+  meta: string;
+  children: ReactNode;
+}) {
+  return (
+    <details id={id} className="rf-fold" data-testid={testId}>
+      <summary>
+        <Chevron />
+        <span className="rf-fold-title">{title}</span>
+        <span className="rf-fold-meta">{meta}</span>
+      </summary>
+      <div className="rf-fold-body">{children}</div>
+    </details>
   );
 }
 
@@ -353,10 +426,7 @@ function Explanation({
   const explanation = explanationFrom(run, detail.case_study, primary);
   const { causal } = explanation;
   return (
-    <section aria-labelledby="explain-title" className="rf-explain" data-testid="explanation">
-      <h2 id="explain-title" className="rf-section-title">
-        The evidence, explained
-      </h2>
+    <section aria-label="The evidence, explained" className="rf-explain" data-testid="explanation">
       <div className="rf-explain-grid">
         <div>
           <h3>What happened?</h3>
@@ -436,7 +506,7 @@ function CallRow({ id, event, run }: { id: string; event: ToolEvent; run: Realit
               <span className="rf-call-seq">#{event.call_seq}</span>
               <span className="rf-call-tool">{event.tool}</span>
               {event.fault_injected ? (
-                <span className="rf-call-fault" title={FAULT_LABEL[event.fault_injected]}>
+                <span className="rf-call-fault" title={faultLabel(event.fault_injected, run)}>
                   {event.fault_injected}
                 </span>
               ) : null}
@@ -477,17 +547,8 @@ function CallRow({ id, event, run }: { id: string; event: ToolEvent; run: Realit
 
 function Ledger({ id, run }: { id: string; run: RealityRun }) {
   const events = run.agent.tool_events;
-  const faulted = events.filter((e) => e.fault_injected).length;
   return (
-    <section aria-labelledby="ledger-title" className="rf-ledger" data-testid="ledger">
-      <div className="rf-section-head">
-        <h2 id="ledger-title" className="rf-section-title">
-          Every tool call
-        </h2>
-        <p className="rf-data">
-          {plural(events.length, "call", "calls")}, {faulted} carrying a delivered fault
-        </p>
-      </div>
+    <section aria-label="Every tool call" className="rf-ledger" data-testid="ledger">
       <ol>
         {events.map((event) => (
           <CallRow key={event.call_seq} id={id} event={event} run={run} />
@@ -498,57 +559,48 @@ function Ledger({ id, run }: { id: string; run: RealityRun }) {
   );
 }
 
-function Discrepancies({ run }: { run: RealityRun }) {
+function discrepancyLine(run: RealityRun): string {
   const counts = new Map<string, number>();
   for (const d of run.discrepancies) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
-  const line = [...counts.entries()]
-    .map(([kind, count]) => `${count} ${DISCREPANCY_LABEL[kind].toLowerCase()}`)
+  return [...counts.entries()]
+    .map(([kind, count]) => `${count} ${(DISCREPANCY_LABEL[kind] ?? humanize(kind)).toLowerCase()}`)
     .join(", ");
+}
+
+function Discrepancies({ run }: { run: RealityRun }) {
   return (
-    <details className="rf-disclose rf-panel" data-testid="discrepancy-panel">
-      <summary>
-        <Chevron />
-        <span>
-          {run.discrepancies.length} discrepanc{run.discrepancies.length === 1 ? "y" : "ies"}:{" "}
-          <span className="text-muted">{line}</span>
-        </span>
-      </summary>
-      <TableScroll label="Discrepancies table">
-        <table className="rf-table min-w-[36rem]" data-testid="discrepancies">
-          <caption className="sr-only">
-            Differences between what the agent saw and authoritative state
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Kind</th>
-              <th scope="col">Agent saw</th>
-              <th scope="col">Actually</th>
+    <TableScroll label="Discrepancies table">
+      <table className="rf-table min-w-[36rem]" data-testid="discrepancies">
+        <caption className="sr-only">
+          Differences between what the target saw and authoritative state
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Kind</th>
+            <th scope="col">Saw</th>
+            <th scope="col">Actually</th>
+          </tr>
+        </thead>
+        <tbody>
+          {run.discrepancies.map((d, i) => (
+            <tr key={i} data-kind={d.kind}>
+              <td>
+                {DISCREPANCY_LABEL[d.kind]}
+                {d.call_seq !== null ? <span className="block font-mono text-faint">call {d.call_seq}</span> : null}
+              </td>
+              <td className="font-mono">{d.agent_saw}</td>
+              <td className="font-mono">{d.actually}</td>
             </tr>
-          </thead>
-          <tbody>
-            {run.discrepancies.map((d, i) => (
-              <tr key={i} data-kind={d.kind}>
-                <td>
-                  {DISCREPANCY_LABEL[d.kind]}
-                  {d.call_seq !== null ? <span className="block font-mono text-faint">call {d.call_seq}</span> : null}
-                </td>
-                <td className="font-mono">{d.agent_saw}</td>
-                <td className="font-mono">{d.actually}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableScroll>
-    </details>
+          ))}
+        </tbody>
+      </table>
+    </TableScroll>
   );
 }
 
 function Records({ run }: { run: RealityRun }) {
   return (
-    <section aria-labelledby="records-title" className="rf-records">
-      <h2 id="records-title" className="rf-section-title">
-        Authoritative records
-      </h2>
+    <section aria-label="Authoritative records" className="rf-records">
       <TableScroll label="Records table">
         <table className="rf-table min-w-[34rem]">
           <caption className="sr-only">Authoritative customer records after the run</caption>
@@ -628,21 +680,64 @@ export function RealityView({
   run: RealityRun;
 }) {
   const story = storyFrom(run);
+  const events = run.agent.tool_events;
+  const faulted = events.filter((e) => e.fault_injected).length;
+  const count = run.discrepancies.length;
   return (
     <div className="rf-reality" data-testid="reality-view" data-run={run.run_id} data-story={story.kind}>
       <Summary id={id} detail={detail} runs={runs} run={run} />
       <RunPicker id={id} runs={runs} current={run.run_id} />
       <Comparison id={id} run={run} />
-      <Explanation detail={detail} run={run} />
-      <Ledger id={id} run={run} />
-      {run.discrepancies.length ? (
-        <Discrepancies run={run} />
-      ) : (
-        <p data-testid="no-discrepancies" className="rf-body">
-          No discrepancy between delivery and authoritative state was recorded in this run.
-        </p>
-      )}
-      <Records run={run} />
+      <section aria-label="Evidence for this run" className="rf-folds">
+        {outcomeLeads(run) ? null : (
+          <Fold
+            id="outcome"
+            testId="outcome-panel"
+            title="Final status and committed records"
+            meta={stateLine(run)}
+          >
+            <OutcomeRow run={run} />
+          </Fold>
+        )}
+        <Fold
+          id="explain"
+          testId="explain-panel"
+          title="What the evidence does and does not show"
+          meta="What happened, the recorded order, causal evidence"
+        >
+          <Explanation detail={detail} run={run} />
+        </Fold>
+        <Fold
+          id="calls"
+          testId="ledger-panel"
+          title="Every tool call"
+          meta={`${plural(events.length, "call", "calls")}, ${faulted} carrying a delivered fault`}
+        >
+          <Ledger id={id} run={run} />
+        </Fold>
+        {count ? (
+          <Fold
+            id="differences"
+            testId="discrepancy-panel"
+            title={`${count} discrepanc${count === 1 ? "y" : "ies"}`}
+            meta={discrepancyLine(run)}
+          >
+            <Discrepancies run={run} />
+          </Fold>
+        ) : (
+          <p data-testid="no-discrepancies" className="rf-body">
+            No discrepancy between delivery and authoritative state was recorded in this run.
+          </p>
+        )}
+        <Fold
+          id="records"
+          testId="records-panel"
+          title="Authoritative records"
+          meta={plural(run.actual.customers.length, "record in the CRM after the run", "records in the CRM after the run")}
+        >
+          <Records run={run} />
+        </Fold>
+      </section>
       <Deeper id={id} detail={detail} run={run} />
     </div>
   );
