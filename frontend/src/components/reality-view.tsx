@@ -99,6 +99,14 @@ function faultLabel(kind: string, run: RealityRun): string {
 }
 
 export function targetLabel(run: RealityRun): string {
+  if (run.external) {
+    const name = run.external.name;
+    if (run.target_evidence === "live_provider") {
+      return `Target: ${name}, external agent using ${run.reported_models.join(", ")}`;
+    }
+    if (run.target_evidence === "external_scripted") return `Target: ${name}, external script, not a model`;
+    return `Target: ${name}, external agent on an offline fixture, not a model`;
+  }
   if (run.target_evidence === "live_provider") {
     return `Target: live model ${run.reported_models.join(", ")}`;
   }
@@ -128,7 +136,8 @@ function Summary({
           Run {index} of {runs.runs.length}
           <span className="rf-wide-only">
             {" "}
-            · World {run.world_ref} · {run.config} policy
+            · World {run.world_ref}
+            {run.external ? null : ` · ${run.config} policy`}
           </span>
         </p>
         <Tag testId="target-evidence" tone={run.target_evidence === "live_provider" ? "neutral" : "warn"}>

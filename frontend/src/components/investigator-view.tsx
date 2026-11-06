@@ -203,7 +203,7 @@ function ExperimentStage({ cycle, fixture }: { cycle: Cycle; fixture: boolean })
           <div>
             <dt className="rf-label">Condition</dt>
             <dd className="rf-body">
-              World {run.world_ref}, {run.config} policy.{" "}
+              World {run.world_ref}{run.external ? "." : `, ${run.config} policy.`}{" "}
               {run.faults.length ? "Configured faults:" : "No fault was configured."}
             </dd>
             {run.faults.map((fault, i) => (

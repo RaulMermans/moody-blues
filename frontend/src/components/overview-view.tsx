@@ -8,7 +8,7 @@ import { conditionLine, outcomeFrom, targetNote, testedFrom, verdictMeaning } fr
 import { type StepLink, stepsFrom } from "@/design/sequence";
 import { disclosureLine, explanationFrom, scopeNote } from "@/design/story";
 import type { InvestigationDetail, RealityRun, RunList, Verdict } from "@/lib/evidence-types";
-import { formatWhen, humanize, MODE_NOTE, STRATEGY_LABEL } from "@/lib/labels";
+import { formatWhen, humanize, modeNote, STRATEGY_LABEL } from "@/lib/labels";
 
 import { cycleHref } from "./investigator-view";
 import { METHOD_HREF, RunPicker, runHref, targetLabel } from "./reality-view";
@@ -92,7 +92,7 @@ function Identity({ detail, run }: { detail: InvestigationDetail; run: RealityRu
           {targetLabel(run)}
         </Tag>
       ) : null}
-      <p className="rf-data rf-wide-only">{MODE_NOTE[summary.mode]}</p>
+      <p className="rf-data rf-wide-only">{modeNote(summary)}</p>
     </div>
   );
 }
@@ -173,7 +173,7 @@ function ResultBand({
       <div className="rf-result-notes">
         <p className="rf-note rf-narrow-only">
           <span className="rf-label">Evidence</span>
-          <span>{MODE_NOTE[detail.summary.mode]}</span>
+          <span>{modeNote(detail.summary)}</span>
         </p>
         {disclosure ? (
           <p data-testid="disclosure" className="rf-note">
