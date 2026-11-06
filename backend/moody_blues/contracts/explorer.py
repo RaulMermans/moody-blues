@@ -35,7 +35,11 @@ Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 
 
 TargetEvidence = Literal[
-    "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+    "live_provider",
+    "local_ollama",
+    "offline_fixture",
+    "reference_executor",
+    "external_scripted",
 ]
 
 
@@ -51,6 +55,9 @@ class ExecutionMode(StrEnum):
     # Real sandboxes, worlds and Oracle, with a labeled fixture model and a reference script.
     # Exercises the product path for free. Never evidence of model behavior.
     REHEARSAL = "rehearsal"
+    # A real model on the operator's own machine took part. Real model behavior, nothing paid, and
+    # never the hosted provider. Which part it played is on the evidence fields.
+    LOCAL = "local"
 
 
 class CaseKind(StrEnum):
@@ -132,7 +139,7 @@ class InvestigationSummary(_Public):
     investigator_model: str
     target_model: str
     # None: this strategy used no model.
-    investigator_evidence: Literal["live_provider", "offline_fixture"] | None
+    investigator_evidence: Literal["live_provider", "offline_fixture", "local_ollama"] | None
     target_evidence: list[TargetEvidence]
     experiment_count: int
     target_run_count: int
@@ -364,6 +371,9 @@ class ExternalTargetView(_Public):
     transcript_sha256: Sha256
     model_calls: int = 0  # reached a provider, as the host recorded it
     model_calls_uncertain: int = 0  # no answer to trust: may have run, may be billed
+    # Sprint 17. Present only when a local model answered, read from the running provider.
+    model_provider: str | None = Field(default=None, exclude_if=lambda v: v is None)
+    model_digest: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class RealityRun(_Public):

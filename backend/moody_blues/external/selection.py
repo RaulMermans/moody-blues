@@ -51,4 +51,5 @@ def external_provenance(
         manifest_sha256=bundle.manifest_sha256,
         model_broker=broker.evidence if broker is not None else "none",
         approved_model=broker.model if broker is not None else None,
+        model_identity=broker.identity if broker is not None else None,
     )

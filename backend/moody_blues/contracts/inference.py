@@ -159,6 +159,61 @@ class InferenceRequest(BaseModel):
         return self
 
 
+class InferenceTimings(BaseModel):
+    """What a local provider measured for one call. No hosted provider reports these."""
+
+    model_config = ConfigDict(frozen=True)
+
+    load_ms: int = Field(ge=0)
+    prompt_eval_ms: int = Field(ge=0)
+    generation_ms: int = Field(ge=0)
+    total_ms: int = Field(ge=0)
+    # Hidden reasoning is measured, never passed on: a target sees only ``content``.
+    thinking_chars: int = Field(default=0, ge=0)
+
+
+class LocalInferencePolicy(BaseModel):
+    """Resource limits for local inference. Set by trusted code, recorded with what ran.
+
+    Nothing here is money. Local runs never touch the spend ledger, and these limits are the only
+    thing that bounds them.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    max_model_calls_per_run: int = Field(ge=1, le=32)
+    max_total_tokens_per_run: int = Field(ge=1)
+    max_completion_tokens: int = Field(ge=1, le=8192)
+    max_prompt_bytes: int = Field(ge=1)
+    call_timeout_seconds: float = Field(gt=0, le=300)
+    run_timeout_seconds: float = Field(gt=0, le=110)
+    max_concurrent_generations: int = Field(ge=1, le=4)
+    context_tokens: int = Field(ge=512)
+    max_experiments: int = Field(ge=1, le=6)
+    max_investigator_calls: int = Field(ge=1, le=12)
+    max_investigation_seconds: float = Field(gt=0, le=3_600)
+
+
+class LocalModelIdentity(BaseModel):
+    """Which local model this was. Every field comes from the running provider or this host."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    provider: Literal["ollama"] = "ollama"
+    server_version: str
+    model: str
+    digest: str
+    family: str | None
+    parameter_size: str | None
+    quantization: str | None
+    capabilities: list[str]
+    context_limit: int | None  # what the model supports
+    thinking_enabled: bool  # the setting this run used; part of what was tested
+    host_os: str
+    host_arch: str
+    policy: LocalInferencePolicy
+
+
 class TokenUsage(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -179,6 +234,8 @@ class InferenceResult(BaseModel):
     finish_reason: str | None
     usage: TokenUsage | None
     latency_ms: int = Field(ge=0)
+    # Sprint 17. Left out when absent, so hashes of earlier results are unchanged.
+    timings: InferenceTimings | None = Field(default=None, exclude_if=lambda v: v is None)
 
     def assistant_message(self) -> ChatMessage | AssistantToolCallMessage | None:
         """This result as the assistant turn to append to the conversation history.

@@ -61,6 +61,7 @@ _SCOPE_TOOLS: dict[Scope, frozenset[str]] = {
 }
 _FINISH_LINE = "When you are finished, return your final result."
 _NOT_CHARGED = "no model was used through the host; nothing was charged"
+LOCAL_COST_NOTE = "a model on this machine; no provider was paid, and the ledger was not touched"
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,6 +264,9 @@ class ExternalAgentTarget:
             transcript_sha256=outcome.transcript_sha256,
             transcript_lines=outcome.transcript_lines,
             events=outcome.events,
+            model_identity=self._live.broker.identity
+            if self._live is not None and outcome.model_attempts
+            else None,
             model_requests=outcome.model_requests,
         )
 
@@ -277,7 +281,8 @@ class ExternalAgentTarget:
 
     def _settle(self, entry: str | None, outcome: DriverOutcome) -> tuple[float | None, str]:
         if self._live is None or self._live.ledger is None or entry is None:
-            return None, _NOT_CHARGED
+            local = self._evidence(outcome) == "local_ollama"
+            return None, LOCAL_COST_NOTE if local else _NOT_CHARGED
         cost = round(self._live.ledger.settle(entry, outcome.tokens), 6)
         return cost, "estimate at assumed ceiling prices; not a provider invoice"
 

@@ -19,7 +19,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints
 
-from moody_blues.contracts.inference import ToolCall
+from moody_blues.contracts.inference import InferenceTimings, LocalModelIdentity, ToolCall
 from moody_blues.contracts.scenario import Objective
 from moody_blues.contracts.world import ToolResponse
 
@@ -357,6 +357,8 @@ class ModelCallRecord(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     latency_ms: int | None = None
+    # Sprint 17: what a local provider measured. Left out when absent.
+    timings: InferenceTimings | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class ExternalAgentRecord(BaseModel):
@@ -392,6 +394,8 @@ class ExternalAgentRecord(BaseModel):
     transcript_lines: int
     events: list[AdapterEvent]
     # Sprint 16. Absent from earlier records and left out when empty, so those stay byte-identical.
+    # Sprint 17: the local model that answered, read from the running provider.
+    model_identity: LocalModelIdentity | None = Field(default=None, exclude_if=lambda v: v is None)
     model_requests: list[ModelCallRecord] = Field(
         default_factory=list[ModelCallRecord], exclude_if=lambda v: not v
     )

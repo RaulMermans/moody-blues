@@ -53,7 +53,11 @@ class TargetResult(BaseModel):
     run_id: str
     target_kind: Literal["llm_agent", "reference_executor", "external_agent"]
     evidence_source: Literal[
-        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+        "live_provider",
+        "local_ollama",
+        "offline_fixture",
+        "reference_executor",
+        "external_scripted",
     ]
     executor: str | None
     provider: str | None

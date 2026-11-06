@@ -315,6 +315,8 @@ def _external_view(run: TargetRunEvidence) -> ExternalTargetView | None:
         model_calls_uncertain=sum(
             r.status is ModelCallStatus.UNCERTAIN for r in record.model_requests
         ),
+        model_provider=record.model_identity.provider if record.model_identity else None,
+        model_digest=record.model_identity.digest if record.model_identity else None,
     )
 
 

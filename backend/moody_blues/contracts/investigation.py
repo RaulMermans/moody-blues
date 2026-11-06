@@ -25,8 +25,9 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from moody_blues.contracts.agent import AgentConfigName, EvidenceSource
+from moody_blues.contracts.agent import MODEL_EVIDENCE, AgentConfigName, EvidenceSource
 from moody_blues.contracts.experiment_evidence import ExperimentAuthorship, ExperimentState
+from moody_blues.contracts.inference import InferenceTimings, LocalModelIdentity
 from moody_blues.contracts.oracle import Verdict
 
 INVESTIGATION_SCHEMA_VERSION = 1
@@ -121,8 +122,11 @@ class TargetProvenance(BaseModel):
     protocol: str | None = None
     bundle_sha256: str | None = None
     manifest_sha256: str | None = None
-    model_broker: Literal["none", "offline_fixture", "live_provider"] = "none"
+    model_broker: Literal["none", "offline_fixture", "live_provider", "local_ollama"] = "none"
     approved_model: str | None = None
+    # Sprint 17. Read from the running provider. Left out when absent, so earlier records stay
+    # byte-identical.
+    model_identity: LocalModelIdentity | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class InvestigationRequest(BaseModel):
@@ -137,6 +141,10 @@ class InvestigationRequest(BaseModel):
     limits: InvestigationLimits = Field(default_factory=InvestigationLimits)
     # Sprint 16. Left out when absent, so earlier records stay byte-identical.
     target: TargetProvenance | None = Field(default=None, exclude_if=lambda v: v is None)
+    # Sprint 17: the Investigator's own local model, read from the running provider.
+    investigator_identity: LocalModelIdentity | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
 
 class ToolContract(BaseModel):
@@ -467,6 +475,8 @@ class ModelCallRecord(BaseModel):
     latency_ms: int
     estimated_cost_usd: float | None
     spend_entry: str | None
+    # Sprint 17: what a local provider measured. Left out when absent.
+    timings: InferenceTimings | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class FindingClass(StrEnum):
@@ -525,7 +535,11 @@ class VerifiedFinding(BaseModel):
     violation_codes: list[str]
     faults_delivered: int
     target_evidence_source: Literal[
-        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+        "live_provider",
+        "local_ollama",
+        "offline_fixture",
+        "reference_executor",
+        "external_scripted",
     ]
     reproduction: ReproductionStatus
     reproduction_experiment_id: str | None = None
@@ -539,7 +553,7 @@ class VerifiedFinding(BaseModel):
 
     @property
     def is_model_behavior(self) -> bool:
-        return self.target_evidence_source == "live_provider"
+        return self.target_evidence_source in MODEL_EVIDENCE
 
     @property
     def fault_attributable(self) -> bool:
