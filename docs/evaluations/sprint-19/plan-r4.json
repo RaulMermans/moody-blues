@@ -1,0 +1,1674 @@
+[
+ {
+  "trial_id": "pilot-crm-blind_retry-fixed",
+  "stage": "pilot",
+  "unit_id": "crm/blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "pilot-crm-blind_retry-random-1804",
+  "stage": "pilot",
+  "unit_id": "crm/blind_retry",
+  "strategy": "random",
+  "seed": 1804,
+  "candidates": [
+   "crm-05",
+   "crm-01",
+   "crm-11",
+   "crm-07",
+   "crm-10",
+   "crm-04"
+  ]
+ },
+ {
+  "trial_id": "pilot-crm-blind_retry-adaptive-1804",
+  "stage": "pilot",
+  "unit_id": "crm/blind_retry",
+  "strategy": "adaptive",
+  "seed": 1804,
+  "candidates": []
+ },
+ {
+  "trial_id": "pilot-queue-job_single_read-fixed",
+  "stage": "pilot",
+  "unit_id": "queue/job_single_read",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "pilot-queue-job_single_read-random-1804",
+  "stage": "pilot",
+  "unit_id": "queue/job_single_read",
+  "strategy": "random",
+  "seed": 1804,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-02",
+   "job-queue-05",
+   "job-queue-11",
+   "job-queue-03",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "pilot-queue-job_single_read-adaptive-1804",
+  "stage": "pilot",
+  "unit_id": "queue/job_single_read",
+  "strategy": "adaptive",
+  "seed": 1804,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-06",
+   "job-queue-07",
+   "job-queue-09",
+   "job-queue-01",
+   "job-queue-12",
+   "job-queue-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-adaptive-1901",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-blind_retry-fixed",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-random-1902",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "crm-01",
+   "crm-03",
+   "crm-02",
+   "crm-06",
+   "crm-09",
+   "crm-07"
+  ]
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-adaptive-1903",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-11",
+   "job-queue-01",
+   "job-queue-07",
+   "job-queue-02",
+   "job-queue-08",
+   "job-queue-05"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-05",
+   "job-queue-12",
+   "job-queue-03",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10"
+  ]
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-fixed",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-trusting-random-1903",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "crm-02",
+   "crm-10",
+   "crm-04",
+   "crm-03",
+   "crm-09",
+   "crm-08"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-02",
+   "job-queue-11",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-04",
+   "job-queue-01"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-09",
+   "job-queue-12",
+   "job-queue-03",
+   "job-queue-06",
+   "job-queue-02",
+   "job-queue-07"
+  ]
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-random-1903",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "crm-07",
+   "crm-03",
+   "crm-02",
+   "crm-08",
+   "crm-10",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-fixed",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_single_read-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_silent-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_single_read-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-10",
+   "job-queue-06",
+   "job-queue-08",
+   "job-queue-03",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_silent-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-random-1903",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "crm-04",
+   "crm-01",
+   "crm-12",
+   "crm-07",
+   "crm-05",
+   "crm-03"
+  ]
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-adaptive-1902",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-blind_retry-adaptive-1902",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-adaptive-1901",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-adaptive-1902",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-blind_retry-adaptive-1901",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-trusting-random-1901",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "crm-03",
+   "crm-11",
+   "crm-01",
+   "crm-10",
+   "crm-02",
+   "crm-07"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-11",
+   "job-queue-08",
+   "job-queue-07",
+   "job-queue-10",
+   "job-queue-09",
+   "job-queue-03"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_single_read-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-blind_retry-adaptive-1903",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-adaptive-1903",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-random-1901",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "crm-12",
+   "crm-01",
+   "crm-11",
+   "crm-06",
+   "crm-04",
+   "crm-10"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_single_read-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-09",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-blind_retry-random-1903",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "crm-08",
+   "crm-04",
+   "crm-06",
+   "crm-03",
+   "crm-01",
+   "crm-10"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_single_read-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-11",
+   "job-queue-06",
+   "job-queue-12"
+  ]
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-random-1901",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "crm-09",
+   "crm-01",
+   "crm-11",
+   "crm-07",
+   "crm-04",
+   "crm-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-12",
+   "job-queue-04",
+   "job-queue-08",
+   "job-queue-10",
+   "job-queue-07",
+   "job-queue-09"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-08",
+   "job-queue-11",
+   "job-queue-10",
+   "job-queue-05",
+   "job-queue-06",
+   "job-queue-09"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_silent-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-random-1902",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "crm-08",
+   "crm-04",
+   "crm-07",
+   "crm-09",
+   "crm-05",
+   "crm-03"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-trusting-random-1902",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "crm-06",
+   "crm-07",
+   "crm-05",
+   "crm-10",
+   "crm-01",
+   "crm-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-12",
+   "job-queue-05",
+   "job-queue-04",
+   "job-queue-02",
+   "job-queue-08",
+   "job-queue-07"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-trusting-adaptive-1901",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_silent-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_silent-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-11",
+   "job-queue-01",
+   "job-queue-08",
+   "job-queue-12",
+   "job-queue-05",
+   "job-queue-03"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-06",
+   "job-queue-01",
+   "job-queue-04",
+   "job-queue-12",
+   "job-queue-08",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-trusting-adaptive-1902",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-adaptive-1902",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-08",
+   "job-queue-04",
+   "job-queue-07",
+   "job-queue-11",
+   "job-queue-03",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_silent-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-05",
+   "job-queue-12",
+   "job-queue-04",
+   "job-queue-09",
+   "job-queue-03"
+  ]
+ },
+ {
+  "trial_id": "main-crm-busy_but_correct-adaptive-1903",
+  "stage": "main",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-11",
+   "job-queue-01",
+   "job-queue-04",
+   "job-queue-08",
+   "job-queue-12"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_single_read-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-09",
+   "job-queue-07",
+   "job-queue-03",
+   "job-queue-06",
+   "job-queue-04",
+   "job-queue-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-08",
+   "job-queue-04",
+   "job-queue-06",
+   "job-queue-11",
+   "job-queue-12",
+   "job-queue-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_idempotent_retry-random-1903",
+  "stage": "main",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "job-queue-06",
+   "job-queue-09",
+   "job-queue-04",
+   "job-queue-10",
+   "job-queue-03",
+   "job-queue-01"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_poll_until_required-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-08",
+   "job-queue-01",
+   "job-queue-11",
+   "job-queue-07",
+   "job-queue-09",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-trusting-fixed",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-idempotent_retry-adaptive-1901",
+  "stage": "main",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_trusting-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-02",
+   "job-queue-10",
+   "job-queue-06",
+   "job-queue-03",
+   "job-queue-12",
+   "job-queue-04"
+  ]
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-random-1902",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "crm-12",
+   "crm-08",
+   "crm-06",
+   "crm-02",
+   "crm-01",
+   "crm-09"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-adaptive-1902",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "adaptive",
+  "seed": 1902,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-random-1901",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "crm-12",
+   "crm-03",
+   "crm-04",
+   "crm-11",
+   "crm-07",
+   "crm-05"
+  ]
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-fixed",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_blind_retry-adaptive-1903",
+  "stage": "main",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_silent-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_silent",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-12",
+   "job-queue-10",
+   "job-queue-03",
+   "job-queue-09",
+   "job-queue-04",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "main-crm-verify_then_report-random-1903",
+  "stage": "main",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "random",
+  "seed": 1903,
+  "candidates": [
+   "crm-03",
+   "crm-04",
+   "crm-08",
+   "crm-09",
+   "crm-11",
+   "crm-02"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_wrong_type-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-05",
+   "job-queue-03",
+   "job-queue-02",
+   "job-queue-12",
+   "job-queue-08",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-fixed",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "main-crm-blind_retry-random-1902",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "crm-12",
+   "crm-03",
+   "crm-06",
+   "crm-11",
+   "crm-02",
+   "crm-07"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_trusting-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_trusting",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-10",
+   "job-queue-09",
+   "job-queue-06",
+   "job-queue-08",
+   "job-queue-04",
+   "job-queue-02"
+  ]
+ },
+ {
+  "trial_id": "main-crm-trusting-adaptive-1903",
+  "stage": "main",
+  "unit_id": "crm/trusting",
+  "strategy": "adaptive",
+  "seed": 1903,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_verify_then_report-random-1901",
+  "stage": "main",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "job-queue-12",
+   "job-queue-10",
+   "job-queue-09",
+   "job-queue-07",
+   "job-queue-06",
+   "job-queue-08"
+  ]
+ },
+ {
+  "trial_id": "main-crm-blind_retry-random-1901",
+  "stage": "main",
+  "unit_id": "crm/blind_retry",
+  "strategy": "random",
+  "seed": 1901,
+  "candidates": [
+   "crm-10",
+   "crm-01",
+   "crm-03",
+   "crm-02",
+   "crm-11",
+   "crm-04"
+  ]
+ },
+ {
+  "trial_id": "main-queue-job_single_read-adaptive-1901",
+  "stage": "main",
+  "unit_id": "queue/job_single_read",
+  "strategy": "adaptive",
+  "seed": 1901,
+  "candidates": []
+ },
+ {
+  "trial_id": "main-queue-job_assumes_it_will_finish-random-1902",
+  "stage": "main",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "random",
+  "seed": 1902,
+  "candidates": [
+   "job-queue-06",
+   "job-queue-12",
+   "job-queue-01",
+   "job-queue-04",
+   "job-queue-09",
+   "job-queue-07"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-trusting-1",
+  "stage": "sweep",
+  "unit_id": "crm/trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-trusting-2",
+  "stage": "sweep",
+  "unit_id": "crm/trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-07",
+   "crm-08",
+   "crm-09",
+   "crm-10",
+   "crm-11",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-blind_retry-1",
+  "stage": "sweep",
+  "unit_id": "crm/blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-blind_retry-2",
+  "stage": "sweep",
+  "unit_id": "crm/blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-07",
+   "crm-08",
+   "crm-09",
+   "crm-10",
+   "crm-11",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-verify_then_report-1",
+  "stage": "sweep",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-verify_then_report-2",
+  "stage": "sweep",
+  "unit_id": "crm/verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-07",
+   "crm-08",
+   "crm-09",
+   "crm-10",
+   "crm-11",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-idempotent_retry-1",
+  "stage": "sweep",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-idempotent_retry-2",
+  "stage": "sweep",
+  "unit_id": "crm/idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-07",
+   "crm-08",
+   "crm-09",
+   "crm-10",
+   "crm-11",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-busy_but_correct-1",
+  "stage": "sweep",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-01",
+   "crm-02",
+   "crm-03",
+   "crm-04",
+   "crm-05",
+   "crm-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-crm-busy_but_correct-2",
+  "stage": "sweep",
+  "unit_id": "crm/busy_but_correct",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "crm-07",
+   "crm-08",
+   "crm-09",
+   "crm-10",
+   "crm-11",
+   "crm-12"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_trusting-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_trusting-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_trusting",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_blind_retry-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_blind_retry-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_blind_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_verify_then_report-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_verify_then_report-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_verify_then_report",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_idempotent_retry-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_idempotent_retry-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_idempotent_retry",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_poll_until_required-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_poll_until_required-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_poll_until_required",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_single_read-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_single_read",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_single_read-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_single_read",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_assumes_it_will_finish-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_assumes_it_will_finish-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_assumes_it_will_finish",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_wrong_type-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_wrong_type-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_wrong_type",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_silent-1",
+  "stage": "sweep",
+  "unit_id": "queue/job_silent",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-01",
+   "job-queue-02",
+   "job-queue-03",
+   "job-queue-04",
+   "job-queue-05",
+   "job-queue-06"
+  ]
+ },
+ {
+  "trial_id": "sweep-queue-job_silent-2",
+  "stage": "sweep",
+  "unit_id": "queue/job_silent",
+  "strategy": "fixed",
+  "seed": null,
+  "candidates": [
+   "job-queue-07",
+   "job-queue-08",
+   "job-queue-09",
+   "job-queue-10",
+   "job-queue-12",
+   "job-queue-11"
+  ]
+ }
+]
