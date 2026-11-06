@@ -4,6 +4,11 @@ How a reader moves through an investigation: the views, the Investigator, the Ti
 rules for the words on them. The Reality Comparison has its own specification:
 [reality-comparison.md](reality-comparison.md).
 
+> Sprint 14 changed the default view and the tab labels: see
+> [product-experience-architecture.md](product-experience-architecture.md) and
+> [ADR 0011](../adr/0011-result-first-information-architecture.md). Where this page disagrees, those win. Its URL
+> contract below still holds.
+
 The order of the experience is **Understand → Explore → Investigate → Verify**. A reader should know what was tested,
 what happened, why the next experiment was chosen and what the Oracle verified, without reading JSON.
 

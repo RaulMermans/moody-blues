@@ -391,3 +391,25 @@ contributor might also hit.
 - **Still at risk:** `.git` is synced, and 1,800 or so other `.artifacts` files remain evicted. `~/dev` alone holds
   `vultr-state.json` and the deploy logs. Keep it.
 
+### KI-62: A link into a closed fold went nowhere
+- **Symptom:** a story step's "Call 1" link changed the URL and the ledger stayed shut.
+- **Cause:** Next.js client links use `pushState`, which fires no `hashchange`, and a closed `<details>` gives its
+  contents no position.
+- **Fix:** `HashFocus` follows clicked hash links until the address and the target both exist, then opens every
+  enclosing fold. Regression tests are in `e2e-design/experience.spec.ts`.
+
+### KI-63: A rehearsal called a script an agent
+- **Symptom:** "The agent reported completion", "Executable Python written by the model" and "run outcome: none" on
+  rehearsal pages, and "Task text is not in this record" with a catalog available.
+- **Cause:** shared copy assumed a model target, and script runs have no `run_outcome`.
+- **Fix:** `targetNoun`, `inRehearsal` and a labeled catalog task. A real rehearsal is scanned at every level in
+  `e2e/product.spec.ts`. Only reference-script runs read a null outcome as recovery: a live run stays narrow.
+
+### KI-64: A PASS headline could outrank an inconclusive investigation
+- **Symptom:** `inv_5c9f95de6c09` is Inconclusive, and its case's primary run is a PASS, so the new Result led with
+  "handled correctly".
+- **Fix:** a scope note now leads the Result, above the headline. The primary run stays the curated one.
+
+### KI-65: `.rf-flow` was already taken
+- **Symptom:** a new landing style silently restyled the Investigator's step list.
+- **Fix:** renamed to `.rf-how-steps`. Search `primitives.css` before adding a class: it has no namespacing by screen.

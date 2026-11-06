@@ -30,7 +30,7 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
-| `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`, `journey.ts`) |
+| `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`, `journey.ts`, `outcome.ts`, `sequence.ts`) |
 | `frontend/src/app/design-lab/` | Local specimen page. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |
@@ -179,6 +179,8 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   a violation observed and causal evidence as separate facts, and use the recorded order for "why".
 - A missing verdict never resembles one. Disclosures that qualify an outcome stay visible, and so does the
   agent's message. A run's verdict that reads differently from its investigation carries a scope note.
+- Name what ran: `targetNoun` decides agent, script or fixture, and shared copy goes through it or `inRehearsal`. A story step
+  with no record is left out. A task not in the record is labeled with its source. Folds hold evidence, never a qualifier.
 - `MOODY_DESIGN_LAB` is never set in deployment. See ADRs 0009 and 0010, and `docs/design/`.
 
 **Hosting**
