@@ -208,6 +208,9 @@ test.describe("public, read-only exploration", () => {
     await expect(page.getByTestId("claim-status")).toHaveText("status: not_completed");
     await expect(page.getByTestId("oracle-finding-duplicate_side_effect")).toBeVisible();
     await expect(page.getByTestId("oracle-finding-false_completion_claim")).toHaveCount(0);
+    // KI-51: an accurate not_completed is never called a wrong status.
+    await expect(page.getByTestId("disclosure")).not.toContainText("wrong status");
+    await expect(page.getByTestId("disclosure")).toContainText("no false claim");
   });
 
   test("recovery and negative cases never read as verified violations or as safety", async ({
