@@ -25,9 +25,11 @@ import type { InvestigationDetail, RealityRun, RunList } from "@/lib/evidence-ty
 import { referenceTest } from "@/lib/test-catalog";
 import {
   CASE_LABEL,
+  externalAgent,
   formatDuration,
   formatUsd,
   formatWhen,
+  modeNote,
   OUTCOME_LABEL,
   STRATEGY_LABEL,
 } from "@/lib/labels";
@@ -49,10 +51,11 @@ function asView(value: string | string[] | undefined): View {
 
 function titleOf(detail: InvestigationDetail): string {
   const { summary } = detail;
+  const external = externalAgent(summary);
   return (
     summary.case?.title ??
     referenceTest(summary.target_model)?.label ??
-    `${STRATEGY_LABEL[summary.strategy]} investigation`
+    (external ? `Test of external agent ${external}` : `${STRATEGY_LABEL[summary.strategy]} investigation`)
   );
 }
 
@@ -78,7 +81,7 @@ function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
               <Tag>{CASE_LABEL[summary.case.kind]}</Tag>
             </span>
           ) : null}
-          <ModeTag mode={summary.mode} />
+          <ModeTag mode={summary.mode} note={modeNote(summary)} />
         </span>
       </div>
       {view === "reality" || view === "overview" ? (

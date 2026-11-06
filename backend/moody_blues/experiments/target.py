@@ -18,6 +18,7 @@ from typing import Literal, Protocol
 from pydantic import BaseModel, ConfigDict, JsonValue
 
 from moody_blues.agents.target import InferencePort
+from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.agent import (
     AgentBudget,
     AgentConfigName,
@@ -50,8 +51,10 @@ class TargetResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     run_id: str
-    target_kind: Literal["llm_agent", "reference_executor"]
-    evidence_source: Literal["live_provider", "offline_fixture", "reference_executor"]
+    target_kind: Literal["llm_agent", "reference_executor", "external_agent"]
+    evidence_source: Literal[
+        "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+    ]
     executor: str | None
     provider: str | None
     requested_model: str | None
@@ -74,6 +77,7 @@ class TargetResult(BaseModel):
     cost_note: str
     full_report: dict[str, JsonValue]
     truncated_model_steps: int = 0
+    external: ExternalAgentRecord | None = None
 
 
 class TargetPort(Protocol):

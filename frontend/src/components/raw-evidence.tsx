@@ -29,6 +29,15 @@ export function RawEvidence({ detail, run }: { detail: InvestigationDetail; run:
           <Fact label="config">{run.config}</Fact>
           <Fact label="target_kind">{run.target_kind}</Fact>
           <Fact label="target_evidence">{run.target_evidence}</Fact>
+          {run.external ? (
+            <>
+              <Fact label="external_agent">{`${run.external.name} (${run.external.agent_id}@${run.external.agent_version})`}</Fact>
+              <Fact label="adapter_protocol">{run.external.protocol}</Fact>
+              <Fact label="execution_mode">{run.external.execution_mode}</Fact>
+              <Fact label="bundle_sha256">{run.external.bundle_sha256}</Fact>
+              <Fact label="transcript_sha256">{run.external.transcript_sha256}</Fact>
+            </>
+          ) : null}
           <Fact label="reported_models">{run.reported_models.join(", ") || "none"}</Fact>
           <Fact label="verdict">{run.verdict}</Fact>
           <Fact label="run_outcome">{run.run_outcome ?? "none"}</Fact>

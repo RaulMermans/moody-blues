@@ -406,6 +406,7 @@ function eventLine(entry: TimelineEntry, fixture: boolean): string {
     case "sandbox_execution":
       return `One step of the experiment in the sandbox, with networking ${facts.network_enabled ? "on" : "off"}. The coordinator's decision: ${String(facts.decision)}.`;
     case "target_run_started":
+      if (facts.config === null) return `Trusted code authorized a run with ${faultNames(list(facts.faults))} configured.`;
       return `Trusted code authorized a run under the ${String(facts.config)} policy, with ${faultNames(list(facts.faults))} configured.`;
     case "tool_interaction":
       return "The gateway's record of this call. What the agent was told may have been distorted.";

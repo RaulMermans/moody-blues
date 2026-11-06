@@ -58,9 +58,9 @@ export function VerdictTag({ verdict, testId }: { verdict: Verdict; testId?: str
   );
 }
 
-export function ModeTag({ mode }: { mode: ExecutionMode }) {
+export function ModeTag({ mode, note }: { mode: ExecutionMode; note?: string }) {
   return (
-    <Tag tone={mode === "live" ? "truth" : "neutral"} title={MODE_NOTE[mode]} testId="mode-tag">
+    <Tag tone={mode === "live" ? "truth" : "neutral"} title={note ?? MODE_NOTE[mode]} testId="mode-tag">
       {MODE_LABEL[mode]}
     </Tag>
   );

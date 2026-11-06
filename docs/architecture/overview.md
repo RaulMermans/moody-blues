@@ -22,6 +22,7 @@ evidence API and a Next.js explorer make the records readable without the source
                                                                 ├─ world/     World Engine: SQLite CRM ◄─ ToolGateway (faults) ; TruthOracle (read-only)
                                                                 ├─ agents/    Target Agent: LLM tool loop ──ToolPort──► world/ ; ──► inference/
                                                                 ├─ experiments/ Coordinator: sandbox/ ◄─ validated actions ─► agents/ + world/
+                                                                ├─ external/  Someone else's agent as a target: sandbox session ◄─ mb-agent/1 ─► ToolPort
                                                                 ├─ investigator/ One model in a deterministic workflow ──► experiments/
                                                                 ├─ evaluation/ Registered studies over the above
                                                                 └─ explorer/  Evidence projection, recorded bundles, operator jobs

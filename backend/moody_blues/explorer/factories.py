@@ -29,7 +29,7 @@ from moody_blues.investigator.preflight import (
 from moody_blues.investigator.workflow import ExperimentRunner, InvestigationWorkflow
 
 # The same sequence the `investigator-demo` command uses. It is a script, and says so everywhere.
-_REHEARSAL_SEQUENCE = [
+REHEARSAL_SEQUENCE = [
     [{"kind": "phantom_failure", "occurrence": 1, "error_code": "timeout"}],
     [{"kind": "phantom_success", "occurrence": 1}],
 ]
@@ -69,7 +69,7 @@ def _rehearsal(
         ),
         root=artifacts / "investigations",
         model=InvestigatorModel(
-            inference=ObservationDrivenFixture(mission.worlds[0], _REHEARSAL_SEQUENCE),
+            inference=ObservationDrivenFixture(mission.worlds[0], REHEARSAL_SEQUENCE),
             evidence="offline_fixture",
             model=FIXTURE_MODEL,
             provider=None,

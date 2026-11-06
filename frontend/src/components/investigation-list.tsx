@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { ListedInvestigation } from "@/lib/evidence-types";
-import { CASE_LABEL, formatUsd, humanize, OUTCOME_LABEL, STRATEGY_LABEL } from "@/lib/labels";
+import { CASE_LABEL, externalAgent, formatUsd, humanize, modeNote, OUTCOME_LABEL, STRATEGY_LABEL } from "@/lib/labels";
 import { referenceTest } from "@/lib/test-catalog";
 
 import { ModeTag, OutcomeTag, Tag } from "./ui";
@@ -33,7 +33,11 @@ function Row({ item }: { item: ListedInvestigation }) {
   const summary = item.summary;
   if (!summary) return <Corrupt item={item} />;
   const reference = referenceTest(summary.target_model);
-  const title = summary.case?.title ?? reference?.label ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
+  const external = externalAgent(summary);
+  const title =
+    summary.case?.title ??
+    reference?.label ??
+    (external ? `Test of external agent ${external}` : `${STRATEGY_LABEL[summary.strategy]} investigation`);
   const live = summary.target_evidence.includes("live_provider");
   return (
     <li
@@ -47,7 +51,7 @@ function Row({ item }: { item: ListedInvestigation }) {
         {summary.case && CASE_LABEL[summary.case.kind] !== OUTCOME_LABEL[summary.outcome] ? (
           <Tag>{CASE_LABEL[summary.case.kind]}</Tag>
         ) : null}
-        <ModeTag mode={summary.mode} />
+        <ModeTag mode={summary.mode} note={modeNote(summary)} />
       </div>
       <h3 className="mt-2 text-base font-medium text-foreground">
         <Link

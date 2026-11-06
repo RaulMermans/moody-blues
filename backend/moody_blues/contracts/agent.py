@@ -22,6 +22,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
+from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.common import ErrorDetail
 from moody_blues.contracts.inference import ConversationMessage, TokenUsage
 from moody_blues.contracts.oracle import OracleReport, Verdict
@@ -65,10 +66,43 @@ class TerminationReason(StrEnum):
     PROVIDER_ERROR = "provider_error"  # inference failed (auth, timeout, rate limit, 5xx, ...)
     INVALID_MODEL_RESPONSE = "invalid_model_response"  # unusable even as a turn
     CANCELLED = "cancelled"
+    # External agents only. Each names what the host observed, not what the agent said.
+    ADAPTER_STARTUP_FAILED = "adapter_startup_failed"  # no valid hello before the deadline
+    PROTOCOL_VERSION_MISMATCH = "protocol_version_mismatch"
+    HANDSHAKE_REJECTED = "handshake_rejected"
+    MALFORMED_MESSAGE = "malformed_message"  # a line was refused; output is never repaired
+    ADAPTER_CRASHED = "adapter_crashed"  # the process died before reporting
+    REJECTED_CALL_LIMIT = "rejected_call_limit"
+    AGENT_REPORTED_FAILURE = "agent_reported_failure"  # it said it could not finish
 
 
 INFRASTRUCTURE_TERMINATIONS: frozenset[TerminationReason] = frozenset(
-    {TerminationReason.PROVIDER_ERROR, TerminationReason.CANCELLED}
+    {
+        TerminationReason.PROVIDER_ERROR,
+        TerminationReason.CANCELLED,
+        TerminationReason.ADAPTER_STARTUP_FAILED,
+        TerminationReason.PROTOCOL_VERSION_MISMATCH,
+        TerminationReason.HANDSHAKE_REJECTED,
+    }
+)
+
+# The agent never started, so it cannot have touched the world. The run says nothing about it.
+ADAPTER_NEVER_RAN: frozenset[TerminationReason] = frozenset(
+    {
+        TerminationReason.ADAPTER_STARTUP_FAILED,
+        TerminationReason.PROTOCOL_VERSION_MISMATCH,
+        TerminationReason.HANDSHAKE_REJECTED,
+    }
+)
+
+# The agent ran and did not finish properly. Its effects, if any, are real and the Oracle read them.
+ADAPTER_SHORTFALLS: frozenset[TerminationReason] = frozenset(
+    {
+        TerminationReason.MALFORMED_MESSAGE,
+        TerminationReason.ADAPTER_CRASHED,
+        TerminationReason.REJECTED_CALL_LIMIT,
+        TerminationReason.AGENT_REPORTED_FAILURE,
+    }
 )
 
 
@@ -82,6 +116,9 @@ class ToolCallDisposition(StrEnum):
     FINAL_CLAIM_INVALID = "final_claim_invalid"
     SKIPPED_AFTER_FINAL_CLAIM = "skipped_after_final_claim"
     CANCELLED = "cancelled"
+    # External agents only.
+    TOOL_NOT_PERMITTED = "tool_not_permitted"  # a real tool, outside this agent's scopes
+    DUPLICATE_CALL_ID = "duplicate_call_id"  # never executed twice
 
 
 class ToolCallRecord(BaseModel):
@@ -157,6 +194,9 @@ class AgentTrajectory(BaseModel):
 
 
 EvidenceSource = Literal["live_provider", "offline_fixture"]
+# ``external_scripted``: an external agent during which the host brokered no model call. An
+# external agent that does use a model carries ``EvidenceSource`` like any other model run.
+ExternalEvidenceSource = EvidenceSource | Literal["external_scripted"]
 
 
 class RecoveryPattern(StrEnum):
@@ -224,13 +264,13 @@ class AgentRunReport(BaseModel):
 
     run_id: str
     started_at: datetime
-    evidence_source: EvidenceSource
+    evidence_source: ExternalEvidenceSource
     scenario_ref: str
     scenario_id: str
     scenario_version: str
     world_id: str
-    provider: str
-    requested_model: str
+    provider: str | None  # None: an external run in which no model was used
+    requested_model: str | None
     reported_models: list[str]
     agent: AgentTrajectory
     world_trace: list[ToolTraceEntry]
@@ -243,3 +283,5 @@ class AgentRunReport(BaseModel):
     assessment: RunAssessment
     estimated_cost_usd: float | None
     cost_note: str
+    # Sprint 15. Left out when absent, so earlier reports stay byte-identical.
+    external: ExternalAgentRecord | None = Field(default=None, exclude_if=lambda v: v is None)

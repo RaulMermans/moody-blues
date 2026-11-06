@@ -1,5 +1,5 @@
 import type { InvestigationDetail } from "@/lib/evidence-types";
-import { MODE_NOTE } from "@/lib/labels";
+import { modeNote } from "@/lib/labels";
 
 import { Chevron, Eyebrow, Fact, Tag } from "./ui";
 
@@ -13,7 +13,7 @@ export function EvidencePanel({ detail }: { detail: InvestigationDetail }) {
           Hash and schema verified on load
         </Tag>
       </div>
-      <p className="text-sm text-muted">{MODE_NOTE[summary.mode]}</p>
+      <p className="text-sm text-muted">{modeNote(summary)}</p>
       <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-muted">
         {detail.limitations.map((limit) => (
           <li key={limit}>{limit}</li>

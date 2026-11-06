@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from moody_blues.contracts.agent import TerminationReason
+from moody_blues.contracts.agent import ADAPTER_SHORTFALLS, TerminationReason
 from moody_blues.contracts.experiment_evidence import (
     ExperimentEvidence,
     ExperimentState,
@@ -41,6 +41,7 @@ SHORTFALLS: frozenset[str] = frozenset(
         TerminationReason.TOKEN_BUDGET.value,
         TerminationReason.WALL_TIMEOUT.value,
         TerminationReason.INVALID_MODEL_RESPONSE.value,
+        *(t.value for t in ADAPTER_SHORTFALLS),
     }
 )
 

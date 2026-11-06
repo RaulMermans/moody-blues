@@ -34,6 +34,11 @@ ExperimentId = Annotated[str, StringConstraints(pattern=r"^exp_[0-9a-f]{12}$")]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 
 
+TargetEvidence = Literal[
+    "live_provider", "offline_fixture", "reference_executor", "external_scripted"
+]
+
+
 class _Public(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -128,7 +133,7 @@ class InvestigationSummary(_Public):
     target_model: str
     # None: this strategy used no model.
     investigator_evidence: Literal["live_provider", "offline_fixture"] | None
-    target_evidence: list[Literal["live_provider", "offline_fixture", "reference_executor"]]
+    target_evidence: list[TargetEvidence]
     experiment_count: int
     target_run_count: int
     verified_finding_count: int
@@ -219,7 +224,7 @@ class FindingView(_Public):
     termination: str
     violation_codes: list[str]
     faults_delivered: int
-    target_evidence: Literal["live_provider", "offline_fixture", "reference_executor"]
+    target_evidence: TargetEvidence
     reproduction: ReproductionStatus
     impairments: list[Impairment]
     eligible_for_rate: bool
@@ -346,6 +351,19 @@ class Discrepancy(_Public):
     source: Literal["oracle", "fault_event"]
 
 
+class ExternalTargetView(_Public):
+    """Who an external run was. ``uses_model`` is what the host observed, not what it was told."""
+
+    agent_id: str
+    name: str
+    agent_version: str
+    protocol: str
+    uses_model: bool
+    execution_mode: str
+    bundle_sha256: Sha256
+    transcript_sha256: Sha256
+
+
 class RealityRun(_Public):
     run_id: str
     run_ref: str
@@ -353,8 +371,8 @@ class RealityRun(_Public):
     world_ref: str
     scenario_ref: str
     config: str
-    target_kind: Literal["llm_agent", "reference_executor"]
-    target_evidence: Literal["live_provider", "offline_fixture", "reference_executor"]
+    target_kind: Literal["llm_agent", "reference_executor", "external_agent"]
+    target_evidence: TargetEvidence
     reported_models: list[str]
     verdict: Verdict
     run_outcome: str | None
@@ -365,6 +383,8 @@ class RealityRun(_Public):
     agent: AgentReality
     actual: ActualReality
     discrepancies: list[Discrepancy]
+    # Sprint 15. Left out when absent, so a bundle of an internal run is byte-identical.
+    external: ExternalTargetView | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class TimelineStage(StrEnum):

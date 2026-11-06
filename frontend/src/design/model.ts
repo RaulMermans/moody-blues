@@ -106,7 +106,8 @@ export type TargetNoun = "agent" | "script" | "fixture";
 /** What ran. Read from the evidence field, so a script is never described as an agent. */
 export function targetNoun(run: RealityRun): TargetNoun {
   if (run.target_evidence === "live_provider") return "agent";
-  return run.target_evidence === "reference_executor" ? "script" : "fixture";
+  const scripted = run.target_evidence === "reference_executor" || run.target_evidence === "external_scripted";
+  return scripted ? "script" : "fixture";
 }
 
 export function missionLine(run: RealityRun): string | null {

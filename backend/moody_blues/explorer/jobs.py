@@ -373,7 +373,7 @@ class JobManager:
             self._close(record, JobStatus.FAILED, "evidence_not_intact")
             return
         digest = atomic_write(self.store.directory(record.job_id) / BUNDLE, text)
-        status, code = _terminal(report, bundle.summary.outcome)
+        status, code = terminal_status(report, bundle.summary.outcome)
         self._close(record, status, code, evidence_sha256=digest)
 
     def _close(
@@ -461,7 +461,7 @@ def _result_class(
     return None
 
 
-def _terminal(report: InvestigationReport, outcome: ProductOutcome) -> tuple[JobStatus, str]:
+def terminal_status(report: InvestigationReport, outcome: ProductOutcome) -> tuple[JobStatus, str]:
     if outcome is ProductOutcome.OUTCOME_UNCERTAIN:
         return JobStatus.OUTCOME_UNCERTAIN, "target_run_unresolved"
     match report.state:

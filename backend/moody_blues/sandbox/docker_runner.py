@@ -39,6 +39,7 @@ from moody_blues.contracts.common import ErrorCategory, ExecutionStatus
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest, SandboxResult
 from moody_blues.sandbox.base import SandboxError, SandboxUnavailableError
 from moody_blues.sandbox.docker_host import resolve_docker_host
+from moody_blues.sandbox.docker_session import DockerSandboxSession, start_failure
 
 log = logging.getLogger("moody_blues.sandbox")
 
@@ -253,6 +254,31 @@ class DockerSandboxRunner:
             "stdin_open": False,
             "tty": False,
         }
+
+    def open_session(self, request: SandboxRequest, *, max_line_bytes: int) -> DockerSandboxSession:
+        """A container that stays up, with its stdin open. The caller must close it."""
+        limits = request.limits or self.default_limits
+        session_id = f"sbx_{uuid.uuid4().hex[:16]}"
+        self.ensure_image()
+        config: dict[str, Any] = self._container_config(session_id, request.code, limits)
+        config["stdin_open"] = True
+        session: DockerSandboxSession | None = None
+        try:
+            container = self._docker().containers.create(**config)
+            session = DockerSandboxSession(
+                client_timeout=self._api_timeout,
+                container=container,
+                session_id=session_id,
+                image=self.image,
+                image_id=cast(str | None, container.attrs.get("Image")),
+                max_line_bytes=max_line_bytes,
+            )
+            session.start()
+        except (docker.errors.DockerException, requests.exceptions.RequestException) as exc:
+            if session is not None:
+                session.close()
+            raise start_failure(session_id, exc) from exc
+        return session
 
     def _await_exit(
         self, container: Container, limits: SandboxLimits, cancel: threading.Event | None

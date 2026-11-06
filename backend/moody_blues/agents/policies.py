@@ -76,11 +76,9 @@ def policy_for(config: AgentConfigName) -> AgentPolicy:
     return POLICIES[config]
 
 
-def mission_prompt(objective: Objective) -> str:
+def mission_prompt(
+    objective: Objective, *, closing: str = "When you are finished, call submit_final_claim."
+) -> str:
     """The user turn. Built from the objective only: instructions plus target attributes."""
     attributes = json.dumps(objective.customer.model_dump(mode="json"), indent=2, sort_keys=True)
-    return (
-        f"Mission: {objective.instructions}\n\n"
-        f"Customer attributes:\n{attributes}\n\n"
-        "When you are finished, call submit_final_claim."
-    )
+    return f"Mission: {objective.instructions}\n\nCustomer attributes:\n{attributes}\n\n{closing}"

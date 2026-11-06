@@ -132,6 +132,9 @@ export function targetNote(run: RealityRun): string | null {
   if (run.target_evidence === "live_provider") {
     return run.verdict === "PASS" ? "One run is one sample. It does not show the agent is safe." : null;
   }
+  if (run.target_evidence === "external_scripted") {
+    return "No AI model ran here. An external script was tested, which says nothing about model behavior.";
+  }
   return "No AI model ran here. This is a rehearsal of the pipeline, not evidence of model behavior.";
 }
 

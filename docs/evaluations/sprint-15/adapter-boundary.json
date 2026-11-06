@@ -1,0 +1,146 @@
+{
+  "label": "deterministic scripts in the real sandbox; says nothing about any LLM",
+  "scenarios": [
+    {
+      "scenario": 1,
+      "title": "Valid adapter handshake",
+      "expected": "final_claim / PASS",
+      "observed": "final_claim / PASS",
+      "wall_seconds": 0.77,
+      "result": "PASS"
+    },
+    {
+      "scenario": 2,
+      "title": "Unsupported protocol version",
+      "expected": "protocol_version_mismatch / INCONCLUSIVE",
+      "observed": "protocol_version_mismatch / INCONCLUSIVE",
+      "wall_seconds": 1.51,
+      "result": "PASS"
+    },
+    {
+      "scenario": 3,
+      "title": "Successful external task",
+      "expected": "final_claim / PASS",
+      "observed": "final_claim / PASS",
+      "wall_seconds": 0.5,
+      "result": "PASS"
+    },
+    {
+      "scenario": 4,
+      "title": "Recovery from a misleading response",
+      "expected": "final_claim / PASS",
+      "observed": "final_claim / PASS",
+      "wall_seconds": 0.43,
+      "result": "PASS"
+    },
+    {
+      "scenario": 5,
+      "title": "Verified duplicate side effect",
+      "expected": "final_claim / VIOLATION",
+      "observed": "final_claim / VIOLATION",
+      "wall_seconds": 0.48,
+      "result": "PASS"
+    },
+    {
+      "scenario": 6,
+      "title": "Invalid tool name",
+      "expected": "final_claim / INCONCLUSIVE",
+      "observed": "final_claim / INCONCLUSIVE",
+      "wall_seconds": 0.42,
+      "result": "PASS"
+    },
+    {
+      "scenario": 7,
+      "title": "Malformed tool arguments",
+      "expected": "final_claim / INCONCLUSIVE",
+      "observed": "final_claim / INCONCLUSIVE",
+      "wall_seconds": 0.4,
+      "result": "PASS"
+    },
+    {
+      "scenario": 8,
+      "title": "Unauthorized Oracle access attempt",
+      "expected": "malformed_message / INCONCLUSIVE",
+      "observed": "malformed_message / INCONCLUSIVE",
+      "wall_seconds": 1.48,
+      "result": "PASS"
+    },
+    {
+      "scenario": 9,
+      "title": "Adapter timeout",
+      "expected": "wall_timeout / INCONCLUSIVE",
+      "observed": "wall_timeout / INCONCLUSIVE",
+      "wall_seconds": 7.46,
+      "result": "PASS"
+    },
+    {
+      "scenario": 10,
+      "title": "Adapter crash",
+      "expected": "adapter_crashed / VIOLATION",
+      "observed": "adapter_crashed / VIOLATION",
+      "wall_seconds": 0.56,
+      "result": "PASS"
+    },
+    {
+      "scenario": 11,
+      "title": "Cancellation during execution",
+      "expected": "cancelled / INCONCLUSIVE",
+      "observed": "cancelled / INCONCLUSIVE",
+      "wall_seconds": 1.7,
+      "result": "PASS"
+    },
+    {
+      "scenario": 12,
+      "title": "Tool quota exceeded",
+      "expected": "final_claim / INCONCLUSIVE",
+      "observed": "final_claim / INCONCLUSIVE",
+      "wall_seconds": 0.5,
+      "result": "PASS"
+    },
+    {
+      "scenario": 13,
+      "title": "Malformed final response",
+      "expected": "malformed_message / INCONCLUSIVE",
+      "observed": "malformed_message / INCONCLUSIVE",
+      "wall_seconds": 1.57,
+      "result": "PASS"
+    },
+    {
+      "scenario": 14,
+      "title": "Evidence completeness",
+      "expected": "13 of 13",
+      "observed": "13 of 13",
+      "result": "PASS"
+    },
+    {
+      "scenario": 15,
+      "title": "Legacy internal target unchanged",
+      "expected": "no external record",
+      "observed": "no external record",
+      "result": "PASS"
+    },
+    {
+      "scenario": 16,
+      "title": "Execution without external credentials",
+      "expected": "runs, nothing charged",
+      "observed": "ran, nothing charged",
+      "result": "PASS"
+    }
+  ],
+  "metrics": {
+    "scenarios_passed": 16,
+    "scenarios_total": 16,
+    "adapter_invocations": 13,
+    "handshakes_accepted": 12,
+    "handshakes_refused_as_designed": 1,
+    "tool_calls_answered": 42,
+    "tool_calls_executed": 28,
+    "reached_gateway": 28,
+    "unauthorized_or_invalid_rejected": 14,
+    "unauthorized_or_invalid_reaching_gateway": 0,
+    "evidence_complete": "13/13",
+    "median_startup_ms": 264.5,
+    "median_scenario_seconds": 0.56,
+    "incremental_cost_usd": 0
+  }
+}

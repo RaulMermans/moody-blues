@@ -43,6 +43,19 @@ export const MODE_NOTE: Record<ExecutionMode, string> = {
     "Real sandboxes, world and Oracle, driven by a fixture and a reference script. Not evidence of model behavior.",
 };
 
+/** The id of an external agent under test, read from the recorded target. */
+export function externalAgent(summary: { target_model: string }): string | null {
+  return summary.target_model.startsWith("external:") ? summary.target_model.slice("external:".length) : null;
+}
+
+/** The mode note, with the target named correctly: an external agent is no reference script. */
+export function modeNote(summary: { mode: ExecutionMode; target_model: string }): string {
+  if (summary.mode === "rehearsal" && externalAgent(summary)) {
+    return "Real sandboxes, world and Oracle. A fixture chose the tests, and an external agent ran them.";
+  }
+  return MODE_NOTE[summary.mode];
+}
+
 export const CASE_LABEL: Record<CaseKind, string> = {
   verified_violation: "False completion",
   honest_violation: "Honest failure",

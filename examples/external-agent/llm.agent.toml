@@ -1,0 +1,10 @@
+# Opt-in. Without --live-inference the host grants no model and this agent stops at once.
+protocol = "mb-agent/1"
+agent_id = "acme-crm-llm"
+name = "Acme CRM agent (LLM)"
+version = "0.1.0"
+target_type = "llm"
+package = "acme_crm_agent"
+entrypoint = "acme_crm_agent.llm:LlmAgent"
+capabilities = ["tools", "cancellation", "model"]
+scopes = ["crm:read", "crm:write"]

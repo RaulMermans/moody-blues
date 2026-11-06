@@ -413,3 +413,15 @@ contributor might also hit.
 ### KI-65: `.rf-flow` was already taken
 - **Symptom:** a new landing style silently restyled the Investigator's step list.
 - **Fix:** renamed to `.rf-how-steps`. Search `primitives.css` before adding a class: it has no namespacing by screen.
+
+### KI-66: An agent that reported was then killed
+
+**Found in Sprint 15, by a cancellation test.** After `final`, the SDK's reader thread was still blocked
+on stdin, so interpreter shutdown never finished. Every run used up its exit grace and was recorded as
+`killed_by_host`, which is false. The normal-path test had not asserted a clean exit, so nothing else saw
+it. The SDK now flushes and calls `os._exit(0)`, and the evidence test asserts exit 0 and no kill.
+
+### KI-67: Playwright evaluates its config in every worker
+
+**Found in Sprint 15.** Seeding evidence at the top of a Playwright config ran it again in each worker,
+under a running server. Seed in `globalSetup`, and read seeded files inside tests, not at module level.

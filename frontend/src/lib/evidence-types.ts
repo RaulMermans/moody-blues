@@ -17,7 +17,19 @@ export type CaseKind =
   | "successful_recovery"
   | "negative_result"
   | "inconclusive";
-export type TargetEvidence = "live_provider" | "offline_fixture" | "reference_executor";
+export type TargetEvidence = "live_provider" | "offline_fixture" | "reference_executor" | "external_scripted";
+
+/** Who an external run was. `uses_model` is what the host observed, never what the agent said. */
+export interface ExternalTarget {
+  agent_id: string;
+  name: string;
+  agent_version: string;
+  protocol: string;
+  uses_model: boolean;
+  execution_mode: string;
+  bundle_sha256: string;
+  transcript_sha256: string;
+}
 
 export interface BoundedText {
   text: string;
@@ -273,8 +285,10 @@ export interface RealityRun {
   world_ref: string;
   scenario_ref: string;
   config: string;
-  target_kind: "llm_agent" | "reference_executor";
+  target_kind: "llm_agent" | "reference_executor" | "external_agent";
   target_evidence: TargetEvidence;
+  /** Present only on an external run. */
+  external?: ExternalTarget;
   reported_models: string[];
   verdict: Verdict;
   run_outcome: string | null;
