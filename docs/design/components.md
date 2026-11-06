@@ -2,84 +2,83 @@
 
 All live in [`frontend/src/design/components/`](../../frontend/src/design/components/). All are server
 components, so they add no client JavaScript. Their contract is
-[`frontend/src/design/model.ts`](../../frontend/src/design/model.ts).
+[`model.ts`](../../frontend/src/design/model.ts), and their words come from
+[`story.ts`](../../frontend/src/design/story.ts).
 
 ## The rule that governs them
 
-A component is told what to draw. `model.ts` copies named evidence fields into typed states. It reads no
-free text for meaning and detects nothing, so a fracture cannot appear without a recorded reason.
+A component is told what to draw. `model.ts` copies named evidence fields into typed states. It reads no free
+text for meaning and detects nothing, so a distortion cannot appear without a recorded reason.
 
 | Component | Input | Purpose | Never |
 |---|---|---|---|
-| `RealityFrame` | `reality: "agent" \| "actual"` | One side of a comparison, with the side's shape and label | Hold business logic |
-| `DivergenceField` | `state: DivergenceState` | The two planes. Only `violation` cuts them | Cut a plane without a violation |
-| `DivergenceDivider` | `state`, optional `detail` | The boundary and its label | Depend on animation to be understood |
-| `Crack` | `state`, `orientation` | The drawn line alone, for custom layouts | Carry text |
-| `RealityEcho` | `children` | Empty displaced outlines | Hold text or data, or sit near a record |
-| `OracleSeal` | `state: SealState` | The verdict | Rotate, offset, echo or wrap inside a word |
-| `FractureMarker` | `discrepancy: Discrepancy`, `tone` | One recorded discrepancy | Appear without a record |
-| `DisplayType` | `text: string`, `effect` | Editorial type | Take a recorded value |
-| `RecordSlab` | `record: RecordView` | One committed row | Be drawn for anything but a real row |
+| `Headline` | `first`, `second`, `outOfRegister`, `size` | The two-sentence statement | Take a recorded value, or layer text |
+| `ComparisonRow` | Two labeled sides, `relation`, `tone` | One event seen from both sides | Hold business logic |
+| `DivergenceDivider` | `relation`, `tone`, `glyph` | The seam and its `=` `≠` `?` | Depend on colour or motion to be understood |
+| `OracleSeal` | `state: SealState` | The verdict, the one light object | Rotate, offset or wrap inside a word |
+| `RecordSlab` | `record: RecordView`, `callHref` | One committed row | Be drawn for anything but a real row, or have anything drawn around it |
+
+`VerdictStrip` (`components/verdict-strip.tsx`) composes the four summary fields and is shared by the
+investigation page and the landing page.
+
+## What happened to Sprint 10's nine
+
+Each was judged on five questions: does it improve understanding, communicate a real state, help identity
+without hurting reading, get reused, and work without motion?
+
+| Sprint 10 | Decision | Why |
+|---|---|---|
+| `OracleSeal` | Kept, smaller | Passes all five. Dropped the repeated "Truth Oracle verdict" note |
+| `RecordSlab` | Kept | Passes all five. Gained the slip and a link to its call |
+| `DivergenceDivider` | Rewritten | The idea survives as the seam, at row level |
+| `DisplayType` | Replaced by `Headline` | Its slice and misregister layers were the theatrical part |
+| `RealityFrame` | Replaced by `ComparisonRow` | Two frames read one whole side at a time. A row keeps an event together, on a phone and in a screen reader |
+| `DivergenceField` | Removed | Cut planes carried no information |
+| `Crack` | Removed | A drawn shape standing for a fact the seam states directly |
+| `RealityEcho` | Removed | Empty outlines beside evidence, close to reading as extra records |
+| `FractureMarker` | Removed | Repeated the ledger. Discrepancies are a table now, and marks sit on the calls |
+
+## `Relation` and `SeamTone`
+
+| Relation | Glyph | Comes from |
+|---|---|---|
+| `equal` | `=` | A claim exists, and there is no `claim_versus_state` discrepancy |
+| `differs` | `≠` | `claim_versus_state`, a located discrepancy, or a delivered fault on a call |
+| `unknown` | `?` | There is no claim to compare |
+
+| Tone | Draws | Comes from |
+|---|---|---|
+| `steady` | One hairline | No recorded difference |
+| `distortion` | A dashed line, neutral colour | A recorded difference, verdict not `VIOLATION` |
+| `break` | A coral line stepped sideways with gaps | A recorded difference, verdict `VIOLATION` |
 
 ## `DivergenceState`
 
-From `divergenceFrom(run)`:
-
-| State | Comes from | Draws |
-|---|---|---|
-| `violation` | Oracle `VIOLATION` | Jagged crack, cut planes, moiré, echoes, ghosted titles |
-| `delivery` | Oracle `PASS` with recorded discrepancies | Straight dash-dot line, neutral markers, "Distorted, state held" |
-| `unresolved` | Oracle `INCONCLUSIVE` | Straight dotted line, "Unresolved" |
-| `none` | Oracle `PASS`, no discrepancies | One plain hairline |
-
-`delivery` exists because every recorded PASS run has at least one discrepancy. "Has a discrepancy" must not
-mean "broke": a fault the agent recovered from is real and is not a failure.
+From `divergenceFrom(run)`, on the comparison as `data-divergence`: `violation`, `delivery` (PASS with
+discrepancies), `unresolved` (INCONCLUSIVE), `none`.
 
 ## `SealState`
 
-The contract has three Oracle verdicts. The brief's `FAILED` and `UNVERIFIED` are not verdicts, so the type
-keeps them apart:
+The contract has three Oracle verdicts. `FAILED` and `UNVERIFIED` are not verdicts, so the type keeps them apart:
 
 | Kind | Values | Meaning | Form |
 |---|---|---|---|
-| `verdict` | `PASS`, `VIOLATION`, `INCONCLUSIVE` | The Oracle spoke | Solid, with ✓ ✕ ? |
-| `incomplete` | `failed`, `cancelled`, `budget_exhausted` | The run did not finish, so no verdict exists | Hollow double rule, — |
-| `unverified` | `no_target_run`, `outcome_uncertain`, `integrity_failed` | Nothing can be said | Hollow dashed rule, ∅ |
+| `verdict` | `PASS`, `VIOLATION`, `INCONCLUSIVE` | The Oracle spoke | Paper, with ✓ ✕ ? on a status tile |
+| `incomplete` | `failed`, `cancelled`, `budget_exhausted` | The run did not finish, so no verdict exists | Hollow dashed outline, — |
+| `unverified` | `no_target_run`, `outcome_uncertain`, `integrity_failed` | Nothing can be said | Hollow dashed outline, ∅ |
 
-A `verdict` carries an optional `qualifier`. `state_correct_claim_missing` is an Oracle PASS, so it renders
-PASS with "State correct, but no valid claim. Not a success." beneath it. An impaired run says so the same way.
+A `verdict` carries an optional `qualifier`: `state_correct_claim_missing` is an Oracle PASS, so it renders PASS
+with "State correct, but no valid claim. Not a success." beneath it. An impaired run says so the same way.
 
-## Using them
+## Styles
 
-```tsx
-const model = comparisonFrom(detail, runs, run);
+`styles/tokens.css` and `styles/primitives.css` are imported by `app/globals.css`, so every screen shares them.
+There is one theme. Other product screens use Tailwind utilities pointed at the same tokens.
 
-<DivergenceField state={model.divergence}>
-  <RealityFrame reality="agent">…</RealityFrame>
-  <DivergenceDivider state={model.divergence} />
-  <RealityFrame reality="actual">
-    {model.newRecords.map((r) => <RecordSlab key={r.customer.customer_id} record={r} />)}
-  </RealityFrame>
-</DivergenceField>
-<OracleSeal state={model.seal} />
-```
+## What the tests enforce
 
-`DivergenceField` needs a grid from its caller. See `.rf-comparison-field` in `prototypes.css`.
-
-## Editorial type
-
-`DisplayType` has three effects: `plain`, `slice` and `misregister`. The text is read once by assistive
-technology; the layers are `aria-hidden`. Inside a field without a violation the layers switch off.
-
-Large evidence words use `.rf-evidence-word` or `.rf-count-number`: big, single-layer, and in the recorded
-spelling. `completed` stays lowercase because that is what the agent filed.
-
-## What the browser tests enforce
-
-`frontend/e2e-design/design.spec.ts`, against all five recorded cases:
-
-- Seal, claim, count, discrepancy count, findings and disclosure match the API.
-- `RecordSlab` ids equal the run's new records exactly.
-- The planes are cut only for `VIOLATION`, and a PASS run shows no fracture tone, ghost or echo.
-- Every decorative layer is `aria-hidden` and holds no id or number. No echo touches a record.
-- No verdict wraps, and nothing covers a recorded value.
+- `frontend/e2e-design/rules.spec.ts`: every copy and state rule, on all 20 recorded runs, plus labeled derived
+  fixtures for states no run reaches.
+- `frontend/e2e-design/design.spec.ts`: every recorded run renders what its evidence holds, in a real browser,
+  along with navigation, access, axe and contrast.
+- `frontend/e2e-design/cross-browser.spec.ts`: layout in Chromium and WebKit.

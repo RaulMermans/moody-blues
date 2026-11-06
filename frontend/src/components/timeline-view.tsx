@@ -42,7 +42,21 @@ function authorLabel(authorship: Authorship, fixture: boolean): string {
   return AUTHOR_LABEL[authorship];
 }
 
-function Entry({ id, entry, fixture }: { id: string; entry: TimelineEntry; fixture: boolean }) {
+type Focus = "exact" | "run" | null;
+
+function Entry({
+  id,
+  entry,
+  fixture,
+  focus,
+  anchor,
+}: {
+  id: string;
+  entry: TimelineEntry;
+  fixture: boolean;
+  focus: Focus;
+  anchor: boolean;
+}) {
   const verdict = entry.stage === "oracle_verdict" ? String(entry.facts.verdict) : null;
   const facts = Object.entries(entry.facts).filter(([, value]) => value !== null);
   return (
@@ -51,11 +65,13 @@ function Entry({ id, entry, fixture }: { id: string; entry: TimelineEntry; fixtu
       data-stage={entry.stage}
       data-authorship={entry.authorship}
       data-verdict={verdict ?? undefined}
-      className="relative pl-6"
+      data-focus={focus ?? undefined}
+      id={anchor ? "trace" : undefined}
+      className="rf-step relative pl-6"
     >
       <span aria-hidden className={`absolute left-0 top-2 h-2 w-2 rounded-full ${RAIL[entry.authorship]}`} />
-      <details className="rounded border border-transparent hover:border-line">
-        <summary className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-2 py-1.5">
+      <details open={focus === "exact"} className="border border-transparent hover:border-line">
+        <summary className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1.5">
           <Chevron />
           <span className="font-mono text-xs text-faint">{formatClock(entry.at)}</span>
           <span
@@ -95,10 +111,15 @@ function Entry({ id, entry, fixture }: { id: string; entry: TimelineEntry; fixtu
           ) : null}
           {entry.evidence.run_id ? (
             <Link
-              href={`/investigations/${id}?view=reality&run=${entry.evidence.run_id}`}
-              className="text-sm text-truth hover:underline"
+              href={`/investigations/${id}?view=reality&run=${entry.evidence.run_id}${
+                entry.evidence.call_seq !== null ? `#call-${entry.evidence.call_seq}` : ""
+              }`}
+              className="rf-link text-sm"
+              data-testid="open-comparison"
             >
-              Open this run in the Reality Comparison
+              {entry.evidence.call_seq !== null
+                ? `Open call ${entry.evidence.call_seq} in the Reality Comparison`
+                : "Open this run in the Reality Comparison"}
             </Link>
           ) : null}
         </div>
@@ -112,30 +133,48 @@ export function TimelineView({
   page,
   showAll,
   fixture,
+  runId,
+  call,
 }: {
   id: string;
   page: TimelinePage;
   showAll: boolean;
   fixture: boolean;
+  runId?: string;
+  call?: number | null;
 }) {
   const entries = showAll ? page.entries : page.entries.filter((e) => KEY_STAGES.has(e.stage));
+  const focusOf = (entry: TimelineEntry): Focus => {
+    if (!runId || entry.evidence.run_id !== runId) return null;
+    return call !== null && call !== undefined && entry.evidence.call_seq === call ? "exact" : "run";
+  };
+  const anchor = entries.find((e) => focusOf(e) === "exact") ?? entries.find((e) => focusOf(e) === "run");
+  const run = runId ? `&run=${runId}` : "";
   return (
     <div className="flex flex-col gap-4" data-testid="timeline-view">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           Each entry comes from one journal record of this investigation.{" "}
           <span className="text-faint">Showing {entries.length} of {page.total}.</span>
+          {runId ? <span className="text-faint"> Steps of run {runId} are marked.</span> : null}
         </p>
         <Link
-          href={`/investigations/${id}?view=timeline${showAll ? "" : "&show=all"}`}
-          className="rounded border border-line px-2.5 py-1 text-sm text-muted hover:text-foreground"
+          href={`/investigations/${id}?view=timeline${showAll ? "" : "&show=all"}${run}`}
+          className="inline-flex min-h-11 items-center border border-line px-3 text-sm text-muted hover:text-foreground"
         >
           {showAll ? "Key steps only" : `Show all ${page.total} records`}
         </Link>
       </div>
       <ol aria-label="Investigation timeline" className="relative flex flex-col gap-0.5 before:absolute before:bottom-2 before:left-[3px] before:top-2 before:w-px before:bg-line">
         {entries.map((entry) => (
-          <Entry key={entry.seq} id={id} entry={entry} fixture={fixture} />
+          <Entry
+            key={entry.seq}
+            id={id}
+            entry={entry}
+            fixture={fixture}
+            focus={focusOf(entry)}
+            anchor={entry === anchor}
+          />
         ))}
       </ol>
     </div>

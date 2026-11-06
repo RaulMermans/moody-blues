@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// The design lab, built with MOODY_DESIGN_LAB=1 into its own output (`pnpm test:design` builds it).
-// The backend serves the real committed bundles read-only. No provider key is set, so nothing here
+// The investigation screens and the design lab, built with MOODY_DESIGN_LAB=1 into their own output
+// (`pnpm test:design` builds it). The backend serves the real committed bundles read-only. No provider key is set, so nothing here
 // can reach inference.
 const BACKEND_PORT = 8110;
 const FRONTEND_PORT = 3110;
@@ -17,7 +17,10 @@ export default defineConfig({
   reporter: [["list"]],
   outputDir: "test-results-design",
   use: { baseURL: `http://127.0.0.1:${FRONTEND_PORT}`, trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] }, testMatch: "cross-browser.spec.ts" },
+  ],
   webServer: [
     {
       command: `uv run uvicorn moody_blues.main:app --host 127.0.0.1 --port ${BACKEND_PORT}`,

@@ -28,7 +28,7 @@ export function FailurePanel({ failure }: { failure: Failure }) {
       role="alert"
       data-testid="evidence-failure"
       data-kind={failure.kind}
-      className="rounded-lg border border-warn/40 bg-warn/5 p-6"
+      className="border border-warn/40 bg-warn/5 p-6"
     >
       <h2 className="text-lg font-semibold text-warn">{copy.title}</h2>
       <p className="mt-2 max-w-2xl text-sm text-muted">{copy.body}</p>

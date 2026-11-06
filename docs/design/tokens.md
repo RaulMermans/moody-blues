@@ -1,40 +1,39 @@
 # Design tokens
 
-Source: [`frontend/src/design/styles/tokens.css`](../../frontend/src/design/styles/tokens.css), scoped to `.rf`.
+Source: [`frontend/src/design/styles/tokens.css`](../../frontend/src/design/styles/tokens.css), on `:root`, so every product screen reads them.
 
 Components read only the semantic tier. `--rf-p-*` primitives stay inside that file.
 
 ## Colour
 
-Reality identity says whose reality something is. It never says good or bad. Status says what was found,
-and never marks a reality. Oracle paper is neither: it is the authority.
+Neutral first. Colour marks a word or a rule, and never fills a panel. Reality identity says whose reality
+something is, never good or bad. Status says what was found and never marks a reality. Oracle paper is neither:
+it is the authority, and it appears once per screen.
 
 | Token | Value | Use |
 |---|---|---|
-| `--rf-surface-base` | `#0d0c12` | Ground |
-| `--rf-surface-raised` | `#191720` | Cards on the ground |
-| `--rf-surface-high` | `#25212e` | Claim slips, lab chrome |
-| `--rf-rule` | `#3a3446` | Quiet rules |
-| `--rf-text` | `#f2eff4` | Primary text |
-| `--rf-text-muted` | `#aba4b6` | Secondary text |
-| `--rf-text-faint` | `#958ea2` | Tertiary text, on base and raised only |
-| `--rf-agent` | `#a88bff` | Agent Reality identity |
-| `--rf-agent-plane` | `#1a1430` | Agent Reality territory |
-| `--rf-actual` | `#ffb77a` | Actual Reality identity |
-| `--rf-actual-plane` | `#1f150e` | Actual Reality territory |
-| `--rf-oracle-surface` | `#f2eff4` | The Oracle's paper |
-| `--rf-oracle-ink` | `#0d0c12` | Ink on paper |
-| `--rf-oracle-rule` | `#c9c3cf` | Rules on paper |
-| `--rf-divergence` | `#f26a73` | The crack and recorded fractures only |
-| `--rf-status-pass` | `#8de0c2` | PASS |
-| `--rf-status-violation` | `#f26a73` | VIOLATION |
-| `--rf-status-inconclusive` | `#dcf06e` | INCONCLUSIVE |
-| `--rf-status-incomplete` | `#aba4b6` | Failed, cancelled, budget exhausted |
-| `--rf-status-unverified` | `#958ea2` | No verdict exists |
-| `--rf-status-ink` | `#0d0c12` | Ink on a solid seal |
+| `--rf-surface-base` | `#0e0e10` | Ground |
+| `--rf-surface-raised` | `#161618` | Record slabs, hovered rows |
+| `--rf-surface-high` | `#1f1f22` | The selected run |
+| `--rf-rule` | `#303034` | Hairlines |
+| `--rf-text` | `#f1ede4` | Primary text, warm paper |
+| `--rf-text-muted` | `#b5b0a6` | Secondary text |
+| `--rf-text-faint` | `#99948b` | Tertiary text and labels |
+| `--rf-agent` | `#b6b1dc` | Agent-reported identity: labels and one dashed rule |
+| `--rf-actual` | `#e2c9a0` | Authoritative identity: labels and one solid rule |
+| `--rf-oracle-surface` | `#f1ede4` | The Oracle's paper |
+| `--rf-oracle-ink` | `#0e0e10` | Ink on paper |
+| `--rf-oracle-rule` | `#cfc9bd` | Rules on paper |
+| `--rf-divergence` | `#f0705a` | Seam breaks and the headline tick, in a VIOLATION only |
+| `--rf-status-pass` | `#9ccbb0` | PASS |
+| `--rf-status-violation` | `#f0705a` | VIOLATION |
+| `--rf-status-inconclusive` | `#d8cf8f` | INCONCLUSIVE |
+| `--rf-status-incomplete` | `#b5b0a6` | Failed, cancelled, budget exhausted |
+| `--rf-status-unverified` | `#99948b` | No verdict exists |
+| `--rf-status-ink` | `#0e0e10` | Ink on a status tile |
 
-The brief's starting palette held, except for additions: `--rf-status-inconclusive` is a new acid yellow,
-because the product's warm `--warn` sat too close to amber identity. The two plane colours are new too.
+Sprint 11 removed `--rf-agent-plane` and `--rf-actual-plane`: a reality no longer has a colour territory. It also
+desaturated every accent.
 
 ### Product tokens
 
@@ -45,63 +44,60 @@ Inside `.rf`, the product's names are re-pointed, so `Tag`, `Code` and `VerdictT
 | `--background`, `--surface`, `--surface-raised`, `--line` | Surface and rule tokens |
 | `--foreground`, `--muted`, `--faint` | Text tokens |
 | `--agent` | `--rf-agent` |
-| `--truth` | `--rf-actual`. The product's name for Actual Reality: cyan today, amber here |
+| `--truth` | `--rf-actual`. The product's name for the authoritative side |
 | `--good`, `--bad`, `--warn` | Status tokens |
 
 ## Typography
 
 | Token | Value | Use |
 |---|---|---|
-| `--rf-font-display` | Archivo, then Arial Narrow, Impact | Editorial type and large evidence words |
-| `--rf-font-tech` | System monospace | Ids, timestamps, tool calls, JSON, labels |
-| `--rf-font-text` | System sans | Reading text |
-| `--rf-type-colossal` | `clamp(3.75rem, 9.5vw, 10rem)` | Landing headline |
-| `--rf-type-poster` | `clamp(3rem, 7vw, 6.5rem)` | Evidence words, page titles |
-| `--rf-type-title` | `clamp(1.75rem, 3.2vw, 3rem)` | Section and frame titles |
+| `--rf-font-display` | Archivo, then Arial Narrow, Helvetica Neue | Headlines and section titles |
+| `--rf-font-text` | Archivo, then system sans | Reading text |
+| `--rf-font-tech` | System monospace | Ids, statuses, tool calls, JSON, labels |
+| `--rf-type-poster` | `clamp(2.625rem, 6.1vw, 5.5rem)` | The landing statement, two lines at desktop |
+| `--rf-type-headline` | `clamp(1.875rem, 4.9vw, 4.25rem)` | A run's headline |
+| `--rf-type-title` | `clamp(1.375rem, 2vw, 1.75rem)` | Section titles |
+| `--rf-type-value` | `clamp(1.25rem, 1.8vw, 1.5rem)` | A status or a recorded value |
 | `--rf-type-lead` | `clamp(1.0625rem, 1.3vw, 1.25rem)` | Lead text |
 | `--rf-type-body` | `0.9375rem` | Reading text |
 | `--rf-type-data` | `0.8125rem` | Technical values |
 | `--rf-type-micro` | `0.6875rem` | Uppercase labels |
-| `--rf-leading-display` | `0.86` | Display line height |
-| `--rf-tracking-display` | `-0.012em` | Display tracking |
-| `--rf-tracking-micro` | `0.16em` | Label tracking |
-| `--rf-width-compressed` | `62%` | Archivo's narrowest width |
+| `--rf-width-display` | `82%` | Archivo's width for headlines |
+| `--rf-tracking-micro` | `0.14em` | Label tracking |
 
 Archivo is SIL OFL 1.1, committed as one 90 KB Latin file with width and weight axes
-([licence](../../frontend/src/design/fonts/OFL.txt)). It adds no package and loads no remote asset.
-Technical type uses system fonts, so evidence never waits for a font.
+([licence](../../frontend/src/design/fonts/OFL.txt)). It is now on every page, loaded from the app's own origin:
+no package and no remote asset. Technical type stays on system fonts, so evidence never waits for a font.
 
-## Grid, rules and geometry
+## Spacing and geometry
 
 | Token | Value | Use |
 |---|---|---|
 | `--rf-space-1` … `--rf-space-16` | `0.25rem` … `4rem` | 4px base spacing |
-| `--rf-gutter` | `clamp(1rem, 3vw, 2.5rem)` | Page gutter |
-| `--rf-measure` | `62ch` | Reading width |
-| `--rf-border-hair` / `-rule` / `-heavy` / `-slab` | `1px` / `2px` / `6px` / `14px` | Rule weights |
-| `--rf-cut` | `14px` | The claim slip's cut corner |
-| `--rf-band` | `120px`, `148px` from 1200px | Width of the fracture band |
-| `--rf-split` | `42%` | Where the two realities meet |
-| `--rf-echo-near` / `-far` | `5px` / `11px` | Echo displacement |
-| `--rf-misregister` | `0.035em` | Layer offset in display type |
+| `--rf-measure` | `64ch` | Reading width |
+| `--rf-hit` | `2.75rem` | The smallest primary control: 44px |
+| `--rf-seam-width` | `2.5rem` | The column the seam sits in |
 
-Breakpoints are 768px (the realities sit side by side) and 1200px. CSS cannot read a variable in a media
-query, so `--rf-bp-*` record the values and the queries repeat them.
+Everything is square: the product no longer has rounded corners. The breakpoints are 720px (rows go side by
+side) and 1100px (the strip becomes one line). CSS cannot read a variable in a media query.
+
+## Displacement
+
+The whole distortion budget. A use outside [these conditions](direction.md#the-distortion-budget) is a defect.
+
+| Token | Value | Moves |
+|---|---|---|
+| `--rf-slip-seam` | `7px` | A broken seam |
+| `--rf-slip-record` | `1.25rem` | The extra record of a duplicate (`0.75rem` on a phone) |
+| `--rf-slip-headline` | `0.42em` | The second headline line |
+
+Setting all three to zero must leave the page reading the same.
 
 ## Motion and focus
 
 | Token | Value | Use |
 |---|---|---|
-| `--rf-motion-instant` | `90ms` | Hover |
-| `--rf-motion-snap` | `180ms` | Stamp |
-| `--rf-motion-shift` | `320ms` | Plane shift |
-| `--rf-motion-draw` | `620ms` | Reserved for Sprint 13 line drawing |
-| `--rf-ease-snap` | `cubic-bezier(0.2, 0.9, 0.1, 1)` | Displacement settling |
-| `--rf-ease-stamp` | `cubic-bezier(0.5, 0, 0.1, 1)` | Verdict landing |
+| `--rf-motion-instant` | `120ms` | Hover backgrounds. The only motion in the system |
 | `--rf-focus-inner` / `-outer` | Paper / ink | Two-ring focus, visible on every surface |
 
-## Promoting tokens in Sprint 11
-
-1. Import `tokens.css` from `globals.css` and put `rf` on the page you are converting.
-2. Remove that page's lab-only classes from the `@source not` lines.
-3. Re-run `make test-design` and the product's e2e suite. The token names do not change.
+Sprint 10's plane, stamp and draw tokens are gone with the animations that used them. Sprint 13 owns motion.

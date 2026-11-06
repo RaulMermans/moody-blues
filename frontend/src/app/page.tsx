@@ -5,7 +5,9 @@ import { FailurePanel } from "@/components/failure-panel";
 import { InvestigationListView } from "@/components/investigation-list";
 import { StatusPanel } from "@/components/status-panel";
 import { Eyebrow, LoadingPanel } from "@/components/ui";
-import { disclosureLine, VerdictStrip } from "@/components/verdict-strip";
+import { VerdictStrip } from "@/components/verdict-strip";
+import { Headline } from "@/design/components/headline";
+import { disclosureLine } from "@/design/story";
 import { getRun, listInvestigations } from "@/lib/evidence";
 import type { InvestigationList, StudyContext } from "@/lib/evidence-types";
 import { STRATEGY_LABEL } from "@/lib/labels";
@@ -33,11 +35,6 @@ const STEPS = [
   },
 ];
 
-/** The first sentence of the mission the agent was really given, from the run's own record. */
-function taskLine(mission: string): string {
-  return mission.replace(/^Mission:\s*/, "").split(/(?<=\.)\s/)[0];
-}
-
 async function Signature({ list }: { list: InvestigationList }) {
   const lead = list.items.find((i) => i.summary?.case?.kind === "verified_violation")?.summary;
   const primary = lead?.case?.primary_run_id;
@@ -46,31 +43,25 @@ async function Signature({ list }: { list: InvestigationList }) {
   if (!run.ok) return null;
   const disclosure = disclosureLine(run.data);
   return (
-    <section aria-labelledby="signature" className="flex flex-col gap-3" data-testid="signature">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="signature" className="text-lg font-semibold text-foreground">
+    <section aria-labelledby="signature" className="rf-signature" data-testid="signature">
+      <div className="rf-section-head">
+        <h2 id="signature" className="rf-section-title">
           {lead.case?.title}
         </h2>
-        <p className="font-mono text-xs text-faint">
+        <p className="rf-data">
           Recorded run · {run.data.reported_models.join(", ")} · {run.data.world_ref}
         </p>
       </div>
-      <p className="max-w-3xl text-sm leading-6 text-muted" data-testid="signature-story">
-        {run.data.agent.mission ? (
-          <>
-            <span className="text-foreground">The task:</span>{" "}
-            {taskLine(run.data.agent.mission.text)}{" "}
-          </>
-        ) : null}
+      <p className="rf-lead" data-testid="signature-story">
         {lead.case?.summary}
       </p>
       <VerdictStrip run={run.data} />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {disclosure ? <p className="max-w-2xl text-sm text-muted">{disclosure}</p> : <span />}
+      <div className="rf-signature-foot">
+        {disclosure ? <p className="rf-body">{disclosure}</p> : <span />}
         <Link
           href={`/investigations/${lead.investigation_id}`}
           data-testid="open-signature"
-          className="rounded bg-truth px-3 py-1.5 text-sm font-medium text-background hover:opacity-90"
+          className="rf-cta rf-cta-quiet"
         >
           Compare the two realities
         </Link>
@@ -82,7 +73,7 @@ async function Signature({ list }: { list: InvestigationList }) {
 function StudyNote({ study }: { study: StudyContext }) {
   const rows = Object.keys(study.units_planned);
   return (
-    <section aria-labelledby="study" className="rounded-lg border border-line p-4" data-testid="study-note">
+    <section aria-labelledby="study" className="border-t border-line pt-4" data-testid="study-note">
       <Eyebrow>Registered benchmark · {study.manifest_id}</Eyebrow>
       <h2 id="study" className="mt-2 font-mono text-sm text-foreground">
         {study.conclusion}
@@ -110,9 +101,9 @@ async function Evidence() {
   return (
     <>
       <Signature list={list.data} />
-      <section aria-labelledby="investigations" className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="investigations" className="text-lg font-semibold text-foreground">
+      <section id="investigations" aria-labelledby="investigations-title" className="flex flex-col gap-3">
+        <div className="rf-section-head">
+          <h2 id="investigations-title" className="rf-section-title">
             Investigations
           </h2>
           <p className="text-sm text-muted">
@@ -126,40 +117,84 @@ async function Evidence() {
   );
 }
 
+/** The primary action needs a real case to point at. Without one it says so by going to the list. */
+async function PrimaryAction() {
+  const list = await listInvestigations();
+  const lead = list.ok
+    ? list.data.items.find((i) => i.summary?.case?.kind === "verified_violation")
+    : undefined;
+  return (
+    <Link
+      href={lead ? `/investigations/${lead.investigation_id}` : "#investigations"}
+      className="rf-cta"
+      data-testid="hero-cta"
+    >
+      Explore a verified failure <span aria-hidden>→</span>
+    </Link>
+  );
+}
+
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-4 py-10 sm:px-6">
-      <header className="flex flex-col gap-3">
-        <h1 className="font-mono text-sm font-semibold tracking-[0.18em] text-truth">MOODY BLUES</h1>
-        <p className="text-sm text-muted">The Reality Distortion Lab for AI Agents</p>
-        <p className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
-          What an AI agent believes, checked against what really happened.
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-4 pb-16 pt-10 sm:px-6 sm:pt-16">
+      <header className="rf-hero" data-testid="hero">
+        <h1 className="rf-label">MOODY BLUES</h1>
+        <Headline
+          as="h2"
+          first="What the agent reported."
+          second="What reality recorded."
+          outOfRegister
+          size="poster"
+        />
+        <p className="rf-hero-lead">
+          MOODY BLUES investigates the gap between an AI agent&apos;s reported outcome and what
+          actually happened.
         </p>
-        <p className="max-w-3xl text-base leading-7 text-muted">
-          AI agents can report success while their tool calls leave the real system wrong. MOODY
-          BLUES is an autonomous adversarial experimentation system that changes the world around
-          an agent to find those moments: an AI Investigator designs experiments, a sandbox contains
-          them, and an independent Oracle checks the agent&apos;s claims against authoritative state.
-        </p>
+        <div className="rf-hero-actions">
+          <Suspense
+            fallback={
+              <Link href="#investigations" className="rf-cta" data-testid="hero-cta">
+                Explore a verified failure <span aria-hidden>→</span>
+              </Link>
+            }
+          >
+            <PrimaryAction />
+          </Suspense>
+          <Link href="#how" className="rf-cta rf-cta-quiet" data-testid="hero-how">
+            How it works
+          </Link>
+        </div>
       </header>
 
-      <section aria-labelledby="how" className="flex flex-col gap-3">
-        <h2 id="how" className="text-lg font-semibold text-foreground">
+      <Suspense
+        fallback={
+          // Holds the space the evidence will take, so what follows does not jump when it streams in.
+          <div className="min-h-screen">
+            <LoadingPanel label="Loading investigations from the evidence API" />
+          </div>
+        }
+      >
+        <Evidence />
+      </Suspense>
+
+      <section id="how" aria-labelledby="how-title" className="rf-how">
+        <h2 id="how-title" className="rf-section-title">
           How it works
         </h2>
-        <ol className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
+        <p className="rf-lead">
+          MOODY BLUES is an autonomous adversarial experimentation system. An AI Investigator designs
+          experiments, a sandbox contains them, and an independent Oracle checks the agent&apos;s claims
+          against authoritative state.
+        </p>
+        <ol>
           {STEPS.map((step) => (
-            <li key={step.title} className="bg-surface p-4">
-              <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
-              <p className="mt-1 text-sm leading-6 text-muted">{step.body}</p>
+            <li key={step.title}>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
             </li>
           ))}
         </ol>
       </section>
-
-      <Suspense fallback={<LoadingPanel label="Loading investigations from the evidence API" />}>
-        <Evidence />
-      </Suspense>
 
       <StatusPanel />
     </main>

@@ -27,20 +27,27 @@ function faceOf(state: SealState): Face {
   if (state.kind === "unverified") {
     return { mark: "∅", label: "Unverified", note: UNVERIFIED_NOTE[state.reason], tone: "unverified" };
   }
-  if (state.verdict === "PASS") {
-    return { mark: "✓", label: "PASS", note: "Truth Oracle verdict", tone: "pass" };
-  }
+  if (state.verdict === "PASS") return { mark: "✓", label: "PASS", note: "", tone: "pass" };
   if (state.verdict === "VIOLATION") {
-    return { mark: "✕", label: "VIOLATION", note: "Truth Oracle verdict", tone: "violation" };
+    return { mark: "✕", label: "VIOLATION", note: "", tone: "violation" };
   }
-  return { mark: "?", label: "INCONCLUSIVE", note: "Truth Oracle verdict", tone: "inconclusive" };
+  return { mark: "?", label: "INCONCLUSIVE", note: "", tone: "inconclusive" };
 }
 
 /**
- * The verdict. It is never rotated, offset, echoed or distorted: it is the one object in the system
- * that stays still. `incomplete` and `unverified` render hollow, because no verdict exists.
+ * The verdict, and the only light object on a screen. It is never rotated, offset or distorted: it
+ * stays still while everything else may slip. `incomplete` and `unverified` render hollow, because
+ * no verdict exists.
  */
-export function OracleSeal({ state, size = "lg" }: { state: SealState; size?: "sm" | "lg" }) {
+export function OracleSeal({
+  state,
+  size = "lg",
+  labelTestId = "oracle-seal-label",
+}: {
+  state: SealState;
+  size?: "sm" | "lg";
+  labelTestId?: string;
+}) {
   const face = faceOf(state);
   return (
     <div
@@ -54,10 +61,10 @@ export function OracleSeal({ state, size = "lg" }: { state: SealState; size?: "s
         {face.mark}
       </span>
       <span className="rf-seal-text">
-        <span className="rf-seal-label" data-testid="oracle-seal-label">
+        <span className="rf-seal-label" data-testid={labelTestId}>
           {face.label}
         </span>
-        <span className="rf-seal-note">{face.note}</span>
+        {state.kind === "verdict" ? null : <span className="rf-seal-note">{face.note}</span>}
         {state.kind === "verdict" && state.qualifier ? (
           <span className="rf-seal-note" data-testid="oracle-seal-qualifier">
             {state.qualifier}

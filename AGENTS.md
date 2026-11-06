@@ -30,10 +30,10 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
-| `frontend/src/design/` | Reality Fracture design system: tokens, primitives, prototypes. Not yet used by the product |
-| `frontend/src/app/design-lab/` | Local design lab. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
+| `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`) |
+| `frontend/src/app/design-lab/` | Local specimen page. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
 | `frontend/e2e` | Playwright against the real backend + production build |
-| `frontend/e2e-design` | Playwright for the design lab against the real recorded evidence |
+| `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
 | `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
@@ -168,12 +168,18 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   After a crash a target run that did not report makes the job `outcome_uncertain`.
 
 **Design**
-- Visual state comes only from typed evidence fields (`frontend/src/design/model.ts`). No presentation
-  heuristics. Only an Oracle `VIOLATION` may crack the frame, ghost a title or draw moiré.
-- Decoration never touches evidence: no layering or distortion of ids, numbers, verdicts or controls, and
-  nothing decorative may read as a record. The Oracle seal is never rotated, offset or echoed.
-- A missing verdict never resembles one. Disclosures that qualify an outcome stay visible.
-- `MOODY_DESIGN_LAB` is never set in deployment. See ADR 0009 and `docs/design/`.
+- Visual state and on-screen conclusions come only from typed evidence fields (`frontend/src/design/model.ts`,
+  `story.ts`). No presentation heuristics, no reading of agent text for meaning, and no model-written copy.
+- Only an Oracle `VIOLATION` displaces anything, and only by the three `--rf-slip-*` offsets. A delivered fault
+  is not a failure. With every offset removed, a page must read the same.
+- Decoration never touches evidence: no layering or distortion of ids, numbers, verdicts or controls, and nothing
+  decorative may read as a record. A real record may move only as a whole, with nothing drawn around it. The
+  Oracle seal is never rotated or offset.
+- Copy states acts, never motives. Only `false_completion_claim` may call a status wrong. Keep a fault delivered,
+  a violation observed and causal evidence as separate facts, and use the recorded order for "why".
+- A missing verdict never resembles one. Disclosures that qualify an outcome stay visible, and so does the
+  agent's message. A run's verdict that reads differently from its investigation carries a scope note.
+- `MOODY_DESIGN_LAB` is never set in deployment. See ADRs 0009 and 0010, and `docs/design/`.
 
 **Hosting**
 - One backend process, always. Next.js and FastAPI bind to loopback; Caddy is the only public listener.

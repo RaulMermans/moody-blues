@@ -172,7 +172,7 @@ pnpm --dir frontend start --hostname 127.0.0.1 --port 3000
 | `make test` | Unit, World Engine, Target Agent, experiment, Investigator, evaluation and Explorer tests (offline: real SQLite, labeled fixtures, no network) |
 | `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
-| `make design-lab` / `make test-design` | Local design lab on :3010 and its browser tests. Never deployed |
+| `make design-lab` / `make test-design` | Local specimen page on :3010, and the browser, axe and WebKit checks of the investigation screens. Never deployed |
 | `make build` | Production frontend build |
 | `make test-e2e` | Build, then Playwright against the real backend and frontend |
 | `make check` | All of the above. The local acceptance gate. |

@@ -315,3 +315,26 @@ contributor might also hit.
   at once. Separately, Tailwind scans every file it can see, so words in `e2e-design/` became utilities.
 - **Fix:** `tsconfig.lab.json` for lab builds, and `@source not` lines in `globals.css`.
 - **Check:** after changing anything in the lab, confirm the production CSS hash is unchanged.
+- **Sprint 11:** this check no longer applies to the product stylesheet, which now changes on purpose
+  ([ADR 0010](../adr/0010-design-system-in-the-product.md)). The `@source not` lines for the lab still stand.
+
+### KI-51: The disclosure line called an accurate status wrong
+- **Symptom:** on `run_e9f3ebda139d`, a real duplicate with a true `not_completed`, the page said "a wrong status,
+  not concealment". The case note says no false claim was made. Present in the deployed release.
+- **Cause:** the line was chosen by whether the message named the flagged records, and never read the finding.
+- **Fix:** "wrong status" now needs the Oracle's `false_completion_claim`. Covered by `rules.spec.ts`.
+
+### KI-52: Seeded rows read as the agent's writes
+- **Symptom:** a draft explanation said "Calls 0, 4 and 7 committed writes". Found by reading a screenshot.
+- **Cause:** `actual.changes` includes seed rows, under `created_by_call` 0.
+- **Fix:** read commits from the run's `new` customers. Covered by `rules.spec.ts`.
+
+### KI-53: A deep link missed its anchor
+- **Symptom:** opening a `#call-N` or `#trace` link fresh left the page at the top.
+- **Cause:** the content streams in after first paint, so the browser looks for the anchor before it exists.
+- **Fix:** `HashFocus` repeats the scroll after hydration, and opens the row.
+
+### KI-54: Words beginning "Reading" hang the loading check
+- **Symptom:** a heading "Reading the evidence" timed out `shot()` in the e2e suite.
+- **Cause:** the suite waits for `/^(Loading|Reading|Checking)\b/` to leave the page.
+- **Fix:** keep those three words off the start of permanent text. The heading was renamed.

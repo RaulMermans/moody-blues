@@ -1,27 +1,12 @@
 @import "tailwindcss";
 
+@import "../design/styles/tokens.css";
+@import "../design/styles/primitives.css";
+
 /* The design lab has its own Tailwind entry, so its classes never reach the product stylesheet. */
-@source not "../design";
 @source not "./design-lab";
 @source not "../../e2e-design";
 @source not "../../playwright.design.config.ts";
-
-:root {
-  --background: #0a0d13;
-  --foreground: #e7ebf2;
-  --surface: #11151d;
-  --surface-raised: #171c26;
-  --line: #242b37;
-  --muted: #9aa5b8;
-  --faint: #6f7a8d;
-  /* Agent Reality and Actual Reality keep one colour each, everywhere. */
-  --agent: #b8a7ff;
-  --truth: #63d2e6;
-  --bad: #ff7b7b;
-  --good: #63d69a;
-  --warn: #eebb5a;
-  color-scheme: dark;
-}
 
 @theme inline {
   --color-background: var(--background);
@@ -36,8 +21,8 @@
   --color-bad: var(--bad);
   --color-good: var(--good);
   --color-warn: var(--warn);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: var(--rf-font-text);
+  --font-mono: var(--rf-font-tech);
 }
 
 body {
@@ -47,9 +32,9 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--truth);
+  outline: 2px solid var(--rf-focus-inner);
   outline-offset: 2px;
-  border-radius: 3px;
+  box-shadow: 0 0 0 2px var(--rf-focus-outer);
 }
 
 details > summary {

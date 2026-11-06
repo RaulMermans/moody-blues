@@ -1,33 +1,32 @@
 /*
- * Reality Fracture tokens. Reference: docs/design/tokens.md.
+ * MOODY BLUES tokens. Reference: docs/design/tokens.md.
  *
  * Three tiers. Components use only the semantic tier.
  *   1. Primitives  --rf-p-*      raw values; nothing outside this file reads them
  *   2. Semantics   --rf-*        what a value means
  *   3. Product     --background, --agent, --truth ...
- *      The product's own names, re-pointed inside `.rf`, so existing components (Tag, Code,
- *      VerdictTag) take this theme unchanged. This is one system, not a parallel one.
+ *      The names Tailwind's theme reads, pointed at the semantics, so every product screen takes the
+ *      same theme. There is one system.
  *
- * Identity and status are separate on purpose: violet and amber say WHOSE reality something
- * belongs to, and never say whether it is good or bad. Status colours never mark a reality.
+ * Neutral first: graphite ground, warm paper type. Colour is an accent, in small amounts, and never a
+ * surface. Identity and status stay separate: lavender and sand say WHOSE reality something belongs
+ * to and never whether it is good or bad. Status colours never mark a reality.
  */
-.rf {
+:root {
   /* Primitives */
-  --rf-p-ink-950: #0d0c12;
-  --rf-p-ink-900: #191720;
-  --rf-p-ink-800: #25212e;
-  --rf-p-ink-700: #3a3446;
-  --rf-p-violet-950: #1a1430;
-  --rf-p-amber-950: #1f150e;
-  --rf-p-paper: #f2eff4;
-  --rf-p-paper-rule: #c9c3cf;
-  --rf-p-lavender: #aba4b6;
-  --rf-p-lavender-dim: #958ea2;
-  --rf-p-violet: #a88bff;
-  --rf-p-amber: #ffb77a;
-  --rf-p-mint: #8de0c2;
-  --rf-p-coral: #f26a73;
-  --rf-p-acid: #dcf06e;
+  --rf-p-ink-950: #0e0e10;
+  --rf-p-ink-900: #161618;
+  --rf-p-ink-800: #1f1f22;
+  --rf-p-ink-700: #303034;
+  --rf-p-paper: #f1ede4;
+  --rf-p-paper-rule: #cfc9bd;
+  --rf-p-stone: #b5b0a6;
+  --rf-p-stone-dim: #99948b;
+  --rf-p-lavender: #b6b1dc;
+  --rf-p-sand: #e2c9a0;
+  --rf-p-sage: #9ccbb0;
+  --rf-p-coral: #f0705a;
+  --rf-p-straw: #d8cf8f;
 
   /* Surfaces: depth comes from lighter planes, never from shadows or blur */
   --rf-surface-base: var(--rf-p-ink-950);
@@ -37,49 +36,45 @@
 
   /* Text */
   --rf-text: var(--rf-p-paper);
-  --rf-text-muted: var(--rf-p-lavender);
-  --rf-text-faint: var(--rf-p-lavender-dim);
+  --rf-text-muted: var(--rf-p-stone);
+  --rf-text-faint: var(--rf-p-stone-dim);
 
-  /* Reality identity */
-  --rf-agent: var(--rf-p-violet);
-  --rf-agent-plane: var(--rf-p-violet-950);
-  --rf-actual: var(--rf-p-amber);
-  --rf-actual-plane: var(--rf-p-amber-950);
+  /* Reality identity: a label and a rule, never a panel */
+  --rf-agent: var(--rf-p-lavender);
+  --rf-actual: var(--rf-p-sand);
 
-  /* The Oracle is the only light object in the dark system */
+  /* The Oracle is the only light object in the dark system, and it appears once per screen */
   --rf-oracle-surface: var(--rf-p-paper);
   --rf-oracle-ink: var(--rf-p-ink-950);
   --rf-oracle-rule: var(--rf-p-paper-rule);
 
-  /* Divergence: only ever drawn from a recorded discrepancy or an Oracle violation */
+  /* Divergence: only ever drawn from a recorded discrepancy in an Oracle VIOLATION */
   --rf-divergence: var(--rf-p-coral);
 
-  /* Status. Each one also has its own glyph, label and shape */
-  --rf-status-pass: var(--rf-p-mint);
+  /* Status. Each one also has its own glyph and word */
+  --rf-status-pass: var(--rf-p-sage);
   --rf-status-violation: var(--rf-p-coral);
-  --rf-status-inconclusive: var(--rf-p-acid);
-  --rf-status-incomplete: var(--rf-p-lavender);
-  --rf-status-unverified: var(--rf-p-lavender-dim);
+  --rf-status-inconclusive: var(--rf-p-straw);
+  --rf-status-incomplete: var(--rf-p-stone);
+  --rf-status-unverified: var(--rf-p-stone-dim);
   --rf-status-ink: var(--rf-p-ink-950);
 
   /* Typography */
-  --rf-font-display: var(--rf-font-archivo), "Arial Narrow", Impact, sans-serif;
+  --rf-font-display: var(--rf-font-archivo), "Arial Narrow", "Helvetica Neue", sans-serif;
+  --rf-font-text: var(--rf-font-archivo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --rf-font-tech: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --rf-font-text: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --rf-type-colossal: clamp(3.75rem, 9.5vw, 10rem);
-  --rf-type-poster: clamp(3rem, 7vw, 6.5rem);
-  --rf-type-title: clamp(1.75rem, 3.2vw, 3rem);
+  --rf-type-poster: clamp(2.625rem, 6.1vw, 5.5rem);
+  --rf-type-headline: clamp(1.875rem, 4.9vw, 4.25rem);
+  --rf-type-title: clamp(1.375rem, 2vw, 1.75rem);
+  --rf-type-value: clamp(1.25rem, 1.8vw, 1.5rem);
   --rf-type-lead: clamp(1.0625rem, 1.3vw, 1.25rem);
   --rf-type-body: 0.9375rem;
   --rf-type-data: 0.8125rem;
   --rf-type-micro: 0.6875rem;
-  --rf-leading-display: 0.86;
-  --rf-tracking-display: -0.012em;
-  --rf-tracking-micro: 0.16em;
-  --rf-width-compressed: 62%;
-  --rf-width-standard: 100%;
+  --rf-width-display: 82%;
+  --rf-tracking-micro: 0.14em;
 
-  /* Grid and spacing: a 4px base */
+  /* Spacing: a 4px base */
   --rf-space-1: 0.25rem;
   --rf-space-2: 0.5rem;
   --rf-space-3: 0.75rem;
@@ -88,38 +83,25 @@
   --rf-space-8: 2rem;
   --rf-space-12: 3rem;
   --rf-space-16: 4rem;
-  --rf-gutter: clamp(1rem, 3vw, 2.5rem);
-  --rf-measure: 62ch;
-  --rf-bp-tablet: 768px; /* documentation only: CSS cannot read this in a media query */
-  --rf-bp-desktop: 1200px;
+  --rf-measure: 64ch;
 
-  /* Rules and geometry */
-  --rf-border-hair: 1px;
-  --rf-border-rule: 2px;
-  --rf-border-heavy: 6px;
-  --rf-border-slab: 14px;
-  --rf-cut: 14px;
+  /* Geometry */
+  --rf-hit: 2.75rem; /* the smallest primary control: 44px */
+  --rf-seam-width: 2.5rem;
 
-  /* Fracture */
-  --rf-band: 120px;
-  --rf-split: 42%;
-  --rf-echo-near: 5px;
-  --rf-echo-far: 11px;
-  --rf-misregister: 0.035em;
+  /* Displacement. The whole distortion budget: three small offsets, used only for a VIOLATION */
+  --rf-slip-seam: 7px;
+  --rf-slip-record: 1.25rem;
+  --rf-slip-headline: 0.42em;
 
-  /* Motion: sharp and brief; everything lands, nothing loops */
-  --rf-motion-instant: 90ms;
-  --rf-motion-snap: 180ms;
-  --rf-motion-shift: 320ms;
-  --rf-motion-draw: 620ms;
-  --rf-ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
-  --rf-ease-stamp: cubic-bezier(0.5, 0, 0.1, 1);
+  /* Motion: hover and focus only. Nothing enters, nothing loops */
+  --rf-motion-instant: 120ms;
 
   /* Focus: two rings, so it shows on every surface including the Oracle's paper */
   --rf-focus-inner: var(--rf-p-paper);
   --rf-focus-outer: var(--rf-p-ink-950);
 
-  /* Product tokens, re-pointed */
+  /* Product tokens */
   --background: var(--rf-surface-base);
   --foreground: var(--rf-text);
   --surface: var(--rf-surface-raised);
@@ -132,14 +114,5 @@
   --bad: var(--rf-status-violation);
   --good: var(--rf-status-pass);
   --warn: var(--rf-status-inconclusive);
-
-  background: var(--rf-surface-base);
-  color: var(--rf-text);
-  font-family: var(--rf-font-text);
-}
-
-@media (min-width: 1200px) {
-  .rf {
-    --rf-band: 148px;
-  }
+  color-scheme: dark;
 }
