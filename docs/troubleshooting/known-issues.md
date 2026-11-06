@@ -355,4 +355,4 @@ contributor might also hit.
   ships the Sprint 11 restyle.
 - **Cause:** PR #15 merged Sprint 11 with no deploy.
 - **Fix:** `hotfix/ki-51-disclosure-wording`, from `967dc88`. Its `frontend`, `backend` and `infra` trees match the
-  recorded `d592879` release. Not pushed or deployed: the owner decides.
+  recorded `d592879` release. Pushed, not deployed: the owner decides.

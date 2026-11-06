@@ -1,7 +1,7 @@
 # Sprint 12: Investigation Experience
 
 - **Date:** 2026-11-06
-- **Branch:** `sprint/12-investigation-experience`, from `origin/main` `e2c9a41`. Its tree equals Sprint 11's tip `9b34e4e`. Not pushed, merged or deployed.
+- **Branch:** `sprint/12-investigation-experience`, from `origin/main` `e2c9a41`. Its tree equals Sprint 11's tip `9b34e4e`. Pushed to `origin` on the owner's instruction. Not merged or deployed.
 - **Outcome:** `ACCEPTED LOCALLY`, pending the owner's review of the renders. No person has used it yet.
 - **Inference spend this sprint:** $0. No model was called. No backend, Oracle, CRM, fault, contract, evidence or infrastructure file changed.
 
@@ -38,7 +38,7 @@ A hotfix from `main` would be empty, and deploying `main` ships the restyle. So 
 
 **`hotfix/ki-51-disclosure-wording`, commit `6dafdda`, from `967dc88`.** Two files, 15 lines: the wording rule and its
 regression test. The new assertion failed before the fix. All 33 product e2e tests pass with it. Lint, types and build
-pass. It never needs merging: `main` already has the fix. It is not pushed or deployed.
+pass. It never needs merging: `main` already has the fix. Pushed to `origin`, not deployed.
 
 ## Verification
 
@@ -172,7 +172,7 @@ What is still not good enough:
 
 ## Release
 
-Nothing was pushed, merged or deployed.
+Both branches are pushed. Nothing was merged or deployed.
 
 1. **KI-51:** the owner chooses. Hotfix branch for the wording alone, or a deploy of `main` or this branch.
 2. **This branch:** review the renders, open a PR, and deploy only with time to run `frontend/e2e-hosted` before the deadline, 2026-11-08 22:00 UTC. It is frontend only, so rollback touches no evidence, ledger or backend state. Anything showing the old site, such as the submission video, would no longer match it.

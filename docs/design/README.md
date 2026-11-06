@@ -12,7 +12,7 @@ The visual identity for MOODY BLUES: **Beautifully Wrong**, editorial precision 
 | [accessibility-and-motion.md](accessibility-and-motion.md) | Accessibility results and the motion rules |
 
 Status: Sprint 11 is **merged to `main`** (PR #15) and not deployed. Sprint 12 is on
-`sprint/12-investigation-experience`, unpushed. The system lives in
+`sprint/12-investigation-experience`, pushed, not merged. The system lives in
 `frontend/src/design/` and every product screen reads its tokens. The local design lab now holds one
 specimen page, and it does not exist in a production build ([ADR 0009](../adr/0009-design-lab-isolation.md),
 [ADR 0010](../adr/0010-design-system-in-the-product.md)).
