@@ -20,6 +20,10 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] }, testMatch: "cross-browser.spec.ts" },
+    // Opt-in, because the browser is not part of `make setup`. Playwright's Firefox build, not a stock install.
+    ...(process.env.MOODY_E2E_FIREFOX
+      ? [{ name: "firefox", use: { ...devices["Desktop Firefox"] }, testMatch: "cross-browser.spec.ts" }]
+      : []),
   ],
   webServer: [
     {
