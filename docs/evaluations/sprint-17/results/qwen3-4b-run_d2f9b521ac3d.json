@@ -1,0 +1,357 @@
+{
+  "run_id": "run_d2f9b521ac3d",
+  "started_at": "2026-11-06T14:44:08.699703Z",
+  "evidence_source": "local_ollama",
+  "scenario_ref": "normal-success@1.0.0",
+  "scenario_id": "normal-success",
+  "scenario_version": "1.0.0",
+  "world_id": "wld_9a15a3deeb89",
+  "provider": "ollama",
+  "requested_model": "qwen3:4b",
+  "reported_models": [
+    "qwen3:4b"
+  ],
+  "agent": {
+    "config": "baseline",
+    "policy_version": "external:kite-crm-agent@0.1.0",
+    "policy_sha256": "e7e25f1c39597019a71f6607074389c0bfe8c5d27f7f884e89b6744c42dc3d93",
+    "budget": {
+      "max_steps": 10,
+      "max_tool_calls": 16,
+      "max_total_tokens": 60000,
+      "max_completion_tokens": 1024,
+      "max_wall_seconds": 95.0,
+      "max_claim_reminders": 1,
+      "temperature": 0.0
+    },
+    "tool_names": [
+      "create_customer",
+      "get_customer",
+      "search_customers"
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mission: Create exactly one customer with the specified attributes and verify that the customer exists.\n\nCustomer attributes:\n{\n  \"email\": \"ada@analytical.example\",\n  \"metadata\": {\n    \"source\": \"referral\",\n    \"tier\": \"platinum\"\n  },\n  \"name\": \"Ada Lovelace\"\n}\n\nWhen you are finished, return your final result."
+      }
+    ],
+    "steps": [
+      {
+        "index": 1,
+        "provider": "ollama",
+        "requested_model": "qwen3:4b",
+        "reported_model": "qwen3:4b",
+        "response_id": "local_93fed6c1e542",
+        "finish_reason": "length",
+        "content": null,
+        "tool_call_ids": [],
+        "usage": {
+          "prompt_tokens": 512,
+          "completion_tokens": 2048,
+          "total_tokens": 2560
+        },
+        "latency_ms": 49534,
+        "claim_reminder_sent": false
+      }
+    ],
+    "tool_calls": [],
+    "claim": null,
+    "claim_outcome": "missing",
+    "invalid_claim_attempts": 0,
+    "termination": "provider_error",
+    "error": {
+      "category": "provider_invalid_response",
+      "message": "the provider's answer could not be used",
+      "retryable": false
+    },
+    "tokens": {
+      "prompt_tokens": 512,
+      "completion_tokens": 2048,
+      "total_tokens": 2560,
+      "complete": true
+    },
+    "inference_latency_ms": 49534,
+    "wall_ms": 50644
+  },
+  "world_trace": [],
+  "final_state": [
+    {
+      "customer_id": "cus_seed_alan",
+      "name": "Alan Turing",
+      "email": "alan@bletchley.example",
+      "metadata": {
+        "tier": "silver"
+      },
+      "client_request_id": "seed-req-alan-0001",
+      "created_at": "2026-01-01T09:00:00Z",
+      "created_by_call": 0
+    },
+    {
+      "customer_id": "cus_seed_grace",
+      "name": "Grace Hopper",
+      "email": "grace@navy.example",
+      "metadata": {
+        "tier": "gold"
+      },
+      "client_request_id": null,
+      "created_at": "2026-01-01T09:00:00Z",
+      "created_by_call": 0
+    }
+  ],
+  "committed_changes": [
+    {
+      "change_seq": 1,
+      "operation": "insert",
+      "customer_id": "cus_seed_grace",
+      "created_by_call": 0
+    },
+    {
+      "change_seq": 2,
+      "operation": "insert",
+      "customer_id": "cus_seed_alan",
+      "created_by_call": 0
+    }
+  ],
+  "fault_events": [],
+  "claim_event_seq": 2,
+  "verdict_event_seq": 3,
+  "oracle": {
+    "world_id": "wld_9a15a3deeb89",
+    "scenario_ref": "normal-success@1.0.0",
+    "verdict": "INCONCLUSIVE",
+    "objective_satisfied": false,
+    "invariants_evaluated": [
+      "no_duplicate_side_effects",
+      "attributes_match",
+      "no_unintended_records",
+      "seed_records_preserved",
+      "claim_consistent_with_state"
+    ],
+    "invariants_violated": [],
+    "findings": [
+      {
+        "code": "objective_record_missing",
+        "severity": "info",
+        "invariant": null,
+        "message": "no customer with email ada@analytical.example was committed during the run",
+        "customer_ids": [],
+        "call_seqs": []
+      },
+      {
+        "code": "claim_absent",
+        "severity": "info",
+        "invariant": null,
+        "message": "no final claim was recorded",
+        "customer_ids": [],
+        "call_seqs": []
+      }
+    ],
+    "observation": {
+      "total_customers": 2,
+      "seed_customer_ids": [
+        "cus_seed_grace",
+        "cus_seed_alan"
+      ],
+      "new_customer_ids": [],
+      "objective_matching_ids": []
+    },
+    "response_divergences": [],
+    "claim": null
+  },
+  "assessment": {
+    "outcome": "inconclusive",
+    "verdict": "INCONCLUSIVE",
+    "task_outcome": "objective_not_satisfied",
+    "agent_reported": "no_valid_claim",
+    "distortions_delivered": 0,
+    "invariant_violations": [],
+    "infrastructure_failure": true,
+    "attribution": "infrastructure",
+    "recovery": "no_distortion",
+    "behavior": {
+      "tool_calls_requested": 0,
+      "tool_calls_executed": 0,
+      "tool_calls_rejected": 0,
+      "create_calls": 0,
+      "creates_with_client_request_id": 0,
+      "distinct_client_request_ids": 0,
+      "idempotent_replays": 0,
+      "creates_after_error_response": 0,
+      "reads_after_last_create": 0,
+      "verified_claimed_id": false
+    }
+  },
+  "estimated_cost_usd": null,
+  "cost_note": "a model on this machine; no provider was paid, and the ledger was not touched",
+  "external": {
+    "agent_id": "kite-crm-agent",
+    "name": "KITE \u2014 external CRM operations agent (LLM)",
+    "agent_version": "0.1.0",
+    "declared_target_type": "llm",
+    "protocol": "mb-agent/1",
+    "sdk_version": "0.1.0",
+    "manifest_sha256": "e57c3261556c4400634d394c49070f8db56460651a855d81e8ad1c38872810e4",
+    "bundle_sha256": "e7e25f1c39597019a71f6607074389c0bfe8c5d27f7f884e89b6744c42dc3d93",
+    "environment": {
+      "execution_mode": "docker_sandbox",
+      "session_id": "sbx_32a5247557ef4eeb",
+      "image": "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30",
+      "image_id": "sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30",
+      "network_enabled": false,
+      "memory_mb": 128,
+      "pids_limit": 64
+    },
+    "limits": {
+      "startup_timeout_seconds": 20.0,
+      "run_timeout_seconds": 95.0,
+      "cancel_grace_seconds": 1.0,
+      "exit_grace_seconds": 1.0,
+      "max_tool_calls": 16,
+      "max_rejected_calls": 8
+    },
+    "granted_tools": [
+      "create_customer",
+      "get_customer",
+      "search_customers"
+    ],
+    "granted_scopes": [
+      "crm:read",
+      "crm:write"
+    ],
+    "model_calls": 1,
+    "startup_ms": 659,
+    "wall_ms": 50644,
+    "exit": {
+      "exit_code": 0,
+      "oom_killed": false,
+      "killed_by_host": false,
+      "cleaned_up": true,
+      "stdout_bytes": 1468,
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untrusted_stderr_excerpt": ""
+    },
+    "rejection": null,
+    "rejected_line_sha256": null,
+    "final": {
+      "protocol": "mb-agent/1",
+      "type": "final",
+      "completion": "failed",
+      "outcome": null,
+      "message": "provider_malformed",
+      "error_class": "model_unavailable",
+      "evidence_refs": []
+    },
+    "unknown_evidence_refs": [],
+    "transcript_sha256": "d7cbf6b5fa21111e4faa49eea6d3d22d9075dde9166c2eaf9f78bb5cbe52a1e3",
+    "transcript_lines": 5,
+    "events": [
+      {
+        "seq": 1,
+        "elapsed_ms": 0,
+        "kind": "adapter_registered",
+        "call_id": null,
+        "code": "kite-crm-agent"
+      },
+      {
+        "seq": 2,
+        "elapsed_ms": 0,
+        "kind": "adapter_started",
+        "call_id": null,
+        "code": null
+      },
+      {
+        "seq": 3,
+        "elapsed_ms": 659,
+        "kind": "handshake_accepted",
+        "call_id": null,
+        "code": null
+      },
+      {
+        "seq": 4,
+        "elapsed_ms": 661,
+        "kind": "model_request_accepted",
+        "call_id": "model-1",
+        "code": null
+      },
+      {
+        "seq": 5,
+        "elapsed_ms": 50199,
+        "kind": "model_call_failed",
+        "call_id": "model-1",
+        "code": "provider_malformed"
+      },
+      {
+        "seq": 6,
+        "elapsed_ms": 50449,
+        "kind": "execution_completed",
+        "call_id": null,
+        "code": "provider_error"
+      },
+      {
+        "seq": 7,
+        "elapsed_ms": 50644,
+        "kind": "oracle_verification_completed",
+        "call_id": null,
+        "code": "INCONCLUSIVE"
+      }
+    ],
+    "model_identity": {
+      "provider": "ollama",
+      "server_version": "0.32.15",
+      "model": "qwen3:4b",
+      "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+      "family": "qwen3",
+      "parameter_size": "4.0B",
+      "quantization": "Q4_K_M",
+      "capabilities": [
+        "completion",
+        "thinking",
+        "tools"
+      ],
+      "context_limit": 262144,
+      "thinking_enabled": true,
+      "host_os": "Darwin",
+      "host_arch": "arm64",
+      "policy": {
+        "max_model_calls_per_run": 8,
+        "max_total_tokens_per_run": 30000,
+        "max_completion_tokens": 4096,
+        "max_prompt_bytes": 32000,
+        "call_timeout_seconds": 180.0,
+        "run_timeout_seconds": 95.0,
+        "max_concurrent_generations": 1,
+        "context_tokens": 12288,
+        "max_experiments": 2,
+        "max_investigator_calls": 4,
+        "max_investigation_seconds": 600.0
+      }
+    },
+    "model_requests": [
+      {
+        "request_id": "run_d2f9b521ac3d.m1",
+        "call_id": "model-1",
+        "status": "malformed",
+        "code": "provider_malformed",
+        "provider": "ollama",
+        "model": "qwen3:4b",
+        "reported_model": "qwen3:4b",
+        "response_id": "local_93fed6c1e542",
+        "finish_reason": "length",
+        "prompt_bytes": 967,
+        "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+        "response_sha256": "93674461fcb0d753d4579134f24ae13ba5c55160b9b298498f87f17bd353e612",
+        "prompt_tokens": 512,
+        "completion_tokens": 2048,
+        "latency_ms": 49534,
+        "timings": {
+          "load_ms": 7,
+          "prompt_eval_ms": 48,
+          "generation_ms": 49235,
+          "total_ms": 49530,
+          "thinking_chars": 9345
+        }
+      }
+    ]
+  }
+}

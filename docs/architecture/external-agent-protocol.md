@@ -140,11 +140,12 @@ logged as `adapter_event`, with ids and fixed codes only, never agent text or ar
 |---|---|---|
 | Internal LLM target | `llm_agent` | `live_provider` |
 | External LLM target | `external_agent` | `live_provider` |
+| External LLM target, local model | `external_agent` | `local_ollama` |
 | External scripted adapter | `external_agent` | `external_scripted` |
 | Reference rehearsal | `reference_executor` | `reference_executor` |
 | Any target on a fixture model | either | `offline_fixture` |
 
-Only `live_provider` is evidence of model behavior, and an external run gets it only if the host
+Only `live_provider` and `local_ollama` are evidence of model behavior, and an external run gets one only if the host
 brokered a live model call in that run.
 
 ### Model calls (Sprint 16)

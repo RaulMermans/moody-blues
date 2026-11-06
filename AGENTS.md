@@ -11,7 +11,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/api/` | HTTP only: app factory, middleware, error envelopes, routes, DI |
 | `backend/moody_blues/services/` | Business logic independent of HTTP |
 | `backend/moody_blues/contracts/` | Pydantic contracts shared across layers |
-| `backend/moody_blues/inference/` | Model provider adapters (Vultr) + live smoke checks |
+| `backend/moody_blues/inference/` | Model provider adapters (Vultr, local Ollama) + live smoke checks |
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
 | `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
@@ -23,7 +23,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver and model broker, `ExternalAgentTarget`, validated target selection, the labeled agent model fixture, commands |
 | `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
 | `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -39,6 +39,7 @@ covers Next.js API drift; these rules take precedence.)
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |
 | `frontend/e2e-external` | Playwright for external runs on the real pages; seeds its own evidence; `make external-ui` |
+| `frontend/e2e-local` | Playwright against evidence a real local model wrote; seeds and starts no model; `make local-ui` |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
 | `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
@@ -157,6 +158,17 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - The SDK stays standard library only and imports nothing from the backend. Change the two sides together:
   `tests/external/test_contract.py` holds them to each other. A change an existing agent cannot ignore is a new
   protocol version, and evidence stays at schema 1 unless it holds an external run.
+
+**Local inference**
+- Ollama is a provider behind `InferencePort`, and nothing more. See ADR 0014 and `docs/external-agents/local-models.md`. Open it
+  only through `external/local.py`. Never point `MOODY_VULTR_BASE_URL` at it, and never mix local and paid in one run.
+- `local_ollama` is not `live_provider`, and neither is ever relabeled. Use `MODEL_EVIDENCE` to ask whether a model answered.
+  Registered evaluation and curated recorded cases stay `live_provider` only.
+- The address is literal loopback. Redirects are not followed, proxies are ignored, and only allowlisted models can be selected.
+- A local run never touches the ledger. `LOCAL_POLICY` bounds it instead, and is recorded with the run. Identity comes from the
+  running server, never from configuration.
+- Refuse a prompt that would not fit the context; never let it be truncated. Nothing retries.
+- `make local-eval` is real inference and is never in `make check`. A clean workflow is not a good model: read what it wrote.
 
 **Investigator**
 - One model inside a deterministic workflow. No extra agents, persistent memory or self-modifying

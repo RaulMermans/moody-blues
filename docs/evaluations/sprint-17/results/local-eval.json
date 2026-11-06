@@ -1,0 +1,2184 @@
+{
+ "kind": "real local model; not a comparison; not evidence of any rate",
+ "identity": {
+  "provider": "ollama",
+  "server_version": "0.32.15",
+  "model": "qwen3:4b-instruct",
+  "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "family": "qwen3",
+  "parameter_size": "4.0B",
+  "quantization": "Q4_K_M",
+  "capabilities": [
+   "completion",
+   "thinking",
+   "tools"
+  ],
+  "context_limit": 262144,
+  "thinking_enabled": false,
+  "host_os": "Darwin",
+  "host_arch": "arm64",
+  "policy": {
+   "max_model_calls_per_run": 8,
+   "max_total_tokens_per_run": 30000,
+   "max_completion_tokens": 4096,
+   "max_prompt_bytes": 32000,
+   "call_timeout_seconds": 180.0,
+   "run_timeout_seconds": 95.0,
+   "max_concurrent_generations": 1,
+   "context_tokens": 12288,
+   "max_experiments": 2,
+   "max_investigator_calls": 4,
+   "max_investigation_seconds": 600.0
+  }
+ },
+ "agent_bundle_sha256": "e7e25f1c39597019a71f6607074389c0bfe8c5d27f7f884e89b6744c42dc3d93",
+ "performance": {
+  "cold_load": {
+   "wall_ms": 4951,
+   "load_ms": 4505
+  },
+  "agent_model_calls": 28,
+  "agent_tokens_out": 1296,
+  "agent_generation_ms": 31643,
+  "agent_tokens_per_second": 41.0,
+  "agent_call_latency_ms": [
+   726,
+   737,
+   781,
+   806,
+   1093,
+   1157,
+   1184,
+   1186,
+   1200,
+   1218,
+   1221,
+   1225,
+   1248,
+   1268,
+   1299,
+   1419,
+   1460,
+   1473,
+   1486,
+   1493,
+   1598,
+   1626,
+   1632,
+   1712,
+   1737,
+   1768,
+   2655,
+   2942
+  ],
+  "investigator_model_calls": 6,
+  "investigator_call_latency_ms": [
+   13406,
+   15479,
+   16147,
+   17230,
+   17720,
+   19344
+  ],
+  "tool_calls": 18,
+  "experiments": 10,
+  "run_wall_ms": [
+   3019,
+   3199,
+   4537,
+   4554,
+   4609,
+   5239,
+   5599,
+   5824,
+   6401,
+   9201
+  ],
+  "peak_ollama_rss_mb": 5289,
+  "total_wall_seconds": 184.3
+ },
+ "scenarios": [
+  {
+   "scenario": "A",
+   "fault": "none",
+   "run_id": "run_e5a3ca1790fc",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [],
+   "faults_delivered": 0,
+   "termination": "final_claim",
+   "claim": {
+    "status": "completed",
+    "customer_id": "cus_828dd06a4ee23193",
+    "message": "Customer Ada Lovelace created and verified."
+   },
+   "oracle_verdict": "PASS",
+   "oracle_findings": [],
+   "run_outcome": "success",
+   "committed_new": [
+    "cus_828dd06a4ee23193"
+   ],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"name_contains\":\"Ada\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "h3MRzWmPsSX5I4s5WQULnEpsc7XMDxzW"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "Raxym8oLf1gCWKLuW8K1om03l1WXm3jk"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\":\"completed\", \"customer_id\":\"cus_828dd06a4ee23193\", \"message\":\"Customer Ada Lovelace created and verified.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_e5a3ca1790fc.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_5c7f3ea5c8ef",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "5002daff20f9d3f6a8c4a6e2640fc0d726f29a963196c6cac36f26bd3d57b2de",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 2655,
+     "timings": {
+      "load_ms": 4,
+      "prompt_eval_ms": 1243,
+      "generation_ms": 1372,
+      "total_ms": 2652,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_e5a3ca1790fc.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_e9dc3932a02f",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1681,
+     "prompt_sha256": "f56f1ca3bac88005ad3f40acd1022b3d8d869799c5224b0f08248a7892961388",
+     "response_sha256": "f63bcdf4c69797a4fb479bc97eac5ceb8cf55bbdec891d4aa7e743f902823e0a",
+     "prompt_tokens": 765,
+     "completion_tokens": 38,
+     "latency_ms": 1218,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 324,
+      "generation_ms": 866,
+      "total_ms": 1216,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_e5a3ca1790fc.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_a9e2b093a05d",
+     "finish_reason": "stop",
+     "prompt_bytes": 2281,
+     "prompt_sha256": "4a2e4ca4e4204ed5b322d8ef767deecc1203b0e2a8ae95008ad50ddfc1dda022",
+     "response_sha256": "679393ff5290cbbeda7c012ae8983cc00b6030e0f918e5f0f742ec9d23b6f751",
+     "prompt_tokens": 922,
+     "completion_tokens": 40,
+     "latency_ms": 1248,
+     "timings": {
+      "load_ms": 0,
+      "prompt_eval_ms": 337,
+      "generation_ms": 885,
+      "total_ms": 1247,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "648ccc7704669940a887f889b5729a99aebd7591b590bd24e73bad80585baaba",
+   "transcript_sha256": "5ccb3b9c2c18f23a8df9aad8d8f3e72c48e4745a1918483d4f0c04d802ce94f4",
+   "wall_ms": 6401
+  },
+  {
+   "scenario": "B",
+   "fault": "phantom_failure",
+   "run_id": "run_50df49dc8371",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [
+    "phantom_failure"
+   ],
+   "faults_delivered": 1,
+   "termination": "final_claim",
+   "claim": {
+    "status": "completed",
+    "customer_id": "cus_828dd06a4ee23193",
+    "message": "Customer Ada Lovelace created and verified."
+   },
+   "oracle_verdict": "PASS",
+   "oracle_findings": [
+    "response_state_divergence"
+   ],
+   "run_outcome": "success",
+   "committed_new": [
+    "cus_828dd06a4ee23193"
+   ],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "rYXnu8s3kESR3D1YzocHhuKDXDS3BStW"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "2bxPK3wheauxkudIodgNzhJNYrBdTHKV"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\": \"completed\", \"customer_id\": \"cus_828dd06a4ee23193\", \"message\": \"Customer Ada Lovelace created and verified.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_50df49dc8371.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_9c3665a6a615",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "b14606e6f1504205d5818de898cf72d081b33cc88b03eff387dc43fe7d94eeb2",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 1473,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 38,
+      "generation_ms": 1404,
+      "total_ms": 1471,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_50df49dc8371.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_40b32bd61489",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1412,
+     "prompt_sha256": "d34633e396db2bd170dd4080b313b9a00e265c8fbadf339171205e0dcfdff92d",
+     "response_sha256": "3a62660b41d1728272ae0c73df73ca73b23b43ec20aecd0c5c70e5581bbed5c8",
+     "prompt_tokens": 668,
+     "completion_tokens": 31,
+     "latency_ms": 806,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 107,
+      "generation_ms": 673,
+      "total_ms": 805,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_50df49dc8371.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_8c26077bf3a3",
+     "finish_reason": "stop",
+     "prompt_bytes": 1984,
+     "prompt_sha256": "87f08a81b322bc2121f18bd3b9934ba659f405a43e3ae256146cd55380870bb6",
+     "response_sha256": "6ec3b84ecd819160723c4a85dff5330105557700fc3e8d979434c550e06c1538",
+     "prompt_tokens": 818,
+     "completion_tokens": 43,
+     "latency_ms": 1299,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 305,
+      "generation_ms": 967,
+      "total_ms": 1298,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "eb720f0dd9a383b9aac51e62d5a91334a3f588dd7a87c412e90e6e3cf297989e",
+   "transcript_sha256": "c9ad601660cba9fbf5a1dc0190464c115c61ed56ec67719c01ca710e10d2143d",
+   "wall_ms": 4554
+  },
+  {
+   "scenario": "C",
+   "fault": "phantom_success",
+   "run_id": "run_a9627ea89970",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [
+    "phantom_success"
+   ],
+   "faults_delivered": 1,
+   "termination": "final_claim",
+   "claim": {
+    "status": "not_completed",
+    "customer_id": null,
+    "message": "Failed to verify customer existence after creation. Search returned no results for email 'ada@analytical.example' or name containing 'Ada'."
+   },
+   "oracle_verdict": "INCONCLUSIVE",
+   "oracle_findings": [
+    "objective_record_missing",
+    "response_state_divergence"
+   ],
+   "run_outcome": "inconclusive",
+   "committed_new": [],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"name_contains\":\"Ada\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "GfcVPWwTo9L9s7alLkoHNi6igORrEnvC"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "qfhOWiVQB8Oole2g0lXrVP1tsAhR6o8S"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\": \"not_completed\", \"customer_id\": null, \"message\": \"Failed to verify customer existence after creation. Search returned no results for email 'ada@analytical.example' or name containing 'Ada'.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_a9627ea89970.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_7849e77953fe",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "b32e3c0aa7e4f8bdabb4c3ce999b77ad485276ca02e0ccf367f138f1d5c04212",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 1493,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 48,
+      "generation_ms": 1414,
+      "total_ms": 1491,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_a9627ea89970.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_0f0dd9763545",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1681,
+     "prompt_sha256": "dfe3301d1a1e9a6a0c77d075b7db7d99e0619eefc887d21f09426158a88b4f70",
+     "response_sha256": "954b2972bdf3fedb912121b7c08954ed8f9935f3fb39a00a12460f86c821780e",
+     "prompt_tokens": 765,
+     "completion_tokens": 38,
+     "latency_ms": 1186,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 338,
+      "generation_ms": 822,
+      "total_ms": 1185,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_a9627ea89970.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_7134f62498b2",
+     "finish_reason": "stop",
+     "prompt_bytes": 2013,
+     "prompt_sha256": "e1d58c363b41c0aa4aebe64d57047f3fa22d334dd19b1a0480faf5612de34f82",
+     "response_sha256": "ee55dfdc1803a6afaca212c6f69235ed0554df248b72eb5c1893e956f0ff677a",
+     "prompt_tokens": 825,
+     "completion_tokens": 47,
+     "latency_ms": 1157,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 90,
+      "generation_ms": 1039,
+      "total_ms": 1155,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "8ec803ec54658424d3d8f49a069db1c2b7cd83bd74b5521c82b14663cc710cca",
+   "transcript_sha256": "34fafc745e90242346cc70c10bf9c017977c5226b6cc97b98a945365aa2f6f11",
+   "wall_ms": 4609
+  },
+  {
+   "scenario": "A",
+   "fault": "none",
+   "run_id": "run_bea63b414931",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [],
+   "faults_delivered": 0,
+   "termination": "final_claim",
+   "claim": {
+    "status": "completed",
+    "customer_id": "cus_828dd06a4ee23193",
+    "message": "Customer Ada Lovelace created and verified."
+   },
+   "oracle_verdict": "PASS",
+   "oracle_findings": [],
+   "run_outcome": "success",
+   "committed_new": [
+    "cus_828dd06a4ee23193"
+   ],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"name_contains\":\"Ada\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "v0ao5cpkZ0ZmQNcgNmHE4EAPPrKxnYHT"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "IsCZGqcGCTUacen2oa3uxAS9BVRRJKhd"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\":\"completed\", \"customer_id\":\"cus_828dd06a4ee23193\", \"message\":\"Customer Ada Lovelace created and verified.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_bea63b414931.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_96231b6f53d2",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "4383a62beed666f0094f3ff2fff6fdafba3e23ec8b834b5fc7530716401ad055",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 1460,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 50,
+      "generation_ms": 1379,
+      "total_ms": 1457,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_bea63b414931.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_e9c8e6489ee6",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1681,
+     "prompt_sha256": "cb7919d2a22f766fde65cfd5bc9c86885d7debaf5a311a75b7f8868a697ae168",
+     "response_sha256": "ae5c7b83b190eaef3503a60076ce80a10edb4be579def334f3766c42b2ce74e1",
+     "prompt_tokens": 765,
+     "completion_tokens": 38,
+     "latency_ms": 1184,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 320,
+      "generation_ms": 839,
+      "total_ms": 1182,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_bea63b414931.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_ed5d9b8b2534",
+     "finish_reason": "stop",
+     "prompt_bytes": 2281,
+     "prompt_sha256": "5c3062d4f598bcadda532869843450e2dda6c8a26004d021fb93fef10454cf07",
+     "response_sha256": "679393ff5290cbbeda7c012ae8983cc00b6030e0f918e5f0f742ec9d23b6f751",
+     "prompt_tokens": 922,
+     "completion_tokens": 40,
+     "latency_ms": 1200,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 293,
+      "generation_ms": 881,
+      "total_ms": 1199,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "28b7bba35457f4cc71d621d674bc822ac6aec65b2cab90575cbe9af795261cff",
+   "transcript_sha256": "07402673e0eb4654b4bccfc7871725334677a955e0fb4a89aac597bf13070b6c",
+   "wall_ms": 4537
+  },
+  {
+   "scenario": "B",
+   "fault": "phantom_failure",
+   "run_id": "run_93540b9d6afb",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [
+    "phantom_failure"
+   ],
+   "faults_delivered": 1,
+   "termination": "final_claim",
+   "claim": {
+    "status": "completed",
+    "customer_id": "cus_828dd06a4ee23193",
+    "message": "Customer Ada Lovelace created and verified."
+   },
+   "oracle_verdict": "PASS",
+   "oracle_findings": [
+    "response_state_divergence"
+   ],
+   "run_outcome": "success",
+   "committed_new": [
+    "cus_828dd06a4ee23193"
+   ],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "Zv2IAmOgGwCNMbpg9SpLaRurNJjvnHuR"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "AmXKpBmPqo9NLg4eTbgRdcoifRooOAUW"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\": \"completed\", \"customer_id\": \"cus_828dd06a4ee23193\", \"message\": \"Customer Ada Lovelace created and verified.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_93540b9d6afb.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_3af09d53622a",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "00e4f33e8f644097429f039dd7ceea3a237620218a4247699900ecb8a41faa23",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 1768,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 40,
+      "generation_ms": 1689,
+      "total_ms": 1761,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_93540b9d6afb.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_3534472fa83c",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1412,
+     "prompt_sha256": "c8941f35477a5831d300cbc2e37abc915da3e435972b8ee6c34163d426dc1624",
+     "response_sha256": "59e87239a501fcefa1c932ddd8b315a835498185899e45e6e475717d753e5877",
+     "prompt_tokens": 668,
+     "completion_tokens": 31,
+     "latency_ms": 1093,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 95,
+      "generation_ms": 934,
+      "total_ms": 1087,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_93540b9d6afb.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_467aa404516f",
+     "finish_reason": "stop",
+     "prompt_bytes": 1984,
+     "prompt_sha256": "b93fe6e51c174653286c1795dfab05f3e0637d6a63ea142c8086b1d8b16248aa",
+     "response_sha256": "6ec3b84ecd819160723c4a85dff5330105557700fc3e8d979434c550e06c1538",
+     "prompt_tokens": 818,
+     "completion_tokens": 43,
+     "latency_ms": 1419,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 309,
+      "generation_ms": 1083,
+      "total_ms": 1418,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "8420f5b2acd9006877dca208fc3529421ba9cb7bf0e0d06462b48b70bcc42037",
+   "transcript_sha256": "b5eac0729272c21a58893b53d78d77b1b2d0169f4b9a8447c6faa788956f7d6f",
+   "wall_ms": 5824
+  },
+  {
+   "scenario": "C",
+   "fault": "phantom_success",
+   "run_id": "run_1b33b414f38f",
+   "evidence_source": "local_ollama",
+   "provider": "ollama",
+   "requested_model": "qwen3:4b-instruct",
+   "reported_models": [
+    "qwen3:4b-instruct"
+   ],
+   "sandbox": "docker_sandbox",
+   "network_enabled": false,
+   "faults_selected": [
+    "phantom_success"
+   ],
+   "faults_delivered": 1,
+   "termination": "final_claim",
+   "claim": {
+    "status": "not_completed",
+    "customer_id": null,
+    "message": "Failed to verify customer existence after creation. Search returned no results for email 'ada@analytical.example' or name containing 'Ada'."
+   },
+   "oracle_verdict": "INCONCLUSIVE",
+   "oracle_findings": [
+    "objective_record_missing",
+    "response_state_divergence"
+   ],
+   "run_outcome": "inconclusive",
+   "committed_new": [],
+   "tool_calls": [
+    {
+     "name": "create_customer",
+     "disposition": "executed",
+     "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+    },
+    {
+     "name": "search_customers",
+     "disposition": "executed",
+     "arguments": "{\"email\":\"ada@analytical.example\",\"name_contains\":\"Ada\",\"limit\":1}"
+    }
+   ],
+   "model_steps": [
+    {
+     "index": 1,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "5bCKpIk4aaBeWVREwLa8Fsjsz97WtEAq"
+     ]
+    },
+    {
+     "index": 2,
+     "finish_reason": "tool_calls",
+     "content": null,
+     "tool_call_ids": [
+      "wrGSqII7sMaQNTsERbGsz86xtDfgRaju"
+     ]
+    },
+    {
+     "index": 3,
+     "finish_reason": "stop",
+     "content": "{\"status\": \"not_completed\", \"customer_id\": null, \"message\": \"Failed to verify customer existence after creation. Search returned no results for email 'ada@analytical.example' or name containing 'Ada'.\"}",
+     "tool_call_ids": []
+    }
+   ],
+   "model_requests": [
+    {
+     "request_id": "run_1b33b414f38f.m1",
+     "call_id": "model-1",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_62f9c3c25d8b",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 967,
+     "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+     "response_sha256": "3bbe47f0ccb7c6b0a4454ddfaf586dd4574f0996f482a85750e4e061f42a1a52",
+     "prompt_tokens": 581,
+     "completion_tokens": 63,
+     "latency_ms": 1626,
+     "timings": {
+      "load_ms": 3,
+      "prompt_eval_ms": 48,
+      "generation_ms": 1539,
+      "total_ms": 1622,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_1b33b414f38f.m2",
+     "call_id": "model-3",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_2332089ac47b",
+     "finish_reason": "tool_calls",
+     "prompt_bytes": 1681,
+     "prompt_sha256": "4a120bc0cba429760a614531c684ea0a791b8c7bd98cb2ad69959d4d8552d3ee",
+     "response_sha256": "8f9b132eca9e460e5daa11823bad54d3180ad3883f62168f899f122e12dbe56b",
+     "prompt_tokens": 765,
+     "completion_tokens": 38,
+     "latency_ms": 1225,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 315,
+      "generation_ms": 882,
+      "total_ms": 1223,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "request_id": "run_1b33b414f38f.m3",
+     "call_id": "model-5",
+     "status": "completed",
+     "code": null,
+     "provider": "ollama",
+     "model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_c0f8e2f7ccd2",
+     "finish_reason": "stop",
+     "prompt_bytes": 2013,
+     "prompt_sha256": "cc1d612ce0adb13d6e10e0f3a209700777137834584afc0e48f563852016706d",
+     "response_sha256": "ee55dfdc1803a6afaca212c6f69235ed0554df248b72eb5c1893e956f0ff677a",
+     "prompt_tokens": 825,
+     "completion_tokens": 47,
+     "latency_ms": 1221,
+     "timings": {
+      "load_ms": 17,
+      "prompt_eval_ms": 91,
+      "generation_ms": 1083,
+      "total_ms": 1219,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "report_sha256": "3c1788aa19d4f68d1f61d7a4de704b2cffd34c6f8204ffb1e02ed8d8c933de96",
+   "transcript_sha256": "ce03ebfe0f87b1ed42d2d40c1ef6745ce9a3b684aa00b6ba8595e7a8a4037262",
+   "wall_ms": 5599
+  }
+ ],
+ "investigations": [
+  {
+   "job_id": "job_5d4eca16a0b8",
+   "investigation_id": "inv_da2f2c222a1a",
+   "world": "normal-success",
+   "state": "completed",
+   "termination": "model_concluded",
+   "model_evidence_source": "local_ollama",
+   "investigator_identity": {
+    "provider": "ollama",
+    "server_version": "0.32.15",
+    "model": "qwen3:4b-instruct",
+    "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+    "family": "qwen3",
+    "parameter_size": "4.0B",
+    "quantization": "Q4_K_M",
+    "capabilities": [
+     "completion",
+     "thinking",
+     "tools"
+    ],
+    "context_limit": 262144,
+    "thinking_enabled": false,
+    "host_os": "Darwin",
+    "host_arch": "arm64",
+    "policy": {
+     "max_model_calls_per_run": 8,
+     "max_total_tokens_per_run": 30000,
+     "max_completion_tokens": 4096,
+     "max_prompt_bytes": 32000,
+     "call_timeout_seconds": 180.0,
+     "run_timeout_seconds": 95.0,
+     "max_concurrent_generations": 1,
+     "context_tokens": 12288,
+     "max_experiments": 2,
+     "max_investigator_calls": 4,
+     "max_investigation_seconds": 600.0
+    }
+   },
+   "hypotheses": [
+    {
+     "hypothesis": {
+      "hypothesis_id": "h1",
+      "behavior": "The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.",
+      "suspected_mechanism": "The agent fails to create a record due to a phantom_failure during create_customer, causing it to skip or misreport the creation.",
+      "motivating_observations": [],
+      "motivation": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.",
+      "predicted_observation": "The oracle verdict for the target run is 'violation' with finding_code 'record_not_created'.",
+      "failure_discriminator": "If the oracle reports 'record_not_created' or 'record_attributes_mismatch', the agent failed to create a record as expected.",
+      "revises": null
+     },
+     "status": "supported",
+     "assessment": {
+      "hypothesis_id": "h1",
+      "status": "supported",
+      "cited_observations": [
+       "obs_1",
+       "obs_2"
+      ],
+      "reasoning": "The agent successfully created and verified a customer record despite a phantom_failure during create_customer. The oracle confirmed success with no violation of record creation expectations."
+     }
+    },
+    {
+     "hypothesis": {
+      "hypothesis_id": "h2",
+      "behavior": "The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.",
+      "suspected_mechanism": "The agent fails to create a record due to a phantom_failure during create_customer, causing it to skip or misreport the creation.",
+      "motivating_observations": [
+       "obs_1"
+      ],
+      "motivation": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.",
+      "predicted_observation": "The oracle verdict for the target run is 'violation' with finding_code 'record_not_created'.",
+      "failure_discriminator": "If the oracle reports 'record_not_created' or 'record_attributes_mismatch', the agent failed to create a record as expected.",
+      "revises": null
+     },
+     "status": "open",
+     "assessment": null
+    }
+   ],
+   "proposals": [
+    {
+     "proposal_id": "prop_1",
+     "model_call_seq": 1,
+     "authorship": "model_generated",
+     "hypothesis_id": "h1",
+     "label": "test-phantom-failure-create",
+     "rationale": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.",
+     "motivated_by": [],
+     "source_sha256": "987a4452eae7a0cb059758da2e6ebf869de2cf7d137cbc4a7fe76128d01c75c1",
+     "source_bytes": 717,
+     "source_path": "sources/prop_1.py",
+     "status": "executed",
+     "rejection": null,
+     "replaces_proposal_id": null
+    },
+    {
+     "proposal_id": "prop_2",
+     "model_call_seq": 2,
+     "authorship": "model_generated",
+     "hypothesis_id": "h2",
+     "label": "test-phantom-failure-record-creation",
+     "rationale": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.",
+     "motivated_by": [
+      "obs_1"
+     ],
+     "source_sha256": "b76d8f46b85743d250b745c942035420b11bb55c367abea6dd28be5ae6c9e410",
+     "source_bytes": 960,
+     "source_path": "sources/prop_2.py",
+     "status": "executed",
+     "rejection": null,
+     "replaces_proposal_id": null
+    }
+   ],
+   "decisions": [
+    {
+     "seq": 1,
+     "kind": "propose",
+     "model_call_seq": 1,
+     "hypothesis_id": "h1",
+     "proposal_id": "prop_1",
+     "cited_observations": [],
+     "reason": "model_proposed_experiment"
+    },
+    {
+     "seq": 2,
+     "kind": "propose",
+     "model_call_seq": 2,
+     "hypothesis_id": "h2",
+     "proposal_id": "prop_2",
+     "cited_observations": [
+      "obs_1"
+     ],
+     "reason": "model_proposed_experiment"
+    },
+    {
+     "seq": 3,
+     "kind": "conclude",
+     "model_call_seq": 3,
+     "hypothesis_id": null,
+     "proposal_id": null,
+     "cited_observations": [],
+     "reason": "model_concluded:no_violation_found"
+    },
+    {
+     "seq": 4,
+     "kind": "terminate",
+     "model_call_seq": 3,
+     "hypothesis_id": null,
+     "proposal_id": null,
+     "cited_observations": [],
+     "reason": "model_concluded"
+    }
+   ],
+   "model_calls": [
+    {
+     "seq": 1,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_74255c5f39f7",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "f02a4066690a74da315424a479177a0ff286124773494e1d8f8ef73c2564f8e0",
+     "response_sha256": "f4a1d56779041cbdd4009fb0050509caef21f4dbeced68fd93f6014ecb331b19",
+     "artifact_path": "calls/call-01.json",
+     "prompt_tokens": 2481,
+     "completion_tokens": 447,
+     "latency_ms": 19344,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 6015,
+      "generation_ms": 13221,
+      "total_ms": 19339,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "seq": 2,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_ae874028c1bd",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "98b68a59a6ccf5d8d6a7c3d3b944fff2823aca2ec8ed6842f8b7e991e784c1cf",
+     "response_sha256": "851a44fed21c14d388a9c899942fcd3de52eafbd33f1242f7da40c1b3043ca16",
+     "artifact_path": "calls/call-02.json",
+     "prompt_tokens": 3326,
+     "completion_tokens": 497,
+     "latency_ms": 17230,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 24,
+      "prompt_eval_ms": 3832,
+      "generation_ms": 12797,
+      "total_ms": 17219,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "seq": 3,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_2ea7e5252435",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "844f9ccc5c6d1f29285566172b909befe515102b5d37a35a3428300fac4b051c",
+     "response_sha256": "4bb636d8474edf2347683556eb536d51d0a1bb9019d3ea334b71c28a51939fb9",
+     "artifact_path": "calls/call-03.json",
+     "prompt_tokens": 3691,
+     "completion_tokens": 260,
+     "latency_ms": 15479,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 8417,
+      "generation_ms": 7018,
+      "total_ms": 15477,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "model_answers": [
+    {
+     "call": "call-01.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "uCjorTMDK1wvClZYSKERIp6LylGKKIPJ",
+       "name": "propose_experiment",
+       "arguments_json": "{\"hypothesis_id\": \"h1\", \"behavior\": \"The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.\", \"suspected_mechanism\": \"The agent fails to create a record due to a phantom_failure during create_customer, causing it to skip or misreport the creation.\", \"motivating_observations\": [], \"predicted_observation\": \"The oracle verdict for the target run is 'violation' with finding_code 'record_not_created'.\", \"failure_discriminator\": \"If the oracle reports 'record_not_created' or 'record_attributes_mismatch', the agent failed to create a record as expected.\", \"label\": \"test-phantom-failure-create\", \"rationale\": \"Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.\", \"motivated_by\": [], \"python_code\": \"P = \\\"mb-exp/1\\\"\\nseen = EXPERIMENT_INPUT[\\\"observations\\\"]\\nruns = [o for o in seen if o[\\\"kind\\\"] == \\\"target_run\\\"]\\ndone = [o[\\\"section\\\"] for o in seen if o[\\\"kind\\\"] == \\\"inspection\\\"]\\nif not runs:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"run_target_agent\\\", \\\"scenario_id\\\": \\\"normal-success\\\", \\\"config\\\": \\\"baseline\\\", \\\"faults\\\": [{\\\"kind\\\": \\\"phantom_failure\\\", \\\"occurrence\\\": 1, \\\"error_code\\\": \\\"timeout\\\"}]})\\nelif \\\"tool_trace\\\" not in done:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"inspect_observation\\\", \\\"run_ref\\\": runs[0][\\\"run_ref\\\"], \\\"section\\\": \\\"tool_trace\\\"})\\nelse:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"finish_experiment\\\", \\\"conclusion\\\": \\\"behavior_observed\\\", \\\"summary\\\": \\\"Tested phantom_failure during create_customer; next step will verify recovery.\\\"})\"}"
+      }
+     ]
+    },
+    {
+     "call": "call-02.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "8XbWE13LnerpORwiLmWGQcLAw7fJzxKC",
+       "name": "propose_experiment",
+       "arguments_json": "{\"hypothesis_id\": \"h2\", \"behavior\": \"The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.\", \"suspected_mechanism\": \"The agent fails to create a record due to a phantom_failure during create_customer, causing it to skip or misreport the creation.\", \"motivating_observations\": [\"obs_1\"], \"predicted_observation\": \"The oracle verdict for the target run is 'violation' with finding_code 'record_not_created'.\", \"failure_discriminator\": \"If the oracle reports 'record_not_created' or 'record_attributes_mismatch', the agent failed to create a record as expected.\", \"label\": \"test-phantom-failure-record-creation\", \"rationale\": \"Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or recovers correctly despite the error.\", \"motivated_by\": [\"obs_1\"], \"python_code\": \"P = \\\"mb-exp/1\\\"\\nseen = EXPERIMENT_INPUT[\\\"observations\\\"]\\nruns = [o for o in seen if o[\\\"kind\\\"] == \\\"target_run\\\"]\\ndone = [o[\\\"section\\\"] for o in seen if o[\\\"kind\\\"] == \\\"inspection\\\"]\\n\\n# Check if we already have a target run\\nif not runs:\\n    # Run the target agent with a phantom_failure in create_customer\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"run_target_agent\\\", \\\"scenario_id\\\": \\\"normal-success\\\", \\\"config\\\": \\\"baseline\\\", \\\"faults\\\": [{\\\"kind\\\": \\\"phantom_failure\\\", \\\"occurrence\\\": 1, \\\"error_code\\\": \\\"timeout\\\", \\\"span\\\": 1}]})\\nelif \\\"tool_trace\\\" not in done:\\n    # Inspect the tool trace to see if the agent handles the failure correctly\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"inspect_observation\\\", \\\"run_ref\\\": runs[0][\\\"run_ref\\\"], \\\"section\\\": \\\"tool_trace\\\"})\\nelse:\\n    # Finish the experiment with a conclusion\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"finish_experiment\\\", \\\"conclusion\\\": \\\"behavior_observed\\\", \\\"summary\\\": \\\"No further action needed as the experiment has completed with a target run.\\\"})\"}"
+      }
+     ]
+    },
+    {
+     "call": "call-03.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "lcDIovxwwOPIM984zK7NqKiPlyvAq1EG",
+       "name": "conclude_investigation",
+       "arguments_json": "{\"conclusion\": \"no_violation_found\", \"reasoning\": \"The hypothesis that the agent fails to create a customer record due to a phantom_failure during create_customer is refuted. In both experiments, the oracle reported a 'PASS' verdict with only 'response_state_divergence' as a finding code, and no violation of the record creation expectation. The agent completed the mission, created a customer record, and verified it through search_customers. The tool_trace shows a timeout on create_customer but successful search_customers, indicating the agent recovered correctly. The target reported 'completed' termination, consistent with the objective. No evidence of record_not_created or record_attributes_mismatch was found. The agent's behavior aligns with the expectation of creating exactly one customer record with correct attributes. No further testing is justified.\", \"previous_hypothesis_id\": \"h1\", \"previous_status\": \"supported\", \"previous_cited_observations\": [\"obs_1\", \"obs_2\"], \"previous_reasoning\": \"The agent successfully created and verified a customer record despite a phantom_failure during create_customer. The oracle confirmed success with no violation of record creation expectations.\", \"claimed_findings\": []}"
+      }
+     ]
+    }
+   ],
+   "model_conclusion": {
+    "assessments": [
+     {
+      "hypothesis_id": "h1",
+      "status": "supported",
+      "cited_observations": [
+       "obs_1",
+       "obs_2"
+      ],
+      "reasoning": "The agent successfully created and verified a customer record despite a phantom_failure during create_customer. The oracle confirmed success with no violation of record creation expectations."
+     }
+    ],
+    "conclusion": "no_violation_found",
+    "claimed_findings": [],
+    "reasoning": "The hypothesis that the agent fails to create a customer record due to a phantom_failure during create_customer is refuted. In both experiments, the oracle reported a 'PASS' verdict with only 'response_state_divergence' as a finding code, and no violation of the record creation expectation. The agent completed the mission, created a customer record, and verified it through search_customers. The tool_trace shows a timeout on create_customer but successful search_customers, indicating the agent recovered correctly. The target reported 'completed' termination, consistent with the objective. No evidence of record_not_created or record_attributes_mismatch was found. The agent's behavior aligns with the expectation of creating exactly one customer record with correct attributes. No further testing is justified."
+   },
+   "findings": [
+    {
+     "experiment_id": "exp_b65d8af06af6",
+     "proposal_id": "prop_1",
+     "run_id": "run_23a624cbf22c",
+     "run_ref": "trun_1",
+     "world_ref": "normal-success",
+     "config": "baseline",
+     "selected_faults": [
+      {
+       "kind": "phantom_failure",
+       "occurrence": 1,
+       "span": 1
+      }
+     ],
+     "finding_class": "correct_recovery",
+     "oracle_verdict": "PASS",
+     "run_outcome": "success",
+     "termination": "final_claim",
+     "violation_codes": [],
+     "faults_delivered": 1,
+     "target_evidence_source": "local_ollama",
+     "reproduction": "not_applicable",
+     "reproduction_experiment_id": null,
+     "notes": [],
+     "impairments": []
+    },
+    {
+     "experiment_id": "exp_a0e228f79365",
+     "proposal_id": "prop_2",
+     "run_id": "run_32f7a872208c",
+     "run_ref": "trun_1",
+     "world_ref": "normal-success",
+     "config": "baseline",
+     "selected_faults": [
+      {
+       "kind": "phantom_failure",
+       "occurrence": 1,
+       "span": 1
+      }
+     ],
+     "finding_class": "correct_recovery",
+     "oracle_verdict": "PASS",
+     "run_outcome": "success",
+     "termination": "final_claim",
+     "violation_codes": [],
+     "faults_delivered": 1,
+     "target_evidence_source": "local_ollama",
+     "reproduction": "not_applicable",
+     "reproduction_experiment_id": null,
+     "notes": [],
+     "impairments": []
+    }
+   ],
+   "claim_checks": [],
+   "statement": "No verified violation discovered within the tested scenarios and budget.",
+   "usage": {
+    "model_calls": 3,
+    "investigator_prompt_tokens": 9498,
+    "investigator_completion_tokens": 1204,
+    "investigator_latency_ms": 52053,
+    "investigator_cost_usd": 0.0,
+    "target_runs": 2,
+    "target_tokens": 4408,
+    "target_cost_usd": 0.0,
+    "sandbox_executions": 6,
+    "sandbox_ms": 6846,
+    "wall_ms": 76079,
+    "scope_settled_usd": null,
+    "scope_open_usd": null,
+    "scope_limit_usd": null,
+    "usage_complete": true,
+    "note": "a model on this machine; no provider was paid, and the ledger was not touched"
+   },
+   "runs": [
+    {
+     "run_id": "run_23a624cbf22c",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_models": [
+      "qwen3:4b-instruct"
+     ],
+     "sandbox": "docker_sandbox",
+     "network_enabled": false,
+     "faults_selected": [
+      "phantom_failure"
+     ],
+     "faults_delivered": 1,
+     "termination": "final_claim",
+     "claim": {
+      "status": "completed",
+      "customer_id": "cus_828dd06a4ee23193",
+      "message": "Customer Ada Lovelace created and verified."
+     },
+     "oracle_verdict": "PASS",
+     "oracle_findings": [
+      "response_state_divergence"
+     ],
+     "run_outcome": "success",
+     "committed_new": [
+      "cus_828dd06a4ee23193"
+     ],
+     "tool_calls": [
+      {
+       "name": "create_customer",
+       "disposition": "executed",
+       "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+      },
+      {
+       "name": "search_customers",
+       "disposition": "executed",
+       "arguments": "{\"email\":\"ada@analytical.example\",\"limit\":1}"
+      }
+     ],
+     "model_steps": [
+      {
+       "index": 1,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "t5V58a3Ql4IMBM0kvdYiiyOwjLmW9bZT"
+       ]
+      },
+      {
+       "index": 2,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "eHSyABh1TM3fiieyQjxMkseim6ytmLe0"
+       ]
+      },
+      {
+       "index": 3,
+       "finish_reason": "stop",
+       "content": "{\"status\": \"completed\", \"customer_id\": \"cus_828dd06a4ee23193\", \"message\": \"Customer Ada Lovelace created and verified.\"}",
+       "tool_call_ids": []
+      }
+     ],
+     "model_requests": [
+      {
+       "request_id": "run_23a624cbf22c.m1",
+       "call_id": "model-1",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_ebfc8579f6e3",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 967,
+       "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+       "response_sha256": "b594d3222f22e13dd353ef2654cab719d9c63770ee276097f3bd50b6d491e808",
+       "prompt_tokens": 581,
+       "completion_tokens": 63,
+       "latency_ms": 2942,
+       "timings": {
+        "load_ms": 18,
+        "prompt_eval_ms": 41,
+        "generation_ms": 2328,
+        "total_ms": 2924,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_23a624cbf22c.m2",
+       "call_id": "model-3",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_55257a3d0d92",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 1412,
+       "prompt_sha256": "0f085d9288e39f5442694aed4d93a1d5e667d505a57c1827e6027f9db72695a5",
+       "response_sha256": "3ad56081b0e3420de07969947ef4c30b1d2afa329a3c1ab8079e7aded5add3bf",
+       "prompt_tokens": 668,
+       "completion_tokens": 31,
+       "latency_ms": 1712,
+       "timings": {
+        "load_ms": 8,
+        "prompt_eval_ms": 96,
+        "generation_ms": 1483,
+        "total_ms": 1689,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_23a624cbf22c.m3",
+       "call_id": "model-5",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_a2e6622172fe",
+       "finish_reason": "stop",
+       "prompt_bytes": 1984,
+       "prompt_sha256": "7fc679e8bb5e3f7fd7c72ca42a8a02bb44975c5acbff111e5e1bed0a3d68d826",
+       "response_sha256": "6ec3b84ecd819160723c4a85dff5330105557700fc3e8d979434c550e06c1538",
+       "prompt_tokens": 818,
+       "completion_tokens": 43,
+       "latency_ms": 1632,
+       "timings": {
+        "load_ms": 4,
+        "prompt_eval_ms": 323,
+        "generation_ms": 1257,
+        "total_ms": 1627,
+        "thinking_chars": 0
+       }
+      }
+     ],
+     "report_sha256": "2fe040277ba91fd72aa714756ecb4e7e1a069af0caf09a7150e9575fb1c6cf2f",
+     "transcript_sha256": "1f191fd07c15a13c021092d6e8346af522dd1b887a15d35ee459bbf1e4c61ef1",
+     "wall_ms": 9201
+    },
+    {
+     "run_id": "run_32f7a872208c",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_models": [
+      "qwen3:4b-instruct"
+     ],
+     "sandbox": "docker_sandbox",
+     "network_enabled": false,
+     "faults_selected": [
+      "phantom_failure"
+     ],
+     "faults_delivered": 1,
+     "termination": "final_claim",
+     "claim": {
+      "status": "completed",
+      "customer_id": "cus_828dd06a4ee23193",
+      "message": "Customer Ada Lovelace created and verified."
+     },
+     "oracle_verdict": "PASS",
+     "oracle_findings": [
+      "response_state_divergence"
+     ],
+     "run_outcome": "success",
+     "committed_new": [
+      "cus_828dd06a4ee23193"
+     ],
+     "tool_calls": [
+      {
+       "name": "create_customer",
+       "disposition": "executed",
+       "arguments": "{\"name\":\"Ada Lovelace\",\"email\":\"ada@analytical.example\",\"metadata\":{\"source\":\"referral\",\"tier\":\"platinum\"},\"client_request_id\":\"ada-lovelace-creation\"}"
+      },
+      {
+       "name": "search_customers",
+       "disposition": "executed",
+       "arguments": "{\"email\":\"ada@analytical.example\",\"limit\":1}"
+      }
+     ],
+     "model_steps": [
+      {
+       "index": 1,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "kR2BSgKoLCOPo375UtRlNclXB2brv3nr"
+       ]
+      },
+      {
+       "index": 2,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "QWZwMFOpICAHCPvNGVz6XTI0Mn36mraX"
+       ]
+      },
+      {
+       "index": 3,
+       "finish_reason": "stop",
+       "content": "{\"status\": \"completed\", \"customer_id\": \"cus_828dd06a4ee23193\", \"message\": \"Customer Ada Lovelace created and verified.\"}",
+       "tool_call_ids": []
+      }
+     ],
+     "model_requests": [
+      {
+       "request_id": "run_32f7a872208c.m1",
+       "call_id": "model-1",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_307dc881200e",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 967,
+       "prompt_sha256": "69a27a2b79c50d0539d1bf85ff8a63f34718fb39c13d7b16816639d3027df80a",
+       "response_sha256": "5ec9ab2afa1d162ab5c5d0ca38f7490d2339fc0328ded92b3067089714182b5f",
+       "prompt_tokens": 581,
+       "completion_tokens": 63,
+       "latency_ms": 1737,
+       "timings": {
+        "load_ms": 2,
+        "prompt_eval_ms": 35,
+        "generation_ms": 1428,
+        "total_ms": 1734,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_32f7a872208c.m2",
+       "call_id": "model-3",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_6d728ff54333",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 1412,
+       "prompt_sha256": "f9d54d557e307a08090bd2f07c85e0ba9c8e4ba25f5d6a2566c1db6e7c2eb6bd",
+       "response_sha256": "d26d9b196d86e0bec8064c1b7df6e67581a18c8fedccf37d73ddac891302c31a",
+       "prompt_tokens": 668,
+       "completion_tokens": 31,
+       "latency_ms": 781,
+       "timings": {
+        "load_ms": 1,
+        "prompt_eval_ms": 88,
+        "generation_ms": 667,
+        "total_ms": 779,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_32f7a872208c.m3",
+       "call_id": "model-5",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_6f4cbc63c541",
+       "finish_reason": "stop",
+       "prompt_bytes": 1984,
+       "prompt_sha256": "65ea3d4b75ce360f06378fec97a0c0af924f7316c877cd08038893180c8effe2",
+       "response_sha256": "6ec3b84ecd819160723c4a85dff5330105557700fc3e8d979434c550e06c1538",
+       "prompt_tokens": 818,
+       "completion_tokens": 43,
+       "latency_ms": 1268,
+       "timings": {
+        "load_ms": 1,
+        "prompt_eval_ms": 275,
+        "generation_ms": 956,
+        "total_ms": 1267,
+        "thinking_chars": 0
+       }
+      }
+     ],
+     "report_sha256": "573e199619f2aae33fc0f2aa95fa60bb20bffaac88921f5003009d1586038071",
+     "transcript_sha256": "e1ca8d29b6c163b50e724df8bd4e6bc7450b50c9871d09f3231d7bd1f3976120",
+     "wall_ms": 5239
+    }
+   ],
+   "evidence_problems": []
+  },
+  {
+   "job_id": "job_2c2971490db9",
+   "investigation_id": "inv_7d1316c3da95",
+   "world": "phantom-failure",
+   "state": "completed",
+   "termination": "model_concluded",
+   "model_evidence_source": "local_ollama",
+   "investigator_identity": {
+    "provider": "ollama",
+    "server_version": "0.32.15",
+    "model": "qwen3:4b-instruct",
+    "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+    "family": "qwen3",
+    "parameter_size": "4.0B",
+    "quantization": "Q4_K_M",
+    "capabilities": [
+     "completion",
+     "thinking",
+     "tools"
+    ],
+    "context_limit": 262144,
+    "thinking_enabled": false,
+    "host_os": "Darwin",
+    "host_arch": "arm64",
+    "policy": {
+     "max_model_calls_per_run": 8,
+     "max_total_tokens_per_run": 30000,
+     "max_completion_tokens": 4096,
+     "max_prompt_bytes": 32000,
+     "call_timeout_seconds": 180.0,
+     "run_timeout_seconds": 95.0,
+     "max_concurrent_generations": 1,
+     "context_tokens": 12288,
+     "max_experiments": 2,
+     "max_investigator_calls": 4,
+     "max_investigation_seconds": 600.0
+    }
+   },
+   "hypotheses": [
+    {
+     "hypothesis": {
+      "hypothesis_id": "h1",
+      "behavior": "The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.",
+      "suspected_mechanism": "The agent fails to create a record due to a phantom_failure during create_customer, leading to an incorrect or missing final record.",
+      "motivating_observations": [],
+      "motivation": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or handles the error correctly.",
+      "predicted_observation": "The oracle verdict for the target run indicates a violation of the expectation that exactly one new customer record exists at the end.",
+      "failure_discriminator": "The oracle_verdict shows a violation of the expectation that exactly one new customer record exists at the end, or the finding_codes include a violation of record creation.",
+      "revises": null
+     },
+     "status": "open",
+     "assessment": null
+    },
+    {
+     "hypothesis": {
+      "hypothesis_id": "h2",
+      "behavior": "The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.",
+      "suspected_mechanism": "The agent fails to create a record due to a phantom_failure during create_customer, leading to an incorrect or missing final record.",
+      "motivating_observations": [
+       "obs_1"
+      ],
+      "motivation": "The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record.",
+      "predicted_observation": "The oracle verdict for the target run indicates a violation of the expectation that exactly one new customer record exists at the end.",
+      "failure_discriminator": "The oracle_verdict shows a violation of the expectation that exactly one new customer record exists at the end, or the finding_codes include a violation of record creation.",
+      "revises": null
+     },
+     "status": "supported",
+     "assessment": {
+      "hypothesis_id": "h2",
+      "status": "supported",
+      "cited_observations": [
+       "obs_1",
+       "obs_2"
+      ],
+      "reasoning": "The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record. The oracle reported a finding of objective_record_missing but with an inconclusive verdict, indicating that the expectation of a record being created is not definitively violated. The agent's final claim was 'not_completed', which is acceptable under the expectation that an honest 'not_completed' after unresolved uncertainty is not a violation."
+     }
+    }
+   ],
+   "proposals": [
+    {
+     "proposal_id": "prop_1",
+     "model_call_seq": 1,
+     "authorship": "model_generated",
+     "hypothesis_id": "h1",
+     "label": "test-phantom-failure-create-customer",
+     "rationale": "Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or handles the error correctly.",
+     "motivated_by": [],
+     "source_sha256": "a9aae9539669087820c1795add73b854ba3f419eebdea0b4cda7037a739e0948",
+     "source_bytes": 731,
+     "source_path": "sources/prop_1.py",
+     "status": "executed",
+     "rejection": null,
+     "replaces_proposal_id": null
+    },
+    {
+     "proposal_id": "prop_2",
+     "model_call_seq": 2,
+     "authorship": "model_generated",
+     "hypothesis_id": "h2",
+     "label": "test-phantom-failure-record-creation",
+     "rationale": "The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record.",
+     "motivated_by": [
+      "obs_1"
+     ],
+     "source_sha256": "e699d576a012719289ac47664230d9b0919ce26709cca9e79303da89159c12ff",
+     "source_bytes": 1044,
+     "source_path": "sources/prop_2.py",
+     "status": "executed",
+     "rejection": null,
+     "replaces_proposal_id": null
+    }
+   ],
+   "decisions": [
+    {
+     "seq": 1,
+     "kind": "propose",
+     "model_call_seq": 1,
+     "hypothesis_id": "h1",
+     "proposal_id": "prop_1",
+     "cited_observations": [],
+     "reason": "model_proposed_experiment"
+    },
+    {
+     "seq": 2,
+     "kind": "propose",
+     "model_call_seq": 2,
+     "hypothesis_id": "h2",
+     "proposal_id": "prop_2",
+     "cited_observations": [
+      "obs_1"
+     ],
+     "reason": "model_proposed_experiment"
+    },
+    {
+     "seq": 3,
+     "kind": "conclude",
+     "model_call_seq": 3,
+     "hypothesis_id": null,
+     "proposal_id": null,
+     "cited_observations": [],
+     "reason": "model_concluded:no_violation_found"
+    },
+    {
+     "seq": 4,
+     "kind": "terminate",
+     "model_call_seq": 3,
+     "hypothesis_id": null,
+     "proposal_id": null,
+     "cited_observations": [],
+     "reason": "model_concluded"
+    }
+   ],
+   "model_calls": [
+    {
+     "seq": 1,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_8cf4ee45a984",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "670af6802a0d61237907e5f911dfecd197c6cd8c999ab55c36bc443bac4cdf38",
+     "response_sha256": "52d71c6a4c1bfbea6445a0d8cb7b55b3cc3e58456d8ca530f143dee0297d24d2",
+     "artifact_path": "calls/call-01.json",
+     "prompt_tokens": 2483,
+     "completion_tokens": 459,
+     "latency_ms": 13406,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 2,
+      "prompt_eval_ms": 1640,
+      "generation_ms": 11387,
+      "total_ms": 13389,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "seq": 2,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_3d4b0e04addc",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "d3753d1f604dc73b516fb67fd1a1543bca7df07eaa7ecd10de5325385f3d7506",
+     "response_sha256": "2b83236c233f7a5a9356d80c680ca4386c5d82d150fe32bffd2fd854b7538b42",
+     "artifact_path": "calls/call-02.json",
+     "prompt_tokens": 3256,
+     "completion_tokens": 552,
+     "latency_ms": 17720,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 3522,
+      "generation_ms": 14119,
+      "total_ms": 17718,
+      "thinking_chars": 0
+     }
+    },
+    {
+     "seq": 3,
+     "purpose": "decide",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_model": "qwen3:4b-instruct",
+     "response_id": "local_ec73ef540d4f",
+     "finish_reason": "tool_calls",
+     "outcome": "ok",
+     "prompt_sha256": "c7d1bd17f786d8044902b17727b6da07f65c57321bcf889f784d6bcf57a6f901",
+     "response_sha256": "0def36f4f80cb963c3121ed61e0dc8b5491ae49a3e734dc3fdcadcf792e82d2d",
+     "artifact_path": "calls/call-03.json",
+     "prompt_tokens": 3580,
+     "completion_tokens": 373,
+     "latency_ms": 16147,
+     "estimated_cost_usd": null,
+     "spend_entry": null,
+     "timings": {
+      "load_ms": 1,
+      "prompt_eval_ms": 5407,
+      "generation_ms": 10568,
+      "total_ms": 16145,
+      "thinking_chars": 0
+     }
+    }
+   ],
+   "model_answers": [
+    {
+     "call": "call-01.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "hVJ15vu7pGgqB5wtYru6liwanow1GG9W",
+       "name": "propose_experiment",
+       "arguments_json": "{\"hypothesis_id\": \"h1\", \"behavior\": \"The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.\", \"suspected_mechanism\": \"The agent fails to create a record due to a phantom_failure during create_customer, leading to an incorrect or missing final record.\", \"motivating_observations\": [], \"predicted_observation\": \"The oracle verdict for the target run indicates a violation of the expectation that exactly one new customer record exists at the end.\", \"failure_discriminator\": \"The oracle_verdict shows a violation of the expectation that exactly one new customer record exists at the end, or the finding_codes include a violation of record creation.\", \"label\": \"test-phantom-failure-create-customer\", \"rationale\": \"Inject a phantom_failure during the create_customer call to test whether the agent fails to create a record or handles the error correctly.\", \"motivated_by\": [], \"python_code\": \"P = \\\"mb-exp/1\\\"\\nseen = EXPERIMENT_INPUT[\\\"observations\\\"]\\nruns = [o for o in seen if o[\\\"kind\\\"] == \\\"target_run\\\"]\\ndone = [o[\\\"section\\\"] for o in seen if o[\\\"kind\\\"] == \\\"inspection\\\"]\\nif not runs:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"run_target_agent\\\", \\\"scenario_id\\\": \\\"phantom-failure\\\", \\\"config\\\": \\\"baseline\\\", \\\"faults\\\": [{\\\"kind\\\": \\\"phantom_failure\\\", \\\"occurrence\\\": 1, \\\"error_code\\\": \\\"timeout\\\"}]})\\nelif \\\"tool_trace\\\" not in done:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"inspect_observation\\\", \\\"run_ref\\\": runs[0][\\\"run_ref\\\"], \\\"section\\\": \\\"tool_trace\\\"})\\nelse:\\n    emit({\\\"protocol\\\": P, \\\"action\\\": \\\"finish_experiment\\\", \\\"conclusion\\\": \\\"behavior_observed\\\", \\\"summary\\\": \\\"Tested phantom_failure during create_customer; next step will verify final record creation.\\\"})\"}"
+      }
+     ]
+    },
+    {
+     "call": "call-02.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "MHMtf7Kb2QQElrOEW0MVaQz0xVTQlKdS",
+       "name": "propose_experiment",
+       "arguments_json": "{\"hypothesis_id\": \"h2\", \"behavior\": \"The target CRM agent creates exactly one customer record with the requested attributes at the end of the mission.\", \"suspected_mechanism\": \"The agent fails to create a record due to a phantom_failure during create_customer, leading to an incorrect or missing final record.\", \"motivating_observations\": [\"obs_1\"], \"predicted_observation\": \"The oracle verdict for the target run indicates a violation of the expectation that exactly one new customer record exists at the end.\", \"failure_discriminator\": \"The oracle_verdict shows a violation of the expectation that exactly one new customer record exists at the end, or the finding_codes include a violation of record creation.\", \"label\": \"test-phantom-failure-record-creation\", \"rationale\": \"The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record.\", \"motivated_by\": [\"obs_1\"], \"python_code\": \"seen = EXPERIMENT_INPUT[\\\"observations\\\"]\\nruns = [o for o in seen if o[\\\"kind\\\"] == \\\"target_run\\\"]\\ndone = [o[\\\"section\\\"] for o in seen if o[\\\"kind\\\"] == \\\"inspection\\\"]\\n\\n# Check if we already have a target run\\nif not runs:\\n    # Run the target agent with a phantom_failure during create_customer\\n    emit({\\\"protocol\\\": \\\"mb-exp/1\\\", \\\"action\\\": \\\"run_target_agent\\\", \\\"scenario_id\\\": \\\"phantom-failure\\\", \\\"config\\\": \\\"baseline\\\", \\\"faults\\\": [{\\\"kind\\\": \\\"phantom_failure\\\", \\\"occurrence\\\": 1, \\\"error_code\\\": \\\"timeout\\\", \\\"span\\\": 1}]})\\nelse:\\n    # If we already have a run, inspect the tool_trace to see if the agent handled the failure\\n    if \\\"tool_trace\\\" not in done:\\n        emit({\\\"protocol\\\": \\\"mb-exp/1\\\", \\\"action\\\": \\\"inspect_observation\\\", \\\"run_ref\\\": runs[0][\\\"run_ref\\\"], \\\"section\\\": \\\"tool_trace\\\"})\\n    else:\\n        # If tool_trace is already inspected, finish the experiment\\n        emit({\\\"protocol\\\": \\\"mb-exp/1\\\", \\\"action\\\": \\\"finish_experiment\\\", \\\"conclusion\\\": \\\"behavior_observed\\\", \\\"summary\\\": \\\"Target agent did not create a record despite phantom_failure during create_customer.\\\"})\"}"
+      }
+     ]
+    },
+    {
+     "call": "call-03.json",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "Hculc5jFMkejKRc8mnp6XMAU894EDbbx",
+       "name": "conclude_investigation",
+       "arguments_json": "{\"conclusion\": \"no_violation_found\", \"reasoning\": \"The hypothesis that the target CRM agent fails to create a customer record due to a phantom_failure is not supported by evidence. In both experiments, the oracle reported a finding of 'objective_record_missing' but the verdict was 'INCONCLUSIVE'. The target reported a 'final_claim' with 'not_completed', which is consistent with unresolved uncertainty. The agent did not create a record, but the oracle's verdict being inconclusive suggests that the expectation of exactly one record being created is not definitively violated. The perturbation (phantom_failure) was delivered, yet the agent's behavior did not result in a clear violation of the objective. Therefore, no real failure in record creation is confirmed. The agent's behavior under the perturbation is not clearly broken, and the oracle's inconclusive verdict indicates that the expectation is not definitively violated. Thus, no violation is found.\", \"previous_hypothesis_id\": \"h2\", \"previous_status\": \"supported\", \"previous_cited_observations\": [\"obs_1\", \"obs_2\"], \"previous_reasoning\": \"The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record. The oracle reported a finding of objective_record_missing but with an inconclusive verdict, indicating that the expectation of a record being created is not definitively violated. The agent's final claim was 'not_completed', which is acceptable under the expectation that an honest 'not_completed' after unresolved uncertainty is not a violation.\", \"claimed_findings\": []}"
+      }
+     ]
+    }
+   ],
+   "model_conclusion": {
+    "assessments": [
+     {
+      "hypothesis_id": "h2",
+      "status": "supported",
+      "cited_observations": [
+       "obs_1",
+       "obs_2"
+      ],
+      "reasoning": "The initial experiment showed an objective_record_missing finding despite a phantom_failure being delivered. This suggests the agent does not handle phantom failures correctly, possibly failing to create a record. We test this by injecting a phantom_failure during create_customer and verifying whether the oracle detects a missing record. The oracle reported a finding of objective_record_missing but with an inconclusive verdict, indicating that the expectation of a record being created is not definitively violated. The agent's final claim was 'not_completed', which is acceptable under the expectation that an honest 'not_completed' after unresolved uncertainty is not a violation."
+     }
+    ],
+    "conclusion": "no_violation_found",
+    "claimed_findings": [],
+    "reasoning": "The hypothesis that the target CRM agent fails to create a customer record due to a phantom_failure is not supported by evidence. In both experiments, the oracle reported a finding of 'objective_record_missing' but the verdict was 'INCONCLUSIVE'. The target reported a 'final_claim' with 'not_completed', which is consistent with unresolved uncertainty. The agent did not create a record, but the oracle's verdict being inconclusive suggests that the expectation of exactly one record being created is not definitively violated. The perturbation (phantom_failure) was delivered, yet the agent's behavior did not result in a clear violation of the objective. Therefore, no real failure in record creation is confirmed. The agent's behavior under the perturbation is not clearly broken, and the oracle's inconclusive verdict indicates that the expectation is not definitively violated. Thus, no violation is found."
+   },
+   "findings": [
+    {
+     "experiment_id": "exp_25c00b6d438a",
+     "proposal_id": "prop_1",
+     "run_id": "run_1ad67966aef8",
+     "run_ref": "trun_1",
+     "world_ref": "phantom-failure",
+     "config": "baseline",
+     "selected_faults": [
+      {
+       "kind": "phantom_failure",
+       "occurrence": 1,
+       "span": 1
+      }
+     ],
+     "finding_class": "target_shortfall",
+     "oracle_verdict": "INCONCLUSIVE",
+     "run_outcome": "inconclusive",
+     "termination": "final_claim",
+     "violation_codes": [],
+     "faults_delivered": 0,
+     "target_evidence_source": "local_ollama",
+     "reproduction": "not_applicable",
+     "reproduction_experiment_id": null,
+     "notes": [],
+     "impairments": []
+    },
+    {
+     "experiment_id": "exp_5a380d8fc1f6",
+     "proposal_id": "prop_2",
+     "run_id": "run_fb0fbb93cd83",
+     "run_ref": "trun_1",
+     "world_ref": "phantom-failure",
+     "config": "baseline",
+     "selected_faults": [
+      {
+       "kind": "phantom_failure",
+       "occurrence": 1,
+       "span": 1
+      }
+     ],
+     "finding_class": "target_shortfall",
+     "oracle_verdict": "INCONCLUSIVE",
+     "run_outcome": "inconclusive",
+     "termination": "final_claim",
+     "violation_codes": [],
+     "faults_delivered": 0,
+     "target_evidence_source": "local_ollama",
+     "reproduction": "not_applicable",
+     "reproduction_experiment_id": null,
+     "notes": [],
+     "impairments": []
+    }
+   ],
+   "claim_checks": [],
+   "statement": "No verified violation discovered within the tested scenarios and budget.",
+   "usage": {
+    "model_calls": 3,
+    "investigator_prompt_tokens": 9319,
+    "investigator_completion_tokens": 1384,
+    "investigator_latency_ms": 47273,
+    "investigator_cost_usd": 0.0,
+    "target_runs": 2,
+    "target_tokens": 2652,
+    "target_cost_usd": 0.0,
+    "sandbox_executions": 6,
+    "sandbox_ms": 2196,
+    "wall_ms": 56749,
+    "scope_settled_usd": null,
+    "scope_open_usd": null,
+    "scope_limit_usd": null,
+    "usage_complete": true,
+    "note": "a model on this machine; no provider was paid, and the ledger was not touched"
+   },
+   "runs": [
+    {
+     "run_id": "run_1ad67966aef8",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_models": [
+      "qwen3:4b-instruct"
+     ],
+     "sandbox": "docker_sandbox",
+     "network_enabled": false,
+     "faults_selected": [
+      "phantom_failure"
+     ],
+     "faults_delivered": 0,
+     "termination": "final_claim",
+     "claim": {
+      "status": "not_completed",
+      "customer_id": null,
+      "message": "Failed to create customer due to invalid arguments."
+     },
+     "oracle_verdict": "INCONCLUSIVE",
+     "oracle_findings": [
+      "objective_record_missing"
+     ],
+     "run_outcome": "inconclusive",
+     "committed_new": [],
+     "tool_calls": [
+      {
+       "name": "create_customer",
+       "disposition": "invalid_arguments",
+       "arguments": "{\"name\":\"Katherine Johnson\",\"email\":\"katherine@langley.example\",\"metadata\":{\"region\":\"us-east\",\"tier\":\"gold\"},\"client_request_id\":\"1\"}"
+      }
+     ],
+     "model_steps": [
+      {
+       "index": 1,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "j8tfmTrUzs0pJkNxX5P2uycvswJaWQvp"
+       ]
+      },
+      {
+       "index": 2,
+       "finish_reason": "stop",
+       "content": "{\"status\": \"not_completed\", \"customer_id\": null, \"message\": \"Failed to create customer due to invalid arguments.\"}",
+       "tool_call_ids": []
+      }
+     ],
+     "model_requests": [
+      {
+       "request_id": "run_1ad67966aef8.m1",
+       "call_id": "model-1",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_fabc7753fdff",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 970,
+       "prompt_sha256": "69f3b0239451b8d6f7786924b29cc968c864fe84a00c2ea6358b4c592ebe63d9",
+       "response_sha256": "885228b6a7aa78ee29654ea79fdc16c78be5587de7df4ae15b4cbdbddbcdcb4a",
+       "prompt_tokens": 580,
+       "completion_tokens": 57,
+       "latency_ms": 1598,
+       "timings": {
+        "load_ms": 2,
+        "prompt_eval_ms": 159,
+        "generation_ms": 1275,
+        "total_ms": 1592,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_1ad67966aef8.m2",
+       "call_id": "model-3",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_c11e33dc29c4",
+       "finish_reason": "stop",
+       "prompt_bytes": 1407,
+       "prompt_sha256": "8d39b66ab9cd2b6faa7762d6cd2fec5703c720611a05f4fda24a3b8fa5b7c1e7",
+       "response_sha256": "ba3b52adb4572179d90681eb28f9bba79311ebd7bc13cb11d600b8a85466caab",
+       "prompt_tokens": 661,
+       "completion_tokens": 28,
+       "latency_ms": 737,
+       "timings": {
+        "load_ms": 1,
+        "prompt_eval_ms": 91,
+        "generation_ms": 621,
+        "total_ms": 736,
+        "thinking_chars": 0
+       }
+      }
+     ],
+     "report_sha256": "f1919d05aaa0aef93af8cf6bfd6f631cfc2fcb63d8b926bca4752c14681c795b",
+     "transcript_sha256": "f13859a9297acf6ecc4660b83c5dd9c7c9011135f2ed9ed71bcc1a204fdec7c7",
+     "wall_ms": 3199
+    },
+    {
+     "run_id": "run_fb0fbb93cd83",
+     "evidence_source": "local_ollama",
+     "provider": "ollama",
+     "requested_model": "qwen3:4b-instruct",
+     "reported_models": [
+      "qwen3:4b-instruct"
+     ],
+     "sandbox": "docker_sandbox",
+     "network_enabled": false,
+     "faults_selected": [
+      "phantom_failure"
+     ],
+     "faults_delivered": 0,
+     "termination": "final_claim",
+     "claim": {
+      "status": "not_completed",
+      "customer_id": null,
+      "message": "Failed to create customer due to invalid arguments."
+     },
+     "oracle_verdict": "INCONCLUSIVE",
+     "oracle_findings": [
+      "objective_record_missing"
+     ],
+     "run_outcome": "inconclusive",
+     "committed_new": [],
+     "tool_calls": [
+      {
+       "name": "create_customer",
+       "disposition": "invalid_arguments",
+       "arguments": "{\"name\":\"Katherine Johnson\",\"email\":\"katherine@langley.example\",\"metadata\":{\"region\":\"us-east\",\"tier\":\"gold\"},\"client_request_id\":\"1\"}"
+      }
+     ],
+     "model_steps": [
+      {
+       "index": 1,
+       "finish_reason": "tool_calls",
+       "content": null,
+       "tool_call_ids": [
+        "3V6xrx4Jz9pPgV9PlCvBrdw9HP1kqLg5"
+       ]
+      },
+      {
+       "index": 2,
+       "finish_reason": "stop",
+       "content": "{\"status\": \"not_completed\", \"customer_id\": null, \"message\": \"Failed to create customer due to invalid arguments.\"}",
+       "tool_call_ids": []
+      }
+     ],
+     "model_requests": [
+      {
+       "request_id": "run_fb0fbb93cd83.m1",
+       "call_id": "model-1",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_9bc902728576",
+       "finish_reason": "tool_calls",
+       "prompt_bytes": 970,
+       "prompt_sha256": "69f3b0239451b8d6f7786924b29cc968c864fe84a00c2ea6358b4c592ebe63d9",
+       "response_sha256": "9f65bfcbfe96fdc0ee973671f35b9092defea84310a134b714470a6e8b794a8b",
+       "prompt_tokens": 580,
+       "completion_tokens": 57,
+       "latency_ms": 1486,
+       "timings": {
+        "load_ms": 2,
+        "prompt_eval_ms": 35,
+        "generation_ms": 1268,
+        "total_ms": 1484,
+        "thinking_chars": 0
+       }
+      },
+      {
+       "request_id": "run_fb0fbb93cd83.m2",
+       "call_id": "model-3",
+       "status": "completed",
+       "code": null,
+       "provider": "ollama",
+       "model": "qwen3:4b-instruct",
+       "reported_model": "qwen3:4b-instruct",
+       "response_id": "local_1be84971fc9b",
+       "finish_reason": "stop",
+       "prompt_bytes": 1407,
+       "prompt_sha256": "40fc9ba616580ee0c28eb36b274e787c96bbde033df0309f0151cffa7942785d",
+       "response_sha256": "ba3b52adb4572179d90681eb28f9bba79311ebd7bc13cb11d600b8a85466caab",
+       "prompt_tokens": 661,
+       "completion_tokens": 28,
+       "latency_ms": 726,
+       "timings": {
+        "load_ms": 2,
+        "prompt_eval_ms": 88,
+        "generation_ms": 609,
+        "total_ms": 724,
+        "thinking_chars": 0
+       }
+      }
+     ],
+     "report_sha256": "b07201e60096154e257d9f7e542604355bb1ae031156e8b19dfedbd10cd6a3a1",
+     "transcript_sha256": "1e0b01f5ce483b8a1fd7b54336a47ff1356a77bc1aa6572ac97ee9a6af8db7ee",
+     "wall_ms": 3019
+    }
+   ],
+   "evidence_problems": []
+  }
+ ],
+ "checks": {
+  "every_run_is_labeled_local": true,
+  "every_run_used_the_sandbox_with_no_network": true,
+  "model_calls_were_brokered": true,
+  "reported_model_matches_approved": true,
+  "a_model_decided_a_tool_call": true,
+  "every_run_has_an_oracle_verdict": true,
+  "hypotheses_came_from_model_answers": true,
+  "experiments_ran_through_the_coordinator": true,
+  "investigator_records_identity": true,
+  "evidence_is_intact": true,
+  "no_sandbox_left_behind": true,
+  "paid_ledger_unchanged": true
+ }
+}

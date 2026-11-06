@@ -15,6 +15,9 @@ Tested in `tests/external/test_model_boundary.py`, with labeled doubles.
 `model_call` carries a `call_id` and `messages`, and nothing else. A line naming a model or an endpoint is a
 schema violation and ends the run. It is not filtered.
 
+Local models have their own allowlist and limits: [local models](../external-agents/local-models.md). The boundary
+is the same broker. The address must be literal loopback, and the sandbox cannot reach it.
+
 ## Limits, checked before a provider is asked
 
 | Limit | Fixture | Live | Refusal code |
