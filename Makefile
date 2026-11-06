@@ -14,7 +14,7 @@ PYTEST  := $(UV) run pytest
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
-        test-hosted release release-check external-preflight external-run external-demo \
+        test-hosted release release-check external-preflight external-run external-investigate external-demo \
         external-test external-containment external-bench external-eval external-ui
 
 help: ## List commands
@@ -59,9 +59,14 @@ test-integration: ## Docker sandbox integration + containment tests (needs a Doc
 external-preflight: ## Check an external agent's manifest and handshake in the real sandbox (MANIFEST=path)
 	$(UV) run moody-blues external-preflight --manifest $(MANIFEST)
 
-external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1)
+external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd)
 	$(UV) run moody-blues external-run --manifest $(MANIFEST) $(if $(WORLD),--world $(WORLD)) \
-		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable)
+		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
+
+external-investigate: ## The real Investigator workflow against one target (TARGET=external_scripted|external_llm|internal_llm MANIFEST=path WORLD=name). Free: models are labeled fixtures
+	$(UV) run moody-blues external-investigate --target $(TARGET) $(if $(MANIFEST),--manifest $(MANIFEST)) \
+		$(if $(WORLD),--world $(WORLD)) $(if $(LIVE),--live-inference) $(if $(LIVE_INVESTIGATOR),--live-investigator) \
+		$(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
 
 external-demo: ## Run both example agents through the real sandbox and Oracle. Scripts, not models; free
 	$(UV) run moody-blues external-demo

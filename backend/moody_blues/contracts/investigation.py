@@ -98,6 +98,33 @@ class InvestigationLimits(BaseModel):
     temperature: float = Field(default=0.0, ge=0, le=1)
 
 
+class TargetKind(StrEnum):
+    """What the operator selected. Validated by trusted code; see ``external/selection.py``."""
+
+    INTERNAL_LLM = "internal_llm"
+    EXTERNAL_SCRIPTED = "external_scripted"
+    EXTERNAL_LLM = "external_llm"
+
+
+class TargetProvenance(BaseModel):
+    """Which target an investigation was pointed at. Written by trusted code, before any run.
+
+    This says what was selected. What actually happened in a run, including whether a model was
+    used at all, is on that run's own record.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: TargetKind
+    agent_id: str | None = None
+    agent_version: str | None = None
+    protocol: str | None = None
+    bundle_sha256: str | None = None
+    manifest_sha256: str | None = None
+    model_broker: Literal["none", "offline_fixture", "live_provider"] = "none"
+    approved_model: str | None = None
+
+
 class InvestigationRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -108,6 +135,8 @@ class InvestigationRequest(BaseModel):
     investigator_model: str = Field(max_length=120)
     target_model: str = Field(max_length=120)
     limits: InvestigationLimits = Field(default_factory=InvestigationLimits)
+    # Sprint 16. Left out when absent, so earlier records stay byte-identical.
+    target: TargetProvenance | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class ToolContract(BaseModel):

@@ -16,6 +16,7 @@ from threading import Event
 from uuid import uuid4
 
 from moody_blues.config import Settings
+from moody_blues.contracts.adapter import AdapterLimits
 from moody_blues.contracts.agent import TerminationReason
 from moody_blues.contracts.common import MoodyBluesError
 from moody_blues.contracts.experiment_evidence import ExperimentEvidence
@@ -25,10 +26,13 @@ from moody_blues.contracts.investigation import (
     InvestigationReport,
     InvestigationRequest,
     Strategy,
+    TargetKind,
+    TargetProvenance,
     WorldTier,
 )
-from moody_blues.experiments.budget import SpendLedger, ledger_path
+from moody_blues.experiments.budget import ScopedSpend, SpendLedger, SpendPort, ledger_path
 from moody_blues.experiments.protocol import APPROVED_SCENARIOS
+from moody_blues.experiments.target import AgentTarget, TargetPort
 from moody_blues.experiments.workspace import atomic_write
 from moody_blues.explorer.factories import REHEARSAL_SEQUENCE
 from moody_blues.explorer.jobs import BUNDLE, JobStore, terminal_status
@@ -38,9 +42,17 @@ from moody_blues.explorer.recorded import render
 from moody_blues.explorer.sanitize import require_clean
 from moody_blues.external.bundle import AgentBundle, ManifestError, build_bundle
 from moody_blues.external.driver import InferenceBroker
-from moody_blues.external.target import ExternalAgentTarget, LiveInference
-from moody_blues.inference.vultr import VultrInferenceClient
-from moody_blues.investigator.commands import DEFAULT_OBJECTIVE
+from moody_blues.external.fixtures import FIXTURE_MODEL as AGENT_FIXTURE_MODEL
+from moody_blues.external.fixtures import CrmModelFixture, Policy
+from moody_blues.external.selection import (
+    TargetSelectionError,
+    check_model_allowed,
+    external_provenance,
+)
+from moody_blues.external.target import ExternalAgentTarget, LiveInference, granted_specs
+from moody_blues.inference.vultr import PROVIDER, VultrInferenceClient
+from moody_blues.investigator.catalog import external_capability
+from moody_blues.investigator.commands import DEFAULT_OBJECTIVE, LIVE_TARGET_BUDGET
 from moody_blues.investigator.fixtures import FIXTURE_MODEL, ObservationDrivenFixture
 from moody_blues.investigator.model import InvestigatorModel
 from moody_blues.investigator.preflight import (
@@ -58,9 +70,16 @@ EXAMPLES = REPO_ROOT / "examples" / "external-agent"
 DEFAULT_WORLD = "normal-success"
 _LIMITS = InvestigationLimits(max_experiments=2, max_model_calls=3, max_wall_seconds=120)
 # A live run is paid for, so it stays small. These are ceilings, not targets.
-_LIVE_MODEL_CALLS = 8
-_LIVE_TOTAL_TOKENS = 30_000
-_LIVE_COMPLETION_TOKENS = 1_024
+LIVE_MODEL_CALLS = 8
+LIVE_TOTAL_TOKENS = 30_000
+# Includes hidden reasoning: at 1,024 the target was cut off when a world made it think (KI-29).
+LIVE_COMPLETION_TOKENS = 4_096
+LIVE_CALL_TIMEOUT_SECONDS = 60.0
+# Startup + this + exit grace must stay inside the sandbox's 120 s ceiling, or the kill decides.
+LIVE_ADAPTER_LIMITS = AdapterLimits(run_timeout_seconds=95.0)
+LIVE_INVESTIGATION_LIMITS = InvestigationLimits(
+    max_experiments=2, max_model_calls=3, max_reproductions=0, max_wall_seconds=420
+)
 
 
 def _sandbox_ready(settings: Settings) -> bool:
@@ -80,6 +99,18 @@ def _sandbox_ready(settings: Settings) -> bool:
     return False
 
 
+def fixture_investigator(world: str, limits: InvestigationLimits) -> InvestigatorModel:
+    return InvestigatorModel(
+        inference=ObservationDrivenFixture(world, REHEARSAL_SEQUENCE),
+        evidence="offline_fixture",
+        model=FIXTURE_MODEL,
+        provider=None,
+        spend=None,
+        max_completion_tokens=limits.max_completion_tokens,
+        temperature=limits.temperature,
+    )
+
+
 def external_workflow(
     settings: Settings,
     bundle: AgentBundle,
@@ -89,42 +120,51 @@ def external_workflow(
     runner: SessionRunner | None = None,
     live: LiveInference | None = None,
     cancel: Event | None = None,
+    provenance: TargetProvenance | None = None,
+    investigator: InvestigatorModel | None = None,
+    limits: InvestigationLimits = _LIMITS,
+    adapter_limits: AdapterLimits | None = None,
+    investigation_id: str | None = None,
+    spend: ScopedSpend | None = None,
 ) -> InvestigationWorkflow:
-    """A rehearsal investigation with the external agent as its target."""
+    """The real workflow and coordinator, with the external agent as its target.
+
+    ``investigator`` is the only thing that differs between a rehearsal and a live investigation.
+    """
     sandbox = generated_code_runner(settings)
-    limits = sandbox_limits(settings)
+    sandbox_caps = sandbox_limits(settings)
+    model = investigator or fixture_investigator(world, limits)
     return InvestigationWorkflow(
         request=InvestigationRequest(
             objective=DEFAULT_OBJECTIVE,
             strategy=Strategy.ADAPTIVE,
             tier=WorldTier.DEVELOPMENT,
             world_ids=(world,),
-            investigator_model=FIXTURE_MODEL,
+            investigator_model=model.model,
             target_model=f"external:{bundle.manifest.agent_id}",
-            limits=_LIMITS,
+            limits=limits,
+            target=provenance,
         ),
         runner=ExperimentRunner(
             sandbox=sandbox,
             target=ExternalAgentTarget(
                 runner=runner or sandbox,
                 bundle=bundle,
-                sandbox_limits=limits,
+                sandbox_limits=sandbox_caps,
+                limits=adapter_limits,
                 live=live,
             ),
             root=artifacts / "experiments",
-            sandbox_limits=limits,
+            sandbox_limits=sandbox_caps,
         ),
         root=artifacts / "investigations",
-        model=InvestigatorModel(
-            inference=ObservationDrivenFixture(world, REHEARSAL_SEQUENCE),
-            evidence="offline_fixture",
-            model=FIXTURE_MODEL,
-            provider=None,
-            spend=None,
-            max_completion_tokens=_LIMITS.max_completion_tokens,
-            temperature=_LIMITS.temperature,
+        model=model,
+        capability=external_capability(
+            bundle.manifest, [s.name for s in granted_specs(bundle)], (world,)
         ),
         cancel=cancel,
+        investigation_id=investigation_id,
+        spend=spend,
     )
 
 
@@ -181,6 +221,9 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
                 f"    faults selected:  {faults}, delivered {run.target_observed.faults_delivered}"
             )
             print(f"    tool calls:       {len(run.target_observed.tool_trace)}")
+            if record.model_requests:
+                states = ", ".join(r.status.value for r in record.model_requests)
+                print(f"    model calls:      {record.model_calls} brokered ({states})")
             print(f"    agent reported:   {claim.status.value if claim else 'no valid report'}")
             print(f"    committed new:    {len(run.committed.new_customer_ids)} record(s)")
             print(f"    Oracle verdict:   {run.oracle.verdict.value}")
@@ -254,6 +297,7 @@ def run(
     world: str,
     live_inference: bool,
     confirm_billable: bool,
+    approved_spend_usd: float | None = None,
 ) -> int:
     if world not in APPROVED_SCENARIOS:
         # Evaluation and reserved worlds have registered meaning, and are never run from here.
@@ -266,9 +310,12 @@ def run(
         return 1
     live: LiveInference | None = None
     if live_inference:
-        live = _open_live(settings, confirm_billable=confirm_billable)
-        if live is None:
+        opened = _open_live(
+            settings, confirm_billable=confirm_billable, approved_spend_usd=approved_spend_usd
+        )
+        if opened is None:
             return 2
+        live = opened[0]
     if not _sandbox_ready(settings):
         return 2
     print(f"EXTERNAL AGENT: {bundle.manifest.name} ({bundle.manifest.agent_id})")
@@ -282,17 +329,28 @@ def run(
     return 0
 
 
-def _open_live(settings: Settings, *, confirm_billable: bool) -> LiveInference | None:
+def _not_run(reason: str) -> None:
+    print(json.dumps({"status": "NOT_RUN", "reason": reason}, indent=2))
+
+
+def _open_live(
+    settings: Settings,
+    *,
+    confirm_billable: bool,
+    approved_spend_usd: float | None,
+    scope: str | None = None,
+) -> tuple[LiveInference, ScopedSpend] | None:
+    """Everything a paid call needs. Without all of it, nothing is opened and nothing is spent."""
     if not confirm_billable:
-        print(
-            json.dumps(
-                {
-                    "status": "NOT_RUN",
-                    "reason": "--live-inference is billable; also pass --confirm-billable",
-                },
-                indent=2,
-            )
-        )
+        _not_run("live inference is billable; also pass --confirm-billable")
+        return None
+    if approved_spend_usd is None or approved_spend_usd <= 0:
+        _not_run("live inference needs the owner's limit: pass --approved-spend-usd")
+        return None
+    try:
+        check_model_allowed(settings.investigator_target_model, settings.external_model_allowlist)
+    except TargetSelectionError as exc:
+        print(json.dumps({"status": "FAIL", "reason": str(exc)}, indent=2))
         return None
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
     if not key:
@@ -305,25 +363,218 @@ def _open_live(settings: Settings, *, confirm_billable: bool) -> LiveInference |
     except MoodyBluesError as exc:
         print(json.dumps({"status": "BLOCKED_BY_BUDGET", "reason": exc.detail.message}, indent=2))
         return None
-    client = VultrInferenceClient(
-        api_key=key,
+    spend = ScopedSpend(ledger, scope or f"external_{uuid4().hex[:12]}", approved_spend_usd)
+    broker = InferenceBroker(
+        inference=_no_retry_client(settings, key, settings.investigator_target_model),
+        evidence="live_provider",
+        provider=PROVIDER,
         model=settings.investigator_target_model,
+        max_model_calls=LIVE_MODEL_CALLS,
+        max_total_tokens=LIVE_TOTAL_TOKENS,
+        max_completion_tokens=LIVE_COMPLETION_TOKENS,
+        call_timeout_seconds=LIVE_CALL_TIMEOUT_SECONDS,
+    )
+    return LiveInference(broker=broker, ledger=spend), spend
+
+
+def _no_retry_client(settings: Settings, key: str, model: str) -> VultrInferenceClient:
+    """The SDK would resend a request that timed out, which may already have been billed."""
+    return VultrInferenceClient(
+        api_key=key,
+        model=model,
         base_url=settings.vultr_base_url,
-        timeout_seconds=settings.investigator_timeout_seconds,
-        max_retries=settings.investigator_max_retries,
+        timeout_seconds=LIVE_CALL_TIMEOUT_SECONDS,
+        max_retries=0,
     )
-    return LiveInference(
-        broker=InferenceBroker(
-            inference=client,
-            evidence="live_provider",
-            provider="vultr",
-            model=settings.investigator_target_model,
-            max_model_calls=_LIVE_MODEL_CALLS,
-            max_total_tokens=_LIVE_TOTAL_TOKENS,
-            max_completion_tokens=_LIVE_COMPLETION_TOKENS,
+
+
+def fixture_broker(world: str, *, policy: Policy = "verify") -> InferenceBroker:
+    """A labeled stand-in, for the whole model path with nothing paid for."""
+    return InferenceBroker(
+        inference=CrmModelFixture(load_scenario(world).objective, policy),
+        evidence="offline_fixture",
+        provider="fixture",
+        model=AGENT_FIXTURE_MODEL,
+        max_model_calls=LIVE_MODEL_CALLS,
+        max_total_tokens=LIVE_TOTAL_TOKENS,
+        max_completion_tokens=LIVE_COMPLETION_TOKENS,
+    )
+
+
+def _investigator_live(
+    settings: Settings, spend: ScopedSpend, limits: InvestigationLimits
+) -> InvestigatorModel:
+    key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
+    return InvestigatorModel(
+        inference=_no_retry_client(settings, key, settings.investigator_model),
+        evidence="live_provider",
+        model=settings.investigator_model,
+        provider=PROVIDER,
+        spend=spend,
+        max_completion_tokens=limits.max_completion_tokens,
+        temperature=limits.temperature,
+        provider_attempts=1,
+        reasoning_effort=limits.reasoning_effort,
+    )
+
+
+def _internal_target(world: str) -> TargetPort:
+    """The internal agent, on the labeled fixture. A live one is ``make investigator-live``."""
+    return AgentTarget(
+        inference=CrmModelFixture(load_scenario(world).objective),
+        evidence="offline_fixture",
+        provider="fixture",
+        model=AGENT_FIXTURE_MODEL,
+        budget=LIVE_TARGET_BUDGET,
+    )
+
+
+def _internal_workflow(
+    settings: Settings, world: str, artifacts: Path, limits: InvestigationLimits
+) -> InvestigationWorkflow:
+    sandbox = generated_code_runner(settings)
+    return InvestigationWorkflow(
+        request=InvestigationRequest(
+            objective=DEFAULT_OBJECTIVE,
+            strategy=Strategy.ADAPTIVE,
+            tier=WorldTier.DEVELOPMENT,
+            world_ids=(world,),
+            investigator_model=FIXTURE_MODEL,
+            target_model=AGENT_FIXTURE_MODEL,
+            limits=limits,
+            target=TargetProvenance(
+                kind=TargetKind.INTERNAL_LLM,
+                model_broker="offline_fixture",
+                approved_model=AGENT_FIXTURE_MODEL,
+            ),
         ),
-        ledger=ledger,
+        runner=ExperimentRunner(
+            sandbox=sandbox,
+            target=_internal_target(world),
+            root=artifacts / "experiments",
+            sandbox_limits=sandbox_limits(settings),
+        ),
+        root=artifacts / "investigations",
+        model=fixture_investigator(world, limits),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class LiveRequest:
+    """What the operator asked to pay for. All of it is refused unless it is all present."""
+
+    target: bool = False
+    investigator: bool = False
+    confirmed: bool = False
+    approved_spend_usd: float | None = None
+
+    @property
+    def any(self) -> bool:
+        return self.target or self.investigator
+
+
+def _print_summary(report: InvestigationReport) -> None:
+    target = report.request.target
+    print(f"  target selected:    {target.kind.value if target else 'unrecorded'}")
+    print(
+        f"  investigator model: {report.model_evidence_source} ({report.request.investigator_model})"
+    )
+    print(f"  hypotheses:         {len(report.hypotheses)}, experiments: {len(report.experiments)}")
+    print(f"  state:              {report.state.value} ({report.termination})")
+
+
+def investigate(
+    settings: Settings,
+    *,
+    kind: TargetKind,
+    manifest: Path | None,
+    world: str,
+    live: LiveRequest,
+) -> int:
+    """One investigation by the real workflow, against one validated target."""
+    if world not in APPROVED_SCENARIOS:
+        print(json.dumps({"status": "FAIL", "reason": f"choose: {APPROVED_SCENARIOS}"}, indent=2))
+        return 1
+    if kind is TargetKind.INTERNAL_LLM:
+        if live.any or manifest is not None:
+            reason = "the internal target has no bundle; a live one is make investigator-live"
+            print(json.dumps({"status": "FAIL", "reason": reason}, indent=2))
+            return 1
+        if not _sandbox_ready(settings):
+            return 2
+        artifacts = artifacts_dir(settings)
+        report = _internal_workflow(settings, world, artifacts, _LIMITS).run()
+        _print_summary(report)
+        print("  The target's model here is a labeled fixture: this says nothing about any LLM.")
+        return 0
+    if manifest is None:
+        print(json.dumps({"status": "FAIL", "reason": "--manifest is required"}, indent=2))
+        return 1
+    if live.target and kind is not TargetKind.EXTERNAL_LLM:
+        print(json.dumps({"status": "FAIL", "reason": "only an LLM target uses a model"}, indent=2))
+        return 1
+    investigation_id = f"inv_{uuid4().hex[:12]}"
+    opened = None
+    if live.any:
+        opened = _open_live(
+            settings,
+            confirm_billable=live.confirmed,
+            approved_spend_usd=live.approved_spend_usd,
+            scope=investigation_id,
+        )
+        if opened is None:
+            return 2
+    broker = None
+    if kind is TargetKind.EXTERNAL_LLM:
+        broker = opened[0].broker if opened and live.target else fixture_broker(world)
+    try:
+        bundle = build_bundle(manifest)
+        provenance = external_provenance(kind, bundle, broker)
+    except (ManifestError, TargetSelectionError) as exc:
+        print(json.dumps({"status": "FAIL", "reason": str(exc)}, indent=2))
+        return 1
+    if not _sandbox_ready(settings):
+        return 2
+    lent: LiveInference | None = None
+    if broker is not None:
+        ledger: SpendPort | None = opened[1] if opened and live.target else None
+        lent = LiveInference(broker=broker, ledger=ledger)
+    limits = LIVE_INVESTIGATION_LIMITS if live.any else _LIMITS
+    adapter_limits = LIVE_ADAPTER_LIMITS if live.target else None
+    # Discovery: the agent's real hello, in its sandbox, before anything can cost money.
+    hello = ExternalAgentTarget(
+        runner=generated_code_runner(settings),
+        bundle=bundle,
+        sandbox_limits=sandbox_limits(settings),
+        live=lent,
+    ).check_handshake(load_scenario(world))
+    if hello.startup_ms is None:
+        code = hello.rejection.code.value if hello.rejection else hello.termination.value
+        print(json.dumps({"status": "FAIL", "reason": f"handshake: {code}"}, indent=2))
+        return 1
+    artifacts = artifacts_dir(settings)
+    print(f"TARGET: {kind.value} {bundle.manifest.agent_id} (bundle {bundle.sha256[:12]})")
+    report = external_workflow(
+        settings,
+        bundle,
+        artifacts=artifacts,
+        world=world,
+        live=lent,
+        provenance=provenance,
+        investigator=_investigator_live(settings, opened[1], limits)
+        if opened and live.investigator
+        else None,
+        limits=limits,
+        adapter_limits=adapter_limits,
+        investigation_id=investigation_id,
+        spend=opened[1] if opened else None,
+    ).run()
+    job_id = publish_run(report, artifacts, settings)
+    _print_summary(report)
+    _print_run(report, artifacts, job_id)
+    if not live.any:
+        print("  Every model here was a labeled fixture: this says nothing about any LLM.")
+    return 0
 
 
 @dataclass(frozen=True, slots=True)

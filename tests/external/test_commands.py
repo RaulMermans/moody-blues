@@ -53,7 +53,13 @@ def test_live_inference_needs_the_billable_confirmation(
 
 
 def test_live_inference_needs_a_key(capsys: pytest.CaptureFixture[str]) -> None:
-    code = _run(make_settings(vultr_api_key=None), LLM, live_inference=True, confirm_billable=True)
+    code = _run(
+        make_settings(vultr_api_key=None),
+        LLM,
+        live_inference=True,
+        confirm_billable=True,
+        approved_spend_usd=0.25,
+    )
     assert code == 2
     assert json.loads(capsys.readouterr().out)["status"] == "BLOCKED_BY_CREDENTIALS"
 

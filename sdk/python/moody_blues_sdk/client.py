@@ -27,7 +27,15 @@ class ToolCallTimeout(Exception):
 
 
 class ModelUnavailable(Exception):
-    """The host refused the model call: not granted, out of budget, or the provider failed."""
+    """The host gave no answer: not granted, out of budget, or the provider failed.
+
+    ``code`` says which. After ``model_call_timeout`` the call may still have run and been billed:
+    the host does not repeat it, and whether to ask again is your agent's decision.
+    """
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(f"{code}: {message}")
+        self.code = code
 
 
 class HostGone(Exception):
@@ -113,6 +121,12 @@ class ToolClient:
         **arguments: Any,
     ) -> ToolResult:
         """Call a tool once. Raises ``Cancelled`` or ``ToolCallTimeout``; never retries."""
+        return self.call_with(tool, arguments, timeout=timeout)
+
+    def call_with(
+        self, tool: str, arguments: Any, *, timeout: float = DEFAULT_CALL_TIMEOUT_SECONDS
+    ) -> ToolResult:
+        """``call``, for arguments a model wrote. Bad ones are the host's to refuse, not yours."""
         reply = self._exchange.request(
             {"type": "tool_call", "tool": tool, "arguments": arguments}, timeout, "tool"
         )
@@ -158,7 +172,7 @@ class ModelClient:
         )
         rejection = reply.get("rejection")
         if rejection is not None:
-            raise ModelUnavailable(f"{rejection['code']}: {rejection['message']}")
+            raise ModelUnavailable(rejection["code"], rejection["message"])
         return ModelReply(
             content=reply.get("content"),
             tool_calls=tuple(reply.get("tool_calls") or ()),

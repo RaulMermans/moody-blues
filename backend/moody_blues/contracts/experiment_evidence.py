@@ -295,6 +295,9 @@ class UnresolvedTargetRun(BaseModel):
     world_found: bool
     committed_new_customer_ids: list[str] | None
     note: str
+    # Sprint 16. Model calls the host wrote down before making them and has no answer for. Each may
+    # have run and may be billed. Left out when zero, so earlier records stay byte-identical.
+    model_calls_unresolved: int = Field(default=0, ge=0, exclude_if=lambda v: v == 0)
 
 
 class SandboxSupplied(BaseModel):
