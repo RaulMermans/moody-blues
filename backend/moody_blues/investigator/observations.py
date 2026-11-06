@@ -115,6 +115,7 @@ HINTS: dict[str, str] = {
         "Reason far less, keep to one simple hypothesis, and call the tool now."
     ),
     "code_too_long": "The program exceeds the size limit. Write a shorter one.",
+    "unknown_candidate": "candidate_id must be one listed in experiment_menu, exactly as written.",
 }
 
 # Recoverable because nothing ran against the target, so repeating has no possible world effect.

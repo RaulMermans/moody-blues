@@ -220,6 +220,21 @@ eval-repro: ## LIVE + CHARGEABLE: registered rerun under manifest limits; needs 
 eval-report: ## Recompute results from the journals into docs/evaluations/sprint-06/results (free)
 	$(UV) run moody-blues eval-report
 
+bench-freeze: ## Freeze a benchmark revision once, from the running local model (REVISION=, REASON=; free)
+	$(UV) run moody-blues bench-freeze --revision $(or $(REVISION),1) $(if $(REASON),--reason "$(REASON)")
+
+bench-verify: ## Check the frozen benchmark is committed and still matches the code (free)
+	$(UV) run moody-blues bench-verify
+
+bench-run: ## REAL local model: one benchmark stage (STAGE=pilot|main|sweep, MOODY_ARTIFACTS_DIR=dir). Free; no provider is paid
+	$(UV) run moody-blues bench-run --stage $(STAGE) $(if $(LIMIT),--limit $(LIMIT))
+
+bench-repro: ## Rerun each verified failure, with a no-fault control, in fresh worlds (MOODY_ARTIFACTS_DIR=dir; free)
+	$(UV) run moody-blues bench-repro
+
+bench-report: ## Recompute the benchmark from raw evidence (MOODY_ARTIFACTS_DIR=dir OUT=dir; free)
+	$(UV) run moody-blues bench-report --out $(or $(OUT),docs/evaluations/sprint-19/results)
+
 recorded-export: ## Rebuild the curated recorded investigations from local .artifacts (free)
 	$(UV) run moody-blues recorded-export
 

@@ -13,7 +13,7 @@ from moody_blues import cli
 def test_world_demo_runs_real_cases_and_writes_reports(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "ARTIFACTS", tmp_path)
+    monkeypatch.setenv("MOODY_ARTIFACTS_DIR", str(tmp_path))
     code = cli.main(["world-demo", "--no-color", "--case", "unsafe-retry", "--case", "normal"])
     out = capsys.readouterr().out
     assert code == 0

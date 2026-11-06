@@ -40,7 +40,7 @@ from moody_blues.experiments.target import AgentTarget, TargetPort
 from moody_blues.experiments.workspace import atomic_write
 from moody_blues.explorer.factories import REHEARSAL_SEQUENCE
 from moody_blues.explorer.jobs import BUNDLE, JobStore, terminal_status
-from moody_blues.explorer.paths import REPO_ROOT, artifacts_dir
+from moody_blues.explorer.paths import REPO_ROOT, artifacts_dir, rehearsal_artifacts
 from moody_blues.explorer.projection import build_bundle as build_investigation_bundle
 from moody_blues.explorer.recorded import render
 from moody_blues.explorer.sanitize import require_clean
@@ -323,7 +323,7 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
 def _run_one(
     settings: Settings, bundle: AgentBundle, world: str, live: LiveInference | None
 ) -> tuple[InvestigationReport, Path]:
-    artifacts = artifacts_dir(settings)
+    artifacts = artifacts_dir(settings) if live is not None else rehearsal_artifacts(settings)
     report = external_workflow(settings, bundle, artifacts=artifacts, world=world, live=live).run()
     return report, artifacts
 
@@ -332,7 +332,7 @@ def _run_local(
     settings: Settings, bundle: AgentBundle, world: str, session: LocalSession, fault: str | None
 ) -> tuple[InvestigationReport, Path]:
     """A real local model drives the agent. A labeled fixture still picks the faults to deliver."""
-    artifacts = artifacts_dir(settings)
+    artifacts = rehearsal_artifacts(settings)
     broker = session.broker()
     sequence = REHEARSAL_SEQUENCE if fault is None else [FAULT_PLANS[fault]]
     limits = LOCAL_INVESTIGATION_LIMITS.model_copy(
@@ -652,7 +652,7 @@ def investigate(
             return 1
         if not _sandbox_ready(settings):
             return 2
-        artifacts = artifacts_dir(settings)
+        artifacts = rehearsal_artifacts(settings)
         report = _internal_workflow(settings, world, artifacts, _LIMITS).run()
         _print_summary(report)
         print("  The target's model here is a labeled fixture: this says nothing about any LLM.")
@@ -710,7 +710,7 @@ def investigate(
         code = hello.rejection.code.value if hello.rejection else hello.termination.value
         print(json.dumps({"status": "FAIL", "reason": f"handshake: {code}"}, indent=2))
         return 1
-    artifacts = artifacts_dir(settings)
+    artifacts = artifacts_dir(settings) if live.any else rehearsal_artifacts(settings)
     print(f"TARGET: {kind.value} {bundle.manifest.agent_id} (bundle {bundle.sha256[:12]})")
     investigator = None
     if opened and live.investigator:

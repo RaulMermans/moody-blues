@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from moody_blues.config import Settings
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
-from moody_blues.explorer.paths import default_artifacts
+from moody_blues.explorer.paths import default_artifacts, rehearsal_artifacts
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
@@ -229,13 +229,18 @@ def _vultr(settings: Settings, checks: list[str], artifact: str) -> int:
     return code
 
 
-def world_demo(case_ids: list[str] | None, *, keep: bool, color: bool) -> int:
+def world_demo(settings: Settings, case_ids: list[str] | None, *, keep: bool, color: bool) -> int:
     from moody_blues.services.world_demo import run_demo
     from moody_blues.services.world_runner import reference_case
     from moody_blues.world.reference import REFERENCE_CASES
 
     cases = [reference_case(c) for c in case_ids] if case_ids else list(REFERENCE_CASES)
-    run_demo(cases, artifacts_dir=ARTIFACTS / "world-demo", keep_worlds=keep, color=color)
+    run_demo(
+        cases,
+        artifacts_dir=rehearsal_artifacts(settings) / "world-demo",
+        keep_worlds=keep,
+        color=color,
+    )
     return 0
 
 
@@ -446,7 +451,7 @@ def experiment_demo(settings: Settings, case_ids: list[str] | None) -> int:
     runner = _ready_sandbox(settings)
     if runner is None:
         return 2
-    root = _experiment_root()
+    root = rehearsal_artifacts(settings) / "experiments"
     print(
         "Deterministic demonstration: real Docker sandboxes, real SQLite worlds, the real Oracle,"
     )
@@ -755,6 +760,22 @@ def _add_agent_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--max-run-tokens", type=int, default=60_000)
 
 
+def _bench(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.evaluation.benchmark import commands
+
+    match args.command:
+        case "bench-freeze":
+            return commands.freeze(settings, revision=args.revision, reason=args.reason)
+        case "bench-verify":
+            return commands.verify()
+        case "bench-run":
+            return commands.run(settings, stage=args.stage, limit=args.limit)
+        case "bench-repro":
+            return commands.reproduce(settings)
+        case _:
+            return commands.report_results(settings, out=args.out)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="moody-blues")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -876,6 +897,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("eval-freeze-followup")
     sub.add_parser("eval-verify")
     sub.add_parser("eval-report")
+    bf = sub.add_parser("bench-freeze")
+    bf.add_argument("--revision", type=int, default=1)
+    bf.add_argument("--reason")
+    sub.add_parser("bench-verify")
+    br = sub.add_parser("bench-run")
+    br.add_argument("--stage", choices=("pilot", "main", "sweep"), required=True)
+    br.add_argument("--limit", type=int)
+    sub.add_parser("bench-repro")
+    bp = sub.add_parser("bench-report")
+    bp.add_argument("--out", type=Path, required=True)
     er = sub.add_parser("eval-run")
     er.add_argument(
         "--suite", choices=("causal", "strategies", "adaptation", "followup"), required=True
@@ -899,7 +930,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         case "vultr-models":
             return _vultr(settings, ["list_models"], "vultr-models.json")
         case "world-demo":
-            return world_demo(args.case, keep=args.keep, color=color)
+            return world_demo(settings, args.case, keep=args.keep, color=color)
         case "world-run":
             return world_run(args.scenario, args.executor, as_json=args.json, color=color)
         case "agent-run":
@@ -928,6 +959,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return containment_report(settings)
         case "ledger-verify":
             return ledger_verify(settings)
+        case "bench-freeze" | "bench-verify" | "bench-run" | "bench-repro" | "bench-report":
+            return _bench(settings, args)
         case "live-budget":
             return live_budget(settings, args.import_report)
         case "investigator-preflight" | "investigator-demo" | "investigator-live":

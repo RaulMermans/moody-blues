@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, JsonValue
 
 from moody_blues.contracts.inference import ChatMessage
 from moody_blues.contracts.investigation import (
@@ -87,12 +87,27 @@ else:
     emit({{"protocol": P, "action": "finish_experiment", "conclusion": ..., "summary": ...}})"""
 
 
+MENU_PROTOCOL = """\
+Experiments are listed in experiment_menu. Choose one by its candidate_id. Each is one target run \
+in the world named by world_ref with exactly the faults shown (an empty list means none); its \
+tool trace and final state are then inspected for you. already_run marks a candidate you have \
+already chosen. Running it again costs an experiment. You cannot write your own experiment."""
+
 CRM_SUBJECT = "a synthetic CRM world"
 
 
 def system_prompt(subject: str) -> str:
     """Byte for byte ``SYSTEM_PROMPT`` for the CRM. No other world's wording reaches a model."""
     return SYSTEM_PROMPT.replace(CRM_SUBJECT, subject)
+
+
+def menu_system_prompt(subject: str) -> str:
+    """The same instructions, except how an experiment comes to exist."""
+    return (
+        system_prompt(subject)
+        .replace("by writing small Python experiments", "by choosing experiments from a fixed list")
+        .replace(" and a short program", "")
+    )
 
 
 class InvestigationContext(BaseModel):
@@ -112,6 +127,8 @@ class InvestigationContext(BaseModel):
     planning_without_results: bool = False
     # Which world the system prompt speaks of. Told by trusted configuration, never the model.
     subject: str = CRM_SUBJECT
+    # The shared candidate list, as shown. Replaces writing a program when present.
+    menu: list[dict[str, JsonValue]] | None = None
 
 
 class PromptTooLargeError(RuntimeError):
@@ -122,7 +139,7 @@ def build_messages(context: InvestigationContext) -> list[ChatMessage]:
     document = {
         "objective": context.objective,
         "target": context.capability.model_dump(mode="json"),
-        "experiment_protocol": PROTOCOL,
+        "experiment_protocol": PROTOCOL if context.menu is None else MENU_PROTOCOL,
         "next_hypothesis_id": f"h{len(context.hypotheses) + 1}",
         "remaining": {
             "experiments": context.experiments_remaining,
@@ -145,8 +162,14 @@ def build_messages(context: InvestigationContext) -> list[ChatMessage]:
         document["previous_proposal_rejected"] = context.diagnostic.model_dump(
             mode="json", exclude_none=True
         )
+    if context.menu is not None:
+        document["experiment_menu"] = context.menu
     body = json.dumps(document, indent=1, sort_keys=True)
-    system = system_prompt(context.subject)
+    system = (
+        system_prompt(context.subject)
+        if context.menu is None
+        else menu_system_prompt(context.subject)
+    )
     if len(system) + len(body) > context.limits.max_prompt_chars:
         raise PromptTooLargeError(f"prompt exceeds {context.limits.max_prompt_chars} characters")
     return [

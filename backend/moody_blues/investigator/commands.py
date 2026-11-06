@@ -38,7 +38,7 @@ from moody_blues.experiments.budget import (
 from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import AgentTarget, ReferenceTarget
 from moody_blues.experiments.workspace import EVIDENCE
-from moody_blues.explorer.paths import default_artifacts
+from moody_blues.explorer.paths import default_artifacts, rehearsal_artifacts
 from moody_blues.inference.vultr import PROVIDER, VultrInferenceClient
 from moody_blues.investigator.catalog import WORLD_TIERS, target_capability
 from moody_blues.investigator.evaluation import (
@@ -114,6 +114,8 @@ def demo(settings: Settings) -> int:
     print("the target is a reference executor. Sandboxes, worlds and the Oracle are real.")
     print("The same fixture runs against two targets, so its second step differs by observation.\n")
     runner_sandbox = generated_code_runner(settings)
+    artifacts = rehearsal_artifacts(settings)
+    experiments, investigations = artifacts / "experiments", artifacts / "investigations"
     limits = InvestigationLimits()
     sequence = [
         [{"kind": "phantom_failure", "occurrence": 1, "error_code": "timeout"}],
@@ -134,10 +136,10 @@ def demo(settings: Settings) -> int:
             runner=ExperimentRunner(
                 sandbox=runner_sandbox,
                 target=ReferenceTarget(executor),
-                root=EXPERIMENTS,
+                root=experiments,
                 sandbox_limits=sandbox_limits(settings),
             ),
-            root=INVESTIGATIONS,
+            root=investigations,
             model=InvestigatorModel(
                 inference=ObservationDrivenFixture("normal-success", sequence),
                 evidence="offline_fixture",
@@ -151,7 +153,7 @@ def demo(settings: Settings) -> int:
         report = workflow.run()
         print(f"--- target: reference executor {executor} ---")
         print(render_report(report))
-        problems = verify_investigation(INVESTIGATIONS / report.investigation_id, EXPERIMENTS)
+        problems = verify_investigation(investigations / report.investigation_id, experiments)
         print(f"evidence verification: {problems or 'intact'}\n")
         worked = worked and not problems
     return 0 if worked else 1
