@@ -36,6 +36,9 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+/** Where the page says what a verdict can and cannot show. */
+export const METHOD_HREF = "/#method";
+
 export function runHref(id: string, runId: string, hash = ""): string {
   return `/investigations/${id}?view=reality&run=${runId}${hash}`;
 }
@@ -380,6 +383,11 @@ function Explanation({
         <div className="rf-causal-wide">
           <dt className="rf-label">Causal evidence</dt>
           <dd data-testid="causal-evidence">{causal.causalEvidence}</dd>
+          <dd className="rf-causal-note">
+            <Link href={METHOD_HREF} className="rf-link" data-testid="method-link">
+              How causal claims are evaluated
+            </Link>
+          </dd>
           {causal.reproduction ? (
             <dd data-testid="case-study" className="rf-causal-note">
               {causal.reproduction}

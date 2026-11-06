@@ -6,11 +6,13 @@ import { EvidencePanel } from "@/components/evidence-panel";
 import { FailurePanel } from "@/components/failure-panel";
 import { HashFocus } from "@/components/hash-focus";
 import { InvestigatorView } from "@/components/investigator-view";
+import { OverviewView } from "@/components/overview-view";
 import { RawEvidence } from "@/components/raw-evidence";
 import { RealityView } from "@/components/reality-view";
 import { TimelineView } from "@/components/timeline-view";
-import { Fact, LoadingPanel, ModeTag, OutcomeTag, Tag } from "@/components/ui";
+import { Chevron, Fact, LoadingPanel, ModeTag, OutcomeTag, Tag, VerdictTag } from "@/components/ui";
 import { OracleSeal } from "@/design/components/oracle-seal";
+import { cyclesFrom, openCycle } from "@/design/journey";
 import { sealWithoutRun } from "@/design/model";
 import {
   getExperiments,
@@ -19,7 +21,7 @@ import {
   getRuns,
   getTimeline,
 } from "@/lib/evidence";
-import type { InvestigationDetail } from "@/lib/evidence-types";
+import type { InvestigationDetail, RealityRun, RunList } from "@/lib/evidence-types";
 import {
   CASE_LABEL,
   formatDuration,
@@ -29,11 +31,13 @@ import {
   STRATEGY_LABEL,
 } from "@/lib/labels";
 
+// `short` is what a phone shows, so all five fit in one row with nothing scrolled out of sight.
 const VIEWS = [
-  { key: "reality", label: "Reality Comparison" },
-  { key: "timeline", label: "Timeline" },
-  { key: "investigator", label: "Investigator" },
-  { key: "evidence", label: "Raw evidence" },
+  { key: "overview", label: "Overview", short: "Overview" },
+  { key: "reality", label: "Reality Comparison", short: "Reality" },
+  { key: "timeline", label: "Timeline", short: "Timeline" },
+  { key: "investigator", label: "Investigator", short: "Investigator" },
+  { key: "evidence", label: "Raw evidence", short: "Evidence" },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
 
@@ -52,9 +56,15 @@ function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
   return (
     <header className="flex flex-col gap-1 sm:gap-3">
       <div className="rf-crumbs">
-        <Link href="/" className="rf-crumb-back">
-          <span aria-hidden>←</span> Investigations
-        </Link>
+        <span className="rf-crumb-lead">
+          <Link href="/" className="rf-crumb-back">
+            <span aria-hidden>←</span> Investigations
+          </Link>
+          <span className="rf-crumb-id">
+            <span data-testid="investigation-id">{summary.investigation_id}</span>
+            <CopyButton value={summary.investigation_id} label="Copy investigation id" />
+          </span>
+        </span>
         <span className="flex flex-wrap items-center gap-2">
           <OutcomeTag outcome={summary.outcome} testId="outcome" />
           {summary.case && CASE_LABEL[summary.case.kind] !== OUTCOME_LABEL[summary.outcome] ? (
@@ -70,16 +80,18 @@ function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
   );
 }
 
-function About({ detail }: { detail: InvestigationDetail }) {
+function About({ detail, note = true }: { detail: InvestigationDetail; note?: boolean }) {
   const { summary } = detail;
   const study = detail.case_study;
   return (
     <section aria-label="About this investigation" className="flex flex-col gap-4 border-t border-line pt-6">
       <h2 className="rf-section-title">About this investigation</h2>
-      <p data-testid="case-title" className="max-w-3xl text-base font-medium text-foreground">
-        {titleOf(detail)}
-      </p>
-      {summary.case ? (
+      {note ? (
+        <p data-testid="case-title" className="max-w-3xl text-base font-medium text-foreground">
+          {titleOf(detail)}
+        </p>
+      ) : null}
+      {summary.case && note ? (
         <p className="max-w-3xl text-sm leading-6 text-muted">
           <span className="text-faint">Case note, editorial: </span>
           {summary.case.summary}
@@ -123,15 +135,6 @@ function About({ detail }: { detail: InvestigationDetail }) {
         <Fact label="Worlds">{summary.world_ids.join(", ")}</Fact>
         <Fact label="Started">{formatWhen(summary.started_at)}</Fact>
         <Fact label="Ended as">{summary.termination ?? summary.state}</Fact>
-        <div className="col-span-2 min-w-0">
-          <dt className="text-xs text-faint">Investigation id</dt>
-          <dd className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-sm text-foreground">
-            <span data-testid="investigation-id" className="break-all">
-              {summary.investigation_id}
-            </span>
-            <CopyButton value={summary.investigation_id} label="Copy investigation id" />
-          </dd>
-        </div>
       </dl>
       <p className="text-xs text-faint">Cost: {summary.cost_note}.</p>
     </section>
@@ -147,9 +150,13 @@ function Tabs({ id, view, runId }: { id: string; view: View; runId: string | und
           key={v.key}
           href={`/investigations/${id}?view=${v.key}${run}`}
           aria-current={view === v.key ? "page" : undefined}
+          aria-label={v.label}
           data-testid={`tab-${v.key}`}
         >
-          {v.label}
+          <span className="rf-tab-long">{v.label}</span>
+          <span className="rf-tab-short" aria-hidden>
+            {v.short}
+          </span>
         </Link>
       ))}
     </nav>
@@ -231,28 +238,132 @@ async function Evidence({
 
 async function Timeline({
   id,
+  detail,
   showAll,
-  fixture,
   runId,
   call,
+  event,
 }: {
   id: string;
+  detail: InvestigationDetail;
   showAll: boolean;
-  fixture: boolean;
   runId: string | undefined;
   call: number | null;
+  event: number | null;
 }) {
   const page = await getTimeline(id);
   if (!page.ok) return <FailurePanel failure={page} />;
   return (
-    <TimelineView id={id} page={page.data} showAll={showAll} fixture={fixture} runId={runId} call={call} />
+    <TimelineView
+      id={id}
+      page={page.data}
+      detail={detail}
+      showAll={showAll}
+      fixture={detail.summary.investigator_evidence === "offline_fixture"}
+      runId={runId}
+      call={call}
+      event={event}
+    />
   );
 }
 
-async function Investigator({ id, detail }: { id: string; detail: InvestigationDetail }) {
-  const experiments = await getExperiments(id);
-  if (!experiments.ok) return <FailurePanel failure={experiments} />;
-  return <InvestigatorView id={id} detail={detail} experiments={experiments.data.experiments} />;
+/** Every run of the investigation, because a cycle states what its own run recorded. */
+async function loadJourney(id: string, detail: InvestigationDetail) {
+  const [experiments, list] = await Promise.all([getExperiments(id), getRuns(id)]);
+  if (!experiments.ok) return { failure: experiments };
+  if (!list.ok) return { failure: list };
+  const loaded = await Promise.all(list.data.runs.map((r) => getRun(id, r.run_id)));
+  const runs: RealityRun[] = [];
+  for (const run of loaded) {
+    if (!run.ok) return { failure: run };
+    runs.push(run.data);
+  }
+  return { list: list.data, runs, cycles: cyclesFrom(detail, experiments.data.experiments, runs, list.data) };
+}
+
+async function Investigator({
+  id,
+  detail,
+  runId,
+  cycle,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+  cycle: string | undefined;
+}) {
+  const journey = await loadJourney(id, detail);
+  if (journey.failure) return <FailurePanel failure={journey.failure} />;
+  return (
+    <InvestigatorView
+      id={id}
+      detail={detail}
+      cycles={journey.cycles}
+      opened={openCycle(journey.cycles, cycle, runId)}
+      runId={runId}
+    />
+  );
+}
+
+async function Overview({
+  id,
+  detail,
+  runId,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+}) {
+  const journey = await loadJourney(id, detail);
+  if (journey.failure) return <FailurePanel failure={journey.failure} />;
+  const chosen = runId ?? journey.list.primary_run_id;
+  const run = journey.runs.find((r) => r.run_id === chosen) ?? null;
+  return <OverviewView id={id} detail={detail} run={run} cycles={journey.cycles} runId={runId} />;
+}
+
+/** Which run the other views are following, so a tab change never loses it silently. */
+async function RunContext({ id, runId, view }: { id: string; runId: string; view: View }) {
+  const list = await getRuns(id);
+  if (!list.ok) return null;
+  return <RunLine id={id} runs={list.data} runId={runId} view={view} />;
+}
+
+function RunLine({ id, runs, runId, view }: { id: string; runs: RunList; runId: string; view: View }) {
+  const index = runs.runs.findIndex((r) => r.run_id === runId);
+  const run = runs.runs[index];
+  return (
+    <p className="rf-run-context" data-testid="run-following">
+      {run ? (
+        <>
+          <span className="rf-label">Following</span>
+          <Link href={`/investigations/${id}?view=reality&run=${runId}`} className="rf-link">
+            Run {index + 1} of {runs.runs.length}, {run.world_ref}
+          </Link>
+          <VerdictTag verdict={run.verdict} />
+        </>
+      ) : (
+        <span>That run is not part of this investigation.</span>
+      )}
+      <Link href={`/investigations/${id}?view=${view}`} className="rf-link" data-testid="run-clear">
+        Clear
+      </Link>
+    </p>
+  );
+}
+
+/** The same record on every view. Only the Overview and the Comparison lead with it open. */
+function AboutPanel({ detail }: { detail: InvestigationDetail }) {
+  return (
+    <details className="rf-disclose rf-panel" data-testid="about-panel">
+      <summary>
+        <Chevron /> About this investigation, its evidence and limits
+      </summary>
+      <div className="rf-stack rf-about-body">
+        <About detail={detail} />
+        <EvidencePanel detail={detail} />
+      </div>
+    </details>
+  );
 }
 
 async function Investigation({ params, searchParams }: PageProps<"/investigations/[id]">) {
@@ -261,25 +372,40 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
   if (!detail.ok) return <FailurePanel failure={detail} />;
   const view = asView(query.view);
   const runId = typeof query.run === "string" ? query.run : undefined;
-  const call = typeof query.call === "string" && /^\d+$/.test(query.call) ? Number(query.call) : null;
+  const digits = (value: string | string[] | undefined) =>
+    typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+  const call = digits(query.call);
+  const event = digits(query.event);
+  const cycle = typeof query.cycle === "string" ? query.cycle : undefined;
   return (
     <>
       <Header detail={detail.data} view={view} />
       <Tabs id={id} view={view} runId={runId} />
+      {runId && view !== "reality" ? <RunContext id={id} runId={runId} view={view} /> : null}
+      {view === "overview" ? <Overview id={id} detail={detail.data} runId={runId} /> : null}
       {view === "reality" ? <Reality id={id} detail={detail.data} runId={runId} /> : null}
       {view === "timeline" ? (
         <Timeline
           id={id}
+          detail={detail.data}
           showAll={query.show === "all"}
-          fixture={detail.data.summary.investigator_evidence === "offline_fixture"}
           runId={runId}
           call={call}
+          event={event}
         />
       ) : null}
-      {view === "investigator" ? <Investigator id={id} detail={detail.data} /> : null}
+      {view === "investigator" ? (
+        <Investigator id={id} detail={detail.data} runId={runId} cycle={cycle} />
+      ) : null}
       {view === "evidence" ? <Evidence id={id} detail={detail.data} runId={runId} /> : null}
-      <About detail={detail.data} />
-      <EvidencePanel detail={detail.data} />
+      {view === "overview" || view === "reality" ? (
+        <>
+          <About detail={detail.data} note={view === "reality"} />
+          <EvidencePanel detail={detail.data} />
+        </>
+      ) : (
+        <AboutPanel detail={detail.data} />
+      )}
       <HashFocus />
     </>
   );

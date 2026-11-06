@@ -1,162 +1,364 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-import type {
-  ExperimentView,
-  HypothesisView,
-  InvestigationDetail,
-  ProposalView,
-} from "@/lib/evidence-types";
+import { OracleSeal } from "@/design/components/oracle-seal";
+import {
+  assessmentCheck,
+  type Cycle,
+  cycleVerdicts,
+  journeyLine,
+  plainQuestion,
+  type Trial,
+} from "@/design/journey";
+import { sealFromRun } from "@/design/model";
+import { stateLine, storyFrom } from "@/design/story";
+import type { HypothesisView, InvestigationDetail, ProposalView } from "@/lib/evidence-types";
 import {
   ADAPTATION_LABEL,
+  FAULT_LABEL,
   FINDING_CLASS_LABEL,
   humanize,
   REPRODUCTION_LABEL,
-  type Tone,
 } from "@/lib/labels";
 
-import { Chevron, Code, Eyebrow, Tag, VerdictTag, TableScroll } from "./ui";
-
-const STATUS_TONE: Record<HypothesisView["status"], Tone> = {
-  supported: "bad",
-  refuted: "good",
-  inconclusive: "warn",
-  open: "neutral",
-};
+import { runHref } from "./reality-view";
+import { Chevron, Code, TableScroll, Tag, VerdictTag } from "./ui";
 
 const STATUS_LABEL: Record<HypothesisView["status"], string> = {
-  supported: "Supported",
-  refuted: "Refuted",
-  inconclusive: "Inconclusive",
-  open: "Not assessed",
+  supported: "supported",
+  refuted: "refuted",
+  inconclusive: "inconclusive",
+  open: "not assessed",
 };
+
+const FLOW = ["Hypothesis", "Experiment", "Observation", "Decision"];
+
+export function cycleHref(id: string, key: string, runId?: string): string {
+  return `/investigations/${id}?view=investigator${runId ? `&run=${runId}` : ""}&cycle=${key}#${key}`;
+}
+
+function Stage({
+  label,
+  source,
+  children,
+}: {
+  label: string;
+  source: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rf-stage" data-stage={label.toLowerCase()}>
+      <div className="rf-stage-head">
+        <h3>{label}</h3>
+        <p>{source}</p>
+      </div>
+      <div className="rf-stage-body">{children}</div>
+    </section>
+  );
+}
 
 function Line({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <dt className="text-xs text-faint">{label}</dt>
-      <dd className="mt-0.5 text-sm leading-6 text-muted">{text}</dd>
+      <dt className="rf-label">{label}</dt>
+      <dd className="rf-body">{text}</dd>
     </div>
   );
 }
 
-function Program({ proposal }: { proposal: ProposalView }) {
-  const adaptation = ADAPTATION_LABEL[proposal.adaptation];
+function HypothesisStage({ cycle, fixture }: { cycle: Cycle; fixture: boolean }) {
+  const hypothesis = cycle.hypothesis;
+  if (!hypothesis) {
+    return (
+      <Stage label="Hypothesis" source="None recorded">
+        <p className="rf-body">No hypothesis is attached to this program.</p>
+      </Stage>
+    );
+  }
+  const question = plainQuestion(cycle);
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs text-foreground">{proposal.label ?? proposal.proposal_id}</span>
-        <Tag title={adaptation.note} testId={`adaptation-${proposal.proposal_id}`}>
-          {adaptation.title}
-        </Tag>
-        {proposal.status === "rejected_before_execution" ? (
-          <Tag tone="warn">Refused: {humanize(proposal.rejection_problem)}</Tag>
-        ) : null}
-      </div>
-      <p className="text-xs text-faint">{adaptation.note}</p>
-      {proposal.rationale ? (
-        <dl>
-          <Line label="Experiment objective" text={proposal.rationale} />
+    <Stage label="Hypothesis" source={fixture ? "Fixture's proposal, not a finding" : "Model's proposal, not a finding"}>
+      {question ? <p className="rf-stage-lead">{question}</p> : null}
+      <dl className="rf-stage-list">
+        <Line label="Suspected failure" text={hypothesis.predicted_observation} />
+      </dl>
+      <details className="rf-disclose">
+        <summary>
+          <Chevron /> The full hypothesis
+        </summary>
+        <dl className="rf-stage-list">
+          <Line label="Behavior under test" text={hypothesis.behavior} />
+          <Line label="Suspected mechanism" text={hypothesis.suspected_mechanism} />
+          <Line label="What separates failure from success" text={hypothesis.failure_discriminator} />
+          <Line label="Why it was proposed" text={hypothesis.motivation} />
         </dl>
-      ) : null}
-      {proposal.motivated_by.length ? (
-        <p className="text-xs text-faint">
-          Informed by <span className="font-mono text-muted">{proposal.motivated_by.join(", ")}</span>
+      </details>
+    </Stage>
+  );
+}
+
+function Program({ proposal, sandbox }: { proposal: ProposalView; sandbox: string | null }) {
+  const adaptation = ADAPTATION_LABEL[proposal.adaptation];
+  const refused = proposal.status === "rejected_before_execution";
+  return (
+    <div className="rf-stack">
+      <p className="rf-stage-program">
+        <span className="rf-mono">{proposal.label ?? proposal.proposal_id}</span>
+        {/* A refused program has no place in the sequence, whatever adaptation it was filed under. */}
+        {refused ? (
+          <Tag tone="warn">Refused: {humanize(proposal.rejection_problem)}</Tag>
+        ) : (
+          <Tag title={adaptation.note} testId={`adaptation-${proposal.proposal_id}`}>
+            {adaptation.title}
+          </Tag>
+        )}
+      </p>
+      {refused ? (
+        <p className="rf-body">
+          The coordinator refused this output before it ran, so no target saw it.
+          {proposal.replaces_proposal_id ? ` It was a replacement for ${proposal.replaces_proposal_id}.` : ""}
         </p>
+      ) : sandbox ? (
+        <p className="rf-body">{sandbox}</p>
       ) : null}
       {proposal.code ? (
-        <details>
-          <summary className="flex items-center gap-1 text-sm text-muted hover:text-foreground">
+        <details className="rf-disclose">
+          <summary>
             <Chevron /> Generated Python, as run in the sandbox
           </summary>
-          <div className="mt-2">
-            <Code>{proposal.code.text}</Code>
-            {proposal.code.truncated ? (
-              <p className="mt-1 text-xs text-faint">
-                Cut to {proposal.code.text.length} of {proposal.code.original_chars} characters.
-              </p>
-            ) : null}
-          </div>
+          <Code>{proposal.code.text}</Code>
+          {proposal.code.truncated ? (
+            <p className="rf-data">
+              Cut to {proposal.code.text.length} of {proposal.code.original_chars} characters.
+            </p>
+          ) : null}
         </details>
       ) : null}
     </div>
   );
 }
 
-function Hypothesis({
-  id,
-  hypothesis,
-  proposals,
-  detail,
-  experiments,
-  fixture,
-}: {
-  id: string;
-  fixture: boolean;
-  hypothesis: HypothesisView;
-  proposals: ProposalView[];
-  detail: InvestigationDetail;
-  experiments: ExperimentView[];
-}) {
-  const mine = proposals.filter((p) => p.hypothesis_id === hypothesis.hypothesis_id);
-  const observations = detail.observations.filter((o) =>
-    mine.some((p) => p.proposal_id === o.proposal_id),
-  );
+function sandboxLine(proposal: ProposalView, trial: Trial | undefined): string | null {
+  if (!trial) return null;
+  const { sandbox_executions: steps, sandbox_network_enabled: network } = trial.experiment;
+  const who =
+    proposal.authorship === "model_generated"
+      ? "Executable Python written by the model"
+      : "A developer script, not written by a model";
+  return `${who}, run in ${steps} sandbox step${steps === 1 ? "" : "s"} with networking ${network ? "on" : "off"}.`;
+}
+
+function ExperimentStage({ cycle }: { cycle: Cycle }) {
+  const first = cycle.trials.find((t) => !t.rerun);
+  const run = first?.run ?? null;
   return (
-    <li
-      id={hypothesis.hypothesis_id}
-      data-testid={`hypothesis-${hypothesis.hypothesis_id}`}
-      data-status={hypothesis.status}
-      className="flex flex-col gap-3 border border-line bg-surface p-4"
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-sm text-foreground">{hypothesis.hypothesis_id}</span>
-        <Tag tone={STATUS_TONE[hypothesis.status]}>{STATUS_LABEL[hypothesis.status]}</Tag>
-        {hypothesis.revises ? (
-          <span className="font-mono text-xs text-faint">follows {hypothesis.revises}</span>
-        ) : null}
-        <span className="text-xs text-faint">
-          {fixture ? "Scripted by a labeled fixture, not a model" : "Written by the Investigator model"}
-        </span>
-      </div>
-      <p className="text-base leading-7 text-foreground">{hypothesis.behavior}</p>
-      <dl className="grid gap-3 md:grid-cols-2">
-        <Line label="Suspected mechanism" text={hypothesis.suspected_mechanism} />
-        <Line label="Why now" text={hypothesis.motivation} />
-        <Line label="Predicted observation" text={hypothesis.predicted_observation} />
-        <Line label="What separates failure from success" text={hypothesis.failure_discriminator} />
-      </dl>
-      {mine.map((proposal) => (
-        <Program key={proposal.proposal_id} proposal={proposal} />
+    <Stage label="Experiment" source="What was set up and run">
+      {cycle.proposals.map((proposal) => (
+        <Program
+          key={proposal.proposal_id}
+          proposal={proposal}
+          sandbox={sandboxLine(proposal, cycle.trials.find((t) => t.experiment.proposal_id === proposal.proposal_id))}
+        />
       ))}
-      {observations.map((o) => {
-        const experiment = experiments.find((e) => e.experiment_id === o.experiment_id);
-        return (
-          <div key={o.observation_id} className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
-            <span className="font-mono text-xs text-muted">{o.observation_id}</span>
-            <span className="text-sm text-muted">{humanize(o.result_class)}</span>
-            {o.verdicts.map((v, i) => (
-              <VerdictTag key={i} verdict={v} />
+      {cycle.proposals.length === 0 ? (
+        <p className="rf-body">No experiment is on record for this hypothesis.</p>
+      ) : null}
+      {run ? (
+        <dl className="rf-stage-list">
+          <div>
+            <dt className="rf-label">Condition</dt>
+            <dd className="rf-body">
+              World {run.world_ref}, {run.config} policy.{" "}
+              {run.faults.length ? "Configured faults:" : "No fault was configured."}
+            </dd>
+            {run.faults.map((fault, i) => (
+              <dd key={i} className="rf-body">
+                {FAULT_LABEL[fault.kind] ?? humanize(fault.kind)}{" "}
+                <span className="rf-data">
+                  {fault.operation}, occurrence {fault.occurrence}, span {fault.span}
+                </span>
+              </dd>
             ))}
-            <span className="font-mono text-xs text-faint">{o.faults_delivered} fault(s) delivered</span>
-            {experiment?.target_run_ids[0] ? (
-              <Link
-                href={`/investigations/${id}?view=reality&run=${experiment.target_run_ids[0]}`}
-                className="text-sm text-truth hover:underline"
-              >
-                Compare realities
-              </Link>
-            ) : null}
           </div>
-        );
-      })}
-      {hypothesis.assessment_reasoning ? (
-        <dl className="border-t border-line pt-3">
-          <Line
-            label={fixture ? "The fixture's assessment" : "The model's assessment"}
-            text={hypothesis.assessment_reasoning}
-          />
         </dl>
       ) : null}
+    </Stage>
+  );
+}
+
+function TrialResult({ id, trial }: { id: string; trial: Trial }) {
+  const { run, experiment, observation } = trial;
+  const refs = [observation?.observation_id, run?.run_id, experiment.experiment_id].filter(Boolean);
+  if (!run) {
+    return (
+      <div className="rf-trial">
+        <p className="rf-body">
+          The experiment ended as {humanize(experiment.termination).toLowerCase()} with no target run to read.
+        </p>
+        <p className="rf-data rf-break">{refs.join(" · ")}</p>
+      </div>
+    );
+  }
+  const story = storyFrom(run);
+  const discrepancies = run.discrepancies.length;
+  return (
+    <div className="rf-trial" data-testid={`trial-${run.run_id}`} data-verdict={run.verdict}>
+      <p className="rf-label">
+        Run {trial.runNumber ?? "?"} · {run.world_ref}
+        {trial.rerun ? " · Rerun of the same program" : ""}
+      </p>
+      <p className="rf-stage-lead">
+        {story.reported} {story.reality}
+      </p>
+      <dl className="rf-trial-facts">
+        <div>
+          <dt className="rf-label">Agent reported</dt>
+          <dd data-testid="trial-claim">{run.agent.claim?.status ?? "no valid claim"}</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Actual outcome</dt>
+          <dd data-testid="trial-state">{stateLine(run)}</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Faults delivered</dt>
+          <dd data-testid="trial-faults">{run.faults_delivered}</dd>
+        </div>
+        <div>
+          <dt className="rf-label">Discrepancies</dt>
+          <dd data-testid="trial-discrepancies">{discrepancies}</dd>
+        </div>
+        <div className="rf-trial-seal">
+          <dt className="rf-label">Oracle verdict</dt>
+          <dd>
+            <OracleSeal state={sealFromRun(run)} size="sm" labelTestId="trial-verdict" />
+          </dd>
+        </div>
+      </dl>
+      <p className="rf-trial-foot">
+        <Link href={runHref(id, run.run_id)} className="rf-link" data-testid="trial-compare">
+          Compare the two realities
+        </Link>
+        <span className="rf-data rf-break">
+          {run.finding_class ? `${FINDING_CLASS_LABEL[run.finding_class] ?? humanize(run.finding_class)} · ` : ""}
+          {refs.join(" · ")}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function DecisionStage({
+  id,
+  cycle,
+  fixture,
+  runId,
+}: {
+  id: string;
+  cycle: Cycle;
+  fixture: boolean;
+  runId?: string;
+}) {
+  const { decision, hypothesis } = cycle;
+  const author = fixture ? "fixture" : "model";
+  const check = assessmentCheck(cycle);
+  const citedNote = ADAPTATION_LABEL.cited_prior_observations.note.split(";")[0];
+  return (
+    <Stage label="Decision" source="What happened next">
+      <p className="rf-stage-lead" data-testid={`decision-${cycle.key}`} data-kind={decision.kind}>
+        {decision.title}
+      </p>
+      <p className="rf-body">{decision.sequence}</p>
+      <dl className="rf-stage-list">
+        {hypothesis?.assessment_reasoning ? (
+          <div>
+            <dt className="rf-label">
+              The {author}&apos;s assessment: {STATUS_LABEL[hypothesis.status]}
+              {hypothesis.assessment_observations.length
+                ? `, citing ${hypothesis.assessment_observations.join(", ")}`
+                : ""}
+            </dt>
+            <dd className="rf-body">{hypothesis.assessment_reasoning}</dd>
+            {check ? <dd className="rf-body rf-stage-check">{check}</dd> : null}
+          </div>
+        ) : null}
+        {decision.reason ? (
+          <div>
+            <dt className="rf-label">
+              The {author}&apos;s stated reason for the next step
+              {decision.reason.cites.length ? `, citing ${decision.reason.cites.join(", ")}` : ""}
+            </dt>
+            <dd className="rf-body">{decision.reason.text}</dd>
+            {decision.reason.cites.length ? <dd className="rf-data">{citedNote}.</dd> : null}
+          </div>
+        ) : null}
+      </dl>
+      {decision.next ? (
+        <Link href={cycleHref(id, decision.next.key, runId)} className="rf-link" data-testid={`next-${cycle.key}`}>
+          Go to {decision.next.label}
+        </Link>
+      ) : null}
+    </Stage>
+  );
+}
+
+function CycleItem({
+  id,
+  cycle,
+  open,
+  fixture,
+  runId,
+}: {
+  id: string;
+  cycle: Cycle;
+  open: boolean;
+  fixture: boolean;
+  runId?: string;
+}) {
+  const { hypothesis } = cycle;
+  const refused = cycle.proposals.every((p) => p.status === "rejected_before_execution");
+  const verdicts = cycleVerdicts(cycle);
+  const title =
+    hypothesis?.behavior ??
+    (refused
+      ? `${cycle.proposals.length} generated program${cycle.proposals.length === 1 ? "" : "s"} refused before execution`
+      : (cycle.proposals[0]?.label ?? cycle.key));
+  return (
+    <li
+      id={cycle.key}
+      data-testid={hypothesis ? `hypothesis-${hypothesis.hypothesis_id}` : `program-${cycle.key}`}
+      data-status={hypothesis?.status}
+      className="rf-cycle"
+    >
+      <details open={open}>
+        <summary>
+          <Chevron />
+          <span className="rf-cycle-number">{hypothesis?.hypothesis_id ?? "—"}</span>
+          <span className="rf-cycle-title">{title}</span>
+          <span className="rf-cycle-result">
+            {verdicts.map((v, i) => (
+              <VerdictTag key={i} verdict={v} />
+            ))}
+            {hypothesis ? (
+              <span className="rf-cycle-model">
+                {fixture ? "Fixture" : "Model"}: {STATUS_LABEL[hypothesis.status]}
+              </span>
+            ) : null}
+          </span>
+        </summary>
+        <div className="rf-cycle-body">
+          <HypothesisStage cycle={cycle} fixture={fixture} />
+          <ExperimentStage cycle={cycle} />
+          <Stage label="Observation" source="What was recorded">
+            {cycle.trials.map((trial) => (
+              <TrialResult key={`${trial.experiment.experiment_id}-${trial.run?.run_id}`} id={id} trial={trial} />
+            ))}
+            {cycle.trials.length === 0 ? (
+              <p className="rf-body">Nothing ran, so there is nothing to observe.</p>
+            ) : null}
+          </Stage>
+          <DecisionStage id={id} cycle={cycle} fixture={fixture} runId={runId} />
+        </div>
+      </details>
     </li>
   );
 }
@@ -164,111 +366,127 @@ function Hypothesis({
 export function InvestigatorView({
   id,
   detail,
-  experiments,
+  cycles,
+  opened,
+  runId,
 }: {
   id: string;
   detail: InvestigationDetail;
-  experiments: ExperimentView[];
+  cycles: Cycle[];
+  opened: string | null;
+  runId?: string;
 }) {
-  const noHypotheses = detail.hypotheses.length === 0;
   const fixture = detail.summary.investigator_evidence === "offline_fixture";
   return (
-    <div className="flex flex-col gap-8" data-testid="investigator-view">
-      <section className="flex flex-col gap-3">
-        <Eyebrow>Hypotheses, in order</Eyebrow>
-        {noHypotheses ? (
-          <p className="border border-line p-4 text-sm text-muted">
-            This strategy runs predetermined programs, so no model wrote a hypothesis.
+    <div className="rf-journey" data-testid="investigator-view">
+      <section aria-labelledby="journey-title" className="rf-stack">
+        <div className="rf-section-head">
+          <h2 id="journey-title" className="rf-section-title">
+            What the Investigator did
+          </h2>
+          <ol aria-label="Each step runs in this order" className="rf-flow">
+            {FLOW.map((stage) => (
+              <li key={stage}>{stage}</li>
+            ))}
+          </ol>
+        </div>
+        {cycles.length ? (
+          <p className="rf-body" data-testid="journey-line">
+            {journeyLine(detail)} The tags give the Oracle&apos;s verdict; the words beside them are the{" "}
+            {fixture ? "fixture's" : "model's"} own reading.
           </p>
-        ) : null}
-        <ol className="flex flex-col gap-3">
-          {detail.hypotheses.map((h) => (
-            <Hypothesis
-              key={h.hypothesis_id}
+        ) : (
+          <p className="rf-body" data-testid="no-cycles">
+            No hypothesis or experiment is on record for this investigation.
+          </p>
+        )}
+        <ol className="rf-cycles">
+          {cycles.map((cycle) => (
+            <CycleItem
+              key={cycle.key}
               id={id}
+              cycle={cycle}
+              open={cycle.key === opened}
               fixture={fixture}
-              hypothesis={h}
-              proposals={detail.proposals}
-              detail={detail}
-              experiments={experiments}
+              runId={runId}
             />
           ))}
         </ol>
       </section>
 
       {detail.conclusion ? (
-        <section className="flex flex-col gap-2">
-          <Eyebrow>
-            {fixture ? "The fixture's conclusion, scripted" : "The model's conclusion: interpretation, checked below"}
-          </Eyebrow>
-          <div className="border border-line bg-surface p-4">
-            <p className="font-mono text-sm text-foreground">{humanize(detail.conclusion.conclusion)}</p>
-            <p className="mt-2 text-sm leading-6 text-muted">{detail.conclusion.reasoning}</p>
-          </div>
+        <section aria-labelledby="conclusion-title" className="rf-stack">
+          <h2 id="conclusion-title" className="rf-section-title">
+            {fixture ? "The fixture's conclusion, scripted" : "The model's conclusion"}
+          </h2>
+          <p className="rf-label">{humanize(detail.conclusion.conclusion)}. An interpretation, checked below.</p>
+          <p className="rf-body rf-measure">{detail.conclusion.reasoning}</p>
         </section>
       ) : null}
 
       {detail.claim_checks.length ? (
-        <section className="flex flex-col gap-2">
-          <Eyebrow>Claims checked against the Oracle</Eyebrow>
-          <ul className="flex flex-col gap-2">
+        <section aria-labelledby="checks-title" className="rf-stack">
+          <h2 id="checks-title" className="rf-section-title">
+            Claims checked against the Oracle
+          </h2>
+          {detail.claim_checks.some((c) => c.statement === detail.conclusion?.reasoning) ? (
+            <p className="rf-body">Each finding the conclusion names, set against what the Oracle recorded.</p>
+          ) : null}
+          <ul className="rf-checks">
             {detail.claim_checks.map((check, i) => (
-              <li key={i} className="border border-line bg-surface p-4">
-                <div className="flex flex-wrap items-center gap-2">
+              <li key={i}>
+                <p className="rf-stage-program">
                   <Tag tone={check.supported ? "truth" : "warn"}>
                     {check.supported ? "Backed by the Oracle" : "Not backed"}
                   </Tag>
-                  <span className="font-mono text-xs text-muted">{check.finding_code}</span>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted">{check.statement}</p>
+                  <span className="rf-data">{check.finding_code}</span>
+                </p>
+                {check.statement !== detail.conclusion?.reasoning ? (
+                  <p className="rf-body rf-measure">{check.statement}</p>
+                ) : null}
               </li>
             ))}
           </ul>
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-2">
-        <Eyebrow>Findings, classified by trusted code</Eyebrow>
-        <TableScroll label="Findings table" className="border border-line">
-          <table className="w-full min-w-[38rem] text-left text-sm" data-testid="findings-table">
+      <section aria-labelledby="findings-title" className="rf-stack">
+        <h2 id="findings-title" className="rf-section-title">
+          Findings, classified by trusted code
+        </h2>
+        <TableScroll label="Findings table">
+          <table className="rf-table min-w-[38rem]" data-testid="findings-table">
             <caption className="sr-only">Every target run and how it was classified</caption>
-            <thead className="bg-raised text-xs text-faint">
+            <thead>
               <tr>
-                <th scope="col" className="px-3 py-2 font-medium">Run</th>
-                <th scope="col" className="px-3 py-2 font-medium">Class</th>
-                <th scope="col" className="px-3 py-2 font-medium">Verdict</th>
-                <th scope="col" className="px-3 py-2 font-medium">Outcome</th>
-                <th scope="col" className="px-3 py-2 font-medium">Reproduction</th>
+                <th scope="col">Run</th>
+                <th scope="col">Class</th>
+                <th scope="col">Verdict</th>
+                <th scope="col">Outcome</th>
+                <th scope="col">Reproduction</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-line bg-surface">
+            <tbody>
               {detail.findings.map((f) => (
                 <tr key={f.run_id} data-testid={`finding-${f.run_id}`}>
-                  <td className="px-3 py-2">
-                    <Link
-                      href={`/investigations/${id}?view=reality&run=${f.run_id}`}
-                      className="font-mono text-xs text-truth hover:underline"
-                    >
+                  <td>
+                    <Link href={runHref(id, f.run_id)} className="rf-link font-mono">
                       {f.world_ref}
                     </Link>
                   </td>
-                  <td className="px-3 py-2 text-muted">
-                    {FINDING_CLASS_LABEL[f.finding_class] ?? f.finding_class}
-                  </td>
-                  <td className="px-3 py-2">
+                  <td>{FINDING_CLASS_LABEL[f.finding_class] ?? f.finding_class}</td>
+                  <td>
                     <VerdictTag verdict={f.oracle_verdict} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-muted">{humanize(f.run_outcome)}</td>
-                  <td className="px-3 py-2 text-xs text-muted">
-                    {REPRODUCTION_LABEL[f.reproduction] ?? f.reproduction}
-                  </td>
+                  <td className="font-mono">{humanize(f.run_outcome)}</td>
+                  <td>{REPRODUCTION_LABEL[f.reproduction] ?? f.reproduction}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </TableScroll>
         {detail.findings.length === 0 ? (
-          <p className="text-sm text-muted">No target run produced a classified finding.</p>
+          <p className="rf-body">No target run produced a classified finding.</p>
         ) : null}
       </section>
     </div>
