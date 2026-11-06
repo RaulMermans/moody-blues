@@ -50,7 +50,7 @@ export function OperatorLogin() {
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-3 border border-line bg-surface p-4">
       <label htmlFor="token" className="text-sm font-medium text-foreground">
         Operator token
       </label>
@@ -60,12 +60,12 @@ export function OperatorLogin() {
         type="password"
         autoComplete="off"
         required
-        className="rounded border border-line bg-background px-3 py-2 font-mono text-sm text-foreground"
+        className="border border-line bg-background px-3 py-2 font-mono text-sm text-foreground"
       />
       <button
         type="submit"
         disabled={busy}
-        className="self-start rounded bg-truth px-3 py-1.5 text-sm font-medium text-background disabled:opacity-50"
+        className="self-start bg-truth px-3 py-1.5 text-sm font-medium text-background disabled:opacity-50"
       >
         {busy ? "Checking" : "Sign in"}
       </button>
@@ -114,14 +114,14 @@ function Mission({
             <button
               type="button"
               onClick={() => onStart(mission.mission_id)}
-              className="rounded bg-warn px-3 py-1.5 text-sm font-medium text-background"
+              className="bg-warn px-3 py-1.5 text-sm font-medium text-background"
             >
               Confirm: may spend up to {required === null ? "the cap" : formatUsd(required)}
             </button>
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="rounded border border-line px-3 py-1.5 text-sm text-muted"
+              className="border border-line px-3 py-1.5 text-sm text-muted"
             >
               Keep it off
             </button>
@@ -132,7 +132,7 @@ function Mission({
             disabled={!mission.available}
             data-testid={`start-${mission.mission_id}`}
             onClick={() => (chargeable ? setConfirming(true) : onStart(mission.mission_id))}
-            className="rounded border border-line px-3 py-1.5 text-sm text-foreground hover:bg-raised disabled:cursor-not-allowed disabled:opacity-40"
+            className="border border-line px-3 py-1.5 text-sm text-foreground hover:bg-raised disabled:cursor-not-allowed disabled:opacity-40"
           >
             Start
           </button>
@@ -166,7 +166,7 @@ function Progress({
       aria-label="Current job"
       data-testid="job-panel"
       data-status={job.status}
-      className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4"
+      className="flex flex-col gap-3 border border-line bg-surface p-4"
     >
       <div className="flex flex-wrap items-center gap-2">
         <Tag tone={finished ? "neutral" : "truth"} testId="job-status">
@@ -195,7 +195,7 @@ function Progress({
             data-testid="cancel-job"
             disabled={job.cancel_requested}
             onClick={onCancel}
-            className="rounded border border-line px-3 py-1.5 text-sm text-muted hover:text-foreground disabled:opacity-40"
+            className="border border-line px-3 py-1.5 text-sm text-muted hover:text-foreground disabled:opacity-40"
           >
             {job.cancel_requested ? "Cancelling" : "Cancel"}
           </button>
@@ -367,7 +367,7 @@ export function OperatorConsole() {
   const budget = status.budget;
   return (
     <div className="flex flex-col gap-6" data-testid="operator-console">
-      <section aria-label="Spend ledger" className="rounded-lg border border-line bg-surface p-4">
+      <section aria-label="Spend ledger" className="border border-line bg-surface p-4">
         {budget ? (
           <>
             <dl className="grid grid-cols-2 gap-3 font-mono text-sm sm:grid-cols-4">
@@ -408,7 +408,7 @@ export function OperatorConsole() {
       ) : null}
 
       <section aria-label="Missions">
-        <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+        <ul className="divide-y divide-line border border-line bg-surface">
           {status.missions.map((mission) => (
             <Mission
               key={mission.mission_id}

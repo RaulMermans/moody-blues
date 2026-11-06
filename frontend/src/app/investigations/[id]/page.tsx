@@ -1,13 +1,19 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { CopyButton } from "@/components/copy-button";
 import { EvidencePanel } from "@/components/evidence-panel";
 import { FailurePanel } from "@/components/failure-panel";
+import { HashFocus } from "@/components/hash-focus";
 import { InvestigatorView } from "@/components/investigator-view";
+import { OverviewView } from "@/components/overview-view";
+import { RawEvidence } from "@/components/raw-evidence";
 import { RealityView } from "@/components/reality-view";
 import { TimelineView } from "@/components/timeline-view";
-import { Eyebrow, Fact, LoadingPanel, ModeTag, OutcomeTag, Tag } from "@/components/ui";
+import { Chevron, Fact, LoadingPanel, ModeTag, OutcomeTag, Tag, VerdictTag } from "@/components/ui";
+import { OracleSeal } from "@/design/components/oracle-seal";
+import { cyclesFrom, openCycle } from "@/design/journey";
+import { sealWithoutRun } from "@/design/model";
 import {
   getExperiments,
   getInvestigation,
@@ -15,13 +21,23 @@ import {
   getRuns,
   getTimeline,
 } from "@/lib/evidence";
-import type { InvestigationDetail } from "@/lib/evidence-types";
-import { CASE_LABEL, formatDuration, formatUsd, formatWhen, STRATEGY_LABEL } from "@/lib/labels";
+import type { InvestigationDetail, RealityRun, RunList } from "@/lib/evidence-types";
+import {
+  CASE_LABEL,
+  formatDuration,
+  formatUsd,
+  formatWhen,
+  OUTCOME_LABEL,
+  STRATEGY_LABEL,
+} from "@/lib/labels";
 
+// `short` is what a phone shows, so all five fit in one row with nothing scrolled out of sight.
 const VIEWS = [
-  { key: "reality", label: "Reality Comparison" },
-  { key: "timeline", label: "Timeline" },
-  { key: "investigator", label: "Investigator" },
+  { key: "overview", label: "Overview", short: "Overview" },
+  { key: "reality", label: "Reality Comparison", short: "Reality" },
+  { key: "timeline", label: "Timeline", short: "Timeline" },
+  { key: "investigator", label: "Investigator", short: "Investigator" },
+  { key: "evidence", label: "Raw evidence", short: "Evidence" },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
 
@@ -29,80 +45,58 @@ function asView(value: string | string[] | undefined): View {
   return VIEWS.find((v) => v.key === value)?.key ?? "reality";
 }
 
-function Header({ detail }: { detail: InvestigationDetail }) {
+function titleOf(detail: InvestigationDetail): string {
   const { summary } = detail;
-  const title = summary.case?.title ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
-  const study = detail.case_study;
+  return summary.case?.title ?? `${STRATEGY_LABEL[summary.strategy]} investigation`;
+}
+
+/** Where the reader is. The Reality view states its own result, so only other views repeat a title. */
+function Header({ detail, view }: { detail: InvestigationDetail; view: View }) {
+  const { summary } = detail;
   return (
-    <header className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Link href="/" className="mr-1 text-sm text-muted hover:text-foreground">
-          ← Investigations
-        </Link>
-        <OutcomeTag outcome={summary.outcome} testId="outcome" />
-        {summary.case ? <Tag>{CASE_LABEL[summary.case.kind]}</Tag> : null}
-        <ModeTag mode={summary.mode} />
+    <header className="flex flex-col gap-1 sm:gap-3">
+      <div className="rf-crumbs">
+        <span className="rf-crumb-lead">
+          <Link href="/" className="rf-crumb-back">
+            <span aria-hidden>←</span> Investigations
+          </Link>
+          <span className="rf-crumb-id">
+            <span data-testid="investigation-id">{summary.investigation_id}</span>
+            <CopyButton value={summary.investigation_id} label="Copy investigation id" />
+          </span>
+        </span>
+        <span className="flex flex-wrap items-center gap-2">
+          <OutcomeTag outcome={summary.outcome} testId="outcome" />
+          {summary.case && CASE_LABEL[summary.case.kind] !== OUTCOME_LABEL[summary.outcome] ? (
+            <span className="flex max-sm:hidden">
+              <Tag>{CASE_LABEL[summary.case.kind]}</Tag>
+            </span>
+          ) : null}
+          <ModeTag mode={summary.mode} />
+        </span>
       </div>
-      <h1 className="max-w-4xl text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-        {title}
-      </h1>
-      {summary.case ? (
-        <p className="max-w-4xl text-sm leading-6 text-muted">
-          <span className="text-faint">Case note: </span>
-          {summary.case.summary}
-        </p>
-      ) : null}
-      <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-xs text-faint">
-        <div className="flex gap-1.5">
-          <dt>target</dt>
-          <dd className="text-muted">{summary.target_model}</dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>strategy</dt>
-          <dd className="text-muted">{STRATEGY_LABEL[summary.strategy]}</dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>experiments</dt>
-          <dd className="text-muted">{summary.experiment_count}</dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>verified findings</dt>
-          <dd data-testid="verified-count" className="text-muted">
-            {summary.verified_finding_count}
-          </dd>
-        </div>
-        <div className="flex gap-1.5">
-          <dt>runtime</dt>
-          <dd className="text-muted">{formatDuration(summary.runtime_ms)}</dd>
-        </div>
-        <div className="flex gap-1.5" title={summary.cost_note}>
-          <dt>est. inference</dt>
-          <dd className="text-muted">{formatUsd(summary.estimated_cost_usd)}</dd>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <dt className="sr-only">Investigation id</dt>
-          <dd data-testid="investigation-id" className="break-all text-muted">
-            {summary.investigation_id}
-          </dd>
-          <CopyButton value={summary.investigation_id} label="Copy investigation id" />
-        </div>
-      </dl>
-      {study ? (
-        <p data-testid="case-study" className="text-sm text-foreground">
-          Reproduced in {study.eligible_reproduced} of {study.eligible_runs} eligible registered
-          reruns.
-        </p>
-      ) : null}
+      {view === "reality" ? null : <h1 className="rf-page-title">{titleOf(detail)}</h1>}
     </header>
   );
 }
 
-function About({ detail }: { detail: InvestigationDetail }) {
+function About({ detail, note = true }: { detail: InvestigationDetail; note?: boolean }) {
   const { summary } = detail;
   const study = detail.case_study;
   return (
-    <section aria-label="About this investigation" className="flex flex-col gap-3 border-t border-line pt-6">
-      <Eyebrow>About this investigation</Eyebrow>
+    <section aria-label="About this investigation" className="flex flex-col gap-4 border-t border-line pt-6">
+      <h2 className="rf-section-title">About this investigation</h2>
+      {note ? (
+        <p data-testid="case-title" className="max-w-3xl text-base font-medium text-foreground">
+          {titleOf(detail)}
+        </p>
+      ) : null}
+      {summary.case && note ? (
+        <p className="max-w-3xl text-sm leading-6 text-muted">
+          <span className="text-faint">Case note, editorial: </span>
+          {summary.case.summary}
+        </p>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-xs text-faint">Objective given to the Investigator</p>
@@ -123,6 +117,14 @@ function About({ detail }: { detail: InvestigationDetail }) {
         </p>
       ) : null}
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-4">
+        <Fact label="Target">{summary.target_model}</Fact>
+        <Fact label="Strategy">{STRATEGY_LABEL[summary.strategy]}</Fact>
+        <Fact label="Experiments">{summary.experiment_count}</Fact>
+        <Fact label="Verified findings">
+          <span data-testid="verified-count">{summary.verified_finding_count}</span>
+        </Fact>
+        <Fact label="Runtime">{formatDuration(summary.runtime_ms)}</Fact>
+        <Fact label="Est. inference">{formatUsd(summary.estimated_cost_usd)}</Fact>
         <Fact label="Investigator">
           {summary.investigator_evidence === "offline_fixture"
             ? "labeled fixture, no model"
@@ -139,62 +141,229 @@ function About({ detail }: { detail: InvestigationDetail }) {
   );
 }
 
-function Tabs({ id, view }: { id: string; view: View }) {
+function Tabs({ id, view, runId }: { id: string; view: View; runId: string | undefined }) {
+  const run = runId ? `&run=${runId}` : "";
   return (
-    <nav aria-label="Investigation views" className="flex gap-1 overflow-x-auto border-b border-line">
+    <nav aria-label="Investigation views" className="rf-tabs">
       {VIEWS.map((v) => (
         <Link
           key={v.key}
-          href={`/investigations/${id}?view=${v.key}`}
+          href={`/investigations/${id}?view=${v.key}${run}`}
           aria-current={view === v.key ? "page" : undefined}
+          aria-label={v.label}
           data-testid={`tab-${v.key}`}
-          className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${
-            view === v.key
-              ? "border-truth text-foreground"
-              : "border-transparent text-muted hover:text-foreground"
-          }`}
         >
-          {v.label}
+          <span className="rf-tab-long">{v.label}</span>
+          <span className="rf-tab-short" aria-hidden>
+            {v.short}
+          </span>
         </Link>
       ))}
     </nav>
   );
 }
 
-async function Reality({ id, runId }: { id: string; runId: string | undefined }) {
-  const runs = await getRuns(id);
-  if (!runs.ok) return <FailurePanel failure={runs} />;
-  const chosen = runId ?? runs.data.primary_run_id;
-  if (!chosen) {
-    return (
-      <p data-testid="no-runs" className="rounded-lg border border-line p-6 text-sm text-muted">
+function NoRun({ detail }: { detail: InvestigationDetail }) {
+  return (
+    <div data-testid="no-runs" className="flex flex-col gap-4">
+      <OracleSeal state={sealWithoutRun(detail.summary.outcome, detail.integrity)} />
+      <p className="text-sm text-muted">
         No target run took place in this investigation, so there is nothing to compare.
       </p>
+    </div>
+  );
+}
+
+async function loadRun(id: string, runId: string | undefined) {
+  const runs = await getRuns(id);
+  if (!runs.ok) return { failure: runs };
+  const chosen = runId ?? runs.data.primary_run_id;
+  if (!chosen) return { noRun: true as const };
+  const run = await getRun(id, chosen);
+  if (!run.ok) return { failure: run };
+  return { runs: runs.data, run: run.data };
+}
+
+/** A failed load still names the page, so the result's absence is never an unlabeled screen. */
+function Unavailable({ detail, children }: { detail: InvestigationDetail; children: ReactNode }) {
+  return (
+    <>
+      <h1 className="rf-page-title">{titleOf(detail)}</h1>
+      {children}
+    </>
+  );
+}
+
+async function Reality({
+  id,
+  detail,
+  runId,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+}) {
+  const loaded = await loadRun(id, runId);
+  if (loaded.failure) {
+    return (
+      <Unavailable detail={detail}>
+        <FailurePanel failure={loaded.failure} />
+      </Unavailable>
     );
   }
-  const run = await getRun(id, chosen);
-  if (!run.ok) return <FailurePanel failure={run} />;
-  return <RealityView id={id} runs={runs.data} run={run.data} />;
+  if (loaded.noRun) {
+    return (
+      <Unavailable detail={detail}>
+        <NoRun detail={detail} />
+      </Unavailable>
+    );
+  }
+  return <RealityView id={id} detail={detail} runs={loaded.runs} run={loaded.run} />;
+}
+
+async function Evidence({
+  id,
+  detail,
+  runId,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+}) {
+  const loaded = await loadRun(id, runId);
+  if (loaded.failure) return <FailurePanel failure={loaded.failure} />;
+  if (loaded.noRun) return <NoRun detail={detail} />;
+  return <RawEvidence detail={detail} run={loaded.run} />;
 }
 
 async function Timeline({
   id,
+  detail,
   showAll,
-  fixture,
+  runId,
+  call,
+  event,
 }: {
   id: string;
+  detail: InvestigationDetail;
   showAll: boolean;
-  fixture: boolean;
+  runId: string | undefined;
+  call: number | null;
+  event: number | null;
 }) {
   const page = await getTimeline(id);
   if (!page.ok) return <FailurePanel failure={page} />;
-  return <TimelineView id={id} page={page.data} showAll={showAll} fixture={fixture} />;
+  return (
+    <TimelineView
+      id={id}
+      page={page.data}
+      detail={detail}
+      showAll={showAll}
+      fixture={detail.summary.investigator_evidence === "offline_fixture"}
+      runId={runId}
+      call={call}
+      event={event}
+    />
+  );
 }
 
-async function Investigator({ id, detail }: { id: string; detail: InvestigationDetail }) {
-  const experiments = await getExperiments(id);
-  if (!experiments.ok) return <FailurePanel failure={experiments} />;
-  return <InvestigatorView id={id} detail={detail} experiments={experiments.data.experiments} />;
+/** Every run of the investigation, because a cycle states what its own run recorded. */
+async function loadJourney(id: string, detail: InvestigationDetail) {
+  const [experiments, list] = await Promise.all([getExperiments(id), getRuns(id)]);
+  if (!experiments.ok) return { failure: experiments };
+  if (!list.ok) return { failure: list };
+  const loaded = await Promise.all(list.data.runs.map((r) => getRun(id, r.run_id)));
+  const runs: RealityRun[] = [];
+  for (const run of loaded) {
+    if (!run.ok) return { failure: run };
+    runs.push(run.data);
+  }
+  return { list: list.data, runs, cycles: cyclesFrom(detail, experiments.data.experiments, runs, list.data) };
+}
+
+async function Investigator({
+  id,
+  detail,
+  runId,
+  cycle,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+  cycle: string | undefined;
+}) {
+  const journey = await loadJourney(id, detail);
+  if (journey.failure) return <FailurePanel failure={journey.failure} />;
+  return (
+    <InvestigatorView
+      id={id}
+      detail={detail}
+      cycles={journey.cycles}
+      opened={openCycle(journey.cycles, cycle, runId)}
+      runId={runId}
+    />
+  );
+}
+
+async function Overview({
+  id,
+  detail,
+  runId,
+}: {
+  id: string;
+  detail: InvestigationDetail;
+  runId: string | undefined;
+}) {
+  const journey = await loadJourney(id, detail);
+  if (journey.failure) return <FailurePanel failure={journey.failure} />;
+  const chosen = runId ?? journey.list.primary_run_id;
+  const run = journey.runs.find((r) => r.run_id === chosen) ?? null;
+  return <OverviewView id={id} detail={detail} run={run} cycles={journey.cycles} runId={runId} />;
+}
+
+/** Which run the other views are following, so a tab change never loses it silently. */
+async function RunContext({ id, runId, view }: { id: string; runId: string; view: View }) {
+  const list = await getRuns(id);
+  if (!list.ok) return null;
+  return <RunLine id={id} runs={list.data} runId={runId} view={view} />;
+}
+
+function RunLine({ id, runs, runId, view }: { id: string; runs: RunList; runId: string; view: View }) {
+  const index = runs.runs.findIndex((r) => r.run_id === runId);
+  const run = runs.runs[index];
+  return (
+    <p className="rf-run-context" data-testid="run-following">
+      {run ? (
+        <>
+          <span className="rf-label">Following</span>
+          <Link href={`/investigations/${id}?view=reality&run=${runId}`} className="rf-link">
+            Run {index + 1} of {runs.runs.length}, {run.world_ref}
+          </Link>
+          <VerdictTag verdict={run.verdict} />
+        </>
+      ) : (
+        <span>That run is not part of this investigation.</span>
+      )}
+      <Link href={`/investigations/${id}?view=${view}`} className="rf-link" data-testid="run-clear">
+        Clear
+      </Link>
+    </p>
+  );
+}
+
+/** The same record on every view. Only the Overview and the Comparison lead with it open. */
+function AboutPanel({ detail }: { detail: InvestigationDetail }) {
+  return (
+    <details className="rf-disclose rf-panel" data-testid="about-panel">
+      <summary>
+        <Chevron /> About this investigation, its evidence and limits
+      </summary>
+      <div className="rf-stack rf-about-body">
+        <About detail={detail} />
+        <EvidencePanel detail={detail} />
+      </div>
+    </details>
+  );
 }
 
 async function Investigation({ params, searchParams }: PageProps<"/investigations/[id]">) {
@@ -203,28 +372,48 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
   if (!detail.ok) return <FailurePanel failure={detail} />;
   const view = asView(query.view);
   const runId = typeof query.run === "string" ? query.run : undefined;
+  const digits = (value: string | string[] | undefined) =>
+    typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+  const call = digits(query.call);
+  const event = digits(query.event);
+  const cycle = typeof query.cycle === "string" ? query.cycle : undefined;
   return (
     <>
-      <Header detail={detail.data} />
-      <Tabs id={id} view={view} />
-      {view === "reality" ? <Reality id={id} runId={runId} /> : null}
+      <Header detail={detail.data} view={view} />
+      <Tabs id={id} view={view} runId={runId} />
+      {runId && view !== "reality" ? <RunContext id={id} runId={runId} view={view} /> : null}
+      {view === "overview" ? <Overview id={id} detail={detail.data} runId={runId} /> : null}
+      {view === "reality" ? <Reality id={id} detail={detail.data} runId={runId} /> : null}
       {view === "timeline" ? (
         <Timeline
           id={id}
+          detail={detail.data}
           showAll={query.show === "all"}
-          fixture={detail.data.summary.investigator_evidence === "offline_fixture"}
+          runId={runId}
+          call={call}
+          event={event}
         />
       ) : null}
-      {view === "investigator" ? <Investigator id={id} detail={detail.data} /> : null}
-      <About detail={detail.data} />
-      <EvidencePanel detail={detail.data} />
+      {view === "investigator" ? (
+        <Investigator id={id} detail={detail.data} runId={runId} cycle={cycle} />
+      ) : null}
+      {view === "evidence" ? <Evidence id={id} detail={detail.data} runId={runId} /> : null}
+      {view === "overview" || view === "reality" ? (
+        <>
+          <About detail={detail.data} note={view === "reality"} />
+          <EvidencePanel detail={detail.data} />
+        </>
+      ) : (
+        <AboutPanel detail={detail.data} />
+      )}
+      <HashFocus />
     </>
   );
 }
 
 export default function Page(props: PageProps<"/investigations/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 pb-10 pt-1 sm:gap-6 sm:pt-3 sm:px-6">
       <Suspense fallback={<LoadingPanel label="Loading this investigation from the evidence API" />}>
         <Investigation {...props} />
       </Suspense>

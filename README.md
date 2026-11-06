@@ -172,6 +172,7 @@ pnpm --dir frontend start --hostname 127.0.0.1 --port 3000
 | `make test` | Unit, World Engine, Target Agent, experiment, Investigator, evaluation and Explorer tests (offline: real SQLite, labeled fixtures, no network) |
 | `make world-demo` | Run the World Engine reference cases: agent-visible responses, committed state, Oracle verdicts |
 | `make test-integration` | Real-Docker sandbox integration and containment tests |
+| `make design-lab` / `make test-design` | Local specimen page on :3010, and the browser, axe and WebKit checks of the investigation screens. Never deployed |
 | `make build` | Production frontend build |
 | `make test-e2e` | Build, then Playwright against the real backend and frontend |
 | `make check` | All of the above. The local acceptance gate. |
@@ -218,7 +219,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 - [ADR 0001](docs/adr/0001-architecture.md) · [ADR 0002](docs/adr/0002-world-engine.md) · [ADR 0003](docs/adr/0003-target-agent.md) · [ADR 0004](docs/adr/0004-experiment-runtime.md) · [ADR 0005](docs/adr/0005-autonomous-investigator.md)
 - [Sprint 6 report](docs/evaluations/sprint-06/report.md) · [Registered evaluation](docs/architecture/evaluation.md) · [ADR 0006](docs/adr/0006-registered-evaluation.md) · [Sprint 6 record](docs/sprints/sprint-06.md)
 - [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Sprint 5](docs/sprints/sprint-05.md) · [Evaluation methodology](docs/evaluations/methodology.md) · [Validation](docs/testing/validation.md)
-- [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md) · [Key rotation](docs/security/key-rotation.md) · [Sprint 8](docs/sprints/sprint-08.md) · [Sprint 9](docs/sprints/sprint-09.md)
+- [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md) · [Key rotation](docs/security/key-rotation.md) · [Sprint 8](docs/sprints/sprint-08.md) · [Sprint 9](docs/sprints/sprint-09.md) · [Sprint 10](docs/sprints/sprint-10.md) · [Design](docs/design/README.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
 ## License

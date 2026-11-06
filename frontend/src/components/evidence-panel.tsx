@@ -19,7 +19,7 @@ export function EvidencePanel({ detail }: { detail: InvestigationDetail }) {
           <li key={limit}>{limit}</li>
         ))}
       </ul>
-      <details className="rounded-lg border border-line bg-surface p-3">
+      <details className="border border-line bg-surface p-3">
         <summary className="flex items-center gap-1 text-sm text-muted hover:text-foreground">
           <Chevron /> Provenance
         </summary>

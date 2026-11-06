@@ -9,12 +9,14 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-lab/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
     // Playwright output
     "playwright-report/**",
     "test-results/**",
+    "test-results-design/**",
   ]),
 ]);
 

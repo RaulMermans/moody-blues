@@ -15,11 +15,11 @@ const STATE_LABEL: Record<IntegrationState, string> = {
 };
 
 const STATE_TONE: Record<IntegrationState, string> = {
-  available: "bg-emerald-400",
-  unavailable: "bg-rose-500",
-  configured_unverified: "bg-amber-400",
-  not_configured: "bg-slate-500",
-  not_checked: "bg-slate-500",
+  available: "bg-good",
+  unavailable: "bg-bad",
+  configured_unverified: "bg-warn",
+  not_configured: "bg-faint",
+  not_checked: "bg-faint",
 };
 
 const INTEGRATION_LABEL: Record<string, string> = {
@@ -44,19 +44,19 @@ function stateLabel(item: IntegrationStatus): string {
 function IntegrationRow({ item }: { item: IntegrationStatus }) {
   return (
     <li
-      className="flex flex-col gap-1 border-t border-white/10 py-3 sm:flex-row sm:items-baseline sm:justify-between"
+      className="flex flex-col gap-1 border-t border-line py-3 sm:flex-row sm:items-baseline sm:justify-between"
       data-testid={`integration-${item.name}`}
       data-state={item.state}
     >
-      <span className="flex items-center gap-2 text-sm text-slate-200">
+      <span className="flex items-center gap-2 text-sm text-foreground">
         <Dot className={STATE_TONE[item.state]} />
         {INTEGRATION_LABEL[item.name] ?? item.name}
       </span>
       <span className="text-right">
-        <span className="block font-mono text-xs uppercase tracking-wide text-slate-300">
+        <span className="block font-mono text-xs uppercase tracking-wide text-muted">
           {stateLabel(item)}
         </span>
-        <span className="block text-xs text-slate-500">{item.detail}</span>
+        <span className="block text-xs text-faint">{item.detail}</span>
       </span>
     </li>
   );
@@ -111,16 +111,16 @@ export function StatusPanel() {
   return (
     <section
       aria-labelledby="system-status"
-      className="rounded-lg border border-white/10 bg-white/[0.03] p-5"
+      className="border border-line bg-white/[0.03] p-5"
     >
       <div className="flex items-center justify-between gap-4">
-        <h2 id="system-status" className="text-sm font-medium uppercase tracking-widest text-slate-400">
+        <h2 id="system-status" className="text-sm font-medium uppercase tracking-widest text-muted">
           System status
         </h2>
         <button
           type="button"
           onClick={refresh}
-          className="rounded border border-white/15 px-2 py-1 text-xs text-slate-300 hover:bg-white/10"
+          className="border border-white/15 px-2 py-1 text-xs text-muted hover:bg-white/10"
         >
           Refresh
         </button>
@@ -136,13 +136,13 @@ export function StatusPanel() {
         <Dot
           className={
             backendState === "connected"
-              ? "bg-emerald-400"
+              ? "bg-good"
               : backendState === "unreachable"
-                ? "bg-rose-500"
-                : "animate-pulse bg-slate-500"
+                ? "bg-bad"
+                : "animate-pulse bg-faint"
           }
         />
-        <span className="text-base text-slate-100">
+        <span className="text-base text-foreground">
           {backendState === "connected" && "Backend connected"}
           {backendState === "unreachable" && "Backend unreachable"}
           {backendState === "checking" && "Checking backend…"}
@@ -150,14 +150,14 @@ export function StatusPanel() {
       </div>
 
       {view.kind === "loaded" && view.status.backend === "connected" && (
-        <p className="mt-1 font-mono text-xs text-slate-500" data-testid="backend-meta">
+        <p className="mt-1 font-mono text-xs text-faint" data-testid="backend-meta">
           v{view.status.health.version} · {view.status.health.environment} · readiness{" "}
           <span data-testid="readiness-status">{view.status.readiness.status}</span>
           {view.status.requestId && <> · {view.status.requestId}</>}
         </p>
       )}
       {view.kind === "loaded" && view.status.backend === "unreachable" && (
-        <p className="mt-1 text-xs text-rose-300" data-testid="backend-error">
+        <p className="mt-1 text-xs text-bad" data-testid="backend-error">
           {view.status.error}
         </p>
       )}

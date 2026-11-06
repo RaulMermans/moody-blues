@@ -307,3 +307,52 @@ contributor might also hit.
 - **Symptom:** none seen. `bootstrap.sh` writes the generated token with `sed`, so it is briefly in a process
   argument on the VM during first setup.
 - **Status:** open and low risk: it happens once, before any service runs. Not changed in Sprint 9.
+
+### KI-50: The design lab's output leaked into the production build
+- **Symptom:** `pnpm build` failed in `.next-lab/types/validator.ts`, and the product CSS grew from 19,999 to
+  22,124 bytes, in Sprint 10.
+- **Cause:** a custom `distDir` makes Next add its types to `tsconfig.json`, which then checks both route sets
+  at once. Separately, Tailwind scans every file it can see, so words in `e2e-design/` became utilities.
+- **Fix:** `tsconfig.lab.json` for lab builds, and `@source not` lines in `globals.css`.
+- **Check:** after changing anything in the lab, confirm the production CSS hash is unchanged.
+- **Sprint 11:** this check no longer applies to the product stylesheet, which now changes on purpose
+  ([ADR 0010](../adr/0010-design-system-in-the-product.md)). The `@source not` lines for the lab still stand.
+
+### KI-51: The disclosure line called an accurate status wrong
+- **Symptom:** on `run_e9f3ebda139d`, a real duplicate with a true `not_completed`, the page said "a wrong status,
+  not concealment". The case note says no false claim was made. Present in the deployed release.
+- **Cause:** the line was chosen by whether the message named the flagged records, and never read the finding.
+- **Fix:** "wrong status" now needs the Oracle's `false_completion_claim`. Covered by `rules.spec.ts`.
+
+### KI-52: Seeded rows read as the agent's writes
+- **Symptom:** a draft explanation said "Calls 0, 4 and 7 committed writes". Found by reading a screenshot.
+- **Cause:** `actual.changes` includes seed rows, under `created_by_call` 0.
+- **Fix:** read commits from the run's `new` customers. Covered by `rules.spec.ts`.
+
+### KI-53: A deep link missed its anchor
+- **Symptom:** opening a `#call-N` or `#trace` link fresh left the page at the top.
+- **Cause:** the content streams in after first paint, so the browser looks for the anchor before it exists.
+- **Fix:** `HashFocus` repeats the scroll after hydration, and opens the row.
+
+### KI-54: Words beginning "Reading" hang the loading check
+- **Symptom:** a heading "Reading the evidence" timed out `shot()` in the e2e suite.
+- **Cause:** the suite waits for `/^(Loading|Reading|Checking)\b/` to leave the page.
+- **Fix:** keep those three words off the start of permanent text. The heading was renamed.
+
+### KI-55: Opening a tool call widened a phone page by 4,449 px
+- **Symptom:** at 390 px, expanding a ledger row let a long JSON line push the page sideways.
+- **Cause:** the phone's single grid track was `auto`, so `min-width: auto` let a `pre` set the width. Tablet and up
+  already used `minmax(0, 1fr)`. Sprint 11 only measured overflow with rows closed.
+- **Fix:** `minmax(0, 1fr)`. The overflow, cover and axe checks now open every disclosure first.
+
+### KI-56: A refused program read as "First experiment"
+- **Symptom:** in `inv_5c9f95de6c09`, programs refused after two real experiments carried that tag.
+- **Cause:** the contract files a proposal with no prior citation under `first_experiment`.
+- **Fix:** the tag is not shown on a refused program. The evidence is unchanged. Covered by `design.spec.ts`.
+
+### KI-57: The deployed release and `main` differ
+- **Symptom:** KI-51 is fixed on `main` and still live, so a hotfix cut from `main` would be empty, and deploying `main`
+  ships the Sprint 11 restyle.
+- **Cause:** PR #15 merged Sprint 11 with no deploy.
+- **Fix:** `hotfix/ki-51-disclosure-wording`, from `967dc88`. Its `frontend`, `backend` and `infra` trees match the
+  recorded `d592879` release. Pushed, not deployed: the owner decides.
