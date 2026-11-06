@@ -13,7 +13,8 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/contracts/` | Pydantic contracts shared across layers |
 | `backend/moody_blues/inference/` | Model provider adapters (Vultr, local Ollama) + live smoke checks |
 | `backend/moody_blues/sandbox/` | `SandboxRunner` interface + Docker implementation |
-| `backend/moody_blues/world/` | World Engine: SQLite CRM store, tool gateway + faults, Truth Oracle, scenarios, reference executors |
+| `backend/moody_blues/world/` | World Engine: shared store, gateway core and fault boundaries, the explicit plugin registry, `verify_world`, the CRM (store, Oracle, scenarios, reference executors, `crm_plugin.py`) |
+| `backend/moody_blues/world/jobqueue/` | Job Queue World: store, gateway, worker, verifier, scenarios, reference executors, plugin |
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
@@ -23,6 +24,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver and model broker, `ExternalAgentTarget`, validated target selection, the labeled agent model fixture, commands |
 | `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
 | `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
+| `examples/job-queue-agent/` | The same for Job Queue World |
 | `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
@@ -32,7 +34,7 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/investigator` | Investigator with a labeled scripted model and sandbox, real SQLite worlds; offline; part of `make test` |
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
-| `tests/external` | The adapter over a real process boundary, with a labeled sandbox double and real SQLite worlds; offline; part of `make test` |
+| `tests/external` | The adapter and both worlds over a real process boundary, with a labeled sandbox double and real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`, `journey.ts`, `outcome.ts`, `sequence.ts`) |
 | `frontend/src/app/design-lab/` | Local specimen page. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
@@ -40,6 +42,7 @@ covers Next.js API drift; these rules take precedence.)
 | `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |
 | `frontend/e2e-external` | Playwright for external runs on the real pages; seeds its own evidence; `make external-ui` |
 | `frontend/e2e-local` | Playwright against evidence a real local model wrote; seeds and starts no model; `make local-ui` |
+| `frontend/e2e-worlds` | Playwright for both worlds on the real pages; seeds its own evidence; `make worlds-ui` |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
 | `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
@@ -80,6 +83,25 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   pass host env into a sandbox.
 - No API endpoint accepts arbitrary code until authentication exists.
 - No live provider calls at import, startup or in default test runs.
+
+**Worlds**
+- A world is a trusted backend component, listed by hand in `world/registry.py`. See ADR 0015 and `docs/architecture/world-plugins.md`.
+  No dynamic import, no upload, and no path from a request, agent or experiment to that list. Nothing untrusted selects a world or an Oracle.
+- A plugin supplies facts, never policy: no limit, budget, sandbox setting, evidence rule or verdict meaning. Verification goes through
+  `verify_world` and nothing else, and verdicts mean what `derive_verdict` says in every world.
+- Do not rename a field that has been serialized. CRM types stay as they are; other worlds use the neutral siblings, and shared code reads
+  `record_ref`, `record_ids`, `seed_ids`, `new_ids`. Compare codes with `==`, never `is`: a stored code is a plain string.
+- One coordinator, one world, one investigation, one world. An agent's scopes name its world. Another world's tool is unknown and reaches no gateway.
+- `WORLD_TIERS` is hashed by registered manifests. New worlds never enter it.
+- `tests/world/golden/crm_e44393a.json` holds the CRM as it was. Never regenerate it to get green.
+- The internal Target Agent is CRM-only. Scripted and fixture results in any world are not model behavior.
+
+**Experiment validity**
+- Validity is not a verdict, is read without one, and never changes one. A fault that never fired is no evidence for or against its hypothesis.
+- Check what the model wrote against structured records, never by parsing its prose. Keep its assessment word for word; only the effective
+  status changes. A repeat is labeled, never refused, and a declared `revises` is never labeled. No similarity thresholds.
+- `supported` is correlation. Never call one run causal, whatever the checks accept. These make findings reliable, not the Investigator better.
+- Tell the Investigator about delivery only for faults the experiment chose. A world's own conditions are for it to find.
 
 **World Engine truth boundaries**
 - Executors and agents get only a `ToolPort`. They never touch the store, the DB file or
@@ -157,7 +179,7 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   host's grant. Never its display name or anything else it wrote.
 - The SDK stays standard library only and imports nothing from the backend. Change the two sides together:
   `tests/external/test_contract.py` holds them to each other. A change an existing agent cannot ignore is a new
-  protocol version, and evidence stays at schema 1 unless it holds an external run.
+  protocol version. Evidence stays at schema 1 unless it holds an external run (2) or a run from another world (3).
 
 **Local inference**
 - Ollama is a provider behind `InferencePort`, and nothing more. See ADR 0014 and `docs/external-agents/local-models.md`. Open it

@@ -3,7 +3,9 @@
 // Every visual state here is copied from a named evidence field. Nothing is inferred from free text
 // and nothing is computed that the Oracle did not record: a component is told what to draw, so a
 // distortion can only appear where this mapping was given a recorded reason for one.
-import type { CustomerView, Discrepancy, ProductOutcome, RealityRun, Verdict } from "@/lib/evidence-types";
+import type { Discrepancy, ProductOutcome, RealityRun, Verdict } from "@/lib/evidence-types";
+
+import { runRecords, type RunRecord } from "./world";
 import { isModelEvidence } from "@/lib/evidence-types";
 
 /**
@@ -33,7 +35,7 @@ export type SeamTone = "steady" | "distortion" | "break";
 export type RecordMention = "structured_claim" | "message_only" | "not_named" | "not_assessed";
 
 export interface RecordView {
-  customer: CustomerView;
+  record: RunRecord;
   mention: RecordMention;
   /** A flagged record the structured claim left out, while it named another flagged record. */
   extra: boolean;
@@ -75,21 +77,21 @@ export function seamFor(run: RealityRun, relation: Relation): SeamTone {
   return run.verdict === "VIOLATION" ? "break" : "distortion";
 }
 
-function mentionOf(customer: CustomerView, run: RealityRun): RecordMention {
-  if (customer.named_in_claim) return "structured_claim";
+function mentionOf(record: RunRecord, run: RealityRun): RecordMention {
+  if (record.named_in_claim) return "structured_claim";
   const disclosure = run.agent.disclosure;
-  if (!disclosure || !customer.flagged_duplicate) return "not_assessed";
-  return disclosure.mentioned_in_message.includes(customer.customer_id) ? "message_only" : "not_named";
+  if (!disclosure || !record.flagged_duplicate) return "not_assessed";
+  return disclosure.mentioned_in_message.includes(record.id) ? "message_only" : "not_named";
 }
 
 /** The rows this run created. Exactly the recorded rows: nothing is added for effect. */
 export function recordsFrom(run: RealityRun): RecordView[] {
-  const added = run.actual.customers.filter((c) => c.role === "new");
+  const added = runRecords(run).filter((c) => c.role === "new");
   const claimedOne = added.some((c) => c.flagged_duplicate && c.named_in_claim);
-  return added.map((customer) => ({
-    customer,
-    mention: mentionOf(customer, run),
-    extra: claimedOne && customer.flagged_duplicate && !customer.named_in_claim,
+  return added.map((record) => ({
+    record,
+    mention: mentionOf(record, run),
+    extra: claimedOne && record.flagged_duplicate && !record.named_in_claim,
   }));
 }
 

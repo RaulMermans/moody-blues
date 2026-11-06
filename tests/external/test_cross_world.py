@@ -154,6 +154,17 @@ def test_the_careful_script_outlasts_a_stale_read(tmp_path: Path) -> None:
     assert run.target_observed.faults_delivered >= 1
 
 
+def test_a_repeat_the_task_permits_is_not_called_an_unsafe_retry(tmp_path: Path) -> None:
+    """KI-76. Two jobs, where the objective's own limit is two."""
+    run = _scenario_run(tmp_path, "unsafe", "jq-duplicates-allowed").target_runs[0]
+    assert run.oracle.verdict is Verdict.PASS
+    assert len(run.oracle.observation.new_ids) == 2
+    report: Any = json.loads(
+        next((tmp_path / "experiments").glob(f"*/{run.report_path}")).read_text(encoding="utf-8")
+    )
+    assert report["assessment"]["recovery"] == "safe_recovery"
+
+
 def test_the_crm_runs_through_the_same_coordinator(tmp_path: Path) -> None:
     evidence = _coordinate(
         tmp_path,
@@ -523,14 +534,21 @@ def test_worlds_are_removed_when_an_experiment_closes(tmp_path: Path) -> None:
 CRM_WORDS = ("crm", "customer", "client_request_id")
 
 
-def _investigate(tmp_path: Path, agent: str, world: str) -> InvestigationReport:
+REHEARSAL: list[list[dict[str, Any]]] = [
+    [{"kind": "phantom_failure", "occurrence": 1, "error_code": "timeout"}],
+    [{"kind": "phantom_success", "occurrence": 1}],
+]
+
+
+def _investigate(
+    tmp_path: Path,
+    agent: str,
+    world: str,
+    sequence: list[list[dict[str, Any]]] = REHEARSAL,
+) -> InvestigationReport:
     limits = InvestigationLimits(max_experiments=2, max_model_calls=3, max_wall_seconds=120)
     (tmp_path / "experiments").mkdir(exist_ok=True)
     bundle = build_bundle(QUEUE_EXAMPLES / f"{agent}.agent.toml")
-    sequence: list[list[dict[str, Any]]] = [
-        [{"kind": "phantom_failure", "occurrence": 1, "error_code": "timeout"}],
-        [{"kind": "phantom_success", "occurrence": 1}],
-    ]
     model = fixture_investigator(world, limits, sequence)
     return InvestigationWorkflow(
         request=InvestigationRequest(
@@ -544,10 +562,7 @@ def _investigate(tmp_path: Path, agent: str, world: str) -> InvestigationReport:
         ),
         runner=ExperimentRunner(
             sandbox=ApprovedSandbox(
-                [
-                    *experiment(world, faults=sequence[0]),
-                    *experiment(world, faults=sequence[1]),
-                ]
+                [s for faults in sequence for s in experiment(world, faults=faults)]
             ),
             target=ExternalAgentTarget(
                 runner=LocalProcessRunner(tmp_path / "procs"),

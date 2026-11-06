@@ -70,6 +70,23 @@ Residual risks specific to external agents:
 - **Scopes are all-or-nothing per manifest.** An operator cannot narrow them per run.
 - **A hash is not a signature**, as elsewhere. `bundle_sha256` says what ran, not who wrote it.
 
+## Worlds (Sprint 18)
+
+A world plugin is trusted backend code, reviewed like any other. External agents and the Investigator stay untrusted.
+
+| Threat | Control | Tested by |
+|---|---|---|
+| An agent registers or selects a world or an Oracle | The registry is a read-only table built in code. No protocol message, route or experiment action names one | `tests/world/test_world_registry.py` |
+| Arbitrary code through a plugin | No dynamic import anywhere on the path, checked over the AST | same |
+| An agent reaches another world's tools | Scopes are the world's own names. A foreign scope never starts; a foreign tool is unknown and reaches no gateway | `tests/external/test_cross_world.py`, real Docker |
+| An experiment names another world's scenario | One coordinator, one world; refused as `unsupported_scenario` | same |
+| A plugin redefines a verdict | `verify_world` recomputes it from the report's findings and refuses a disagreement | `tests/world/test_job_queue.py` |
+| An agent supplies a verdict | No field exists; a `final` that sends one ends the run | `tests/external/test_cross_world.py` |
+| A claim of one world read as another's | `extra="forbid"` on both, and the driver reads only the world's own field | same |
+| A world database read across worlds | One directory and file per run, and agents have only their sandbox | `tests/world/test_job_queue.py` |
+
+No public route changed. Operator missions are unchanged and name no world, so Job Queue World cannot be run from the API.
+
 ## Residual risks
 
 - **`POST /sandbox/smoke` needs no token.** It is not mounted in production, and the backend binds to

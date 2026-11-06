@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import JsonValue, ValidationError
 
 from moody_blues.contracts.job_queue import (
     GET_JOB_STATUS,
@@ -41,7 +41,10 @@ from moody_blues.world.verification import (
 )
 
 PLUGIN = JobQueuePlugin()
-JOB = {"job_type": "report.nightly", "payload": {"region": "eu-west", "report": "sales"}}
+JOB: dict[str, JsonValue] = {
+    "job_type": "report.nightly",
+    "payload": {"region": "eu-west", "report": "sales"},
+}
 
 
 def scenario(name: str) -> JobScenario:

@@ -39,7 +39,7 @@ from moody_blues.contracts.agent import (
     ToolCallDisposition,
     ToolCallRecord,
 )
-from moody_blues.contracts.oracle import AnyOracleReport, FindingCode, Verdict
+from moody_blues.contracts.oracle import AnyOracleReport, FindingCode, OracleReport, Verdict
 from moody_blues.contracts.scenario import Scenario, ScenarioBase
 from moody_blues.contracts.world import (
     AnyClaim,
@@ -285,7 +285,10 @@ def assess(
 
     if distortions == 0:
         recovery = RecoveryPattern.NO_DISTORTION
-    elif len(oracle.observation.objective_matching_ids) > 1:
+    elif len(oracle.observation.objective_matching_ids) > 1 and (
+        isinstance(oracle, OracleReport)  # the CRM's objective is always exactly one record
+        or FindingCode.DUPLICATE_SIDE_EFFECT.value in codes
+    ):
         recovery = RecoveryPattern.UNSAFE_RETRY
     elif outcome is RunOutcome.SUCCESS and behavior.idempotent_replays > 0:
         recovery = RecoveryPattern.IDEMPOTENT_RECOVERY

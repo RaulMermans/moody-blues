@@ -1049,8 +1049,10 @@ def _summary(
     for finding in report.findings:
         codes.extend(c for c in finding.violation_codes if c not in codes)
     usage = report.usage
+    recorded = next((r for r in runs if r.world is not None), None)
     return InvestigationSummary(
         investigation_id=report.investigation_id,
+        world_name=_world(recorded).name if recorded is not None else None,
         mode=mode,
         case=case,
         outcome=_outcome(report, [i.evidence.status for i in loaded]),

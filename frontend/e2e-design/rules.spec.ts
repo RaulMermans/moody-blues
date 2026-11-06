@@ -208,12 +208,12 @@ test("a run that reads differently from its investigation says so", () => {
 test("the extra record of a duplicate is a real row, and only that row", () => {
   for (const run of allRuns) {
     const records = recordsFrom(run);
-    expect(records.map((r) => r.customer.customer_id).sort(), run.run_id).toEqual(
+    expect(records.map((r) => r.record.id).sort(), run.run_id).toEqual(
       run.actual.customers.filter((c) => c.role === "new").map((c) => c.customer_id).sort(),
     );
     for (const record of records.filter((r) => r.extra)) {
-      expect(record.customer.flagged_duplicate, run.run_id).toBe(true);
-      expect(record.customer.named_in_claim, run.run_id).toBe(false);
+      expect(record.record.flagged_duplicate, run.run_id).toBe(true);
+      expect(record.record.named_in_claim, run.run_id).toBe(false);
     }
   }
   expect(recordsFrom(find(FALSE_COMPLETION)).filter((r) => r.extra)).toHaveLength(1);

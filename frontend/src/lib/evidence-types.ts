@@ -64,6 +64,8 @@ export interface CaseNote {
 
 export interface InvestigationSummary {
   investigation_id: string;
+  /** The environment's name, where the runs recorded one. */
+  world_name?: string;
   mode: ExecutionMode;
   case: CaseNote | null;
   outcome: ProductOutcome;
@@ -111,7 +113,7 @@ export interface InvestigationList {
 
 export interface HypothesisView {
   hypothesis_id: string;
-  status: "open" | "supported" | "refuted" | "inconclusive";
+  status: "open" | "supported" | "refuted" | "inconclusive" | "not_exercised";
   behavior: string;
   suspected_mechanism: string;
   motivation: string;
@@ -233,6 +235,7 @@ export interface InvestigationDetail {
   conclusion: { conclusion: string; reasoning: string } | null;
   case_study: CaseStudy | null;
   provenance: Provenance;
+  validity?: InvestigationValidity;
 }
 
 export interface ToolEvent {
@@ -253,6 +256,8 @@ export interface ClaimView {
   status: string;
   customer_id: string | null;
   message: BoundedText;
+  /** Present in a world without customers. */
+  record_id?: string | null;
 }
 
 export interface DisclosureView {
@@ -274,6 +279,78 @@ export interface CustomerView {
   named_in_claim: boolean;
 }
 
+export interface RecordView {
+  record_id: string;
+  kind: string;
+  title: string;
+  status: string | null;
+  status_history: string[];
+  identity_key: string | null;
+  attributes: Record<string, unknown>;
+  created_by_call: number;
+  role: "seed" | "new";
+  objective_match: boolean;
+  flagged_duplicate: boolean;
+  named_in_claim: boolean;
+}
+
+export interface InvariantView {
+  invariant_id: string;
+  scope: "task" | "world";
+  description: string;
+  violated: boolean;
+}
+
+/** Present only where the run recorded it. A run without one is the CRM. */
+export interface WorldView {
+  world_type: string;
+  name: string;
+  plugin_version: string;
+  config_sha256: string;
+  record_noun: string;
+  store_noun: string;
+  write_tool: string;
+  selected_tools: string[];
+  invariants: InvariantView[];
+}
+
+export interface ValidityView {
+  classification: "control" | "exercised" | "partially_exercised" | "not_exercised";
+  faults: {
+    kind: string;
+    operation: string;
+    occurrence: number;
+    trigger_reached: boolean;
+    delivered: number;
+    delivered_at_calls: number[];
+  }[];
+  eligible_fault_kinds: string[];
+  not_exercised_fault_kinds: string[];
+}
+
+export interface AssessmentCheck {
+  hypothesis_id: string;
+  claimed_status: string;
+  effective_status: "supported" | "refuted" | "inconclusive" | "not_exercised";
+  outcome:
+    | "accepted"
+    | "not_exercised"
+    | "contradicts_oracle"
+    | "conflicting"
+    | "no_target_run"
+    | "unknown_evidence";
+  strength: "correlation_only" | "paired_contrast_observed" | "none";
+  cited_observations: string[];
+  eligible_observations: string[];
+}
+
+export interface InvestigationValidity {
+  experiments: { experiment_id: string; run_ref: string; classification: string }[];
+  assessments: AssessmentCheck[];
+  repeated_hypotheses: { hypothesis_id: string; repeats: string }[];
+  conclusion_matches_findings: boolean | null;
+}
+
 export interface OracleFindingView {
   code: string;
   severity: "violation" | "warning" | "info";
@@ -281,6 +358,7 @@ export interface OracleFindingView {
   message: string;
   customer_ids: string[];
   call_seqs: number[];
+  record_ids?: string[];
 }
 
 export interface Discrepancy {
@@ -306,6 +384,9 @@ export interface RealityRun {
   target_evidence: TargetEvidence;
   /** Present only on an external run. */
   external?: ExternalTarget;
+  /** Absent on a run recorded before worlds existed: see design/world.ts. */
+  world?: WorldView;
+  validity?: ValidityView;
   reported_models: string[];
   verdict: Verdict;
   run_outcome: string | null;
@@ -326,10 +407,13 @@ export interface RealityRun {
     changes: {
       change_seq: number;
       operation: string;
-      customer_id: string;
+      customer_id: string | null;
       created_by_call: number;
+      record_id?: string | null;
     }[];
     new_customer_ids: string[];
+    records?: RecordView[];
+    new_record_ids?: string[];
     verdict: Verdict;
     objective_satisfied: boolean;
     invariants_evaluated: string[];

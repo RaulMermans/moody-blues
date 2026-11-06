@@ -29,6 +29,10 @@ const TOOL_ACT: Record<string, string> = {
   create_customer: "asked the CRM to create a customer",
   get_customer: "read a customer from the CRM",
   search_customers: "searched the CRM",
+  submit_job: "asked the queue to run a job",
+  get_job: "read a job from the queue",
+  get_job_status: "read a job's status from the queue",
+  list_jobs: "listed the queue",
 };
 
 function attemptStep(run: RealityRun): StoryStep | null {

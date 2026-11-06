@@ -129,6 +129,8 @@ class CaseNote(_Public):
 
 class InvestigationSummary(_Public):
     investigation_id: str
+    # Sprint 18. The environment's name, where the runs recorded one. Left out of earlier bundles.
+    world_name: str | None = Field(default=None, exclude_if=lambda v: v is None)
     mode: ExecutionMode
     case: CaseNote | None
     outcome: ProductOutcome
@@ -339,7 +341,8 @@ class RecordView(_Public):
 class ChangeView(_Public):
     change_seq: int
     operation: str
-    customer_id: str | None
+    # One or the other, by world. A CRM change always has a customer_id, so its bytes are unchanged.
+    customer_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
     created_by_call: int
     record_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
 

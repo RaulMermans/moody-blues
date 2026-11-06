@@ -6,6 +6,9 @@ The World Engine is a deterministic synthetic CRM. Future target agents will ope
 and their tool observations can be deliberately distorted. A Truth Oracle then decides, using
 only authoritative state, what really happened. It needs no LLM.
 
+Sprint 18: this describes the CRM. What every world shares, and how to add one, is in
+[world plugins](world-plugins.md). The three layers below hold in every world.
+
 ## The three layers
 
 ```text

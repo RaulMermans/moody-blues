@@ -11,6 +11,7 @@ import { referenceTest } from "@/lib/test-catalog";
 import { FAULT_PLAIN } from "./journey";
 import { claimRelation, firstDivergence, missionLine, targetNoun } from "./model";
 import { environmentLine, hasFinding, stateLine, storyFrom } from "./story";
+import { wordsFor } from "./world";
 
 const times = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -19,7 +20,6 @@ function joined(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-const isWrite = (event: ToolEvent) => event.tool === "create_customer";
 
 export const firstFault = (run: RealityRun): ToolEvent | undefined =>
   run.agent.tool_events.find((e) => e.fault_injected);
@@ -28,25 +28,29 @@ export const firstFault = (run: RealityRun): ToolEvent | undefined =>
 export function actsAfterFault(run: RealityRun): string {
   const fault = firstFault(run);
   const after = run.agent.tool_events.filter((e) => e.call_seq > (fault?.call_seq ?? 0));
-  const writes = after.filter(isWrite).length;
+  const words = wordsFor(run);
+  const writes = after.filter((e) => e.tool === words.writeTool).length;
   const reads = after.length - writes;
   const parts: string[] = [];
-  if (reads) parts.push(`read the CRM ${times(reads, "time", "times")}`);
-  if (writes) parts.push(`made ${times(writes, "more create call", "more create calls")}`);
+  if (reads) parts.push(`read the ${words.store} ${times(reads, "time", "times")}`);
+  if (writes) {
+    parts.push(`made ${times(writes, `more ${words.writeVerb} call`, `more ${words.writeVerb} calls`)}`);
+  }
   const claim = run.agent.claim;
   parts.push(claim ? `reported ${claim.status}` : "filed no valid report");
   return joined(parts);
 }
 
 /** What the first fault did, in plain words, from the fault's own recorded kind. */
-export function faultSentence(event: ToolEvent): string {
+export function faultSentence(event: ToolEvent, run: RealityRun): string {
+  const { store, record } = wordsFor(run);
   switch (event.fault_injected) {
     case "phantom_failure":
-      return `The CRM saved the customer, but the tool reported an error (${event.error_code ?? "unknown"}).`;
+      return `The ${store} saved the ${record}, but the tool reported an error (${event.error_code ?? "unknown"}).`;
     case "phantom_success":
-      return "The tool reported a saved customer, but nothing was committed.";
+      return `The tool reported a saved ${record}, but nothing was committed.`;
     case "stale_read":
-      return "A read returned an old snapshot of the CRM.";
+      return `A read returned an old snapshot of the ${store}.`;
     default:
       return `The tool delivered ${humanize(event.fault_injected).toLowerCase()}.`;
   }
@@ -57,14 +61,15 @@ function headline(run: RealityRun): string {
   const who = `The ${noun}`;
   const delivered = run.faults_delivered;
   const duplicate = hasFinding(run, "duplicate_side_effect");
+  const { store } = wordsFor(run);
   switch (storyFrom(run).kind) {
     case "false_completion":
       return duplicate
-        ? `${who} reported the task complete, but the CRM holds a duplicate record.`
-        : `${who} reported the task complete, but the CRM does not agree.`;
+        ? `${who} reported the task complete, but the ${store} holds a duplicate record.`
+        : `${who} reported the task complete, but the ${store} does not agree.`;
     case "reported_violation":
       return duplicate
-        ? `${who} reported the task not completed, and the CRM holds a duplicate record.`
+        ? `${who} reported the task not completed, and the ${store} holds a duplicate record.`
         : `${who} reported the task not completed, and the Oracle recorded a violation.`;
     case "unreported_violation":
       return `${who} filed no valid report, and the Oracle recorded a violation.`;
@@ -94,7 +99,7 @@ function headline(run: RealityRun): string {
 function support(run: RealityRun): string {
   const noun = targetNoun(run);
   const fault = firstFault(run);
-  const lead = fault ? `${faultSentence(fault)} The ${noun} then ${actsAfterFault(run)}.` : `The ${noun} ${actsAfterFault(run)}.`;
+  const lead = fault ? `${faultSentence(fault, run)} The ${noun} then ${actsAfterFault(run)}.` : `The ${noun} ${actsAfterFault(run)}.`;
   return run.verdict === "VIOLATION" ? `${lead} Result: ${stateLine(run)}.` : lead;
 }
 
@@ -119,9 +124,8 @@ export function conditionLine(run: RealityRun): string {
   return `Condition: ${joined(kinds.map((k) => FAULT_PLAIN[k] ?? humanize(k).toLowerCase()))}.`;
 }
 
-const ORACLE = "The Oracle, an independent check of the CRM's saved data,";
-
 export function verdictMeaning(run: RealityRun): string {
+  const ORACLE = `The Oracle, an independent check of the ${wordsFor(run).store}'s saved data,`;
   if (run.verdict === "PASS") return `${ORACLE} found no broken rule in this run.`;
   if (run.verdict === "INCONCLUSIVE") return `${ORACLE} could not decide this run. Nothing is concluded from it.`;
   const broken = run.actual.findings.filter((f) => f.severity === "violation").map((f) => humanize(f.code).toLowerCase());
@@ -149,14 +153,15 @@ export function targetNote(run: RealityRun): string | null {
 export function relationLine(run: RealityRun): string {
   const noun = targetNoun(run);
   const divergence = firstDivergence(run) !== null;
+  const { store } = wordsFor(run);
   if (run.verdict === "INCONCLUSIVE") return "The Oracle left this run undecided.";
   if (run.verdict === "VIOLATION") {
-    if (hasFinding(run, "false_completion_claim")) return `The ${noun}'s final report does not match the CRM.`;
+    if (hasFinding(run, "false_completion_claim")) return `The ${noun}'s final report does not match the ${store}.`;
     if (claimRelation(run) === "unknown") return `The ${noun} filed no valid report, and the violation stands.`;
-    return `The ${noun}'s final report matches the CRM. The violation still stands, because it is in the saved data.`;
+    return `The ${noun}'s final report matches the ${store}. The violation still stands, because it is in the saved data.`;
   }
   if (!divergence) return "Nothing delivered to the target differed from what was saved.";
-  return `These do not conflict. A tool response was misleading, and the ${noun}'s final report matches the CRM.`;
+  return `These do not conflict. A tool response was misleading, and the ${noun}'s final report matches the ${store}.`;
 }
 
 export interface OutcomeCopy {

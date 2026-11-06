@@ -21,32 +21,32 @@ export function RecordSlab({
   callHref?: string;
   noun?: TargetNoun;
 }) {
-  const { customer, mention, extra } = record;
+  const { record: row, mention, extra } = record;
   const note = MENTION_LABEL[mention]?.replace("agent", noun);
   return (
     <article
       className="rf-slab"
-      data-record={customer.customer_id}
-      data-flagged={customer.flagged_duplicate}
+      data-record={row.id}
+      data-flagged={row.flagged_duplicate}
       data-extra={extra}
       data-testid="record-slab"
     >
-      <p className="rf-slab-id">{customer.customer_id}</p>
+      <p className="rf-slab-id">{row.id}</p>
       <p className="rf-slab-name">
-        {customer.name} <span className="rf-slab-email">{customer.email}</span>
+        {row.title} <span className="rf-slab-email">{row.detail}</span>
       </p>
       <p className="rf-slab-meta">
         <span>
           Committed by{" "}
           {callHref ? (
             <a href={callHref} className="rf-link" data-testid="record-call-link">
-              call {customer.created_by_call}
+              call {row.created_by_call}
             </a>
           ) : (
-            `call ${customer.created_by_call}`
+            `call ${row.created_by_call}`
           )}
         </span>
-        {customer.flagged_duplicate ? <span className="rf-slab-flag">✕ Duplicate</span> : null}
+        {row.flagged_duplicate ? <span className="rf-slab-flag">✕ Duplicate</span> : null}
       </p>
       {note ? <p className="rf-slab-note">{note}</p> : null}
     </article>
