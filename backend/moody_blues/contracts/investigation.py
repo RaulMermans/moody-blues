@@ -29,6 +29,7 @@ from moody_blues.contracts.agent import MODEL_EVIDENCE, AgentConfigName, Evidenc
 from moody_blues.contracts.experiment_evidence import ExperimentAuthorship, ExperimentState
 from moody_blues.contracts.inference import InferenceTimings, LocalModelIdentity
 from moody_blues.contracts.oracle import Verdict
+from moody_blues.contracts.validity import InvestigationValidity
 
 INVESTIGATION_SCHEMA_VERSION = 1
 
@@ -160,7 +161,9 @@ class WorldCard(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     world_id: str
-    seed_customers: int
+    # One or the other, by world. Left out when absent, so a CRM card hashes as it always has.
+    seed_customers: int | None = Field(default=None, exclude_if=lambda v: v is None)
+    seed_records: int | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class TargetCapability(BaseModel):
@@ -291,6 +294,8 @@ class DeliveredFacts(BaseModel):
     provenance: Literal[Provenance.GATEWAY_DELIVERED] = Provenance.GATEWAY_DELIVERED
     tool_calls: int
     faults_delivered: int
+    # For faults the experiment chose: whether they fired. ``not_exercised`` tested nothing.
+    fault_validity: SafeToken | None = None
 
 
 class RunFacts(BaseModel):
@@ -340,6 +345,8 @@ class InspectionFacts(BaseModel):
     new_customers: int | None = None
     objective_matching_records: int | None = None
     seed_customers: int | None = None
+    new_records: int | None = None
+    seed_records: int | None = None
 
 
 class OmittedText(BaseModel):
@@ -431,7 +438,8 @@ class HypothesisRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     hypothesis: Hypothesis
-    status: Literal["open", "supported", "refuted", "inconclusive"] = "open"
+    # What the evidence allows, which may not be what the model said: ``assessment`` keeps that.
+    status: Literal["open", "supported", "refuted", "inconclusive", "not_exercised"] = "open"
     assessment: HypothesisAssessment | None = None
 
 
@@ -582,6 +590,9 @@ class ClaimCheck(BaseModel):
     # True only if a fault reached the target in the run. A story blaming an injected fault for
     # a violation in a run where none fired is the model's narrative, not evidence.
     fault_was_delivered: bool = False
+    # Sprint 18: a violation in a run whose intended fault never fired stands, but cannot be
+    # credited to that fault. Left out when false, so earlier records read the same.
+    fault_not_exercised: bool = Field(default=False, exclude_if=lambda v: v is False)
 
 
 class InvestigationUsage(BaseModel):
@@ -629,3 +640,5 @@ class InvestigationReport(BaseModel):
     statement: str
     limitations: list[str]
     usage: InvestigationUsage
+    # Sprint 18. Absent in earlier records, and they are not rewritten.
+    validity: InvestigationValidity | None = Field(default=None, exclude_if=lambda v: v is None)

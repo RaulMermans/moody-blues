@@ -362,7 +362,7 @@ def test_a_forged_oracle_result_changes_nothing(tmp_path: Path, entry: str) -> N
     bundle = build_bundle(fixture_manifest(tmp_path, entry))
     _, evidence = _investigate(tmp_path, bundle, TargetKind.EXTERNAL_SCRIPTED)
     run = _runs(evidence)[0]
-    assert len(run.committed.new_customer_ids) == 2  # what it really did
+    assert len(run.committed.new_ids) == 2  # what it really did
     assert run.oracle.verdict is Verdict.VIOLATION  # read from state, whatever it sent
 
 

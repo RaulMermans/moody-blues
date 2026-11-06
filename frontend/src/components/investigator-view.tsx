@@ -30,6 +30,7 @@ const STATUS_LABEL: Record<HypothesisView["status"], string> = {
   supported: "supported",
   refuted: "refuted",
   inconclusive: "inconclusive",
+  not_exercised: "not exercised",
   open: "not assessed",
 };
 

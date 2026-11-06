@@ -13,7 +13,7 @@ import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from pydantic import JsonValue, ValidationError
 
@@ -21,6 +21,7 @@ from moody_blues.contracts.adapter import MODEL_INTENTS_SUFFIX
 from moody_blues.contracts.experiment_evidence import (
     EVIDENCE_SCHEMA_VERSION,
     EXTERNAL_EVIDENCE_SCHEMA_VERSION,
+    WORLD_EVIDENCE_SCHEMA_VERSION,
     ExperimentAuthorship,
     ExperimentEvidence,
     ExperimentLimits,
@@ -41,21 +42,37 @@ from moody_blues.experiments.workspace import (
     read_journal,
     sha256_text,
 )
-from moody_blues.world.scenarios import load_scenario
-from moody_blues.world.store import DB_FILENAME, ReadOnlyWorldView
+from moody_blues.world.crm_plugin import WORLD_TYPE as CRM_WORLD_TYPE
+from moody_blues.world.registry import plugin_for_scenario
+from moody_blues.world.store import DB_FILENAME
 
 
 def inspect_worlds(worlds_dir: Path, scenario_id: str) -> list[str] | None:
-    """Non-seed customer ids in the newest surviving world, or None if none can be read."""
+    """Non-seed record ids in the newest surviving world, or None if none can be read."""
     databases = sorted(worlds_dir.glob(f"*/{DB_FILENAME}"), key=lambda p: p.stat().st_mtime)
     if not databases:
         return None
-    seeds = {c.customer_id for c in load_scenario(scenario_id).initial_state.customers}
+    plugin = plugin_for_scenario(scenario_id)
     try:
-        with ReadOnlyWorldView(databases[-1]) as view:
-            return [c.customer_id for c in view.all_customers() if c.customer_id not in seeds]
+        return plugin.new_record_ids(databases[-1], plugin.load_scenario(scenario_id))
     except (sqlite3.Error, OSError):
         return None
+
+
+def unresolved_run(
+    *, run_ref: str, scenario_id: str, found: list[str] | None, note: str, model_calls: int = 0
+) -> UnresolvedTargetRun:
+    """Each world's new ids go under its own name; ``world_found`` says whether any were read."""
+    crm = plugin_for_scenario(scenario_id).descriptor.world_type == CRM_WORLD_TYPE
+    return UnresolvedTargetRun(
+        run_ref=run_ref,
+        scenario_id=scenario_id,
+        world_found=found is not None,
+        committed_new_customer_ids=found if crm else None,
+        committed_new_record_ids=None if crm else found,
+        note=note,
+        model_calls_unresolved=model_calls,
+    )
 
 
 def unresolved_model_calls(worlds_dir: Path) -> int:
@@ -71,6 +88,20 @@ def unresolved_model_calls(worlds_dir: Path) -> int:
             target = requested if entry.get("status") == "requested" else settled
             target.add(str(entry.get("request_id")))
     return len(requested - settled)
+
+
+def schema_for(
+    runs: list[TargetRunEvidence], unresolved: list[UnresolvedTargetRun]
+) -> Literal[1, 2, 3]:
+    """The lowest version that can hold these runs, so CRM records stay as they were."""
+    other_world = any(r.world_type != CRM_WORLD_TYPE for r in runs) or any(
+        u.committed_new_record_ids is not None for u in unresolved
+    )
+    if other_world:
+        return WORLD_EVIDENCE_SCHEMA_VERSION
+    if any(r.external is not None for r in runs):
+        return EXTERNAL_EVIDENCE_SCHEMA_VERSION
+    return EVIDENCE_SCHEMA_VERSION
 
 
 def _owned_by_live_process(directory: Path) -> bool:
@@ -101,14 +132,13 @@ def _unresolved(records: list[JournalRecord], worlds_dir: Path) -> list[Unresolv
         scenario_id = str(authorized["scenario_id"])
         found = inspect_worlds(worlds_dir, scenario_id)
         out.append(
-            UnresolvedTargetRun(
+            unresolved_run(
                 run_ref=run_ref,
                 scenario_id=scenario_id,
-                world_found=found is not None,
-                committed_new_customer_ids=found,
+                found=found,
                 note="the coordinator died during this run; its effects and any claim are "
                 "unverified and no Oracle verdict exists; not retried",
-                model_calls_unresolved=unresolved_model_calls(worlds_dir),
+                model_calls=unresolved_model_calls(worlds_dir),
             )
         )
     return out
@@ -128,9 +158,8 @@ def _close(directory: Path, records: list[JournalRecord]) -> ExperimentEvidence:
     costs = [r.estimated_cost_usd for r in runs if r.estimated_cost_usd is not None]
     executions = [e for s in steps for e in s.sandbox]
     now = datetime.now(UTC)
-    external = any(r.external is not None for r in runs)
     evidence = ExperimentEvidence(
-        schema_version=EXTERNAL_EVIDENCE_SCHEMA_VERSION if external else EVIDENCE_SCHEMA_VERSION,
+        schema_version=schema_for(runs, unresolved),
         experiment_id=str(created["experiment_id"]),
         parent_investigation_id=cast(str | None, created.get("parent_investigation_id")),
         label=str(created["label"]),

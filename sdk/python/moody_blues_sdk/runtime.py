@@ -46,7 +46,8 @@ def _hello(adapter: AgentAdapter) -> Message:
 
 def _context(raw: dict[str, Any], exchange: Exchange, cancel: threading.Event) -> ExecutionContext:
     task = raw["task"]
-    customer = task["objective"]["customer"]
+    objective = task["objective"]
+    customer = objective.get("customer")
     granted = tuple(raw["capabilities"])
     return ExecutionContext(
         run_id=raw["run_id"],
@@ -54,8 +55,11 @@ def _context(raw: dict[str, Any], exchange: Exchange, cancel: threading.Event) -
         scenario_ref=raw["scenario_ref"],
         task=Task(
             mission=task["mission"],
-            instructions=task["objective"]["instructions"],
-            customer=CustomerTask(
+            instructions=objective["instructions"],
+            objective=objective,
+            _customer=None
+            if customer is None
+            else CustomerTask(
                 name=customer["name"],
                 email=customer["email"],
                 metadata=dict(customer.get("metadata") or {}),

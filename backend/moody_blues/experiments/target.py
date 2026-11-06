@@ -27,10 +27,16 @@ from moody_blues.contracts.agent import (
     TokenTotals,
 )
 from moody_blues.contracts.common import ErrorDetail
-from moody_blues.contracts.oracle import OracleReport
+from moody_blues.contracts.oracle import AnyOracleReport
 from moody_blues.contracts.run import ToolTraceEntry
-from moody_blues.contracts.scenario import Scenario
-from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
+from moody_blues.contracts.scenario import Scenario, ScenarioBase
+from moody_blues.contracts.world import (
+    AnyClaim,
+    CommittedChange,
+    CustomerRecord,
+    WorldChange,
+    WorldRecord,
+)
 from moody_blues.experiments.budget import SpendPort, worst_case_run_tokens
 from moody_blues.services.agent_world_runner import run_agent_scenario
 from moody_blues.services.world_runner import run_scenario
@@ -38,7 +44,7 @@ from moody_blues.services.world_runner import run_scenario
 
 @dataclass(frozen=True, slots=True)
 class TargetRequest:
-    scenario: Scenario
+    scenario: ScenarioBase
     config: AgentConfigName
     world_root: Path
     max_wall_seconds: float
@@ -68,12 +74,12 @@ class TargetResult(BaseModel):
     termination: str
     run_outcome: str | None
     error: ErrorDetail | None
-    claim: FinalClaim | None
+    claim: AnyClaim | None
     world_id: str
     world_trace: list[ToolTraceEntry]
-    final_state: list[CustomerRecord]
-    committed_changes: list[CommittedChange]
-    oracle: OracleReport
+    final_state: list[CustomerRecord] | list[WorldRecord]
+    committed_changes: list[CommittedChange] | list[WorldChange]
+    oracle: AnyOracleReport
     tokens: TokenTotals | None
     inference_latency_ms: int | None
     wall_ms: int
@@ -82,6 +88,10 @@ class TargetResult(BaseModel):
     full_report: dict[str, JsonValue]
     truncated_model_steps: int = 0
     external: ExternalAgentRecord | None = None
+
+
+class UnsupportedTargetError(ValueError):
+    """This target cannot run in this world. Raised before anything exists."""
 
 
 class TargetPort(Protocol):
@@ -111,6 +121,10 @@ class AgentTarget:
         self._ledger = ledger
 
     def run(self, request: TargetRequest) -> TargetResult:
+        # The internal agent's prompts and tools are the CRM's. Elsewhere, use an external agent.
+        if not isinstance(request.scenario, Scenario):
+            raise UnsupportedTargetError("the internal Target Agent runs in the CRM only")
+        scenario = request.scenario
         budget = self._budget.model_copy(
             update={
                 "max_wall_seconds": min(self._budget.max_wall_seconds, request.max_wall_seconds)
@@ -120,14 +134,14 @@ class AgentTarget:
         # reservation stays open and keeps counting in full.
         entry = (
             self._ledger.reserve(
-                f"experiment:{request.scenario.scenario_id}:{request.config.value}",
+                f"experiment:{scenario.scenario_id}:{request.config.value}",
                 worst_case_tokens=worst_case_run_tokens(budget),
             )
             if self._ledger is not None
             else None
         )
         report = run_agent_scenario(
-            request.scenario,
+            scenario,
             config=request.config,
             inference=self._inference,
             evidence=self._evidence,

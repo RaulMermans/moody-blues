@@ -14,6 +14,7 @@ import {
   targetNoun,
 } from "@/design/model";
 import { relationLine, testedFrom } from "@/design/outcome";
+import { changeRecordId, claimedRecordId, runRecords, validityLine, wordsFor } from "@/design/world";
 import {
   disclosureLine,
   environmentLine,
@@ -28,6 +29,7 @@ import type {
   RealityRun,
   RunList,
   ToolEvent,
+  WorldView,
 } from "@/lib/evidence-types";
 import { isModelEvidence } from "@/lib/evidence-types";
 import { DISCREPANCY_LABEL, FAULT_LABEL, FINDING_CLASS_LABEL, humanize, inRehearsal } from "@/lib/labels";
@@ -137,6 +139,7 @@ function Summary({
 }) {
   const story = storyFrom(run);
   const disclosure = disclosureLine(run);
+  const validity = validityLine(run);
   const scope = scopeNote(detail.summary, runs, run);
   const index = runs.runs.findIndex((r) => r.run_id === run.run_id) + 1;
   return (
@@ -146,7 +149,7 @@ function Summary({
           Run {index} of {runs.runs.length}
           <span className="rf-wide-only">
             {" "}
-            · World {run.world_ref}
+            · {run.world ? `${run.world.name} · ` : null}World {run.world_ref}
             {run.external ? null : ` · ${run.config} policy`}
           </span>
         </p>
@@ -170,6 +173,11 @@ function Summary({
         <p data-testid="environment" className="rf-note">
           <span className="rf-label">Environment</span> {environmentLine(run)}
         </p>
+        {validity ? (
+          <p data-testid="experiment-validity" data-class={run.validity?.classification} className="rf-note">
+            <span className="rf-label">Experiment validity</span> {validity}
+          </p>
+        ) : null}
         {scope ? (
           <p data-testid="scope-note" className="rf-note">
             <span className="rf-label">Scope</span> {scope.text}{" "}
@@ -187,7 +195,9 @@ function Summary({
 
 function ClaimFacts({ run }: { run: RealityRun }) {
   const claim = run.agent.claim;
-  const creates = run.agent.tool_events.filter((e) => e.tool === "create_customer").length;
+  const { record, writeTool } = wordsFor(run);
+  const creates = run.agent.tool_events.filter((e) => e.tool === writeTool).length;
+  const claimed = claimedRecordId(run);
   if (!claim) {
     return (
       <>
@@ -196,7 +206,7 @@ function ClaimFacts({ run }: { run: RealityRun }) {
           The run ended with {humanize(run.agent.termination).toLowerCase()}. A missing claim is never
           read as success.
         </p>
-        <p className="rf-data">{plural(creates, "create_customer call", "create_customer calls")} attempted</p>
+        <p className="rf-data">{plural(creates, `${writeTool} call`, `${writeTool} calls`)} attempted</p>
       </>
     );
   }
@@ -207,18 +217,18 @@ function ClaimFacts({ run }: { run: RealityRun }) {
       </p>
       <div className="rf-slip">
         <p className="rf-slab-meta">
-          {claim.customer_id ? "1 customer id in the structured claim" : "No customer id in the structured claim"}
+          {claimed ? `1 ${record} id in the structured claim` : `No ${record} id in the structured claim`}
         </p>
-        {claim.customer_id ? <p className="rf-slab-id">{claim.customer_id}</p> : null}
+        {claimed ? <p className="rf-slab-id">{claimed}</p> : null}
       </div>
-      <p className="rf-data">{plural(creates, "create_customer call", "create_customer calls")} attempted</p>
+      <p className="rf-data">{plural(creates, `${writeTool} call`, `${writeTool} calls`)} attempted</p>
     </>
   );
 }
 
 function StateFacts({ run }: { run: RealityRun }) {
   const records = recordsFrom(run);
-  const seeded = run.actual.customers.filter((c) => c.role === "seed").length;
+  const seeded = runRecords(run).filter((c) => c.role === "seed").length;
   return (
     <>
       <p className="rf-count">
@@ -231,10 +241,10 @@ function StateFacts({ run }: { run: RealityRun }) {
         <div className="rf-slabs">
           {records.map((record) => (
             <RecordSlab
-              key={record.customer.customer_id}
+              key={record.record.id}
               record={record}
               noun={targetNoun(run)}
-              callHref={`#call-${record.customer.created_by_call}`}
+              callHref={`#call-${record.record.created_by_call}`}
             />
           ))}
         </div>
@@ -489,20 +499,21 @@ function Explanation({
 }
 
 function actualFor(event: ToolEvent, run: RealityRun): string {
+  const { writeTool } = wordsFor(run);
   const committed = run.actual.changes.find(
     (c) => c.created_by_call === event.call_seq && c.operation === "insert",
   );
   if (event.fault_injected && event.actual_summary) {
-    const write = event.tool === "create_customer";
+    const write = event.tool === writeTool;
     const suffix = committed
-      ? `; committed ${committed.customer_id}`
+      ? `; committed ${changeRecordId(committed)}`
       : write
         ? "; committed nothing"
         : "";
     return `True response: ${event.actual_summary}${suffix}`;
   }
-  if (committed) return `Committed ${committed.customer_id}`;
-  if (event.tool === "create_customer") return "Committed nothing";
+  if (committed) return `Committed ${changeRecordId(committed)}`;
+  if (event.tool === writeTool) return "Committed nothing";
   return "Delivered as it was";
 }
 
@@ -618,25 +629,33 @@ function Discrepancies({ run }: { run: RealityRun }) {
 }
 
 function Records({ run }: { run: RealityRun }) {
+  const { record, store } = wordsFor(run);
+  const label = record.charAt(0).toUpperCase() + record.slice(1);
   return (
     <section aria-label="Authoritative records" className="rf-records">
       <TableScroll label="Records table">
         <table className="rf-table min-w-[34rem]">
-          <caption className="sr-only">Authoritative customer records after the run</caption>
+          <caption className="sr-only">Authoritative {record} records after the run in the {store}</caption>
           <thead>
             <tr>
               <th scope="col">Record</th>
-              <th scope="col">Name</th>
+              <th scope="col">{record === "customer" ? "Name" : label}</th>
               <th scope="col">Created by</th>
               <th scope="col">Marks</th>
             </tr>
           </thead>
           <tbody>
-            {run.actual.customers.map((c) => (
-              <tr key={c.customer_id} data-testid={`record-${c.customer_id}`} data-duplicate={c.flagged_duplicate}>
-                <td className="font-mono">{c.customer_id}</td>
+            {runRecords(run).map((c) => (
+              <tr key={c.id} data-testid={`record-${c.id}`} data-duplicate={c.flagged_duplicate}>
+                <td className="font-mono">{c.id}</td>
                 <td>
-                  {c.name} <span className="text-faint">{c.email}</span>
+                  {c.title} <span className="text-faint">{c.detail}</span>
+                  {c.statusHistory.length > 1 ? (
+                    <span className="text-faint" data-testid="status-history">
+                      {" "}
+                      ({c.statusHistory.join(" → ")})
+                    </span>
+                  ) : null}
                 </td>
                 <td className="font-mono">{c.role === "seed" ? "seed" : `call ${c.created_by_call}`}</td>
                 <td>
@@ -652,6 +671,22 @@ function Records({ run }: { run: RealityRun }) {
         </table>
       </TableScroll>
     </section>
+  );
+}
+
+function Invariants({ world }: { world: WorldView }) {
+  return (
+    <ul className="rf-stage-list" data-testid="invariants">
+      {world.invariants.map((invariant) => (
+        <li key={invariant.invariant_id} data-testid={`invariant-${invariant.invariant_id}`} data-violated={invariant.violated}>
+          <span className="rf-body">{invariant.description}</span>{" "}
+          <span className="flex flex-wrap gap-1">
+            <Tag>{invariant.scope === "task" ? "this task" : "this world"}</Tag>
+            {invariant.violated ? <Tag tone="bad">broken</Tag> : null}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -748,11 +783,25 @@ export function RealityView({
             No discrepancy between delivery and authoritative state was recorded in this run.
           </p>
         )}
+        {run.world ? (
+          <Fold
+            id="invariants"
+            testId="invariants-panel"
+            title="What the Oracle checked"
+            meta={`${run.world.name} ${run.world.plugin_version} · ${plural(run.world.invariants.length, "rule", "rules")}`}
+          >
+            <Invariants world={run.world} />
+          </Fold>
+        ) : null}
         <Fold
           id="records"
           testId="records-panel"
           title="Authoritative records"
-          meta={plural(run.actual.customers.length, "record in the CRM after the run", "records in the CRM after the run")}
+          meta={plural(
+            runRecords(run).length,
+            `record in the ${wordsFor(run).store} after the run`,
+            `records in the ${wordsFor(run).store} after the run`,
+          )}
         >
           <Records run={run} />
         </Fold>

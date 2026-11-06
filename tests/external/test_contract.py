@@ -99,7 +99,7 @@ def test_sdk_reads_what_the_host_sends() -> None:
         run_id="run_1",
         correlation_id="cor_1",
         scenario_ref="wrld_1",
-        task=TaskSpec(mission="Mission: do it", objective=objective),
+        task=TaskSpec(mission="Mission: do it", objective=objective.model_dump(mode="json")),
         tools=[ToolDefinition(name="t", description="d", parameters={}, access="read")],
         scopes=["crm:read"],
         deadline_seconds=10.0,
@@ -278,3 +278,32 @@ def test_an_external_run_cannot_lack_provenance_or_be_filed_as_version_1() -> No
     assert AgentRunReport.model_fields["external"].default is None
     with pytest.raises(ValidationError):
         TargetRunEvidence.model_validate({"target_kind": "external_agent"})
+
+
+def test_a_crm_final_report_is_byte_for_byte_what_it_was() -> None:
+    """The SDK grew ``record_id``. An agent that never sets it sends the same bytes."""
+    from moody_blues_sdk import AgentResult as SdkResult
+
+    assert SdkResult.completed(customer_id="cus_x", message="m").to_message() == {
+        "type": "final",
+        "completion": "finished",
+        "outcome": {"status": "completed", "customer_id": "cus_x"},
+        "message": "m",
+        "error_class": None,
+        "evidence_refs": [],
+    }
+
+
+def test_a_queue_final_report_names_its_record() -> None:
+    from moody_blues_sdk import AgentResult as SdkResult
+
+    outcome = SdkResult.completed(record_id="job_x").to_message()["outcome"]
+    assert outcome == {"status": "completed", "customer_id": None, "record_id": "job_x"}
+
+
+def test_a_task_without_a_customer_says_so_rather_than_inventing_one() -> None:
+    from moody_blues_sdk import Task
+
+    task = Task(mission="m", instructions="i", objective={"kind": "submit_single_job"})
+    with pytest.raises(ValueError, match="no customer"):
+        _ = task.customer

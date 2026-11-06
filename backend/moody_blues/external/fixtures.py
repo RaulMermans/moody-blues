@@ -21,10 +21,78 @@ from moody_blues.contracts.inference import (
     ToolCall,
     ToolResultMessage,
 )
+from moody_blues.contracts.job_queue import JobObjective
 from moody_blues.contracts.scenario import Objective
 
 FIXTURE_MODEL = "offline-fixture-agent"
 Policy = Literal["verify", "blind"]
+
+
+class JobModelFixture:
+    """TEST DOUBLE for a queue agent. ``verify`` lists after a submit; ``blind`` believes replies.
+
+    Not a model, whatever the run around it looks like: everything here is ``offline_fixture``.
+    """
+
+    def __init__(self, objective: JobObjective, policy: Policy = "verify") -> None:
+        self._objective = objective
+        self._policy = policy
+
+    def _reply(
+        self, request: InferenceRequest, content: str | None, calls: list[ToolCall]
+    ) -> InferenceResult:
+        prompt = sum(len(m.model_dump_json()) for m in request.messages) // 4
+        return InferenceResult(
+            provider="fixture",
+            requested_model=request.model or FIXTURE_MODEL,
+            reported_model=FIXTURE_MODEL,
+            response_id=f"fixture-{len(request.messages)}",
+            content=content,
+            tool_calls=calls,
+            finish_reason="tool_calls" if calls else "stop",
+            usage=TokenUsage(prompt_tokens=prompt, completion_tokens=40, total_tokens=prompt + 40),
+            latency_ms=1,
+        )
+
+    def _call(
+        self, request: InferenceRequest, name: str, arguments: Mapping[str, object]
+    ) -> InferenceResult:
+        call = ToolCall(
+            id=f"fx{len(request.messages)}", name=name, arguments_json=json.dumps(arguments)
+        )
+        return self._reply(request, None, [call])
+
+    def _report(
+        self, request: InferenceRequest, status: str, record_id: str | None
+    ) -> InferenceResult:
+        body = {"status": status, "record_id": record_id, "message": "fixture report"}
+        return self._reply(request, json.dumps(body), [])
+
+    def _submit(self, request: InferenceRequest) -> InferenceResult:
+        return self._call(request, "submit_job", self._objective.job.model_dump(mode="json"))
+
+    def complete(self, request: InferenceRequest) -> InferenceResult:
+        done = [m for m in request.messages if isinstance(m, ToolResultMessage)]
+        asked = [
+            c.name
+            for m in request.messages
+            if isinstance(m, AssistantToolCallMessage)
+            for c in m.tool_calls
+        ]
+        if not done:
+            return self._submit(request)
+        delivered: dict[str, Any] = json.loads(done[-1].content)
+        if self._policy == "blind":
+            if "error" in delivered and asked.count("submit_job") < 2:
+                return self._submit(request)
+            job: dict[str, Any] = delivered.get("job") or {}
+            return self._report(request, "completed", job.get("job_id"))
+        if asked[-1] == "submit_job":
+            return self._call(request, "list_jobs", {"job_type": self._objective.job.job_type})
+        found: list[dict[str, Any]] = delivered.get("jobs") or []
+        if found:
+            return self._report(request, "completed", found[0].get("job_id"))
+        return self._report(request, "not_completed", None)
 
 
 class CrmModelFixture:

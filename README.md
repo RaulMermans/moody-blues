@@ -131,7 +131,16 @@ The [submission pack](docs/submission/README.md) holds the copy, video script, c
 | External agents: `mb-agent/1` over stdio, Python SDK, one long-lived process in the sandbox per run | Implemented and **verified on real Docker with scripted agents, and with a real local model driving an independent agent** ([record](docs/sprints/sprint-17.md)). A real hosted model has not driven one |
 | Investigator against external targets: validated selection, real workflow and coordinator | Implemented and verified on real Docker. **A real local 4B model wrote hypotheses and experiments against an external agent**, which ran through the real coordinator. Its reasoning was weak ([results](docs/evaluations/sprint-17/README.md)) |
 | Local inference through Ollama, loopback only, separate from the paid ledger | **Experimental.** Verified on one Mac with one small model ([guide](docs/external-agents/local-models.md)) |
+| World plugins: CRM and Job Queue through one coordinator, Oracle path and evidence format | Implemented and **verified on real Docker with scripted agents** ([record](docs/sprints/sprint-18.md)). No real model has run in Job Queue World, and it is not deployed |
+| Experiment validity: undelivered faults, and model assessments checked against structured records | Implemented. Regression cases use the real Sprint 17 errors; no live model has run with it |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
+
+## Worlds
+
+MOODY BLUES runs the same coordinator, fault boundaries, Oracle path and evidence against two synthetic environments: a CRM and a
+job queue. A world is a trusted, versioned plugin ([contract](docs/architecture/world-plugins.md), [ADR 0015](docs/adr/0015-world-plugins.md)),
+with its own tools and deterministic invariants. **Two supported synthetic worlds are not general-purpose agent compatibility.**
+Worlds are added in code, not uploaded, and Job Queue runs are local: nothing here is deployed. [Job Queue guide](docs/external-agents/job-queue-example.md).
 
 ## Bring your own agent
 
@@ -248,6 +257,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 - [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Sprint 5](docs/sprints/sprint-05.md) · [Evaluation methodology](docs/evaluations/methodology.md) · [Validation](docs/testing/validation.md)
 - [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md) · [Key rotation](docs/security/key-rotation.md) · [Sprint 8](docs/sprints/sprint-08.md) · [Sprint 9](docs/sprints/sprint-09.md) · [Sprint 10](docs/sprints/sprint-10.md) · [Design](docs/design/README.md)
 - [External agents: quickstart](docs/external-agents/quickstart.md) · [Protocol](docs/architecture/external-agent-protocol.md) · [ADR 0012](docs/adr/0012-external-agent-adapter.md) · [Sprint 15](docs/sprints/sprint-15.md)
+- [World plugins](docs/architecture/world-plugins.md) · [ADR 0015](docs/adr/0015-world-plugins.md) · [Job Queue World](docs/external-agents/job-queue-example.md) · [Sprint 18](docs/sprints/sprint-18.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
 ## License

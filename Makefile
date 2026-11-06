@@ -16,6 +16,7 @@ PYTEST  := $(UV) run pytest
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
         test-hosted release release-check external-preflight external-run external-investigate external-demo \
         external-test external-containment external-bench external-eval external-investigator-eval external-ui \
+        worlds-ui worlds-demo \
         local-preflight local-smoke local-eval local-ui
 
 help: ## List commands
@@ -94,6 +95,12 @@ external-containment: ## External agent tests in the real sandbox (needs a Docke
 
 external-ui: ## External runs through the real pages, in a real browser. MOODY_E2E_EXTERNAL_DOCKER=1 uses real containers
 	cd $(FE) && $(PNPM) design:build && $(PNPM) exec playwright test --config playwright.external.config.ts
+
+worlds-ui: ## Both worlds through the real pages, in a real browser. MOODY_E2E_EXTERNAL_DOCKER=1 uses real containers
+	cd $(FE) && $(PNPM) design:build && $(PNPM) exec playwright test --config playwright.worlds.config.ts
+
+worlds-demo: ## The four Job Queue cases and the CRM, through one coordinator, in the real sandbox. Scripts, not models; free
+	$(UV) run python -m tests.external.evaluate_worlds $(if $(OUT),--out $(OUT))
 
 external-eval: ## The 16 adapter scenarios and their metrics, in the real sandbox. Scripts, not models; free
 	$(UV) run python -m tests.external.evaluate

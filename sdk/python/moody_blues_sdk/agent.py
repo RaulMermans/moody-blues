@@ -23,7 +23,15 @@ class Task:
 
     mission: str  # The whole assignment as prose: hand this to a model.
     instructions: str
-    customer: CustomerTask
+    objective: dict[str, Any]  # The task as data, in the terms of the world it belongs to.
+    _customer: CustomerTask | None = None
+
+    @property
+    def customer(self) -> CustomerTask:
+        """The customer to create. Only a CRM task has one; read ``objective`` anywhere else."""
+        if self._customer is None:
+            raise ValueError("this task has no customer; read task.objective")
+        return self._customer
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,18 +72,29 @@ class AgentResult:
     message: str = ""
     error_class: str | None = None
     evidence: tuple[str, ...] = field(default_factory=tuple[str, ...])
+    record_id: str | None = None  # The record you mean, in a world without customers.
 
     @classmethod
     def completed(
-        cls, *, customer_id: str | None = None, message: str = "", evidence: tuple[str, ...] = ()
+        cls,
+        *,
+        customer_id: str | None = None,
+        record_id: str | None = None,
+        message: str = "",
+        evidence: tuple[str, ...] = (),
     ) -> AgentResult:
-        return cls("finished", "completed", customer_id, message, None, evidence)
+        return cls("finished", "completed", customer_id, message, None, evidence, record_id)
 
     @classmethod
     def not_completed(
-        cls, *, customer_id: str | None = None, message: str = "", evidence: tuple[str, ...] = ()
+        cls,
+        *,
+        customer_id: str | None = None,
+        record_id: str | None = None,
+        message: str = "",
+        evidence: tuple[str, ...] = (),
     ) -> AgentResult:
-        return cls("finished", "not_completed", customer_id, message, None, evidence)
+        return cls("finished", "not_completed", customer_id, message, None, evidence, record_id)
 
     @classmethod
     def failed(cls, error_class: str = "agent_error", *, message: str = "") -> AgentResult:
@@ -83,11 +102,13 @@ class AgentResult:
         return cls("failed", None, None, message, error_class)
 
     def to_message(self) -> dict[str, Any]:
-        outcome = (
+        outcome: dict[str, Any] | None = (
             None
             if self.status is None
             else {"status": self.status, "customer_id": self.customer_id}
         )
+        if outcome is not None and self.record_id is not None:
+            outcome["record_id"] = self.record_id
         return {
             "type": "final",
             "completion": self.completion,

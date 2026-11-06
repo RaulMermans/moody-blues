@@ -184,7 +184,7 @@ def test_preexisting_email_seed_is_not_mistaken_for_the_objective(tmp_path: Path
     """The same-email seed is visible to searches but is never the objective's record."""
     report = run_reference_case(reference_case("preexisting-email-verified"), root_dir=tmp_path)
     o = report.oracle
-    assert "cus_seed_mjackson" in o.observation.seed_customer_ids
+    assert "cus_seed_mjackson" in o.observation.seed_ids
     assert "cus_seed_mjackson" not in o.observation.objective_matching_ids
     searches = [t for t in report.tool_trace if t.tool == "search_customers"]
     assert searches

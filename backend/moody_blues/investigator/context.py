@@ -87,6 +87,14 @@ else:
     emit({{"protocol": P, "action": "finish_experiment", "conclusion": ..., "summary": ...}})"""
 
 
+CRM_SUBJECT = "a synthetic CRM world"
+
+
+def system_prompt(subject: str) -> str:
+    """Byte for byte ``SYSTEM_PROMPT`` for the CRM. No other world's wording reaches a model."""
+    return SYSTEM_PROMPT.replace(CRM_SUBJECT, subject)
+
+
 class InvestigationContext(BaseModel):
     """The variable part of a prompt. Equal contexts give byte-identical prompts."""
 
@@ -102,6 +110,8 @@ class InvestigationContext(BaseModel):
     diagnostic: GenerationDiagnostic | None = None
     # Strategy B: every experiment is written before any of them runs.
     planning_without_results: bool = False
+    # Which world the system prompt speaks of. Told by trusted configuration, never the model.
+    subject: str = CRM_SUBJECT
 
 
 class PromptTooLargeError(RuntimeError):
@@ -136,9 +146,10 @@ def build_messages(context: InvestigationContext) -> list[ChatMessage]:
             mode="json", exclude_none=True
         )
     body = json.dumps(document, indent=1, sort_keys=True)
-    if len(SYSTEM_PROMPT) + len(body) > context.limits.max_prompt_chars:
+    system = system_prompt(context.subject)
+    if len(system) + len(body) > context.limits.max_prompt_chars:
         raise PromptTooLargeError(f"prompt exceeds {context.limits.max_prompt_chars} characters")
     return [
-        ChatMessage(role="system", content=SYSTEM_PROMPT),
+        ChatMessage(role="system", content=system),
         ChatMessage(role="user", content=body),
     ]

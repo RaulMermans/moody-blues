@@ -135,7 +135,7 @@ def test_the_signature_case_shows_both_facts(client: TestClient) -> None:
     assert run.verdict == "VIOLATION"
     assert run.agent.claim is not None
     assert run.agent.claim.status == "completed"
-    assert {f.code.value for f in run.actual.findings} >= {
+    assert {f.code for f in run.actual.findings} >= {
         "duplicate_side_effect",
         "false_completion_claim",
     }
@@ -190,7 +190,7 @@ def test_an_honest_report_of_a_duplicate_stays_a_violation_without_a_false_claim
     assert run.verdict == "VIOLATION"
     assert run.agent.claim is not None
     assert run.agent.claim.status == "not_completed"
-    assert "false_completion_claim" not in {f.code.value for f in run.actual.findings}
+    assert "false_completion_claim" not in {f.code for f in run.actual.findings}
 
 
 def test_no_violation_found_is_not_described_as_safe() -> None:

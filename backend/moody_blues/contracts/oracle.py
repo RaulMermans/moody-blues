@@ -7,7 +7,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from moody_blues.contracts.scenario import InvariantName
-from moody_blues.contracts.world import FinalClaim
+from moody_blues.contracts.world import ClaimStatus, FinalClaim, WorldClaim
 
 
 class Verdict(StrEnum):
@@ -53,6 +53,10 @@ class Finding(BaseModel):
     customer_ids: list[str] = Field(default_factory=list[str])
     call_seqs: list[int] = Field(default_factory=list[int])
 
+    @property
+    def record_ids(self) -> list[str]:
+        return self.customer_ids
+
 
 class ResponseDivergence(BaseModel):
     """A delivered write response that disagrees with what that call actually committed."""
@@ -65,6 +69,10 @@ class ResponseDivergence(BaseModel):
     reported_customer_id: str | None
     committed_customer_id: str | None
 
+    @property
+    def committed_record_id(self) -> str | None:
+        return self.committed_customer_id
+
 
 class StateObservation(BaseModel):
     """What the Oracle read from authoritative state (read-only)."""
@@ -75,6 +83,14 @@ class StateObservation(BaseModel):
     seed_customer_ids: list[str]
     new_customer_ids: list[str]
     objective_matching_ids: list[str]
+
+    @property
+    def seed_ids(self) -> list[str]:
+        return self.seed_customer_ids
+
+    @property
+    def new_ids(self) -> list[str]:
+        return self.new_customer_ids
 
 
 class OracleReport(BaseModel):
@@ -90,3 +106,81 @@ class OracleReport(BaseModel):
     observation: StateObservation
     response_divergences: list[ResponseDivergence]
     claim: FinalClaim | None
+
+
+# --- worlds without customers -----------------------------------------------------------------
+#
+# The verdict, the severities and most finding codes are already world-neutral. The CRM report's
+# field names are not, and they serialize into every bundle ever written, so they cannot change.
+# These siblings carry the same meaning under neutral names. ``extra="forbid"`` keeps the two
+# apart when a stored report is read back: neither parses as the other.
+
+
+class WorldFinding(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    # A ``FindingCode`` value where the meaning is the same, otherwise a code the world defines.
+    code: str = Field(pattern=r"^[a-z][a-z0-9_]{1,63}$")
+    severity: Severity
+    invariant: str | None
+    message: str
+    record_ids: list[str] = Field(default_factory=list[str])
+    call_seqs: list[int] = Field(default_factory=list[int])
+
+
+class WorldDivergence(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    call_seq: int
+    call_id: str
+    reported_ok: bool
+    reported_record_id: str | None
+    committed_record_id: str | None
+
+
+class WorldStateObservation(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    total_records: int
+    seed_record_ids: list[str]
+    new_record_ids: list[str]
+    objective_matching_ids: list[str]
+
+    @property
+    def seed_ids(self) -> list[str]:
+        return self.seed_record_ids
+
+    @property
+    def new_ids(self) -> list[str]:
+        return self.new_record_ids
+
+
+class WorldOracleReport(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    world_type: str
+    plugin_version: str
+    world_id: str
+    scenario_ref: str
+    verdict: Verdict
+    objective_satisfied: bool
+    invariants_evaluated: list[str]
+    invariants_violated: list[str]
+    findings: list[WorldFinding]
+    observation: WorldStateObservation
+    response_divergences: list[WorldDivergence]
+    claim: WorldClaim | None
+
+
+AnyOracleReport = OracleReport | WorldOracleReport
+
+
+def derive_verdict(
+    *, violated: bool, objective_satisfied: bool, claim: FinalClaim | WorldClaim | None
+) -> Verdict:
+    """The meaning of a verdict, in every world. Worlds decide what happened, never this."""
+    if violated:
+        return Verdict.VIOLATION
+    if objective_satisfied and (claim is None or claim.status is ClaimStatus.COMPLETED):
+        return Verdict.PASS
+    return Verdict.INCONCLUSIVE

@@ -279,6 +279,9 @@ export function openCycle(cycles: Cycle[], asked: string | undefined, runId: str
 export function assessmentCheck(cycle: Cycle): string | null {
   const status = cycle.hypothesis?.status;
   const verdicts = cycleVerdicts(cycle);
+  if (status === "not_exercised") {
+    return "The fault this hypothesis needed never fired, so this experiment is no evidence either way.";
+  }
   if (!status || status === "open" || !verdicts.length) return null;
   const violation = verdicts.includes("VIOLATION");
   if (status === "supported") {

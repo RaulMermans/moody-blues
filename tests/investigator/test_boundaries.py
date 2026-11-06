@@ -53,7 +53,7 @@ class InjectingTarget:
         claim = FinalClaim(
             status=ClaimStatus.COMPLETED,
             customer_id=self._customer_id
-            or (result.claim.customer_id if result.claim is not None else None),
+            or (result.claim.record_ref if result.claim is not None else None),
             message=self._message,
         )
         return result.model_copy(update={"claim": claim})

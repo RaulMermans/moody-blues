@@ -60,13 +60,14 @@ from moody_blues.contracts.investigation import (
 )
 from moody_blues.contracts.protocol import MAX_EXPERIMENT_CODE_BYTES
 from moody_blues.contracts.sandbox import SandboxLimits
+from moody_blues.contracts.validity import AssessmentCheck, InvestigationValidity
 from moody_blues.experiments.budget import BudgetExceededError, ScopedSpend
 from moody_blues.experiments.coordinator import ExperimentCoordinator
 from moody_blues.experiments.programs import probe_program
 from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.target import TargetPort
 from moody_blues.experiments.workspace import EVIDENCE, sha256_text
-from moody_blues.investigator.catalog import target_capability
+from moody_blues.investigator.catalog import target_capability, world_of
 from moody_blues.investigator.context import (
     InvestigationContext,
     PromptTooLargeError,
@@ -91,6 +92,12 @@ from moody_blues.investigator.observations import (
     diagnostic_for,
     observe,
     recoverable,
+)
+from moody_blues.investigator.validity import (
+    check_batch,
+    conclusion_matches,
+    experiment_validity,
+    repeated_hypotheses,
 )
 from moody_blues.investigator.workspace import InvestigationWorkspace, exclusive
 from moody_blues.sandbox.base import SandboxRunner
@@ -167,6 +174,7 @@ class ExperimentRunner:
             sandbox_limits=self.sandbox_limits,
             limits=ExperimentLimits(max_runtime_seconds=min(300.0, max_runtime_seconds)),
             allowed_scenarios=worlds,
+            world=world_of(worlds),
         )
         return coordinator.run(spec, cancel=cancel)
 
@@ -219,6 +227,7 @@ class InvestigationWorkflow:
         self._cancel = cancel
         self._monotonic = monotonic
         self._capability = capability or target_capability(request.world_ids)
+        self._world = world_of(request.world_ids)
         self._fixed_schedule = fixed_schedule
         self._repair_unrun_programs = repair_unrun_programs
         self._limits = request.limits
@@ -233,6 +242,7 @@ class InvestigationWorkflow:
         self._observations: list[InvestigationObservation] = []
         self._calls: list[ModelCallRecord] = []
         self._evidence: dict[str, ExperimentEvidence] = {}
+        self._assessment_checks: list[AssessmentCheck] = []
         self._conclusion: ConcludeInvestigation | None = None
         self._findings: list[VerifiedFinding] = []
         self._slots_used = 0
@@ -532,6 +542,7 @@ class InvestigationWorkflow:
             observations=self._observations if planned is None else [],
             diagnostic=diagnostic,
             planning_without_results=planned is not None,
+            subject=self._world.investigator_subject(),
         )
         try:
             messages = build_messages(context)
@@ -583,11 +594,21 @@ class InvestigationWorkflow:
         return invalid("invalid_decision", sorted(set(bad))) if bad else proposal
 
     def _apply_assessments(self, assessments: list[HypothesisAssessment]) -> None:
-        for assessment in assessments:
+        """The model's assessment is kept. Its status stands only as far as the evidence does."""
+        checks = check_batch(
+            assessments,
+            earlier=self._assessment_checks,
+            observations={o.observation_id: o for o in self._observations},
+            evidence=self._evidence,
+            proposals=self._proposals,
+            experiment_by_proposal={e.proposal_id: e.experiment_id for e in self._experiments},
+        )
+        self._assessment_checks.extend(checks)
+        for assessment, check in zip(assessments, checks, strict=True):
             record = self._hypotheses.get(assessment.hypothesis_id)
             if record is not None:
                 self._hypotheses[assessment.hypothesis_id] = record.model_copy(
-                    update={"status": assessment.status, "assessment": assessment}
+                    update={"status": check.effective_status, "assessment": assessment}
                 )
 
     def _accept_conclusion(self, conclusion: ConcludeInvestigation) -> _Stop:
@@ -845,6 +866,12 @@ class InvestigationWorkflow:
             statement=statement(self._findings),
             limitations=self._limitations(),
             usage=self._usage(),
+            validity=InvestigationValidity(
+                experiments=experiment_validity(self._evidence.values()),
+                assessments=self._assessment_checks,
+                repeated_hypotheses=repeated_hypotheses(self._hypotheses.values()),
+                conclusion_matches_findings=conclusion_matches(self._conclusion, self._findings),
+            ),
         )
 
     def _finish(self, stop: _Stop) -> InvestigationReport:

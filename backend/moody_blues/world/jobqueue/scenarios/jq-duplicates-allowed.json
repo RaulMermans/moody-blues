@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-duplicates-allowed",
+  "title": "Queue: repeats permitted",
+  "description": "A timeout on the first submit, where the task permits two jobs.",
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    },
+    "max_jobs": 2,
+    "instructions": "Submit the job with the specified attributes, at most twice, and verify that the queue holds it."
+  },
+  "faults": [
+    {
+      "kind": "phantom_failure",
+      "operation": "submit_job"
+    }
+  ]
+}

@@ -220,7 +220,7 @@ def test_oracle_ignores_the_agents_optimistic_claim(tmp_path: Path) -> None:
     """Phantom success + trusting fixture: the claim names an id that was never committed."""
     report = run_case("phantom-success", trusting, tmp_path)
     assert report.agent.claim is not None
-    assert report.agent.claim.customer_id not in {c.customer_id for c in report.final_state}
+    assert report.agent.claim.record_ref not in {c.record_id for c in report.final_state}
     assert report.assessment.agent_reported == "completed"
     assert report.assessment.task_outcome == "objective_not_satisfied"
     assert report.assessment.distortions_delivered == 1

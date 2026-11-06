@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-phantom-failure",
+  "title": "Queue: phantom failure",
+  "description": "The first submit_job commits but reports a timeout.",
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_failure",
+      "operation": "submit_job"
+    }
+  ]
+}

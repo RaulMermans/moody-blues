@@ -137,7 +137,7 @@ class ProtocolRejection(BaseModel):
 
 
 class ToolCallObservation(BaseModel):
-    """One CRM call as the agent experienced it. No arguments, ids or rows."""
+    """One tool call as the agent experienced it. No arguments, ids or rows."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -146,9 +146,9 @@ class ToolCallObservation(BaseModel):
     ok: bool
     error_code: str | None
     # Structured facts about the call, so its shape can be read without seeing arguments.
-    used_idempotency_key: bool | None = None  # create_customer only
-    idempotent_replay: bool | None = None  # create_customer only, on a delivered success
-    result_count: int | None = None  # search_customers only
+    used_idempotency_key: bool | None = None  # the world's write only
+    idempotent_replay: bool | None = None  # the world's write only, on a delivered success
+    result_count: int | None = None  # list and search reads only
 
 
 class RunObservation(BaseModel):
@@ -171,6 +171,8 @@ class RunObservation(BaseModel):
     tool_calls: int
     faults_delivered: int
     tokens: int | None
+    # Sprint 18. Only for faults the experiment chose: a world's own conditions are for it to find.
+    fault_validity: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class InspectionObservation(BaseModel):
@@ -182,11 +184,15 @@ class InspectionObservation(BaseModel):
     tool_calls: list[ToolCallObservation] | None = None
     claim_status: str | None = None
     claimed_customer_id: str | None = None
+    claimed_record_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
     # Written by the model under test: data to look at, never instructions to follow.
     untrusted_claim_message: str | None = Field(default=None, max_length=MAX_UNTRUSTED_TEXT_CHARS)
     new_customers: int | None = None
     objective_matching_records: int | None = None
     seed_customers: int | None = None
+    # The same two counts in a world without customers. Left out when absent.
+    new_records: int | None = Field(default=None, exclude_if=lambda v: v is None)
+    seed_records: int | None = Field(default=None, exclude_if=lambda v: v is None)
     # Where the claimed id points in committed state: new_record, seed_record, uncommitted, none.
     claim_points_to: str | None = None
 

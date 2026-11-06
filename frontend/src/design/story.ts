@@ -13,6 +13,7 @@ import type {
 import { humanize, OUTCOME_LABEL } from "@/lib/labels";
 
 import { claimRelation, targetNoun } from "./model";
+import { newRecordIds, runRecords, wordsFor } from "./world";
 
 export type StoryKind =
   | "false_completion"
@@ -71,7 +72,7 @@ function reportedSentence(run: RealityRun): string {
 }
 
 function realitySentence(kind: StoryKind, run: RealityRun): string {
-  const created = run.actual.new_customer_ids.length;
+  const created = newRecordIds(run).length;
   switch (kind) {
     case "false_completion":
     case "reported_violation":
@@ -90,7 +91,7 @@ function realitySentence(kind: StoryKind, run: RealityRun): string {
       return "The Oracle found no violation.";
     case "no_claim":
       return created === 0
-        ? "Reality recorded no new customer."
+        ? `Reality recorded no new ${wordsFor(run).record}.`
         : `Reality recorded ${created} new record${created === 1 ? "" : "s"}.`;
     case "inconclusive":
       return "The Oracle could not conclude.";
@@ -108,9 +109,11 @@ export function storyFrom(run: RealityRun): RunStory {
 }
 
 export function stateLine(run: RealityRun): string {
-  const flagged = run.actual.customers.filter((c) => c.flagged_duplicate).length;
-  const created = run.actual.new_customer_ids.length;
-  if (flagged > 1) return `${flagged} records committed, 1 required`;
+  const flagged = runRecords(run).filter((c) => c.flagged_duplicate).length;
+  const created = newRecordIds(run).length;
+  // The CRM's objective is always exactly one. Elsewhere the task sets its own limit.
+  if (flagged > 1 && !run.actual.records?.length) return `${flagged} records committed, 1 required`;
+  if (flagged > 1) return `${flagged} records committed, more than the task permits`;
   return `${created} new record${created === 1 ? "" : "s"} committed`;
 }
 
@@ -180,15 +183,17 @@ function listCalls(calls: number[]): string {
 
 const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-const RECOVERY_NOTE: Record<string, string> = {
-  idempotent_recovery: "It retried with the same key, and the CRM returned the original record.",
-  safe_recovery: "It checked state and ended with exactly one record.",
-};
+const recoveryNote = (pattern: string, store: string, records: number): string =>
+  ({
+    idempotent_recovery: `It retried with the same key, and the ${store} returned the original record.`,
+    safe_recovery: `It checked state and ended with ${records === 1 ? "exactly one record" : `${records} records`}.`,
+  })[pattern] ?? "";
 
 function attempts(run: RealityRun): string {
-  const creates = run.agent.tool_events.filter((e) => e.tool === "create_customer").length;
-  const commits = run.actual.new_customer_ids.length;
-  return `${subject(run)} made ${creates} create call${creates === 1 ? "" : "s"}, and ${commits} committed.`;
+  const { writeTool, writeVerb } = wordsFor(run);
+  const creates = run.agent.tool_events.filter((e) => e.tool === writeTool).length;
+  const commits = newRecordIds(run).length;
+  return `${subject(run)} made ${creates} ${writeVerb} call${creates === 1 ? "" : "s"}, and ${commits} committed.`;
 }
 
 function happened(kind: StoryKind, run: RealityRun): string {
@@ -204,7 +209,7 @@ function happened(kind: StoryKind, run: RealityRun): string {
     case "violation":
       return `${attempts(run)} It filed status ${status}, and the Oracle recorded a violation.`;
     case "recovered": {
-      const note = RECOVERY_NOTE[run.agent.recovery_pattern ?? ""] ?? "";
+      const note = recoveryNote(run.agent.recovery_pattern ?? "", wordsFor(run).store, newRecordIds(run).length);
       return `${attempts(run)} ${note} It filed status ${status}, and the objective is satisfied in authoritative state.`.replace("  ", " ");
     }
     case "clean":
@@ -233,7 +238,7 @@ function sequence(run: RealityRun): string {
     .map((t) => `${capital(listCalls(t.calls))} delivered ${t.calls.length === 1 ? "a " : ""}${faultNoun(t.kind, t.calls.length)}.`)
     .join(" ");
   // Only this run's rows: seeded rows are in the change log too, under call 0.
-  const commits = run.actual.customers
+  const commits = runRecords(run)
     .filter((c) => c.role === "new")
     .map((c) => c.created_by_call)
     .sort((a, b) => a - b);
@@ -245,9 +250,9 @@ function sequence(run: RealityRun): string {
 
 const MATTERS: Record<StoryKind, string> = {
   false_completion:
-    "Anything reading the status alone would mark this task done, while the CRM holds a record that should not exist.",
+    "Anything reading the status alone would mark this task done, while the STORE holds a record that should not exist.",
   reported_violation:
-    "A true report does not undo a side effect. The extra record stays in the CRM until someone removes it.",
+    "A true report does not undo a side effect. The extra record stays in the STORE until someone removes it.",
   unreported_violation: "The side effect is real and nothing in a final report says so.",
   violation: "The status reads as done while the Oracle records a broken invariant.",
   recovered:
@@ -301,7 +306,9 @@ export function explanationFrom(run: RealityRun, study: CaseStudy | null, primar
   return {
     happened: happened(kind, run),
     why: sequence(run),
-    matters: MATTERS[kind].replace("the target is safe", `the ${targetNoun(run)} is safe`),
+    matters: MATTERS[kind]
+      .replace("the target is safe", `the ${targetNoun(run)} is safe`)
+      .replace("STORE", wordsFor(run).store),
     causal: {
       faultDelivered: run.faults_delivered ? `Yes, ${run.faults_delivered}` : "No",
       violationObserved: OBSERVED[run.verdict],

@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, JsonValue
 
-from moody_blues.contracts.oracle import OracleReport
-from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim, ToolResponse
+from moody_blues.contracts.oracle import AnyOracleReport
+from moody_blues.contracts.world import (
+    AnyClaim,
+    CommittedChange,
+    CustomerRecord,
+    ToolResponse,
+    WorldChange,
+    WorldRecord,
+)
 
 
 class ToolTraceEntry(BaseModel):
@@ -32,11 +39,11 @@ class RunReport(BaseModel):
     executor: str
     world_id: str
     tool_trace: list[ToolTraceEntry]
-    final_state: list[CustomerRecord]
-    committed_changes: list[CommittedChange]
-    claim: FinalClaim | None
+    final_state: list[CustomerRecord] | list[WorldRecord]
+    committed_changes: list[CommittedChange] | list[WorldChange]
+    claim: AnyClaim | None
     claim_event_seq: int
-    oracle: OracleReport
+    oracle: AnyOracleReport
     verdict_event_seq: int
     event_count: int
     # sha256 over world outcome with run-specific identifiers removed; equal inputs => equal.

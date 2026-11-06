@@ -65,6 +65,7 @@ function Row({ item }: { item: ListedInvestigation }) {
           <Tag>{CASE_LABEL[summary.case.kind]}</Tag>
         ) : null}
         <ModeTag mode={summary.mode} note={modeNote(summary)} />
+        {summary.world_name ? <Tag testId="investigation-world">{summary.world_name}</Tag> : null}
       </div>
       <h3 className="mt-2 text-base font-medium text-foreground">
         <Link

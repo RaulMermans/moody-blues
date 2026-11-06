@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-stale-read",
+  "title": "Queue: stale status",
+  "description": "The job completes, while the first two reads show it as queued.",
+  "worker": {
+    "start_after_calls": 1,
+    "finish_after_calls": 2
+  },
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    },
+    "required_statuses": [
+      "completed"
+    ],
+    "instructions": "Submit exactly one job with the specified attributes and report whether it reached a required status."
+  },
+  "faults": [
+    {
+      "kind": "stale_read",
+      "operation": "read",
+      "occurrence": 2,
+      "span": 2
+    }
+  ]
+}

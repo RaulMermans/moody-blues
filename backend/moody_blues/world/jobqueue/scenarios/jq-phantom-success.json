@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-phantom-success",
+  "title": "Queue: phantom success",
+  "description": "The first submit_job is rolled back but reports success.",
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    }
+  },
+  "faults": [
+    {
+      "kind": "phantom_success",
+      "operation": "submit_job"
+    }
+  ]
+}

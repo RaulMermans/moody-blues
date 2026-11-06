@@ -274,7 +274,7 @@ def trial_from_run(
         category=category_of(impairments),
         impairments=impairments,
         behavior=behavior_of(run),
-        new_records=len(run.committed.new_customer_ids),
+        new_records=len(run.committed.new_ids),
         prompt_tokens=tokens.prompt_tokens if tokens is not None else None,
         completion_tokens=tokens.completion_tokens if tokens is not None else None,
         tokens_complete=tokens.complete if tokens is not None else False,

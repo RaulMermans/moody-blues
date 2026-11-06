@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-normal",
+  "title": "Queue: normal scheduling",
+  "description": "One job is submitted with no fault.",
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    }
+  }
+}

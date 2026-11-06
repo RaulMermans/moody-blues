@@ -19,11 +19,13 @@ from pydantic import JsonValue, ValidationError
 from moody_blues.contracts.adapter import ModelCallStatus
 from moody_blues.contracts.agent import AgentRunReport
 from moody_blues.contracts.experiment_evidence import (
+    CommittedSummary,
     ExperimentAuthorship,
     ExperimentEvidence,
     ExperimentState,
     StepRecord,
     TargetRunEvidence,
+    WorldCommittedSummary,
 )
 from moody_blues.contracts.explorer import (
     ActualReality,
@@ -45,9 +47,11 @@ from moody_blues.contracts.explorer import (
     ExperimentProvenance,
     ExperimentView,
     ExternalTargetView,
+    FaultDeliveryView,
     FaultView,
     FindingView,
     HypothesisView,
+    InvariantView,
     InvestigationBundle,
     InvestigationSummary,
     ObservationView,
@@ -56,9 +60,12 @@ from moody_blues.contracts.explorer import (
     ProposalView,
     Provenance,
     RealityRun,
+    RecordView,
     TimelineEntry,
     TimelineStage,
     ToolEvent,
+    ValidityView,
+    WorldView,
 )
 from moody_blues.contracts.investigation import (
     DecisionKind,
@@ -70,9 +77,10 @@ from moody_blues.contracts.investigation import (
     Strategy,
     VerifiedFinding,
 )
-from moody_blues.contracts.oracle import FindingCode, OracleReport
+from moody_blues.contracts.oracle import AnyOracleReport, FindingCode
 from moody_blues.contracts.run import ToolTraceEntry
-from moody_blues.contracts.world import ToolResponse
+from moody_blues.contracts.world import ToolResponse, WorldChange, WorldClaim
+from moody_blues.contracts.world_plugin import WorldDescriptor
 from moody_blues.experiments.recovery import verify_experiment
 from moody_blues.experiments.workspace import (
     EVIDENCE,
@@ -90,6 +98,8 @@ from moody_blues.explorer.sanitize import (
     bounded,
 )
 from moody_blues.investigator.workspace import REPORT, verify_investigation
+from moody_blues.world.crm_plugin import DESCRIPTOR as CRM_DESCRIPTOR
+from moody_blues.world.registry import world_plugin
 
 STALE_READ_EFFECT = "read_served_from_stale_snapshot"
 _CLAIM_CODES = frozenset(
@@ -115,19 +125,27 @@ def _json_text(value: object) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False)
 
 
-def summarize_response(response: ToolResponse) -> str:
+def summarize_response(response: ToolResponse, world: WorldDescriptor = CRM_DESCRIPTOR) -> str:
     """A short, factual reading of one tool response. Ids and counts only, never prose."""
     if not response.ok:
         code = response.error.code if response.error else "error"
         return f"error: {code}"
     data = response.data or {}
-    customer = data.get("customer")
-    if isinstance(customer, dict):
+    shape, noun = world.shape, world.record_noun
+    item = data.get(shape.item_key)
+    if isinstance(item, dict):
         replay = " (idempotent replay)" if data.get("idempotent_replay") is True else ""
-        return f"ok: customer {customer.get('customer_id')}{replay}"
+        fields = cast(dict[str, JsonValue], item)
+        return f"ok: {noun} {fields.get(shape.id_key)}{replay}"
     if "count" in data:
-        return f"ok: {data['count']} customer(s) returned"
+        return f"ok: {data['count']} {noun}(s) returned"
+    if shape.id_key in data and "status" in data:
+        return f"ok: {noun} {data[shape.id_key]} is {data['status']}"
     return "ok"
+
+
+def _world(run: TargetRunEvidence) -> WorldDescriptor:
+    return world_plugin(run.world_type).descriptor
 
 
 def _load_experiment(directory: Path) -> _Loaded:
@@ -149,7 +167,9 @@ def _load_experiment(directory: Path) -> _Loaded:
 # --- reality ----------------------------------------------------------------------------
 
 
-def _actual_summaries(report: AgentRunReport | None) -> dict[int, str]:
+def _actual_summaries(
+    report: AgentRunReport | None, world: WorldDescriptor = CRM_DESCRIPTOR
+) -> dict[int, str]:
     """The true response behind each distorted call, from the gateway's own fault events."""
     if report is None:
         return {}
@@ -159,7 +179,7 @@ def _actual_summaries(report: AgentRunReport | None) -> dict[int, str]:
             continue
         actual = event.payload.get("actual_response")
         if isinstance(actual, dict):
-            out[event.call_seq] = summarize_response(ToolResponse.model_validate(actual))
+            out[event.call_seq] = summarize_response(ToolResponse.model_validate(actual), world)
     return out
 
 
@@ -181,7 +201,10 @@ def _notes(report: AgentRunReport | None) -> dict[int, str]:
 
 
 def _tool_event(
-    entry: ToolTraceEntry, actual: Mapping[int, str], notes: Mapping[int, str]
+    entry: ToolTraceEntry,
+    actual: Mapping[int, str],
+    notes: Mapping[int, str],
+    world: WorldDescriptor = CRM_DESCRIPTOR,
 ) -> ToolEvent:
     delivered = entry.delivered
     note = notes.get(entry.call_seq)
@@ -203,7 +226,7 @@ def _tool_event(
             ),
             MAX_JSON_CHARS,
         ),
-        delivered_summary=summarize_response(delivered),
+        delivered_summary=summarize_response(delivered, world),
         error_code=delivered.error.code if delivered.error else None,
         fault_injected=entry.fault_injected,
         fault_effect=entry.fault_effect,
@@ -212,11 +235,11 @@ def _tool_event(
     )
 
 
-def _flagged_ids(oracle: OracleReport) -> list[str]:
+def _flagged_ids(oracle: AnyOracleReport) -> list[str]:
     ids: list[str] = []
     for finding in oracle.findings:
-        if finding.code is FindingCode.DUPLICATE_SIDE_EFFECT:
-            ids.extend(i for i in finding.customer_ids if i not in ids)
+        if finding.code == FindingCode.DUPLICATE_SIDE_EFFECT.value:
+            ids.extend(i for i in finding.record_ids if i not in ids)
     return ids
 
 
@@ -235,6 +258,7 @@ def _disclosure(run: TargetRunEvidence) -> DisclosureView | None:
 
 def _discrepancies(run: TargetRunEvidence, actual: Mapping[int, str]) -> list[Discrepancy]:
     out: list[Discrepancy] = []
+    world = _world(run)
     trace = {t.call_seq: t for t in run.target_observed.tool_trace}
     for divergence in run.oracle.response_divergences:
         seen = trace.get(divergence.call_seq)
@@ -242,10 +266,10 @@ def _discrepancies(run: TargetRunEvidence, actual: Mapping[int, str]) -> list[Di
             Discrepancy(
                 kind=DiscrepancyKind.MISLEADING_WRITE_RESPONSE,
                 call_seq=divergence.call_seq,
-                agent_saw=summarize_response(seen.delivered) if seen else "reported success",
+                agent_saw=summarize_response(seen.delivered, world) if seen else "reported success",
                 actually=(
-                    f"committed customer {divergence.committed_customer_id}"
-                    if divergence.committed_customer_id
+                    f"committed {world.record_noun} {divergence.committed_record_id}"
+                    if divergence.committed_record_id
                     else "nothing was committed by this call"
                 ),
                 source="oracle",
@@ -257,7 +281,7 @@ def _discrepancies(run: TargetRunEvidence, actual: Mapping[int, str]) -> list[Di
                 Discrepancy(
                     kind=DiscrepancyKind.STALE_READ,
                     call_seq=entry.call_seq,
-                    agent_saw=summarize_response(entry.delivered),
+                    agent_saw=summarize_response(entry.delivered, world),
                     actually=actual.get(
                         entry.call_seq, "the read was served from a stale snapshot"
                     ),
@@ -276,7 +300,7 @@ def _discrepancies(run: TargetRunEvidence, actual: Mapping[int, str]) -> list[Di
                     source="oracle",
                 )
             )
-        elif finding.code is FindingCode.DUPLICATE_SIDE_EFFECT:
+        elif finding.code == FindingCode.DUPLICATE_SIDE_EFFECT.value:
             out.append(
                 Discrepancy(
                     kind=DiscrepancyKind.DUPLICATE_SIDE_EFFECT,
@@ -326,14 +350,18 @@ def _reality(
     report: AgentRunReport | None,
     finding: VerifiedFinding | None,
 ) -> RealityRun:
-    actual = _actual_summaries(report)
+    world = _world(run)
+    actual = _actual_summaries(report, world)
     notes = _notes(report)
     oracle = run.oracle
     claim = run.target_observed.claim
     flagged = set(_flagged_ids(oracle))
     matching = set(oracle.observation.objective_matching_ids)
-    seeds = set(oracle.observation.seed_customer_ids)
+    seeds = set(oracle.observation.seed_ids)
     mission = _mission(report)
+    committed = run.committed
+    claimed = claim.record_ref if claim is not None else None
+    neutral = isinstance(claim, WorldClaim) or isinstance(committed, WorldCommittedSummary)
     return RealityRun(
         run_id=run.run_id,
         run_ref=run.run_ref,
@@ -358,12 +386,15 @@ def _reality(
         external=_external_view(run),
         agent=AgentReality(
             mission=bounded(mission, MAX_MESSAGE_CHARS) if mission else None,
-            tool_events=[_tool_event(t, actual, notes) for t in run.target_observed.tool_trace],
+            tool_events=[
+                _tool_event(t, actual, notes, world) for t in run.target_observed.tool_trace
+            ],
             termination=run.target_observed.termination,
             claim=ClaimView(
                 status=claim.status.value,
-                customer_id=claim.customer_id,
+                customer_id=None if neutral else claimed,
                 message=bounded(claim.message, MAX_MESSAGE_CHARS),
+                record_id=claimed if neutral else None,
             )
             if claim
             else None,
@@ -382,37 +413,126 @@ def _reality(
                     role="seed" if c.customer_id in seeds else "new",
                     objective_match=c.customer_id in matching,
                     flagged_duplicate=c.customer_id in flagged,
-                    named_in_claim=claim is not None and claim.customer_id == c.customer_id,
+                    named_in_claim=claimed == c.customer_id,
                 )
-                for c in run.committed.customers
+                for c in (committed.customers if isinstance(committed, CommittedSummary) else [])
             ],
             changes=[
                 ChangeView(
                     change_seq=c.change_seq,
                     operation=c.operation,
-                    customer_id=c.customer_id,
+                    customer_id=None if isinstance(c, WorldChange) else c.record_id,
                     created_by_call=c.created_by_call,
+                    record_id=c.record_id if isinstance(c, WorldChange) else None,
                 )
-                for c in run.committed.changes
+                for c in committed.changes
             ],
-            new_customer_ids=run.committed.new_customer_ids,
+            new_customer_ids=[] if neutral else committed.new_ids,
+            new_record_ids=committed.new_ids if neutral else [],
+            records=_records(committed, seeds, matching, flagged, claimed),
             verdict=oracle.verdict,
             objective_satisfied=oracle.objective_satisfied,
             invariants_evaluated=[str(i) for i in oracle.invariants_evaluated],
             invariants_violated=[str(i) for i in oracle.invariants_violated],
             findings=[
                 OracleFindingView(
-                    code=f.code,
+                    code=str(f.code),
                     severity=f.severity,
                     invariant=str(f.invariant) if f.invariant else None,
                     message=f.message,
-                    customer_ids=f.customer_ids,
+                    customer_ids=[] if neutral else f.record_ids,
                     call_seqs=f.call_seqs,
+                    record_ids=f.record_ids if neutral else [],
                 )
                 for f in oracle.findings
             ],
         ),
         discrepancies=_discrepancies(run, actual),
+        world=_world_view(run),
+        validity=_validity_view(run),
+    )
+
+
+def _records(
+    committed: CommittedSummary | WorldCommittedSummary,
+    seeds: set[str],
+    matching: set[str],
+    flagged: set[str],
+    claimed: str | None,
+) -> list[RecordView]:
+    if isinstance(committed, CommittedSummary):
+        return []
+    views: list[RecordView] = []
+    for r in committed.records:
+        history = r.attributes.get("status_history")
+        views.append(
+            RecordView(
+                record_id=r.record_id,
+                kind=r.kind,
+                title=r.title,
+                status=r.status,
+                status_history=[str(s) for s in cast(list[JsonValue], history)]
+                if isinstance(history, list)
+                else [],
+                identity_key=r.identity_key,
+                attributes={k: v for k, v in r.attributes.items() if k != "status_history"},
+                created_by_call=r.created_by_call,
+                role="seed" if r.record_id in seeds else "new",
+                objective_match=r.record_id in matching,
+                flagged_duplicate=r.record_id in flagged,
+                named_in_claim=claimed == r.record_id,
+            )
+        )
+    return views
+
+
+def _world_view(run: TargetRunEvidence) -> WorldView | None:
+    """Only what the run recorded, read against the registered world. Refuses nothing old."""
+    if run.world is None:
+        return None
+    descriptor = _world(run)
+    violated = {str(i) for i in run.oracle.invariants_violated}
+    evaluated = {str(i) for i in run.oracle.invariants_evaluated}
+    return WorldView(
+        world_type=run.world.world_type,
+        name=descriptor.name,
+        plugin_version=run.world.plugin_version,
+        config_sha256=run.world.config_sha256,
+        record_noun=descriptor.record_noun,
+        store_noun=descriptor.store_noun,
+        write_tool=descriptor.shape.write_tool,
+        selected_tools=run.world.selected_tools,
+        invariants=[
+            InvariantView(
+                invariant_id=i.invariant_id,
+                scope=i.scope,
+                description=i.description,
+                violated=i.invariant_id in violated,
+            )
+            for i in descriptor.invariants
+            if i.invariant_id in evaluated
+        ],
+    )
+
+
+def _validity_view(run: TargetRunEvidence) -> ValidityView | None:
+    if run.validity is None:
+        return None
+    return ValidityView(
+        classification=run.validity.classification.value,
+        faults=[
+            FaultDeliveryView(
+                kind=f.kind,
+                operation=f.operation,
+                occurrence=f.occurrence,
+                trigger_reached=f.trigger_reached,
+                delivered=f.delivered,
+                delivered_at_calls=f.delivered_at_calls,
+            )
+            for f in run.validity.faults
+        ],
+        eligible_fault_kinds=run.validity.eligible_fault_kinds,
+        not_exercised_fault_kinds=run.validity.not_exercised_fault_kinds,
     )
 
 
@@ -763,7 +883,7 @@ def _add_run_finished(line: _Timeline, record: JournalRecord, experiment_id: str
             "run_outcome": run.run_outcome,
             "objective_satisfied": run.oracle.objective_satisfied,
             "invariants_violated": [str(i) for i in run.oracle.invariants_violated],
-            "finding_codes": [f.code.value for f in run.oracle.findings],
+            "finding_codes": [str(f.code) for f in run.oracle.findings],
         },
         experiment_id=experiment_id,
         run_id=run.run_id,
@@ -929,8 +1049,10 @@ def _summary(
     for finding in report.findings:
         codes.extend(c for c in finding.violation_codes if c not in codes)
     usage = report.usage
+    recorded = next((r for r in runs if r.world is not None), None)
     return InvestigationSummary(
         investigation_id=report.investigation_id,
+        world_name=_world(recorded).name if recorded is not None else None,
         mode=mode,
         case=case,
         outcome=_outcome(report, [i.evidence.status for i in loaded]),
@@ -1054,6 +1176,7 @@ def build_bundle(
         runs=runs,
         timeline=line.entries(),
         case_study=case_study,
+        validity=report.validity,
         provenance=Provenance(
             source_report_sha256=sha256_text(report_text),
             source_journal_head_sha256=journal[-1].sha256,

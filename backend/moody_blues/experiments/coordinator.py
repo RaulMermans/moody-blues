@@ -37,8 +37,6 @@ from moody_blues.contracts.agent import (
 )
 from moody_blues.contracts.common import ExecutionStatus
 from moody_blues.contracts.experiment_evidence import (
-    EVIDENCE_SCHEMA_VERSION,
-    EXTERNAL_EVIDENCE_SCHEMA_VERSION,
     TERMINAL_STATES,
     ActionDecision,
     AuthorizedRun,
@@ -57,8 +55,9 @@ from moody_blues.contracts.experiment_evidence import (
     TargetObserved,
     TargetRunEvidence,
     UnresolvedTargetRun,
+    WorldCommittedSummary,
 )
-from moody_blues.contracts.oracle import Verdict
+from moody_blues.contracts.oracle import OracleReport, Verdict
 from moody_blues.contracts.protocol import (
     MAX_EXPERIMENT_CODE_BYTES,
     MAX_STEP_INPUT_BYTES,
@@ -76,7 +75,13 @@ from moody_blues.contracts.protocol import (
     StepInput,
 )
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest, SandboxResult
-from moody_blues.contracts.scenario import FaultKind
+from moody_blues.contracts.scenario import FaultKind, ScenarioBase
+from moody_blues.contracts.world import (
+    CommittedChange,
+    CustomerRecord,
+    WorldChange,
+    WorldRecord,
+)
 from moody_blues.experiments.budget import BudgetExceededError
 from moody_blues.experiments.harness import build_step_program, inspect_run, observe_run
 from moody_blues.experiments.protocol import (
@@ -85,8 +90,9 @@ from moody_blues.experiments.protocol import (
     authorize_run,
     parse_action,
 )
-from moody_blues.experiments.recovery import inspect_worlds
+from moody_blues.experiments.recovery import inspect_worlds, schema_for, unresolved_run
 from moody_blues.experiments.target import TargetPort, TargetRequest, TargetResult
+from moody_blues.experiments.validity import assess_delivery
 from moody_blues.experiments.workspace import (
     EVIDENCE,
     SOURCE,
@@ -95,7 +101,9 @@ from moody_blues.experiments.workspace import (
     sha256_text,
 )
 from moody_blues.sandbox.base import SandboxError, SandboxRunner, SandboxUnavailableError
-from moody_blues.world.scenarios import load_scenario
+from moody_blues.world.crm_plugin import WORLD_TYPE as CRM_WORLD_TYPE
+from moody_blues.world.plugin import WorldPlugin
+from moody_blues.world.registry import plugin_for, provenance, world_plugin
 
 log = logging.getLogger("moody_blues.experiments")
 
@@ -225,6 +233,25 @@ def _sandbox_stop(result: SandboxResult) -> _Stop | None:
             )
 
 
+def _committed(result: TargetResult) -> CommittedSummary | WorldCommittedSummary:
+    """Read back from the report, under the names that world's evidence uses."""
+    seeds = set(result.oracle.observation.seed_ids)
+    state = result.final_state
+    if isinstance(result.oracle, OracleReport):
+        return CommittedSummary(
+            world_id=result.world_id,
+            customers=[r for r in state if isinstance(r, CustomerRecord)],
+            changes=[c for c in result.committed_changes if isinstance(c, CommittedChange)],
+            new_customer_ids=[r.record_id for r in state if r.record_id not in seeds],
+        )
+    return WorldCommittedSummary(
+        world_id=result.world_id,
+        records=[r for r in state if isinstance(r, WorldRecord)],
+        changes=[c for c in result.committed_changes if isinstance(c, WorldChange)],
+        new_record_ids=[r.record_id for r in state if r.record_id not in seeds],
+    )
+
+
 class ExperimentCoordinator:
     def __init__(
         self,
@@ -236,10 +263,21 @@ class ExperimentCoordinator:
         limits: ExperimentLimits | None = None,
         monotonic: Callable[[], float] = time.monotonic,
         allowed_scenarios: tuple[str, ...] = APPROVED_SCENARIOS,
+        world: WorldPlugin | None = None,
     ) -> None:
         if sandbox_limits.network_enabled:
             raise ValueError("experiments never run with networking")
-        self._allowed_scenarios = allowed_scenarios
+        # One coordinator, one world. Chosen here, by trusted code; an experiment names a scenario
+        # and nothing else, and a scenario from any other world is simply not on its list.
+        self._world = world or world_plugin(CRM_WORLD_TYPE)
+        known = set(self._world.scenario_ids())
+        self._allowed_scenarios = (
+            self._world.approved_scenarios()
+            if world is not None and allowed_scenarios == APPROVED_SCENARIOS
+            else allowed_scenarios
+        )
+        if not set(self._allowed_scenarios) <= known:
+            raise ValueError("an allowed scenario does not belong to this coordinator's world")
         self._sandbox = sandbox
         self._target = target
         self._root = root
@@ -299,11 +337,10 @@ class ExperimentCoordinator:
         run_ref, scenario_id = session.target_in_flight
         found = inspect_worlds(session.workspace.worlds_dir, scenario_id)
         session.unresolved.append(
-            UnresolvedTargetRun(
+            unresolved_run(
                 run_ref=run_ref,
                 scenario_id=scenario_id,
-                world_found=found is not None,
-                committed_new_customer_ids=found,
+                found=found,
                 note="the target run raised before reporting; not retried",
             )
         )
@@ -526,7 +563,7 @@ class ExperimentCoordinator:
             )
         return authorize_run(
             action,
-            scenario=load_scenario(action.scenario_id),
+            scenario=self._world.load_scenario(action.scenario_id),
             runs_done=len(session.runs),
             max_runs=self._limits.max_target_runs,
         )
@@ -562,7 +599,7 @@ class ExperimentCoordinator:
             fault_source="scenario"
             if authorized.fault_source == "scenario"
             else "experiment_selection",
-            faults=list(scenario.faults),
+            faults=scenario.fault_list(),
         )
         # Write-ahead: from here until target_run_finished, world effects may exist.
         session.workspace.journal(
@@ -596,7 +633,7 @@ class ExperimentCoordinator:
                 ),
                 None,
             )
-        run = self._record_run(session, run_ref, grant, started_at, result)
+        run = self._record_run(session, run_ref, grant, started_at, result, scenario)
         session.runs.append(run)
         session.target_in_flight = None
         observation = observe_run(run)
@@ -610,13 +647,20 @@ class ExperimentCoordinator:
         grant: AuthorizedRun,
         started_at: datetime,
         result: TargetResult,
+        scenario: ScenarioBase,
     ) -> TargetRunEvidence:
+        plugin = plugin_for(scenario)
         name = f"{run_ref}-{result.run_id}.json"
         report_sha = atomic_write(
             session.workspace.runs_dir / name, json.dumps(result.full_report, indent=2) + "\n"
         )
-        seeds = set(result.oracle.observation.seed_customer_ids)
         faults_delivered = sum(1 for t in result.world_trace if t.fault_injected is not None)
+        committed = _committed(result)
+        selected = (
+            result.external.granted_tools
+            if result.external is not None
+            else list(plugin.descriptor.tools)
+        )
         run = TargetRunEvidence(
             run_ref=run_ref,
             run_id=result.run_id,
@@ -638,14 +682,7 @@ class ExperimentCoordinator:
                 claim=result.claim,
                 termination=result.termination,
             ),
-            committed=CommittedSummary(
-                world_id=result.world_id,
-                customers=result.final_state,
-                changes=result.committed_changes,
-                new_customer_ids=[
-                    c.customer_id for c in result.final_state if c.customer_id not in seeds
-                ],
-            ),
+            committed=committed,
             oracle=result.oracle,
             error=result.error,
             tokens=result.tokens,
@@ -657,6 +694,8 @@ class ExperimentCoordinator:
             report_sha256=report_sha,
             truncated_model_steps=result.truncated_model_steps,
             external=result.external,
+            world=provenance(scenario, selected),
+            validity=assess_delivery(grant.faults, result.world_trace, grant.fault_source),
         )
         session.workspace.journal("target_run_finished", run.model_dump(mode="json"))
         if run.external is not None:
@@ -733,11 +772,8 @@ class ExperimentCoordinator:
         self._transition(session, ExperimentState.FINALIZING)
         check_transition(session.state, stop.status)
         session.state = stop.status
-        external = any(r.external is not None for r in session.runs)
         evidence = ExperimentEvidence(
-            schema_version=EXTERNAL_EVIDENCE_SCHEMA_VERSION
-            if external
-            else EVIDENCE_SCHEMA_VERSION,
+            schema_version=schema_for(session.runs, session.unresolved),
             experiment_id=session.experiment_id,
             parent_investigation_id=session.spec.parent_investigation_id,
             label=session.spec.label,

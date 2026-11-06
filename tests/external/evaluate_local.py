@@ -131,9 +131,9 @@ def _run_view(run: TargetRunEvidence, experiment_dir: Path) -> dict[str, Any]:
         if run.target_observed.claim
         else None,
         "oracle_verdict": run.oracle.verdict.value,
-        "oracle_findings": [f.code.value for f in run.oracle.findings],
+        "oracle_findings": [str(f.code) for f in run.oracle.findings],
         "run_outcome": run.run_outcome,
-        "committed_new": [c for c in run.committed.new_customer_ids],
+        "committed_new": [c for c in run.committed.new_ids],
         "tool_calls": [
             {"name": c["name"], "disposition": c["disposition"], "arguments": c["arguments_json"]}
             for c in agent["tool_calls"]

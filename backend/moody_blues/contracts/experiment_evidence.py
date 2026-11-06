@@ -28,7 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.agent import AgentConfigName, TokenTotals
 from moody_blues.contracts.common import ErrorDetail, ExecutionStatus
-from moody_blues.contracts.oracle import OracleReport
+from moody_blues.contracts.oracle import AnyOracleReport
 from moody_blues.contracts.protocol import (
     ExperimentConclusion,
     Observation,
@@ -36,12 +36,27 @@ from moody_blues.contracts.protocol import (
 )
 from moody_blues.contracts.run import ToolTraceEntry
 from moody_blues.contracts.scenario import FaultSpec
-from moody_blues.contracts.world import CommittedChange, CustomerRecord, FinalClaim
+from moody_blues.contracts.validity import RunValidity
+from moody_blues.contracts.world import (
+    AnyClaim,
+    CommittedChange,
+    CustomerRecord,
+    WorldChange,
+    WorldRecord,
+)
+from moody_blues.contracts.world_plugin import (
+    LEGACY_PLUGIN_VERSION,
+    LEGACY_WORLD_TYPE,
+    WorldProvenance,
+)
 
 # Version 2 is version 1 plus external target runs. A record without one stays at version 1, so
 # nothing written before Sprint 15, and nothing written since by an internal target, changes.
-EVIDENCE_SCHEMA_VERSION = 1
-EXTERNAL_EVIDENCE_SCHEMA_VERSION = 2
+# Version 3 is a record from a world other than the CRM, which earlier readers cannot parse. A CRM
+# record gains optional fields and keeps its version: a reader that ignores them loses nothing.
+EVIDENCE_SCHEMA_VERSION: Literal[1] = 1
+EXTERNAL_EVIDENCE_SCHEMA_VERSION: Literal[2] = 2
+WORLD_EVIDENCE_SCHEMA_VERSION: Literal[3] = 3
 
 
 class ExperimentAuthorship(StrEnum):
@@ -225,7 +240,7 @@ class TargetObserved(BaseModel):
 
     tool_trace: list[ToolTraceEntry]
     faults_delivered: int
-    claim: FinalClaim | None
+    claim: AnyClaim | None
     termination: str
 
 
@@ -238,6 +253,25 @@ class CommittedSummary(BaseModel):
     customers: list[CustomerRecord]
     changes: list[CommittedChange]
     new_customer_ids: list[str]
+
+    @property
+    def new_ids(self) -> list[str]:
+        return self.new_customer_ids
+
+
+class WorldCommittedSummary(BaseModel):
+    """``CommittedSummary`` for a world without customers."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    world_id: str
+    records: list[WorldRecord]
+    changes: list[WorldChange]
+    new_record_ids: list[str]
+
+    @property
+    def new_ids(self) -> list[str]:
+        return self.new_record_ids
 
 
 class TargetRunEvidence(BaseModel):
@@ -267,8 +301,8 @@ class TargetRunEvidence(BaseModel):
     finished_at: datetime
     authorized: AuthorizedRun
     target_observed: TargetObserved
-    committed: CommittedSummary
-    oracle: OracleReport
+    committed: CommittedSummary | WorldCommittedSummary
+    oracle: AnyOracleReport
     error: ErrorDetail | None
     tokens: TokenTotals | None
     inference_latency_ms: int | None
@@ -281,6 +315,17 @@ class TargetRunEvidence(BaseModel):
     truncated_model_steps: int = 0
     # Sprint 15: who ran, on what, under which limits. Left out when absent.
     external: ExternalAgentRecord | None = Field(default=None, exclude_if=lambda v: v is None)
+    # Sprint 18. Absent in earlier records: see ``world_type`` and ``run_validity``.
+    world: WorldProvenance | None = Field(default=None, exclude_if=lambda v: v is None)
+    validity: RunValidity | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @property
+    def world_type(self) -> str:
+        return self.world.world_type if self.world is not None else LEGACY_WORLD_TYPE
+
+    @property
+    def plugin_version(self) -> str:
+        return self.world.plugin_version if self.world is not None else LEGACY_PLUGIN_VERSION
 
     @model_validator(mode="after")
     def _external_is_recorded(self) -> Self:
@@ -299,6 +344,8 @@ class UnresolvedTargetRun(BaseModel):
     world_found: bool
     committed_new_customer_ids: list[str] | None
     note: str
+    # Sprint 18: the same thing for a world without customers. Left out when absent.
+    committed_new_record_ids: list[str] | None = Field(default=None, exclude_if=lambda v: v is None)
     # Sprint 16. Model calls the host wrote down before making them and has no answer for. Each may
     # have run and may be billed. Left out when zero, so earlier records stay byte-identical.
     model_calls_unresolved: int = Field(default=0, ge=0, exclude_if=lambda v: v == 0)
@@ -328,7 +375,7 @@ class ResourceUsage(BaseModel):
 class ExperimentEvidence(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal[1, 2] = EVIDENCE_SCHEMA_VERSION
+    schema_version: Literal[1, 2, 3] = EVIDENCE_SCHEMA_VERSION
     experiment_id: str
     parent_investigation_id: str | None
     label: str
@@ -361,4 +408,7 @@ class ExperimentEvidence(BaseModel):
         external = any(r.external is not None for r in self.target_runs)
         if external and self.schema_version < EXTERNAL_EVIDENCE_SCHEMA_VERSION:
             raise ValueError("an external target run needs schema version 2")
+        other_world = any(r.world_type != LEGACY_WORLD_TYPE for r in self.target_runs)
+        if other_world and self.schema_version < WORLD_EVIDENCE_SCHEMA_VERSION:
+            raise ValueError("a run in another world needs schema version 3")
         return self

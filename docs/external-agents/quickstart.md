@@ -7,7 +7,8 @@ costs money.
 **What this is today.** A local developer workflow: your Python agent runs in a locked-down
 container on your machine, against the synthetic CRM. It is not a hosted service. See
 [what is supported](#what-is-supported). To let a real model on your machine drive your agent, for free, see
-[local models](local-models.md).
+[local models](local-models.md). For an agent that manages jobs rather than customers, see
+[Job Queue World](job-queue-example.md).
 
 ## 1. Set up
 

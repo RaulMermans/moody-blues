@@ -1,0 +1,10 @@
+# Opt-in. Without a host-granted model this agent stops at once.
+protocol = "mb-agent/1"
+agent_id = "acme-queue-llm"
+name = "Acme queue agent (LLM)"
+version = "0.1.0"
+target_type = "llm"
+package = "acme_queue_agent"
+entrypoint = "acme_queue_agent.llm:LlmQueueAgent"
+capabilities = ["tools", "cancellation", "model"]
+scopes = ["queue:read", "queue:write"]

@@ -31,7 +31,7 @@ from moody_blues.contracts.investigation import (
 )
 from moody_blues.contracts.oracle import Severity, Verdict
 from moody_blues.contracts.protocol import InspectionObservation, RejectionCode
-from moody_blues.experiments.harness import PROLOGUE_LINES
+from moody_blues.experiments.harness import PROLOGUE_LINES, chosen_fault_validity
 from moody_blues.experiments.workspace import sha256_text
 
 SHORTFALLS: frozenset[str] = frozenset(
@@ -129,7 +129,7 @@ RECOVERABLE: frozenset[ResultClass] = frozenset(
 
 
 def violation_codes(run: TargetRunEvidence) -> list[str]:
-    return sorted({f.code.value for f in run.oracle.findings if f.severity is Severity.VIOLATION})
+    return sorted({str(f.code) for f in run.oracle.findings if f.severity is Severity.VIOLATION})
 
 
 def python_failure(evidence: ExperimentEvidence) -> tuple[str, int | None] | None:
@@ -210,6 +210,7 @@ def recoverable(evidence: ExperimentEvidence, result: ResultClass) -> bool:
 def _run_facts(run: TargetRunEvidence) -> RunFacts:
     grant, observed, oracle = run.authorized, run.target_observed, run.oracle
     chosen = grant.fault_source == "experiment_selection"
+    validity = chosen_fault_validity(run)
     return RunFacts(
         run_ref=run.run_ref,
         world_ref=grant.scenario_id,
@@ -224,8 +225,8 @@ def _run_facts(run: TargetRunEvidence) -> RunFacts:
         oracle=OracleFacts(
             verdict=oracle.verdict,
             objective_satisfied=oracle.objective_satisfied,
-            invariants_violated=[i.value for i in oracle.invariants_violated],
-            finding_codes=sorted({f.code.value for f in oracle.findings}),
+            invariants_violated=[str(i) for i in oracle.invariants_violated],
+            finding_codes=sorted({str(f.code) for f in oracle.findings}),
             run_outcome=run.run_outcome,
         ),
         target=TargetReportedFacts(
@@ -233,7 +234,9 @@ def _run_facts(run: TargetRunEvidence) -> RunFacts:
             termination=observed.termination,
         ),
         delivered=DeliveredFacts(
-            tool_calls=len(observed.tool_trace), faults_delivered=observed.faults_delivered
+            tool_calls=len(observed.tool_trace),
+            faults_delivered=observed.faults_delivered,
+            fault_validity=validity.value if validity is not None else None,
         ),
         truncated_model_steps=run.truncated_model_steps,
     )
@@ -262,6 +265,8 @@ def _inspection_facts(item: InspectionObservation) -> InspectionFacts:
         new_customers=item.new_customers,
         objective_matching_records=item.objective_matching_records,
         seed_customers=item.seed_customers,
+        new_records=item.new_records,
+        seed_records=item.seed_records,
     )
 
 

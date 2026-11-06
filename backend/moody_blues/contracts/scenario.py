@@ -58,7 +58,7 @@ class FaultEffect(StrEnum):
     NOT_APPLIED_NOTHING_TO_HIDE = "not_applied_nothing_to_hide"
 
 
-# Fault target for ``stale_read``: get_customer and search_customers share one occurrence count.
+# Fault target for ``stale_read``: every read tool of a world shares one occurrence count.
 READ_OPERATION = "read"
 
 PHANTOM_FAILURE_CODES: frozenset[ToolErrorCode] = frozenset(
@@ -78,7 +78,9 @@ class FaultSpec(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     kind: FaultKind
-    operation: Literal[ToolName.CREATE_CUSTOMER, "read"] = ToolName.CREATE_CUSTOMER
+    # Closed on purpose: a fault targets one world's write, or reads. Which of these a scenario
+    # may use is that world's to say (``check_fault_targets``).
+    operation: Literal[ToolName.CREATE_CUSTOMER, "submit_job", "read"] = ToolName.CREATE_CUSTOMER
     occurrence: int = Field(default=1, ge=1, le=1000)
     span: int = Field(default=1, ge=1, le=6)
     error_code: ToolErrorCode = ToolErrorCode.TIMEOUT
@@ -177,7 +179,20 @@ class LogicalClock(BaseModel):
         return value.astimezone(UTC)
 
 
-class Scenario(BaseModel):
+def check_fault_targets(value: list[FaultSpec], *, operations: frozenset[str]) -> list[FaultSpec]:
+    """A world accepts faults on its own operations only, and one fault per execution."""
+    targets = [t for f in value for t in f.targets]
+    if len(targets) != len(set(targets)):
+        raise ValueError("at most one fault may target a given (operation, occurrence)")
+    unknown = sorted({f.operation for f in value} - operations)
+    if unknown:
+        raise ValueError(f"this world has no operation {unknown[0]!r}")
+    return value
+
+
+class ScenarioBase(BaseModel):
+    """What every world's scenario has. Field order is part of ``scenario_sha256``: do not move."""
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal[1] = SCENARIO_SCHEMA_VERSION
@@ -187,6 +202,18 @@ class Scenario(BaseModel):
     description: str = Field(default="", max_length=4000)
     seed: int = Field(default=0, ge=0, le=2**63 - 1)
     clock: LogicalClock = Field(default_factory=LogicalClock)
+
+    @property
+    def ref(self) -> str:
+        return f"{self.scenario_id}@{self.version}"
+
+    def fault_list(self) -> list[FaultSpec]:
+        raise NotImplementedError
+
+
+class Scenario(ScenarioBase):
+    """A CRM world."""
+
     initial_state: InitialState = Field(default_factory=InitialState)
     objective: Objective
     faults: list[FaultSpec] = Field(default_factory=list[FaultSpec], max_length=32)
@@ -195,10 +222,9 @@ class Scenario(BaseModel):
     @field_validator("faults")
     @classmethod
     def _unique_targets(cls, value: list[FaultSpec]) -> list[FaultSpec]:
-        targets = [t for f in value for t in f.targets]
-        if len(targets) != len(set(targets)):
-            raise ValueError("at most one fault may target a given (operation, occurrence)")
-        return value
+        return check_fault_targets(
+            value, operations=frozenset({ToolName.CREATE_CUSTOMER.value, READ_OPERATION})
+        )
 
     @field_validator("invariants")
     @classmethod
@@ -207,6 +233,5 @@ class Scenario(BaseModel):
             raise ValueError("invariants must be a non-empty list without duplicates")
         return value
 
-    @property
-    def ref(self) -> str:
-        return f"{self.scenario_id}@{self.version}"
+    def fault_list(self) -> list[FaultSpec]:
+        return self.faults

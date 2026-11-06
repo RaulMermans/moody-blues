@@ -466,3 +466,26 @@ now checks both sides. All 31 earlier real investigations still verify.
 
 `target_capability` was written for the internal agent and also used for external scripts, so a live model would
 have reasoned about a script as if it were an LLM. External targets now get `external_capability`.
+
+### KI-75: A view's code became a string, and `is` stopped matching
+
+Sprint 18 widened `OracleFindingView.code` to `str`, and `recorded.py` compared it with `is`, so every recorded export was refused
+for lacking a finding it had. `test_committed_export_rebuilds_byte_for_byte_from_source` caught it. Compare codes with `==`: a
+stored code is a plain string in any world.
+
+### KI-76: Copy assumed exactly one record was required
+
+"2 records committed, 1 required", `unsafe_retry` and "exactly one record" were true only of the CRM. In a queue task that permits
+two jobs each would have been false, and a permitted repeat was labeled an unsafe retry. Found by reading the rendered page, not
+by a test. Ask what the objective says, not what the CRM always said.
+
+### KI-77: An effective status can reveal a world's own conditions
+
+`fault_validity` is hidden from the model for built-in faults, but a hypothesis whose status comes back `not_exercised` shows after
+the fact that a built-in fault did not fire. Harmless in development worlds. Any new registered evaluation should decide this
+before its manifest is frozen, and `w-e*` and `w-r*` are already used.
+
+### KI-78: `sdk_version` does not distinguish the SDK before and after `record_id`
+
+The change is additive and existing tests pin `0.1.0`, so the version stayed. `bundle_sha256` identifies exactly what ran. Bump the
+version with the next change an agent can notice.

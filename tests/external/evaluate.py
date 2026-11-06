@@ -70,7 +70,7 @@ CASES: tuple[Case, ...] = (
          check=lambda r: r.external is not None and r.external.exit is not None
          and r.external.exit.killed_by_host),
     Case(10, "Adapter crash", "CreatesThenCrashes", "normal-success", "adapter_crashed",
-         "VIOLATION", check=lambda r: len(r.oracle.observation.new_customer_ids) == 2),
+         "VIOLATION", check=lambda r: len(r.oracle.observation.new_ids) == 2),
     Case(11, "Cancellation during execution", "ObeysCancel", "normal-success", "cancelled",
          "INCONCLUSIVE", cancel_after=1.5),
     Case(12, "Tool quota exceeded", "ExhaustsQuota", "normal-success", "final_claim",

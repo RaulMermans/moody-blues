@@ -36,7 +36,7 @@ def _calls(result: TargetResult) -> list[Any]:
 def test_refused_calls_never_reach_the_gateway(fixture_run: Run) -> None:
     result = fixture_run("BadCalls")
     assert result.world_trace == []
-    assert result.oracle.observation.new_customer_ids == []
+    assert result.oracle.observation.new_ids == []
     assert _calls(result)
     assert all(c.disposition is not D.EXECUTED for c in _calls(result))
 
@@ -60,7 +60,7 @@ def test_a_tool_outside_the_agents_scopes_is_refused(fixture_run: Run) -> None:
     assert result.claim is not None
     assert result.claim.message == D.TOOL_NOT_PERMITTED.value
     assert result.world_trace == []
-    assert result.oracle.observation.new_customer_ids == []
+    assert result.oracle.observation.new_ids == []
     assert result.external is not None
     assert result.external.granted_tools == ["get_customer", "search_customers"]
 
@@ -92,10 +92,8 @@ def test_a_forged_tool_result_ends_the_run_and_commits_nothing(fixture_run: Run)
     assert result.external is not None
     assert result.external.rejection is not None
     assert result.external.rejection.code is AdapterRejectionCode.UNKNOWN_MESSAGE
-    assert (
-        result.final_state == result.final_state[: len(result.oracle.observation.seed_customer_ids)]
-    )
-    assert result.oracle.observation.new_customer_ids == []
+    assert result.final_state == result.final_state[: len(result.oracle.observation.seed_ids)]
+    assert result.oracle.observation.new_ids == []
     assert result.claim is None
 
 

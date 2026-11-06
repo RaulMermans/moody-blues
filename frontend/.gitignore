@@ -47,4 +47,5 @@ next-env.d.ts
 # design lab test output
 /.e2e-design/
 /.e2e-external/
+/.e2e-worlds/
 /test-results-design/
