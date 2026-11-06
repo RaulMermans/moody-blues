@@ -14,7 +14,7 @@ PYTEST  := $(UV) run pytest
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
-        test-hosted
+        test-hosted release release-check
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -182,6 +182,12 @@ ledger-verify: ## Print the spend ledger's hash and totals, or fail if it is cor
 deploy-lint: ## Shellcheck the deploy scripts and validate the Caddyfile (needs Docker; free)
 	docker run --rm -v "$(CURDIR)/infra/vultr:/mnt:ro" -w /mnt koalaman/shellcheck:stable -x -S warning -e SC1091 $(notdir $(wildcard infra/vultr/*.sh)) moody-cli
 	docker run --rm -e MOODY_PUBLIC_HOST=moody.example -v "$(CURDIR)/infra/vultr/config/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+release-check: ## Show what REF= would ship and what is live now (read-only; deploys nothing)
+	infra/vultr/release.sh "$(REF)" --dry-run
+
+release: ## Deploy the commit REF= to the public site, after a typed confirmation, then check it
+	infra/vultr/release.sh "$(REF)"
 
 vultr-plan: ## Show the reviewed plan at live list prices (public API; no key; creates nothing)
 	infra/vultr/provision.sh plan
