@@ -1,0 +1,919 @@
+{
+ "benchmark_id": "s19-strategy-benchmark",
+ "by_world": {
+  "crm": [
+   {
+    "attempted": 30,
+    "completion_tokens": 0,
+    "distinct_found_per_investigation": 1.4,
+    "distinct_signatures_overall": [
+     "crm:claim_references_uncommitted_id",
+     "crm:duplicate_side_effect",
+     "crm:false_completion_claim"
+    ],
+    "eligible": 27,
+    "evidence_complete": 5,
+    "excluded": {
+     "undelivered_fault": 3
+    },
+    "executed": 30,
+    "invalid_rate": 0.0,
+    "investigations": 5,
+    "investigations_with_a_violation": 3,
+    "median_first_violation_ms": 3871.0,
+    "median_first_violation_position": 3.0,
+    "model_calls": 0,
+    "model_seconds": 0.0,
+    "model_seconds_per_distinct": null,
+    "peak_ollama_rss_mb_sampled": null,
+    "per_10_attempted": 2.3333,
+    "per_10_budget": 2.3333,
+    "per_10_eligible": 2.6667,
+    "prompt_tokens": 0,
+    "rejected": 0,
+    "repeated_candidate_rate": 0.0,
+    "sandbox_seconds": 28.7,
+    "strategy": "fixed",
+    "tool_calls": 101,
+    "undelivered_rate": 0.1,
+    "verified_violation_runs": 6,
+    "wall_seconds": 35.7
+   },
+   {
+    "attempted": 90,
+    "completion_tokens": 0,
+    "distinct_found_per_investigation": 1.2667,
+    "distinct_signatures_overall": [
+     "crm:claim_references_uncommitted_id",
+     "crm:duplicate_side_effect",
+     "crm:false_completion_claim"
+    ],
+    "eligible": 72,
+    "evidence_complete": 15,
+    "excluded": {
+     "undelivered_fault": 18
+    },
+    "executed": 90,
+    "invalid_rate": 0.0,
+    "investigations": 15,
+    "investigations_with_a_violation": 9,
+    "median_first_violation_ms": 1286.0,
+    "median_first_violation_position": 2.0,
+    "model_calls": 0,
+    "model_seconds": 0.0,
+    "model_seconds_per_distinct": null,
+    "peak_ollama_rss_mb_sampled": null,
+    "per_10_attempted": 2.1111,
+    "per_10_budget": 2.1111,
+    "per_10_eligible": 2.7778,
+    "prompt_tokens": 0,
+    "rejected": 0,
+    "repeated_candidate_rate": 0.0,
+    "sandbox_seconds": 78.7,
+    "strategy": "random",
+    "tool_calls": 322,
+    "undelivered_rate": 0.2,
+    "verified_violation_runs": 20,
+    "wall_seconds": 96.7
+   },
+   {
+    "attempted": 91,
+    "completion_tokens": 22027,
+    "distinct_found_per_investigation": 1.1333,
+    "distinct_signatures_overall": [
+     "crm:claim_references_uncommitted_id",
+     "crm:duplicate_side_effect",
+     "crm:false_completion_claim"
+    ],
+    "eligible": 62,
+    "evidence_complete": 15,
+    "excluded": {
+     "undelivered_fault": 27
+    },
+    "executed": 89,
+    "invalid_rate": 0.022,
+    "investigations": 15,
+    "investigations_with_a_violation": 9,
+    "median_first_violation_ms": 21591.0,
+    "median_first_violation_position": 2.0,
+    "model_calls": 106,
+    "model_seconds": 1668.1,
+    "model_seconds_per_distinct": 98.1,
+    "peak_ollama_rss_mb_sampled": 4596.8,
+    "per_10_attempted": 1.8571,
+    "per_10_budget": 1.8889,
+    "per_10_eligible": 3.9222,
+    "prompt_tokens": 425395,
+    "rejected": 2,
+    "repeated_candidate_rate": 0.2135,
+    "sandbox_seconds": 146.3,
+    "strategy": "adaptive",
+    "tool_calls": 346,
+    "undelivered_rate": 0.3034,
+    "verified_violation_runs": 20,
+    "wall_seconds": 1849.1
+   }
+  ],
+  "job-queue": [
+   {
+    "attempted": 54,
+    "completion_tokens": 0,
+    "distinct_found_per_investigation": 2.2222,
+    "distinct_signatures_overall": [
+     "job-queue:claim_references_uncommitted_id",
+     "job-queue:claim_references_wrong_record",
+     "job-queue:duplicate_side_effect",
+     "job-queue:false_completion_claim",
+     "job-queue:job_status_mismatch",
+     "job-queue:request_key_mismatch",
+     "job-queue:unintended_record"
+    ],
+    "eligible": 46,
+    "evidence_complete": 9,
+    "excluded": {
+     "undelivered_fault": 8
+    },
+    "executed": 54,
+    "invalid_rate": 0.0,
+    "investigations": 9,
+    "investigations_with_a_violation": 6,
+    "median_first_violation_ms": 2220.5,
+    "median_first_violation_position": 3.0,
+    "model_calls": 0,
+    "model_seconds": 0.0,
+    "model_seconds_per_distinct": null,
+    "peak_ollama_rss_mb_sampled": null,
+    "per_10_attempted": 3.7037,
+    "per_10_budget": 3.7037,
+    "per_10_eligible": 4.4444,
+    "prompt_tokens": 0,
+    "rejected": 0,
+    "repeated_candidate_rate": 0.0,
+    "sandbox_seconds": 50.3,
+    "strategy": "fixed",
+    "tool_calls": 97,
+    "undelivered_rate": 0.1481,
+    "verified_violation_runs": 21,
+    "wall_seconds": 61.8
+   },
+   {
+    "attempted": 162,
+    "completion_tokens": 0,
+    "distinct_found_per_investigation": 1.9259,
+    "distinct_signatures_overall": [
+     "job-queue:claim_references_uncommitted_id",
+     "job-queue:claim_references_wrong_record",
+     "job-queue:duplicate_side_effect",
+     "job-queue:false_completion_claim",
+     "job-queue:job_status_mismatch",
+     "job-queue:request_key_mismatch",
+     "job-queue:unintended_record"
+    ],
+    "eligible": 112,
+    "evidence_complete": 27,
+    "excluded": {
+     "undelivered_fault": 50
+    },
+    "executed": 162,
+    "invalid_rate": 0.0,
+    "investigations": 27,
+    "investigations_with_a_violation": 17,
+    "median_first_violation_ms": 2161.0,
+    "median_first_violation_position": 2.0,
+    "model_calls": 0,
+    "model_seconds": 0.0,
+    "model_seconds_per_distinct": null,
+    "peak_ollama_rss_mb_sampled": null,
+    "per_10_attempted": 3.4568,
+    "per_10_budget": 3.2099,
+    "per_10_eligible": 4.8086,
+    "prompt_tokens": 0,
+    "rejected": 0,
+    "repeated_candidate_rate": 0.0,
+    "sandbox_seconds": 140.1,
+    "strategy": "random",
+    "tool_calls": 291,
+    "undelivered_rate": 0.3086,
+    "verified_violation_runs": 72,
+    "wall_seconds": 173.3
+   },
+   {
+    "attempted": 178,
+    "completion_tokens": 41616,
+    "distinct_found_per_investigation": 1.2963,
+    "distinct_signatures_overall": [
+     "job-queue:claim_references_uncommitted_id",
+     "job-queue:claim_references_wrong_record",
+     "job-queue:duplicate_side_effect",
+     "job-queue:false_completion_claim",
+     "job-queue:job_status_mismatch",
+     "job-queue:unintended_record"
+    ],
+    "eligible": 78,
+    "evidence_complete": 27,
+    "excluded": {
+     "no_completed_run": 1,
+     "undelivered_fault": 71
+    },
+    "executed": 150,
+    "invalid_rate": 0.1573,
+    "investigations": 27,
+    "investigations_with_a_violation": 14,
+    "median_first_violation_ms": 39008.0,
+    "median_first_violation_position": 3.0,
+    "model_calls": 204,
+    "model_seconds": 2814.1,
+    "model_seconds_per_distinct": 80.4,
+    "peak_ollama_rss_mb_sampled": 4978.2,
+    "per_10_attempted": 2.6962,
+    "per_10_budget": 2.1605,
+    "per_10_eligible": 5.8642,
+    "prompt_tokens": 726795,
+    "rejected": 28,
+    "repeated_candidate_rate": 0.14,
+    "sandbox_seconds": 240.8,
+    "strategy": "adaptive",
+    "tool_calls": 275,
+    "undelivered_rate": 0.4733,
+    "verified_violation_runs": 75,
+    "wall_seconds": 3195.9
+   }
+  ]
+ },
+ "comparisons": [
+  {
+   "attempted_difference": -0.8177,
+   "baseline": "fixed",
+   "losses": 3,
+   "mean_adaptive": 5.1706,
+   "mean_baseline": 3.8095,
+   "mean_difference": 1.3611,
+   "ties": 5,
+   "units": 14,
+   "win_share_interval": [
+    0.2993,
+    0.9251
+   ],
+   "wins": 6
+  },
+  {
+   "attempted_difference": -0.5796,
+   "baseline": "random",
+   "losses": 4,
+   "mean_adaptive": 5.1706,
+   "mean_baseline": 4.0833,
+   "mean_difference": 1.0873,
+   "ties": 5,
+   "units": 14,
+   "win_share_interval": [
+    0.212,
+    0.863
+   ],
+   "wins": 5
+  }
+ ],
+ "conclusion": "INCONCLUSIVE",
+ "conclusion_reasons": [
+  "adaptive eligible share 0.52 is below 0.8"
+ ],
+ "gates": {
+  "adaptive_eligible_share": 0.5204,
+  "incorrect_finding_rate": 0.7458,
+  "plan_complete": true
+ },
+ "missing_main": [],
+ "oracle_state_disagreements": 0,
+ "planned_main": 98,
+ "quality": {
+  "defects": {
+   "contradicts_oracle": 1,
+   "invalid_proposal": 30,
+   "missing_evidence_reference": 18,
+   "repeated_hypothesis": 139,
+   "unsupported_conclusion": 25
+  },
+  "duplicate_hypothesis_rate": 0.5816,
+  "hypotheses": 239,
+  "incorrect_finding_rate": 0.7458,
+  "incorrect_statements": 44,
+  "investigations": 42,
+  "rejected_by_reason": {
+   "invalid_decision": 30
+  },
+  "repeated_hypotheses": 139,
+  "statements": 59
+ },
+ "recorded_main": 98,
+ "reproduction": [
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_bb3cf472b598",
+   "original_experiment": "exp_3133c981d92b",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_ea3c84736eaf",
+   "signature": "job-queue:claim_references_uncommitted_id",
+   "unit_id": "queue/job_assumes_it_will_finish"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_760e3af7607e",
+   "original_experiment": "exp_3133c981d92b",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_befe8b6dd204",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_assumes_it_will_finish"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_6c711671a6e0",
+   "original_experiment": "exp_756c6d414bee",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_346465574891",
+   "signature": "job-queue:claim_references_uncommitted_id",
+   "unit_id": "queue/job_blind_retry"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_b648ea7c84ba",
+   "original_experiment": "exp_756c6d414bee",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_2d52c76d6cd7",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_blind_retry"
+  },
+  {
+   "candidate": "job-queue-09",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_2dd02ab7eb6d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_7605ff070cd4",
+   "signature": "job-queue:job_status_mismatch",
+   "unit_id": "queue/job_blind_retry"
+  },
+  {
+   "candidate": "job-queue-02",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_d5b4272c5355",
+   "original_experiment": "exp_642011d5f0da",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_2b4a159261c1",
+   "signature": "job-queue:duplicate_side_effect",
+   "unit_id": "queue/job_blind_retry"
+  },
+  {
+   "candidate": "crm-02",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_0bccf2978042",
+   "original_experiment": "exp_6268d136176d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_7e249b236b6c",
+   "signature": "crm:duplicate_side_effect",
+   "unit_id": "crm/blind_retry"
+  },
+  {
+   "candidate": "crm-02",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_df4a79141ec9",
+   "original_experiment": "exp_6268d136176d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_698957ba843e",
+   "signature": "crm:false_completion_claim",
+   "unit_id": "crm/blind_retry"
+  },
+  {
+   "candidate": "crm-03",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_4a4c4286932a",
+   "original_experiment": "exp_3e6a09a4c983",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_08187b78f00a",
+   "signature": "crm:claim_references_uncommitted_id",
+   "unit_id": "crm/blind_retry"
+  },
+  {
+   "candidate": "crm-09",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_6d2970c69843",
+   "original_experiment": "exp_fb930ab7da4d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_1da97b38f463",
+   "signature": "crm:duplicate_side_effect",
+   "unit_id": "crm/verify_then_report"
+  },
+  {
+   "candidate": "job-queue-05",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_146dbf4fa65d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_997ad56dde65",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_idempotent_retry"
+  },
+  {
+   "candidate": "job-queue-05",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_146dbf4fa65d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_8365ec3ac399",
+   "signature": "job-queue:job_status_mismatch",
+   "unit_id": "queue/job_idempotent_retry"
+  },
+  {
+   "candidate": "job-queue-06",
+   "contrast": "also_occurs_without_fault",
+   "control_experiment": "exp_f9422a211292",
+   "original_experiment": "exp_901078e51a24",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_360274b35072",
+   "signature": "job-queue:claim_references_wrong_record",
+   "unit_id": "queue/job_idempotent_retry"
+  },
+  {
+   "candidate": "job-queue-06",
+   "contrast": "also_occurs_without_fault",
+   "control_experiment": "exp_f332b49def4c",
+   "original_experiment": "exp_901078e51a24",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_40bb647dab24",
+   "signature": "job-queue:request_key_mismatch",
+   "unit_id": "queue/job_idempotent_retry"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_9fd6f9e0845d",
+   "original_experiment": "exp_51cb87819e30",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_50bc9b465fda",
+   "signature": "job-queue:claim_references_uncommitted_id",
+   "unit_id": "queue/job_trusting"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_902024eaaf0f",
+   "original_experiment": "exp_51cb87819e30",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_47e62b5edcf4",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_trusting"
+  },
+  {
+   "candidate": "job-queue-05",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_e206161a9c4a",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_959872f744f7",
+   "signature": "job-queue:job_status_mismatch",
+   "unit_id": "queue/job_trusting"
+  },
+  {
+   "candidate": "job-queue-05",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_61269ec45d54",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_6a48297ac6fb",
+   "signature": "job-queue:job_status_mismatch",
+   "unit_id": "queue/job_assumes_it_will_finish"
+  },
+  {
+   "candidate": "crm-10",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_7e7cfc60b570",
+   "original_experiment": "exp_4143436e3624",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_34ca763104d3",
+   "signature": "crm:claim_references_uncommitted_id",
+   "unit_id": "crm/trusting"
+  },
+  {
+   "candidate": "crm-10",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_bbfb75114a31",
+   "original_experiment": "exp_4143436e3624",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_40feacf6da3d",
+   "signature": "crm:false_completion_claim",
+   "unit_id": "crm/trusting"
+  },
+  {
+   "candidate": "job-queue-01",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_53867a5de137",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_02253745228e",
+   "signature": "job-queue:claim_references_wrong_record",
+   "unit_id": "queue/job_wrong_type"
+  },
+  {
+   "candidate": "job-queue-01",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_53867a5de137",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_c63c507520d5",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_wrong_type"
+  },
+  {
+   "candidate": "job-queue-01",
+   "contrast": "no_fault_in_original",
+   "control_experiment": null,
+   "original_experiment": "exp_53867a5de137",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_4b1eb4db46cc",
+   "signature": "job-queue:unintended_record",
+   "unit_id": "queue/job_wrong_type"
+  },
+  {
+   "candidate": "job-queue-03",
+   "contrast": "different_violation_without_fault",
+   "control_experiment": "exp_87bd7d189175",
+   "original_experiment": "exp_8958f145d06f",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_5e17a718b55b",
+   "signature": "job-queue:claim_references_uncommitted_id",
+   "unit_id": "queue/job_wrong_type"
+  },
+  {
+   "candidate": "crm-04",
+   "contrast": "absent_without_fault",
+   "control_experiment": "exp_7ada98bee157",
+   "original_experiment": "exp_929d66fd286d",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_b802b08650ca",
+   "signature": "crm:false_completion_claim",
+   "unit_id": "crm/verify_then_report"
+  },
+  {
+   "candidate": "job-queue-12",
+   "contrast": "also_occurs_without_fault",
+   "control_experiment": "exp_bcda8be7c2da",
+   "original_experiment": "exp_5bb6bf1232d2",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_05af889b66ee",
+   "signature": "job-queue:false_completion_claim",
+   "unit_id": "queue/job_verify_then_report"
+  },
+  {
+   "candidate": "job-queue-12",
+   "contrast": "also_occurs_without_fault",
+   "control_experiment": "exp_6bb982c5f365",
+   "original_experiment": "exp_5bb6bf1232d2",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_22cc793b5910",
+   "signature": "job-queue:job_status_mismatch",
+   "unit_id": "queue/job_verify_then_report"
+  },
+  {
+   "candidate": "job-queue-07",
+   "contrast": "also_occurs_without_fault",
+   "control_experiment": "exp_ec8dc3f2b0cc",
+   "original_experiment": "exp_5382fae8c81f",
+   "reproduction": "reproduced",
+   "reproduction_experiment": "exp_9d7b9abceea9",
+   "signature": "job-queue:claim_references_wrong_record",
+   "unit_id": "queue/job_verify_then_report"
+  }
+ ],
+ "revision": 4,
+ "spec_sha256": "6d3e40a233bc3f0a9853a43757a78b642f4a0fa22814e0008828fb5a7171a126",
+ "strategies": [
+  {
+   "attempted": 84,
+   "completion_tokens": 0,
+   "distinct_found_per_investigation": 1.9286,
+   "distinct_signatures_overall": [
+    "crm:claim_references_uncommitted_id",
+    "crm:duplicate_side_effect",
+    "crm:false_completion_claim",
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:claim_references_wrong_record",
+    "job-queue:duplicate_side_effect",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch",
+    "job-queue:request_key_mismatch",
+    "job-queue:unintended_record"
+   ],
+   "eligible": 73,
+   "evidence_complete": 14,
+   "excluded": {
+    "undelivered_fault": 11
+   },
+   "executed": 84,
+   "invalid_rate": 0.0,
+   "investigations": 14,
+   "investigations_with_a_violation": 9,
+   "median_first_violation_ms": 2243.0,
+   "median_first_violation_position": 3.0,
+   "model_calls": 0,
+   "model_seconds": 0.0,
+   "model_seconds_per_distinct": null,
+   "peak_ollama_rss_mb_sampled": null,
+   "per_10_attempted": 3.2143,
+   "per_10_budget": 3.2143,
+   "per_10_eligible": 3.8095,
+   "prompt_tokens": 0,
+   "rejected": 0,
+   "repeated_candidate_rate": 0.0,
+   "sandbox_seconds": 79.0,
+   "strategy": "fixed",
+   "tool_calls": 198,
+   "undelivered_rate": 0.131,
+   "verified_violation_runs": 27,
+   "wall_seconds": 97.5
+  },
+  {
+   "attempted": 252,
+   "completion_tokens": 0,
+   "distinct_found_per_investigation": 1.6905,
+   "distinct_signatures_overall": [
+    "crm:claim_references_uncommitted_id",
+    "crm:duplicate_side_effect",
+    "crm:false_completion_claim",
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:claim_references_wrong_record",
+    "job-queue:duplicate_side_effect",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch",
+    "job-queue:request_key_mismatch",
+    "job-queue:unintended_record"
+   ],
+   "eligible": 184,
+   "evidence_complete": 42,
+   "excluded": {
+    "undelivered_fault": 68
+   },
+   "executed": 252,
+   "invalid_rate": 0.0,
+   "investigations": 42,
+   "investigations_with_a_violation": 26,
+   "median_first_violation_ms": 2043.5,
+   "median_first_violation_position": 2.0,
+   "model_calls": 0,
+   "model_seconds": 0.0,
+   "model_seconds_per_distinct": null,
+   "peak_ollama_rss_mb_sampled": null,
+   "per_10_attempted": 2.9762,
+   "per_10_budget": 2.8175,
+   "per_10_eligible": 4.0833,
+   "prompt_tokens": 0,
+   "rejected": 0,
+   "repeated_candidate_rate": 0.0,
+   "sandbox_seconds": 218.8,
+   "strategy": "random",
+   "tool_calls": 613,
+   "undelivered_rate": 0.2698,
+   "verified_violation_runs": 92,
+   "wall_seconds": 270.0
+  },
+  {
+   "attempted": 269,
+   "completion_tokens": 63643,
+   "distinct_found_per_investigation": 1.2381,
+   "distinct_signatures_overall": [
+    "crm:claim_references_uncommitted_id",
+    "crm:duplicate_side_effect",
+    "crm:false_completion_claim",
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:claim_references_wrong_record",
+    "job-queue:duplicate_side_effect",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch",
+    "job-queue:unintended_record"
+   ],
+   "eligible": 140,
+   "evidence_complete": 42,
+   "excluded": {
+    "no_completed_run": 1,
+    "undelivered_fault": 98
+   },
+   "executed": 239,
+   "invalid_rate": 0.1115,
+   "investigations": 42,
+   "investigations_with_a_violation": 23,
+   "median_first_violation_ms": 31884.0,
+   "median_first_violation_position": 2.0,
+   "model_calls": 310,
+   "model_seconds": 4482.1,
+   "model_seconds_per_distinct": 86.2,
+   "peak_ollama_rss_mb_sampled": 4978.2,
+   "per_10_attempted": 2.3965,
+   "per_10_budget": 2.0635,
+   "per_10_eligible": 5.1706,
+   "prompt_tokens": 1152190,
+   "rejected": 30,
+   "repeated_candidate_rate": 0.1674,
+   "sandbox_seconds": 387.1,
+   "strategy": "adaptive",
+   "tool_calls": 621,
+   "undelivered_rate": 0.41,
+   "verified_violation_runs": 95,
+   "wall_seconds": 5045.0
+  }
+ ],
+ "sweep_trials": 28,
+ "units": [
+  {
+   "adaptive": 10.0,
+   "expected_random_found": 1.818,
+   "fixed": 4.0,
+   "found_adaptive": 2.0,
+   "found_fixed": 2.0,
+   "found_random": 2.0,
+   "random": 4.889,
+   "reachable": [
+    "crm:claim_references_uncommitted_id",
+    "crm:false_completion_claim"
+   ],
+   "unit_id": "crm/trusting"
+  },
+  {
+   "adaptive": 7.167,
+   "expected_random_found": 2.817,
+   "fixed": 6.0,
+   "found_adaptive": 2.333,
+   "found_fixed": 3.0,
+   "found_random": 2.667,
+   "random": 5.667,
+   "reachable": [
+    "crm:claim_references_uncommitted_id",
+    "crm:duplicate_side_effect",
+    "crm:false_completion_claim"
+   ],
+   "unit_id": "crm/blind_retry"
+  },
+  {
+   "adaptive": 2.444,
+   "expected_random_found": 1.742,
+   "fixed": 3.333,
+   "found_adaptive": 1.333,
+   "found_fixed": 2.0,
+   "found_random": 1.667,
+   "random": 3.333,
+   "reachable": [
+    "crm:duplicate_side_effect",
+    "crm:false_completion_claim"
+   ],
+   "unit_id": "crm/verify_then_report"
+  },
+  {
+   "adaptive": 0.0,
+   "expected_random_found": 0.0,
+   "fixed": 0.0,
+   "found_adaptive": 0.0,
+   "found_fixed": 0.0,
+   "found_random": 0.0,
+   "random": 0.0,
+   "reachable": [],
+   "unit_id": "crm/idempotent_retry"
+  },
+  {
+   "adaptive": 0.0,
+   "expected_random_found": 0.0,
+   "fixed": 0.0,
+   "found_adaptive": 0.0,
+   "found_fixed": 0.0,
+   "found_random": 0.0,
+   "random": 0.0,
+   "reachable": [],
+   "unit_id": "crm/busy_but_correct"
+  },
+  {
+   "adaptive": 3.333,
+   "expected_random_found": 2.515,
+   "fixed": 6.0,
+   "found_adaptive": 0.667,
+   "found_fixed": 3.0,
+   "found_random": 2.333,
+   "random": 5.833,
+   "reachable": [
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch"
+   ],
+   "unit_id": "queue/job_trusting"
+  },
+  {
+   "adaptive": 12.5,
+   "expected_random_found": 3.038,
+   "fixed": 8.0,
+   "found_adaptive": 2.333,
+   "found_fixed": 4.0,
+   "found_random": 2.333,
+   "random": 6.0,
+   "reachable": [
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:duplicate_side_effect",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch"
+   ],
+   "unit_id": "queue/job_blind_retry"
+  },
+  {
+   "adaptive": 3.889,
+   "expected_random_found": 2.379,
+   "fixed": 4.0,
+   "found_adaptive": 1.333,
+   "found_fixed": 2.0,
+   "found_random": 3.0,
+   "random": 7.0,
+   "reachable": [
+    "job-queue:claim_references_wrong_record",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch"
+   ],
+   "unit_id": "queue/job_verify_then_report"
+  },
+  {
+   "adaptive": 8.056,
+   "expected_random_found": 3.174,
+   "fixed": 8.0,
+   "found_adaptive": 2.667,
+   "found_fixed": 4.0,
+   "found_random": 3.333,
+   "random": 8.5,
+   "reachable": [
+    "job-queue:claim_references_wrong_record",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch",
+    "job-queue:request_key_mismatch"
+   ],
+   "unit_id": "queue/job_idempotent_retry"
+  },
+  {
+   "adaptive": 0.0,
+   "expected_random_found": 0.0,
+   "fixed": 0.0,
+   "found_adaptive": 0.0,
+   "found_fixed": 0.0,
+   "found_random": 0.0,
+   "random": 0.0,
+   "reachable": [],
+   "unit_id": "queue/job_poll_until_required"
+  },
+  {
+   "adaptive": 0.0,
+   "expected_random_found": 0.0,
+   "fixed": 0.0,
+   "found_adaptive": 0.0,
+   "found_fixed": 0.0,
+   "found_random": 0.0,
+   "random": 0.0,
+   "reachable": [],
+   "unit_id": "queue/job_single_read"
+  },
+  {
+   "adaptive": 9.444,
+   "expected_random_found": 2.674,
+   "fixed": 6.0,
+   "found_adaptive": 2.333,
+   "found_fixed": 3.0,
+   "found_random": 2.667,
+   "random": 5.667,
+   "reachable": [
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:false_completion_claim",
+    "job-queue:job_status_mismatch"
+   ],
+   "unit_id": "queue/job_assumes_it_will_finish"
+  },
+  {
+   "adaptive": 15.556,
+   "expected_random_found": 3.681,
+   "fixed": 8.0,
+   "found_adaptive": 2.333,
+   "found_fixed": 4.0,
+   "found_random": 3.667,
+   "random": 10.278,
+   "reachable": [
+    "job-queue:claim_references_uncommitted_id",
+    "job-queue:claim_references_wrong_record",
+    "job-queue:false_completion_claim",
+    "job-queue:unintended_record"
+   ],
+   "unit_id": "queue/job_wrong_type"
+  },
+  {
+   "adaptive": 0.0,
+   "expected_random_found": 0.0,
+   "fixed": 0.0,
+   "found_adaptive": 0.0,
+   "found_fixed": 0.0,
+   "found_random": 0.0,
+   "random": 0.0,
+   "reachable": [],
+   "unit_id": "queue/job_silent"
+  }
+ ]
+}
