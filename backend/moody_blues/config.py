@@ -69,6 +69,15 @@ class Settings(BaseSettings):
         "python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30"
     )
 
+    # Local inference. Never a hosted provider: the address must be loopback, and that is checked
+    # where it is used (``inference/ollama.py``). Nothing here touches the Vultr settings or ledger.
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "qwen3:4b-instruct"
+    # Host-side: the only local models that may be selected, by anyone, for anything.
+    local_model_allowlist: tuple[str, ...] = ("qwen3:4b-instruct",)
+    # Explicit, because it changes what the model does, and recorded with every run.
+    ollama_think: bool = False
+
     # Investigation Explorer. Public reads serve only the committed, hash-pinned bundles.
     # None means the repository defaults (``evidence/recorded`` and ``.artifacts``).
     recorded_evidence_dir: Path | None = None
