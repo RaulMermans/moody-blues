@@ -217,7 +217,9 @@ def bench_limits() -> InvestigationLimits:
         max_model_calls=12,
         max_completion_tokens=2_048,
         reasoning_effort=None,
-        max_prompt_chars=24_000,
+        # Measured: six observations make a closing prompt of about 25,700 characters. Above the
+        # hard limits it would be refused by the local provider, never cut (revision 3).
+        max_prompt_chars=28_000,
         max_refinements=1,
         max_reproductions=0,
         max_wall_seconds=900,
