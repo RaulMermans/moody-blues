@@ -1759,3 +1759,160 @@
     transition: none;
   }
 }
+
+/* Sprint 13. Long recorded text, and the marks that keep reasoning apart from outcomes. */
+.rf-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.rf-clamp[data-open] {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.rf-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--rf-hit);
+  font-size: 0.8125rem;
+  color: var(--rf-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--rf-motion-instant);
+}
+
+.rf-more:hover {
+  color: var(--rf-text);
+}
+
+.rf-why {
+  align-self: flex-start;
+  font-size: 0.875rem;
+}
+
+.rf-stage {
+  scroll-margin-top: var(--rf-space-16);
+}
+
+/* The model's own words: a hairline, so they never read as a recorded outcome. */
+.rf-voice {
+  padding-left: var(--rf-space-3);
+  border-left: 1px solid var(--rf-rule);
+}
+
+.rf-ladder-title,
+.rf-cycle > details:not([open]) .rf-cycle-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.rf-ladder[data-lead] li:not([data-shown]) .rf-ladder-title {
+  color: var(--rf-text-muted);
+}
+
+.rf-ladder li[data-shown] .rf-ladder-title {
+  font-weight: 500;
+}
+
+.rf-identity {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--rf-space-1) var(--rf-space-6);
+}
+
+.rf-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rf-space-3);
+}
+
+.rf-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rf-space-3) var(--rf-space-8);
+  padding-bottom: var(--rf-space-3);
+}
+
+.rf-tally dd {
+  font-family: var(--rf-font-display);
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--rf-text);
+}
+
+.rf-tally [data-verdict="VIOLATION"] dd,
+.rf-tally [data-verdict="VIOLATION"] dt {
+  color: var(--bad);
+}
+
+.rf-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-3);
+  padding-top: var(--rf-space-4);
+  border-top: 1px solid var(--rf-rule);
+}
+
+.rf-status-grid,
+.rf-status-list {
+  display: grid;
+  gap: var(--rf-space-3) var(--rf-space-6);
+}
+
+.rf-status-line {
+  display: flex;
+  align-items: center;
+  gap: var(--rf-space-2);
+  font-size: 0.875rem;
+  color: var(--rf-text);
+}
+
+/* A short settle when a record opens, for orientation. It moves the whole record and nothing else. */
+@keyframes rf-reveal {
+  from {
+    transform: translateY(-3px);
+  }
+}
+
+.rf-step > details[open] > .rf-step-detail,
+.rf-cycle > details[open] > .rf-cycle-body {
+  animation: rf-reveal 140ms ease-out;
+}
+
+@media (min-width: 720px) {
+  .rf-status-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  .rf-status-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .rf-trial-facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  }
+
+  .rf-trial-seal {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-step > details[open] > .rf-step-detail,
+  .rf-cycle > details[open] > .rf-cycle-body {
+    animation: none;
+  }
+
+  .rf-more {
+    transition: none;
+  }
+}

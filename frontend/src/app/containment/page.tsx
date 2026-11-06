@@ -10,10 +10,10 @@ function Attempt({ attempt }: { attempt: ContainmentAttempt }) {
     <li
       data-testid="containment-attempt"
       data-attempt={attempt.attempt_id}
-      className="flex flex-col gap-3 border border-line bg-raised p-4"
+      className="flex flex-col gap-3 border-b border-line py-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="max-w-xl text-sm font-semibold text-foreground">{attempt.attempted}</h3>
+        <h3 className="max-w-3xl text-base font-medium text-foreground">{attempt.attempted}</h3>
         <Tag tone={attempt.held ? "good" : "bad"} testId="attempt-held">
           {attempt.held ? "BLOCKED" : "NOT BLOCKED"}
         </Tag>
@@ -72,17 +72,17 @@ function Report({ report }: { report: ContainmentReport }) {
         </p>
       </section>
       <section className="flex flex-col gap-3" aria-labelledby="attempts">
-        <h2 id="attempts" className="text-lg font-semibold text-foreground">
+        <h2 id="attempts" className="rf-section-title">
           What was attempted
         </h2>
-        <ol className="flex flex-col gap-3">
+        <ol className="flex flex-col border-t border-line">
           {report.attempts.map((attempt) => (
             <Attempt key={attempt.attempt_id} attempt={attempt} />
           ))}
         </ol>
       </section>
       <section className="flex flex-col gap-2" aria-labelledby="limits">
-        <h2 id="limits" className="text-lg font-semibold text-foreground">
+        <h2 id="limits" className="rf-section-title">
           What this does not show
         </h2>
         <ul className="flex list-disc flex-col gap-1 pl-5 text-sm leading-6 text-muted">
@@ -111,10 +111,10 @@ async function Loaded() {
 
 export default function Page() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Containment</h1>
-        <p className="text-sm leading-6 text-muted">
+        <h1 className="rf-page-title">Containment</h1>
+        <p className="rf-lead">
           Model-generated code runs in a disposable container. This page records harmless attempts
           to get out of one, each made for real, and what stopped them. It is a read-only record:
           nothing on this page can run anything.

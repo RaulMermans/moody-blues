@@ -21,6 +21,7 @@ import {
   REPRODUCTION_LABEL,
 } from "@/lib/labels";
 
+import { ClampText } from "./clamp-text";
 import { runHref } from "./reality-view";
 import { Chevron, Code, TableScroll, Tag, VerdictTag } from "./ui";
 
@@ -40,14 +41,16 @@ export function cycleHref(id: string, key: string, runId?: string): string {
 function Stage({
   label,
   source,
+  id,
   children,
 }: {
   label: string;
   source: string;
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="rf-stage" data-stage={label.toLowerCase()}>
+    <section id={id} className="rf-stage" data-stage={label.toLowerCase()}>
       <div className="rf-stage-head">
         <h3>{label}</h3>
         <p>{source}</p>
@@ -66,7 +69,24 @@ function Line({ label, text }: { label: string; text: string }) {
   );
 }
 
-function HypothesisStage({ cycle, fixture }: { cycle: Cycle; fixture: boolean }) {
+/** The reason for a step is recorded with the step before it, so a reader arriving here gets a way back. */
+function ledHere(cycle: Cycle, cycles: Cycle[]): Cycle | undefined {
+  return cycles.find((c) => c.decision.next?.key === cycle.key && c.decision.reason);
+}
+
+function HypothesisStage({
+  id,
+  cycle,
+  from,
+  fixture,
+  runId,
+}: {
+  id: string;
+  cycle: Cycle;
+  from: Cycle | undefined;
+  fixture: boolean;
+  runId?: string;
+}) {
   const hypothesis = cycle.hypothesis;
   if (!hypothesis) {
     return (
@@ -80,8 +100,22 @@ function HypothesisStage({ cycle, fixture }: { cycle: Cycle; fixture: boolean })
     <Stage label="Hypothesis" source={fixture ? "Fixture's proposal, not a finding" : "Model's proposal, not a finding"}>
       {question ? <p className="rf-stage-lead">{question}</p> : null}
       <dl className="rf-stage-list">
-        <Line label="Suspected failure" text={hypothesis.predicted_observation} />
+        <div>
+          <dt className="rf-label">Suspected failure</dt>
+          <dd className="rf-body rf-voice">
+            <ClampText text={hypothesis.predicted_observation} />
+          </dd>
+        </div>
       </dl>
+      {from ? (
+        <Link
+          href={cycleHref(id, from.key, runId).replace(`#${from.key}`, `#decision-${from.key}`)}
+          className="rf-link rf-why"
+          data-testid={`why-${cycle.key}`}
+        >
+          Why this was tried: the decision after {from.hypothesis?.hypothesis_id ?? "the last experiment"}
+        </Link>
+      ) : null}
       <details className="rf-disclose">
         <summary>
           <Chevron /> The full hypothesis
@@ -263,7 +297,7 @@ function DecisionStage({
   const check = assessmentCheck(cycle);
   const citedNote = ADAPTATION_LABEL.cited_prior_observations.note.split(";")[0];
   return (
-    <Stage label="Decision" source="What happened next">
+    <Stage id={`decision-${cycle.key}`} label="Decision" source="The record, then the model's reasoning">
       <p className="rf-stage-lead" data-testid={`decision-${cycle.key}`} data-kind={decision.kind}>
         {decision.title}
       </p>
@@ -277,7 +311,9 @@ function DecisionStage({
                 ? `, citing ${hypothesis.assessment_observations.join(", ")}`
                 : ""}
             </dt>
-            <dd className="rf-body">{hypothesis.assessment_reasoning}</dd>
+            <dd className="rf-body rf-voice">
+              <ClampText text={hypothesis.assessment_reasoning} />
+            </dd>
             {check ? <dd className="rf-body rf-stage-check">{check}</dd> : null}
           </div>
         ) : null}
@@ -287,7 +323,7 @@ function DecisionStage({
               The {author}&apos;s stated reason for the next step
               {decision.reason.cites.length ? `, citing ${decision.reason.cites.join(", ")}` : ""}
             </dt>
-            <dd className="rf-body">{decision.reason.text}</dd>
+            <dd className="rf-body rf-voice">{decision.reason.text}</dd>
             {decision.reason.cites.length ? <dd className="rf-data">{citedNote}.</dd> : null}
           </div>
         ) : null}
@@ -304,12 +340,14 @@ function DecisionStage({
 function CycleItem({
   id,
   cycle,
+  from,
   open,
   fixture,
   runId,
 }: {
   id: string;
   cycle: Cycle;
+  from: Cycle | undefined;
   open: boolean;
   fixture: boolean;
   runId?: string;
@@ -346,9 +384,9 @@ function CycleItem({
           </span>
         </summary>
         <div className="rf-cycle-body">
-          <HypothesisStage cycle={cycle} fixture={fixture} />
+          <HypothesisStage id={id} cycle={cycle} from={from} fixture={fixture} runId={runId} />
           <ExperimentStage cycle={cycle} />
-          <Stage label="Observation" source="What was recorded">
+          <Stage label="Observation" source="Recorded evidence, not the model's words">
             {cycle.trials.map((trial) => (
               <TrialResult key={`${trial.experiment.experiment_id}-${trial.run?.run_id}`} id={id} trial={trial} />
             ))}
@@ -379,6 +417,9 @@ export function InvestigatorView({
   const fixture = detail.summary.investigator_evidence === "offline_fixture";
   return (
     <div className="rf-journey" data-testid="investigator-view">
+      <noscript>
+        <style>{".rf-clamp{display:block;-webkit-line-clamp:unset;overflow:visible}.rf-more{display:none}"}</style>
+      </noscript>
       <section aria-labelledby="journey-title" className="rf-stack">
         <div className="rf-section-head">
           <h2 id="journey-title" className="rf-section-title">
@@ -406,6 +447,7 @@ export function InvestigatorView({
               key={cycle.key}
               id={id}
               cycle={cycle}
+              from={ledHere(cycle, cycles)}
               open={cycle.key === opened}
               fixture={fixture}
               runId={runId}
@@ -420,7 +462,9 @@ export function InvestigatorView({
             {fixture ? "The fixture's conclusion, scripted" : "The model's conclusion"}
           </h2>
           <p className="rf-label">{humanize(detail.conclusion.conclusion)}. An interpretation, checked below.</p>
-          <p className="rf-body rf-measure">{detail.conclusion.reasoning}</p>
+          <div className="rf-body rf-measure rf-voice">
+            <ClampText text={detail.conclusion.reasoning} />
+          </div>
         </section>
       ) : null}
 

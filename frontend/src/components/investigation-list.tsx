@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { ListedInvestigation } from "@/lib/evidence-types";
-import { CASE_LABEL, formatDuration, formatUsd, humanize, STRATEGY_LABEL } from "@/lib/labels";
+import { CASE_LABEL, formatDuration, formatUsd, humanize, OUTCOME_LABEL, STRATEGY_LABEL } from "@/lib/labels";
 
 import { ModeTag, OutcomeTag, Tag } from "./ui";
 
@@ -10,7 +10,7 @@ function Corrupt({ item }: { item: ListedInvestigation }) {
     <li
       data-testid={`investigation-${item.investigation_id}`}
       data-integrity="corrupt"
-      className="flex flex-col gap-1 px-4 py-4"
+      className="flex flex-col gap-1 py-4"
     >
       <div className="flex flex-wrap items-center gap-2">
         <Tag tone="warn">Failed verification</Tag>
@@ -37,11 +37,13 @@ function Row({ item }: { item: ListedInvestigation }) {
       data-testid={`investigation-${item.investigation_id}`}
       data-integrity="verified"
       data-outcome={summary.outcome}
-      className="group relative px-4 py-4 hover:bg-raised"
+      className="group relative py-4"
     >
       <div className="flex flex-wrap items-center gap-2">
         <OutcomeTag outcome={summary.outcome} />
-        {summary.case ? <Tag>{CASE_LABEL[summary.case.kind]}</Tag> : null}
+        {summary.case && CASE_LABEL[summary.case.kind] !== OUTCOME_LABEL[summary.outcome] ? (
+          <Tag>{CASE_LABEL[summary.case.kind]}</Tag>
+        ) : null}
         <ModeTag mode={summary.mode} />
       </div>
       <h3 className="mt-2 text-base font-medium text-foreground">
@@ -92,7 +94,7 @@ export function InvestigationListView({ items }: { items: ListedInvestigation[] 
   return (
     <ul
       aria-label="Investigations"
-      className="divide-y divide-line overflow-hidden border border-line bg-surface"
+      className="divide-y divide-line border-y border-line"
     >
       {items.map((item) => (
         <Row key={item.investigation_id} item={item} />

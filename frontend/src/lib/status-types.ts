@@ -41,3 +41,17 @@ export type SystemStatus =
       checkedAt: string;
       error: string;
     };
+
+/** The only status a browser receives. See public-status.ts. */
+export type PublicStatus =
+  | {
+      backend: "connected";
+      checkedAt: string;
+      version: string;
+      readiness: ReadinessResponse["status"];
+      integrations: { name: string; state: IntegrationState }[];
+    }
+  | {
+      backend: "unreachable";
+      checkedAt: string;
+    };
