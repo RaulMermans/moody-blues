@@ -1,7 +1,7 @@
 # Sprint 18: Pluggable Truth Oracle and multi-world reliability testing
 
-- **Branch:** `sprint/18-pluggable-truth-oracle`, from `origin/main` at `e44393a` (PR #24). Committed locally: not pushed, merged
-  or deployed.
+- **Branch:** `sprint/18-pluggable-truth-oracle`, from `origin/main` at `e44393a` (PR #24). Pushed to `origin` at the owner's request. Not
+  merged or deployed.
 - **Worked in:** `~/dev/Moody-Blues`, as the brief says.
 - **Outcome:** two genuinely different synthetic environments now run through one coordinator, gateway pipeline, fault boundary,
   Oracle path and evidence format, with independent world-specific verification. The CRM is unchanged, by measurement.
@@ -38,7 +38,7 @@ Decision: [ADR 0015](../adr/0015-world-plugins.md). Contract: [world plugins](..
 | C18-H Evidence Integrity | **PASS** | Provenance complete, verification and tampering in both worlds, history unwritten |
 | C18-I Product Experience | **PASS** | 16 Playwright tests on real-container evidence. No CRM word on any view of a queue run |
 | C18-J Regression and Security | **PASS** | Below |
-| C18-K Release Safety | **PASS** | No push, merge, deploy, paid inference, spending change or production change. See the correction below |
+| C18-K Release Safety | **PASS** | No unauthorized push, and no merge, deploy, paid inference, spending change or production change. See the correction below |
 
 ## Regression, final code
 
