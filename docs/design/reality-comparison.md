@@ -74,10 +74,12 @@ When no rule fits, the sentence gets narrower, and the ledger and Timeline remai
 Four facts stay separate: **fault delivered**, **violation observed**, **causal evidence**, and whether
 causality stands. The "Why did it happen?" answer gives the recorded order and says it does not show why.
 
-The page says "None in this record" for causal evidence. That wording is exact and deliberate. The Sprint 6
+The page says "None in this record" for causal evidence, with a link to what a verdict does not show. That wording
+is exact and deliberate. The Sprint 6
 follow-up study does hold a clean contrast for this failure (`full/baseline` against `clean/baseline`, 3/3 and 0/3,
 `causal_evidence_supports_fault`), but that result is not in the investigation bundle, and the UI never holds
-a result. Showing it needs the export to carry it, which is backend work. Reproduction ("4 of 4 eligible reruns")
+a result. Showing it needs the export to carry it, which is backend work:
+[proposal](investigation-experience.md#causal-evidence). Reproduction ("4 of 4 eligible reruns")
 is shown on the primary run only, and it is labeled as not being a control.
 
 ## Navigation

@@ -30,7 +30,7 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
-| `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`) |
+| `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`, `journey.ts`) |
 | `frontend/src/app/design-lab/` | Local specimen page. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |

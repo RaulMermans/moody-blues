@@ -70,6 +70,22 @@ The contract has three Oracle verdicts. `FAILED` and `UNVERIFIED` are not verdic
 A `verdict` carries an optional `qualifier`: `state_correct_claim_missing` is an Oracle PASS, so it renders PASS
 with "State correct, but no valid claim. Not a success." beneath it. An impaired run says so the same way.
 
+## Journey rules
+
+`design/journey.ts` is to the Investigator and Timeline what `story.ts` is to the Comparison: pure functions over typed
+evidence, with no model and no reading of recorded text.
+
+| Function | Gives | May never |
+|---|---|---|
+| `cyclesFrom` | One cycle per hypothesis, then programs with none | Drop or reorder a recorded hypothesis, proposal or run |
+| `Decision` | What happened next, and the recorded reason if there is one | Supply a reason the record lacks |
+| `assessmentCheck` | What the Oracle recorded beside the model's reading | Treat a model status as a verdict |
+| `timelineNodes` | Milestones in place, with records folded between them | Move a record |
+| `explainEvent` | One sentence on what an event is and how far to trust it | State a motive or a cause |
+
+Layout classes are `rf-cycle`, `rf-stage`, `rf-trial`, `rf-step`, `rf-trace-group`, `rf-ladder` and `rf-answers`. They
+add no tokens. Sprint 12 added one component, `OverviewView`, and one prop, `className` on `Fact`.
+
 ## Styles
 
 `styles/tokens.css` and `styles/primitives.css` are imported by `app/globals.css`, so every screen shares them.

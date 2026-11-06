@@ -1748,6 +1748,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .rf-cycle > details > summary,
+  .rf-ladder a,
+  .rf-step > details > summary,
   .rf-link,
   .rf-call summary,
   .rf-run,
