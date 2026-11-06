@@ -115,7 +115,7 @@ def test_stale_read_outlasted_by_polling_passes(tmp_path: Path) -> None:
         t.delivered.data == {"job_id": t.delivered.data["job_id"], "status": "queued"}
         for t in stale
         if t.delivered.data
-    )  # noqa: E501
+    )
 
 
 def test_stale_read_believed_is_inconclusive_not_a_violation(tmp_path: Path) -> None:
@@ -282,9 +282,11 @@ def test_a_verifier_that_cannot_read_is_an_error_never_a_verdict(tmp_path: Path)
 
 
 def test_a_crm_claim_is_refused_by_the_queue_verifier(tmp_path: Path) -> None:
-    with JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world:
-        with pytest.raises(OracleVerificationError):
-            verify_world(world, FinalClaim(status=ClaimStatus.COMPLETED))
+    with (
+        JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world,
+        pytest.raises(OracleVerificationError),
+    ):
+        verify_world(world, FinalClaim(status=ClaimStatus.COMPLETED))
 
 
 def test_stored_reports_of_the_two_worlds_never_parse_as_each_other(tmp_path: Path) -> None:
@@ -402,17 +404,21 @@ def test_two_worlds_share_nothing(tmp_path: Path) -> None:
 
 
 def test_the_read_only_view_cannot_write(tmp_path: Path) -> None:
-    with JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world:
-        with world.view() as view, pytest.raises(sqlite3.OperationalError):
-            view._conn.execute("DELETE FROM jobs")  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    with (
+        JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world,
+        world.view() as view,
+        pytest.raises(sqlite3.OperationalError),
+    ):
+        view._conn.execute("DELETE FROM jobs")  # pyright: ignore[reportPrivateUsage]
 
 
 def test_the_transition_journal_is_append_only(tmp_path: Path) -> None:
     store = JobStore.initialize(tmp_path / "q.sqlite3", meta={"world_id": "wld_test"})
-    with pytest.raises(sqlite3.IntegrityError), store.transaction() as conn:
+    with store.transaction() as conn:
         conn.execute(
             "INSERT INTO job_transitions (job_id, to_status, at_call) VALUES ('j','queued',0)"
         )
+    with pytest.raises(sqlite3.IntegrityError), store.transaction() as conn:
         conn.execute("DELETE FROM job_transitions")
     store.close()
 
@@ -470,6 +476,8 @@ def test_nothing_about_a_customer_reaches_a_job_target() -> None:
 def test_execute_in_world_runs_only_this_worlds_scripts(tmp_path: Path) -> None:
     from moody_blues.services.world_runner import UnknownExecutorError
 
-    with JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world:
-        with pytest.raises(UnknownExecutorError):
-            execute_in_world(world, "verify_then_report")  # the CRM's script
+    with (
+        JobWorld(scenario("jq-normal"), root_dir=tmp_path) as world,
+        pytest.raises(UnknownExecutorError),
+    ):
+        execute_in_world(world, "verify_then_report")  # the CRM's script
