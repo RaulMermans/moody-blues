@@ -26,6 +26,7 @@ firewall group and by ufw.
 | `infra/vultr/plan.env` | | The reviewed plan and region |
 | `infra/vultr/provision.sh` | laptop | `plan`, `apply`, `status`, `destroy` |
 | `infra/vultr/bootstrap.sh` | VM, once | Packages, users, Docker, firewall, SSH, pinned image |
+| `infra/vultr/release.sh` | laptop | `make release REF=<commit>`: the way to deploy. Confirms, ships that commit through `deploy.sh`, checks the public site |
 | `infra/vultr/deploy.sh` | laptop | Ships the committed HEAD and builds it |
 | `infra/vultr/remote-switch.sh` | VM | Switches release, proves it serves, goes back on failure |
 | `infra/vultr/rollback.sh` | laptop | Returns to the previous release |
