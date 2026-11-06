@@ -53,6 +53,9 @@ export function modeNote(summary: { mode: ExecutionMode; target_model: string })
   if (summary.mode === "rehearsal" && externalAgent(summary)) {
     return "Real sandboxes, world and Oracle. A fixture chose the tests, and an external agent ran them.";
   }
+  if (summary.mode === "live" && externalAgent(summary)) {
+    return "A real model chose the tests, and an external agent ran them, started by an operator.";
+  }
   return MODE_NOTE[summary.mode];
 }
 

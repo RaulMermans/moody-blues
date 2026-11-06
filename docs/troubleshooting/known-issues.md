@@ -425,3 +425,20 @@ it. The SDK now flushes and calls `os._exit(0)`, and the evidence test asserts e
 
 **Found in Sprint 15.** Seeding evidence at the top of a Playwright config ran it again in each worker,
 under a running server. Seed in `globalSetup`, and read seeded files inside tests, not at module level.
+
+### KI-68: The model broker had only met a polite provider
+
+A reused `call_id` reached the provider twice, failed calls did not count against the budget, the SDK client
+silently resent ambiguous requests, and a 120 s client timeout could hold a 60 s run open past cancel. All were
+invisible because the only provider it had met answered at once. Fixed in Sprint 16.
+`tests/external/test_model_boundary.py`.
+
+### KI-69: A run whose only model call failed read as scripted
+
+`evidence_source` came from answers delivered, so a provider that was asked, and may bill, left no trace of a model.
+A Sprint 15 test asserted this. It now comes from requests that reached a provider.
+
+### KI-70: The Investigator was told every target was an LLM
+
+`target_capability` was written for the internal agent and also used for external scripts, so a live model would
+have reasoned about a script as if it were an LLM. External targets now get `external_capability`.

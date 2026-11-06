@@ -29,6 +29,10 @@ export interface ExternalTarget {
   execution_mode: string;
   bundle_sha256: string;
   transcript_sha256: string;
+  /** Requests that reached a provider, as the host recorded them. */
+  model_calls: number;
+  /** No answer to trust: each may have run, and may be billed. */
+  model_calls_uncertain: number;
 }
 
 export interface BoundedText {

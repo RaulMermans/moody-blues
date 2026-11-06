@@ -15,6 +15,7 @@ from moody_blues_sdk import (
     ExecutionContext,
     ModelReply,
     ModelUnavailable,
+    ToolCallTimeout,
     ToolClient,
 )
 
@@ -30,14 +31,33 @@ def _tool_turn(reply: ModelReply) -> dict[str, Any]:
     return {"role": "assistant", "content": reply.content, "tool_calls": list(reply.tool_calls)}
 
 
+def _report_text(content: str | None) -> str:
+    """Models often wrap the object in prose or a code fence. The object is what was asked for."""
+    text = content or ""
+    return text[text.find("{") : text.rfind("}") + 1]
+
+
 def _final(reply: ModelReply) -> AgentResult:
     try:
-        report = json.loads(reply.content or "")
+        report = json.loads(_report_text(reply.content))
         status = report["status"]
     except (ValueError, KeyError, TypeError):
         return AgentResult.failed("model_output", message="the model gave no final report")
     build = AgentResult.completed if status == "completed" else AgentResult.not_completed
     return build(customer_id=report.get("customer_id"), message=str(report.get("message", "")))
+
+
+def _use_tool(tools: ToolClient, call: dict[str, Any]) -> Any:
+    """Once. What came back goes to the model, which decides what it means."""
+    try:
+        arguments = json.loads(call["arguments_json"] or "{}")
+    except ValueError:
+        return {"error": "invalid_json_arguments"}
+    try:
+        result = tools.call_with(call["name"], arguments)
+    except ToolCallTimeout:
+        return {"error": "no_reply", "note": "the call may still have taken effect"}
+    return result.data if result.ok else {"error": result.error_code}
 
 
 class LlmAgent(AgentAdapter):
@@ -62,9 +82,11 @@ class LlmAgent(AgentAdapter):
                 return _final(reply)
             messages.append(_tool_turn(reply))
             for call in reply.tool_calls:
-                result = tools.call(call["name"], **json.loads(call["arguments_json"] or "{}"))
-                body = result.data if result.ok else {"error": result.error_code}
                 messages.append(
-                    {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(body)}
+                    {
+                        "role": "tool",
+                        "tool_call_id": call["id"],
+                        "content": json.dumps(_use_tool(tools, call)),
+                    }
                 )
         return AgentResult.failed("model_output", message=f"no report after {MAX_TURNS} turns")

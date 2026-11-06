@@ -17,6 +17,7 @@ exist and nothing else: built-in faults, seed contents and any expected outcome 
 from __future__ import annotations
 
 from moody_blues.agents.tooling import FINAL_CLAIM_TOOL
+from moody_blues.contracts.adapter import AgentManifest
 from moody_blues.contracts.agent import AgentConfigName
 from moody_blues.contracts.investigation import (
     TargetCapability,
@@ -69,6 +70,19 @@ PERTURBATIONS: tuple[str, ...] = (
 )
 
 
+EXTERNAL_MISSION = (
+    "The target is an externally implemented {nature}, reached over a fixed protocol. You know "
+    "nothing about how it works beyond what the runs show. Its mission in each world: create "
+    "exactly one customer with given attributes, verify that the customer exists, then report "
+    "whether it completed the task. An action's `config` is required by the protocol and has no "
+    'effect on this target: always pass "baseline".'
+)
+_EXTERNAL_NATURE = {
+    "scripted": "program that declares itself a fixed script",
+    "llm": "agent that declares itself model-driven; any model it uses is reached through the host",
+}
+
+
 def tier_of(world_id: str) -> WorldTier:
     for tier, worlds in WORLD_TIERS.items():
         if world_id in worlds:
@@ -102,4 +116,24 @@ def target_capability(world_ids: tuple[str, ...]) -> TargetCapability:
         configs=list(AgentConfigName),
         perturbations=list(PERTURBATIONS),
         worlds=world_cards(world_ids),
+    )
+
+
+def external_capability(
+    manifest: AgentManifest, granted_tools: list[str], world_ids: tuple[str, ...]
+) -> TargetCapability:
+    """What may be known about an external target, from its registration and the host's grant.
+
+    Only fixed strings and the host's own tool list: nothing an agent wrote reaches the model, not
+    even its display name. Tools it was not granted are left out, because it cannot call them.
+    """
+    internal = target_capability(world_ids)
+    return internal.model_copy(
+        update={
+            "mission": EXTERNAL_MISSION.format(nature=_EXTERNAL_NATURE[manifest.target_type.value]),
+            "tools": [
+                t for t in internal.tools if t.name in granted_tools or t.name == FINAL_CLAIM_TOOL
+            ],
+            "configs": [AgentConfigName.BASELINE],
+        }
     )

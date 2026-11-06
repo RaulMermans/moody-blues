@@ -178,6 +178,18 @@ model calls and 30,000 tokens and reserved in the ledger first. It has only been
 labeled fixture, never a live provider. A run is called an LLM run only if the host really brokered
 a model call during it, whatever the manifest says.
 
+## Investigate it
+
+`external-run` tests your agent. To put the Investigator's workflow on it, with a validated selection:
+
+```bash
+export MOODY_ARTIFACTS_DIR=$(mktemp -d)
+make external-investigate TARGET=external_scripted MANIFEST=my-agent/my.agent.toml
+```
+
+Use `TARGET=external_llm` for an agent that uses a model. Offline, a labeled fixture answers its calls. See the
+[LLM adapter guide](llm-adapter-guide.md) and the [Investigator guide](investigator-integration.md).
+
 ## What is supported
 
 | | |

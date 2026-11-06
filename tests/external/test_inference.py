@@ -179,7 +179,7 @@ def test_a_provider_failure_reaches_the_agent_as_a_refusal_and_keeps_usage_incom
             provider="fixture",
             model="m",
             max_model_calls=2,
-            max_total_tokens=100,
+            max_total_tokens=5_000,  # room for the worst case, so the call reaches the provider
             max_completion_tokens=64,
         ),
         ledger=None,
@@ -190,8 +190,10 @@ def test_a_provider_failure_reaches_the_agent_as_a_refusal_and_keeps_usage_incom
     assert result.external is not None
     assert result.external.final is not None
     assert result.external.final.error_class == "model_unavailable"
-    # No call returned, so nothing shows a model was used.
-    assert result.evidence_source == "external_scripted"
+    # Sprint 16: no call returned, but a provider was asked and may bill for it, so this is not a
+    # scripted run. Sprint 15 asserted the opposite, which hid a possibly charged request.
+    assert result.evidence_source == "offline_fixture"
+    assert result.external.model_calls == 1
 
 
 class Ledger:

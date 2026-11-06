@@ -29,6 +29,8 @@ SUPPORTED_PROTOCOLS: tuple[str, ...] = (ADAPTER_PROTOCOL,)
 MAX_AGENT_MESSAGE_BYTES = 65_536  # one line from the agent
 MAX_BUNDLE_BYTES = 4_000_000
 MAX_EVIDENCE_REFS = 64
+# Beside the world: what the host wrote down before asking a provider, for recovery to read.
+MODEL_INTENTS_SUFFIX = ".model-calls.jsonl"
 MAX_STDERR_EXCERPT_CHARS = 500
 
 AgentId = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{2,63}$")]
@@ -257,7 +259,11 @@ class AdapterEventKind(StrEnum):
     TOOL_REQUEST_ACCEPTED = "tool_request_accepted"
     TOOL_REQUEST_REJECTED = "tool_request_rejected"
     TOOL_RESPONSE_DELIVERED = "tool_response_delivered"
+    MODEL_REQUEST_ACCEPTED = "model_request_accepted"
+    MODEL_REQUEST_REJECTED = "model_request_rejected"
     MODEL_CALL_BROKERED = "model_call_brokered"
+    MODEL_CALL_FAILED = "model_call_failed"
+    MODEL_CALL_UNCERTAIN = "model_call_uncertain"
     MESSAGE_REJECTED = "message_rejected"
     EXECUTION_COMPLETED = "execution_completed"
     EXECUTION_CANCELLED = "execution_cancelled"
@@ -306,6 +312,53 @@ class AdapterExit(BaseModel):
     untrusted_stderr_excerpt: str = Field(max_length=MAX_STDERR_EXCERPT_CHARS)
 
 
+class ModelCallStatus(StrEnum):
+    """What became of one ``model_call``, as the host saw it."""
+
+    COMPLETED = "completed"  # an answer was delivered to the agent
+    REJECTED = "rejected"  # refused before any provider was asked; nothing can be billed
+    FAILED = "failed"  # the provider refused it
+    MALFORMED = "malformed"  # the provider answered with something unusable; never delivered
+    UNCERTAIN = "uncertain"  # no answer the host can trust: it may have run, and may be billed
+
+
+# Reached a provider, so these make a run a model run, and may cost money.
+MODEL_ATTEMPTED: frozenset[ModelCallStatus] = frozenset(
+    {
+        ModelCallStatus.COMPLETED,
+        ModelCallStatus.FAILED,
+        ModelCallStatus.MALFORMED,
+        ModelCallStatus.UNCERTAIN,
+    }
+)
+
+
+class ModelCallRecord(BaseModel):
+    """One brokered request. Written by the host, from what the host did.
+
+    ``request_id`` is the host's and stable for the run; ``call_id`` is the agent's word. Hashes
+    stand in for the text: the conversation is the agent's, and may hold anything.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    request_id: str
+    call_id: str
+    status: ModelCallStatus
+    code: str | None = None  # why, for anything but ``completed``
+    provider: str | None = None
+    model: str | None = None  # the approved model, set by the host
+    reported_model: str | None = None  # what the provider said it ran
+    response_id: str | None = None
+    finish_reason: str | None = None
+    prompt_bytes: int = Field(ge=0)
+    prompt_sha256: str
+    response_sha256: str | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    latency_ms: int | None = None
+
+
 class ExternalAgentRecord(BaseModel):
     """Provenance of one external run. ``declared_target_type`` is the agent's word for it;
     ``model_calls`` is what the host saw, and only that can make a run an LLM run."""
@@ -338,3 +391,7 @@ class ExternalAgentRecord(BaseModel):
     transcript_sha256: str
     transcript_lines: int
     events: list[AdapterEvent]
+    # Sprint 16. Absent from earlier records and left out when empty, so those stay byte-identical.
+    model_requests: list[ModelCallRecord] = Field(
+        default_factory=list[ModelCallRecord], exclude_if=lambda v: not v
+    )

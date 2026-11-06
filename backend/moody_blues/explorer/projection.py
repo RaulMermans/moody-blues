@@ -16,6 +16,7 @@ from typing import cast
 
 from pydantic import JsonValue, ValidationError
 
+from moody_blues.contracts.adapter import ModelCallStatus
 from moody_blues.contracts.agent import AgentRunReport
 from moody_blues.contracts.experiment_evidence import (
     ExperimentAuthorship,
@@ -310,6 +311,10 @@ def _external_view(run: TargetRunEvidence) -> ExternalTargetView | None:
         execution_mode=record.environment.execution_mode if record.environment else "not_started",
         bundle_sha256=record.bundle_sha256,
         transcript_sha256=record.transcript_sha256,
+        model_calls=record.model_calls,
+        model_calls_uncertain=sum(
+            r.status is ModelCallStatus.UNCERTAIN for r in record.model_requests
+        ),
     )
 
 

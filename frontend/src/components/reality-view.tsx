@@ -102,7 +102,10 @@ export function targetLabel(run: RealityRun): string {
   if (run.external) {
     const name = run.external.name;
     if (run.target_evidence === "live_provider") {
-      return `Target: ${name}, external agent using ${run.reported_models.join(", ")}`;
+      const models = run.reported_models.join(", ");
+      return models
+        ? `Target: ${name}, external agent using ${models}`
+        : `Target: ${name}, external agent whose model calls never returned`;
     }
     if (run.target_evidence === "external_scripted") return `Target: ${name}, external script, not a model`;
     return `Target: ${name}, external agent on an offline fixture, not a model`;

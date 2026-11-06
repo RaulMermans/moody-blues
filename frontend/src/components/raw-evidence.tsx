@@ -34,6 +34,8 @@ export function RawEvidence({ detail, run }: { detail: InvestigationDetail; run:
               <Fact label="external_agent">{`${run.external.name} (${run.external.agent_id}@${run.external.agent_version})`}</Fact>
               <Fact label="adapter_protocol">{run.external.protocol}</Fact>
               <Fact label="execution_mode">{run.external.execution_mode}</Fact>
+              <Fact label="model_calls_brokered">{String(run.external.model_calls)}</Fact>
+              <Fact label="model_calls_uncertain">{String(run.external.model_calls_uncertain)}</Fact>
               <Fact label="bundle_sha256">{run.external.bundle_sha256}</Fact>
               <Fact label="transcript_sha256">{run.external.transcript_sha256}</Fact>
             </>

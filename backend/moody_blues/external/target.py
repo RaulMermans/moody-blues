@@ -25,6 +25,7 @@ from moody_blues.contracts.adapter import (
     ADAPTER_PROTOCOL,
     MAX_AGENT_MESSAGE_BYTES,
     MAX_STDERR_EXCERPT_CHARS,
+    MODEL_INTENTS_SUFFIX,
     AdapterEnvironment,
     AdapterEvent,
     AdapterEventKind,
@@ -70,7 +71,7 @@ class LiveInference:
     ledger: SpendPort | None
 
 
-def _granted_specs(bundle: AgentBundle) -> list[ToolSpec]:
+def granted_specs(bundle: AgentBundle) -> list[ToolSpec]:
     """The manifest's scopes against the host's tools, never the other way round."""
     allowed = {tool for scope in bundle.manifest.scopes for tool in _SCOPE_TOOLS[scope]}
     return [s for s in agent_tool_specs() if s.name in allowed]
@@ -251,7 +252,7 @@ class ExternalAgentTarget:
             limits=self._limits,
             granted_tools=[t.name for t in context.tools],
             granted_scopes=context.scopes,
-            model_calls=len(outcome.model_steps),
+            model_calls=outcome.model_attempts,
             startup_ms=outcome.startup_ms,
             wall_ms=wall_ms,
             exit=_exit_record(outcome),
@@ -262,11 +263,15 @@ class ExternalAgentTarget:
             transcript_sha256=outcome.transcript_sha256,
             transcript_lines=outcome.transcript_lines,
             events=outcome.events,
+            model_requests=outcome.model_requests,
         )
 
     def _evidence(self, outcome: DriverOutcome) -> ExternalEvidenceSource:
-        """Only a model call the host itself brokered can make this an LLM run."""
-        if self._live is None or not outcome.model_steps:
+        """Only a model call the host itself brokered can make this an LLM run.
+
+        One that failed still counts: a provider was asked, and it may be billed.
+        """
+        if self._live is None or outcome.model_attempts == 0:
             return "external_scripted"
         return self._live.broker.evidence
 
@@ -284,6 +289,7 @@ class ExternalAgentTarget:
         specs: list[ToolSpec],
         limits: AdapterLimits,
     ) -> tuple[DriverOutcome, AdapterEnvironment | None, ErrorDetail | None]:
+        intents = request.world_root / f"{context.run_id}{MODEL_INTENTS_SUFFIX}"
         try:
             session = self._runner.open_session(
                 SandboxRequest(code=self._bundle.bootstrap, limits=self._sandbox_limits),
@@ -312,9 +318,10 @@ class ExternalAgentTarget:
             bundle_frame=self._bundle.frame,
             broker=self._live.broker if self._live is not None else None,
             cancel=request.cancel,
+            model_intents=intents if self._live is not None else None,
         )
         outcome = driver.run()
-        error = None
+        error = outcome.model_error if outcome.termination.value == "provider_error" else None
         if outcome.exit is not None and not outcome.exit.cleaned_up:
             error = ErrorDetail(
                 category=ErrorCategory.SANDBOX_RUNTIME,
@@ -324,7 +331,7 @@ class ExternalAgentTarget:
 
     def check_handshake(self, scenario: Scenario) -> DriverOutcome:
         """Start the agent in its sandbox and shake hands. No world exists, and nothing runs."""
-        specs = _granted_specs(self._bundle)
+        specs = granted_specs(self._bundle)
         run_id = f"run_{uuid4().hex[:12]}"
         session = self._runner.open_session(
             SandboxRequest(code=self._bundle.bootstrap, limits=self._sandbox_limits),
@@ -342,7 +349,7 @@ class ExternalAgentTarget:
 
     def run(self, request: TargetRequest) -> TargetResult:
         manifest = self._bundle.manifest
-        specs = _granted_specs(self._bundle)
+        specs = granted_specs(self._bundle)
         run_id = f"run_{uuid4().hex[:12]}"
         entry = self._reserve(request)
         started_at = datetime.now(UTC)
@@ -414,8 +421,8 @@ class ExternalAgentTarget:
             final_state=report.final_state,
             committed_changes=report.committed_changes,
             oracle=report.oracle,
-            tokens=outcome.tokens if outcome.model_steps else None,
-            inference_latency_ms=outcome.inference_ms if outcome.model_steps else None,
+            tokens=outcome.tokens if outcome.model_attempts else None,
+            inference_latency_ms=outcome.inference_ms if outcome.model_attempts else None,
             wall_ms=wall_ms,
             estimated_cost_usd=cost,
             cost_note=note,

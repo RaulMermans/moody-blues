@@ -6,7 +6,7 @@ conflict. This file adds nothing that contradicts it.
 Quick orientation:
 - `make help` lists commands. `make check` is the local acceptance gate. `make doctor` diagnoses
   the environment.
-- `make vultr-smoke` / `make vultr-models` / `make agent-run` / `make agent-eval` /
+- `make vultr-smoke` / `make vultr-models` / `make agent-run` / `make agent-eval` / `make external-investigate LIVE=1` /
   `make experiment-live` / `make investigator-live` / `make investigator-eval` / `make eval-run` / `make eval-repro` make **live** calls (all but `vultr-models` are chargeable). Run them
   only when asked. `make live-budget` shows the estimated spend.
 - Latest sprint record: [docs/sprints/sprint-15.md](docs/sprints/sprint-15.md) (earlier: [sprint-14.md](docs/sprints/sprint-14.md), [sprint-13.md](docs/sprints/sprint-13.md), [sprint-12.md](docs/sprints/sprint-12.md), [sprint-11.md](docs/sprints/sprint-11.md), [sprint-10.md](docs/sprints/sprint-10.md), [sprint-07.md](docs/sprints/sprint-07.md), [sprint-06.md](docs/sprints/sprint-06.md), [sprint-05.md](docs/sprints/sprint-05.md), [sprint-04.md](docs/sprints/sprint-04.md), [sprint-03.md](docs/sprints/sprint-03.md), [sprint-02.md](docs/sprints/sprint-02.md), [sprint-01.md](docs/sprints/sprint-01.md)).

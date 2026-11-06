@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     # pulled implicitly. Verified by `make investigator-preflight`.
     investigator_model: str = "glm-5.3"
     investigator_target_model: str = "glm-5.3"
+    # Host-side: the only models an external agent can be lent, whatever it asks for or declares.
+    external_model_allowlist: tuple[str, ...] = ("glm-5.3",)
     investigator_timeout_seconds: float = Field(default=120.0, gt=0, le=300)
     # SDK retries happen before a response exists, so they cannot replay a tool call. Model
     # calls reserve once per attempt. A live HTTP 502 ended an investigation with this at 0.

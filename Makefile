@@ -14,8 +14,8 @@ PYTEST  := $(UV) run pytest
         investigator-live investigator-eval investigator-repro evidence-audit eval-freeze \
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
-        test-hosted release release-check external-preflight external-run external-demo \
-        external-test external-containment external-bench external-eval external-ui
+        test-hosted release release-check external-preflight external-run external-investigate external-demo \
+        external-test external-containment external-bench external-eval external-investigator-eval external-ui
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -59,9 +59,14 @@ test-integration: ## Docker sandbox integration + containment tests (needs a Doc
 external-preflight: ## Check an external agent's manifest and handshake in the real sandbox (MANIFEST=path)
 	$(UV) run moody-blues external-preflight --manifest $(MANIFEST)
 
-external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1)
+external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd)
 	$(UV) run moody-blues external-run --manifest $(MANIFEST) $(if $(WORLD),--world $(WORLD)) \
-		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable)
+		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
+
+external-investigate: ## The real Investigator workflow against one target (TARGET=external_scripted|external_llm|internal_llm MANIFEST=path WORLD=name). Free: models are labeled fixtures
+	$(UV) run moody-blues external-investigate --target $(TARGET) $(if $(MANIFEST),--manifest $(MANIFEST)) \
+		$(if $(WORLD),--world $(WORLD)) $(if $(LIVE),--live-inference) $(if $(LIVE_INVESTIGATOR),--live-investigator) \
+		$(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND))
 
 external-demo: ## Run both example agents through the real sandbox and Oracle. Scripts, not models; free
 	$(UV) run moody-blues external-demo
@@ -70,13 +75,16 @@ external-test: ## External agent adapter tests over a real process boundary (off
 	$(PYTEST) tests/external
 
 external-containment: ## External agent tests in the real sandbox (needs a Docker daemon)
-	$(PYTEST) tests/integration/test_external_agent.py tests/security/test_external_agent_containment.py -m docker
+	$(PYTEST) tests/integration/test_external_agent.py tests/integration/test_external_investigator.py tests/security/test_external_agent_containment.py -m docker
 
 external-ui: ## External runs through the real pages, in a real browser. MOODY_E2E_EXTERNAL_DOCKER=1 uses real containers
 	cd $(FE) && $(PNPM) design:build && $(PNPM) exec playwright test --config playwright.external.config.ts
 
 external-eval: ## The 16 adapter scenarios and their metrics, in the real sandbox. Scripts, not models; free
 	$(UV) run python -m tests.external.evaluate
+
+external-investigator-eval: ## Sprint 16 cases and boundaries in the real sandbox. Models are labeled fixtures; free
+	$(UV) run python -m tests.external.evaluate_investigator
 
 external-bench: ## Measure adapter startup, per-call overhead, memory and cleanup in the real sandbox
 	$(UV) run python -m tests.external.bench

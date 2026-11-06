@@ -12,8 +12,12 @@ import sys
 from pathlib import Path
 
 from moody_blues.config import Settings
+from moody_blues.contracts.investigation import TargetKind
 from moody_blues.external.bundle import build_bundle
 from moody_blues.external.commands import EXAMPLES, external_workflow, publish_run
+from tests.external.test_investigator_target import (
+    _investigate,  # pyright: ignore[reportPrivateUsage]
+)
 from tests.external.test_pipeline import _investigation  # pyright: ignore[reportPrivateUsage]
 
 
@@ -31,6 +35,11 @@ def main() -> None:
             report, _ = _investigation(artifacts, name)
         publish_run(report, artifacts, settings)
         ids[name] = report.investigation_id
+    # Docker or not, the agent's model here is a labeled fixture.
+    bundle = build_bundle(EXAMPLES / "llm.agent.toml")
+    report, _ = _investigate(artifacts, bundle, TargetKind.EXTERNAL_LLM, policy="verify")
+    publish_run(report, artifacts, settings)
+    ids["llm"] = report.investigation_id
     (artifacts / "external-ids.json").write_text(json.dumps(ids), encoding="utf-8")
 
 

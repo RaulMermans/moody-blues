@@ -135,6 +135,9 @@ export function targetNote(run: RealityRun): string | null {
   if (run.target_evidence === "external_scripted") {
     return "No AI model ran here. An external script was tested, which says nothing about model behavior.";
   }
+  if (run.external) {
+    return "No AI model ran here. A labeled fixture answered this agent's model calls, which says nothing about model behavior.";
+  }
   return "No AI model ran here. This is a rehearsal of the pipeline, not evidence of model behavior.";
 }
 

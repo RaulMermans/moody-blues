@@ -698,6 +698,7 @@ def _evaluation(settings: Settings, args: argparse.Namespace) -> int:
 
 
 def _external(settings: Settings, args: argparse.Namespace) -> int:
+    from moody_blues.contracts.investigation import TargetKind
     from moody_blues.external import commands
 
     match args.command:
@@ -710,6 +711,20 @@ def _external(settings: Settings, args: argparse.Namespace) -> int:
                 world=args.world,
                 live_inference=args.live_inference,
                 confirm_billable=args.confirm_billable,
+                approved_spend_usd=args.approved_spend_usd,
+            )
+        case "external-investigate":
+            return commands.investigate(
+                settings,
+                kind=TargetKind(args.target),
+                manifest=args.manifest,
+                world=args.world,
+                live=commands.LiveRequest(
+                    target=args.live_inference,
+                    investigator=args.live_investigator,
+                    confirmed=args.confirm_billable,
+                    approved_spend_usd=args.approved_spend_usd,
+                ),
             )
         case _:
             return commands.demo(settings)
@@ -801,6 +816,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     xr.add_argument("--world", default="normal-success")
     xr.add_argument("--live-inference", action="store_true")
     xr.add_argument("--confirm-billable", action="store_true")
+    xr.add_argument("--approved-spend-usd", type=float)
+    xi = sub.add_parser("external-investigate")
+    xi.add_argument(
+        "--target", required=True, choices=["internal_llm", "external_scripted", "external_llm"]
+    )
+    xi.add_argument("--manifest", type=Path)
+    xi.add_argument("--world", default="normal-success")
+    xi.add_argument("--live-inference", action="store_true")
+    xi.add_argument("--live-investigator", action="store_true")
+    xi.add_argument("--confirm-billable", action="store_true")
+    xi.add_argument("--approved-spend-usd", type=float)
     sub.add_parser("external-demo")
     sub.add_parser("recorded-export")
     sub.add_parser("recorded-verify")
@@ -873,7 +899,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return experiment_live(settings, args)
         case "experiment-recover":
             return experiment_recover(settings)
-        case "external-preflight" | "external-run" | "external-demo":
+        case "external-preflight" | "external-run" | "external-investigate" | "external-demo":
             return _external(settings, args)
         case "recorded-export":
             return recorded_export(settings)

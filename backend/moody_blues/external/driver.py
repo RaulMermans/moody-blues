@@ -9,7 +9,9 @@ Failure rules:
 - A line that is not a valid message ends the run. It is never repaired or re-asked.
 - A well-formed call that may not run is answered with a rejection, as a model-driven target's
   would be. Rejected calls are counted, and a flood of them ends the run.
-- Nothing here repeats a call. A duplicate ``call_id`` is refused, never run again.
+- Nothing here repeats a call. A duplicate ``call_id`` is refused, never run again. That holds for
+  model calls too, and the broker's client must not retry: a request that timed out may have run
+  and may be billed, so it is recorded as uncertain and the agent decides what to do next.
 - A run that stops for any reason still goes to the Oracle: whatever the agent did before it
   stopped is real, and the Oracle reads it from committed state.
 """
@@ -23,7 +25,8 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from threading import Event
+from pathlib import Path
+from threading import Event, Thread
 from typing import NoReturn
 
 from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
@@ -31,6 +34,7 @@ from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 from moody_blues.agents.target import InferencePort
 from moody_blues.agents.tooling import CRM_TOOLS, error_result, validate_call
 from moody_blues.contracts.adapter import (
+    MODEL_ATTEMPTED,
     AdapterEvent,
     AdapterEventKind,
     AdapterLimits,
@@ -44,6 +48,8 @@ from moody_blues.contracts.adapter import (
     FinalMessage,
     HelloMessage,
     ModelCallMessage,
+    ModelCallRecord,
+    ModelCallStatus,
     ModelResultMessage,
     RefusedMessage,
     ToolCallMessage,
@@ -59,7 +65,7 @@ from moody_blues.contracts.agent import (
     ToolCallDisposition,
     ToolCallRecord,
 )
-from moody_blues.contracts.common import MoodyBluesError
+from moody_blues.contracts.common import ErrorCategory, ErrorDetail, MoodyBluesError
 from moody_blues.contracts.inference import (
     ConversationMessage,
     InferenceRequest,
@@ -81,6 +87,25 @@ log = logging.getLogger("moody_blues.external")
 
 _POLL_SECONDS = 0.05
 _CONVERSATION: TypeAdapter[list[ConversationMessage]] = TypeAdapter(list[ConversationMessage])
+# Below the agent's line limit, so that a prompt is refused as a prompt and not as a broken line.
+DEFAULT_MAX_PROMPT_BYTES = 48_000
+DEFAULT_MODEL_CALL_TIMEOUT_SECONDS = 45.0
+# The provider may have done the work, so a failure of these kinds cannot be read as "not billed".
+_AMBIGUOUS_FAILURES = frozenset(
+    {
+        ErrorCategory.PROVIDER_TIMEOUT,
+        ErrorCategory.PROVIDER_CONNECTION,
+        ErrorCategory.PROVIDER_SERVER_ERROR,
+    }
+)
+# A model the host stopped lending explains why the agent gave up, so the run says so.
+_REFUSALS_THAT_END_A_RUN = {
+    "model_call_budget_exhausted": TerminationReason.MAX_STEPS,
+    "token_budget_exhausted": TerminationReason.TOKEN_BUDGET,
+}
+_FAILED_MODEL_STATES = frozenset(
+    {ModelCallStatus.FAILED, ModelCallStatus.MALFORMED, ModelCallStatus.UNCERTAIN}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +119,8 @@ class InferenceBroker:
     max_model_calls: int
     max_total_tokens: int
     max_completion_tokens: int
+    max_prompt_bytes: int = DEFAULT_MAX_PROMPT_BYTES
+    call_timeout_seconds: float = DEFAULT_MODEL_CALL_TIMEOUT_SECONDS
 
 
 class _Stopped(Exception):
@@ -114,6 +141,8 @@ class DriverOutcome:
     exit: SessionExit | None = None
     tool_calls: list[ToolCallRecord] = field(default_factory=list[ToolCallRecord])
     model_steps: list[AgentStep] = field(default_factory=list[AgentStep])
+    model_requests: list[ModelCallRecord] = field(default_factory=list[ModelCallRecord])
+    model_error: ErrorDetail | None = None
     tokens: TokenTotals = field(default_factory=TokenTotals)
     inference_ms: int = 0
     unknown_evidence_refs: list[str] = field(default_factory=list[str])
@@ -124,6 +153,11 @@ class DriverOutcome:
     @property
     def claim_outcome(self) -> ClaimOutcome:
         return ClaimOutcome.VALID if self.claim is not None else ClaimOutcome.MISSING
+
+    @property
+    def model_attempts(self) -> int:
+        """Requests that reached a provider. Only these can make a run an LLM run."""
+        return sum(r.status in MODEL_ATTEMPTED for r in self.model_requests)
 
 
 class AdapterDriver:
@@ -140,7 +174,9 @@ class AdapterDriver:
         broker: InferenceBroker | None = None,
         cancel: Event | None = None,
         monotonic: Callable[[], float] = time.monotonic,
+        model_intents: Path | None = None,
     ) -> None:
+        self._model_intents = model_intents
         self._session = session
         self._port = port
         self._manifest = manifest
@@ -190,12 +226,31 @@ class AdapterDriver:
         """Read the end of the run from what the host saw, not from what the agent said."""
         if out.termination is TerminationReason.ADAPTER_CRASHED and ended.exit_code == 0:
             out.termination = TerminationReason.NO_FINAL_CLAIM  # a clean exit with no report
+        self._attribute_to_model(out)
         if out.termination is TerminationReason.ADAPTER_CRASHED:
             self._event(AdapterEventKind.ADAPTER_CRASHED, code=str(ended.exit_code))
         elif out.termination is TerminationReason.CANCELLED:
             self._event(AdapterEventKind.EXECUTION_CANCELLED)
         else:
             self._event(AdapterEventKind.EXECUTION_COMPLETED, code=out.termination.value)
+
+    @staticmethod
+    def _attribute_to_model(out: DriverOutcome) -> None:
+        """An agent that gave up because the host's model failed it did not fall short itself.
+
+        Only when the last thing that happened to it was that failure, and it made no claim.
+        """
+        gave_up = out.termination in {
+            TerminationReason.AGENT_REPORTED_FAILURE,
+            TerminationReason.NO_FINAL_CLAIM,
+        }
+        if not gave_up or not out.model_requests:
+            return
+        last = out.model_requests[-1]
+        if last.status in _FAILED_MODEL_STATES:
+            out.termination = TerminationReason.PROVIDER_ERROR
+        elif last.code in _REFUSALS_THAT_END_A_RUN:
+            out.termination = _REFUSALS_THAT_END_A_RUN[last.code]
 
     def _elapsed_ms(self) -> int:
         return int((self._monotonic() - self._started) * 1000)
@@ -470,29 +525,117 @@ class AdapterDriver:
 
     # --- host-brokered inference --------------------------------------------------------
 
-    def _refuse_model(self, message: ModelCallMessage, code: str, text: str) -> None:
+    def _note_model(
+        self,
+        message: ModelCallMessage,
+        request_id: str,
+        status: ModelCallStatus,
+        code: str | None,
+        result: InferenceResult | None = None,
+        latency_ms: int | None = None,
+    ) -> None:
+        text = json.dumps(message.messages, separators=(",", ":"), sort_keys=True).encode()
+        broker = self._broker
+        usage = result.usage if result is not None else None
+        record = ModelCallRecord(
+            request_id=request_id,
+            call_id=message.call_id,
+            status=status,
+            code=code,
+            provider=None if status is ModelCallStatus.REJECTED or not broker else broker.provider,
+            model=None if status is ModelCallStatus.REJECTED or not broker else broker.model,
+            reported_model=result.reported_model if result is not None else None,
+            response_id=result.response_id if result is not None else None,
+            finish_reason=result.finish_reason if result is not None else None,
+            prompt_bytes=len(text),
+            prompt_sha256=hashlib.sha256(text).hexdigest(),
+            response_sha256=hashlib.sha256(
+                result.model_dump_json(include={"content", "tool_calls"}).encode()
+            ).hexdigest()
+            if result is not None
+            else None,
+            prompt_tokens=usage.prompt_tokens if usage is not None else None,
+            completion_tokens=usage.completion_tokens if usage is not None else None,
+            latency_ms=latency_ms,
+        )
+        self._outcome.model_requests.append(record)
+        self._write_intent({"request_id": request_id, "status": status.value})
+        log.info(
+            "adapter_model_call",
+            extra={
+                "run_id": self._context.run_id,
+                "correlation_id": self._context.correlation_id,
+                "request_id": request_id,
+                "status": status.value,
+                "code": code,
+                "latency_ms": latency_ms,
+                "retries": 0,  # the broker never retries; see the module docstring
+            },
+        )
+
+    def _write_intent(self, entry: dict[str, str]) -> None:
+        """Write-ahead, so that a crash cannot lose the fact that a provider may have been asked."""
+        if self._model_intents is None:
+            return
+        with self._model_intents.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(entry) + "\n")
+            stream.flush()
+
+    def _refuse_model(
+        self,
+        message: ModelCallMessage,
+        request_id: str,
+        code: str,
+        text: str,
+        *,
+        status: ModelCallStatus = ModelCallStatus.REJECTED,
+        result: InferenceResult | None = None,
+        latency_ms: int | None = None,
+    ) -> None:
+        self._note_model(message, request_id, status, code, result, latency_ms)
+        kind = {
+            ModelCallStatus.REJECTED: AdapterEventKind.MODEL_REQUEST_REJECTED,
+            ModelCallStatus.UNCERTAIN: AdapterEventKind.MODEL_CALL_UNCERTAIN,
+        }.get(status, AdapterEventKind.MODEL_CALL_FAILED)
+        self._event(kind, call_id=message.call_id, code=code)
         self._send(
             ModelResultMessage(
                 call_id=message.call_id, rejection=CallRejection(code=code, message=text[:500])
             )
         )
-        self._event(AdapterEventKind.TOOL_REQUEST_REJECTED, call_id=message.call_id, code=code)
         self._count_rejection()
+
+    def _model_refusal(
+        self, message: ModelCallMessage, broker: InferenceBroker | None
+    ) -> tuple[str, str] | None:
+        """Why this may not reach a provider. Every limit is the host's, and is checked here."""
+        out = self._outcome
+        if message.call_id in self._seen_calls:
+            return "duplicate_call_id", "this call_id was already used"
+        self._seen_calls.add(message.call_id)
+        if broker is None or Capability.MODEL.value not in self._context.capabilities:
+            return "capability_not_granted", "no model for this run"
+        if self._cancel_deadline is not None:
+            return "cancelled", "run cancelled"
+        if out.model_attempts >= broker.max_model_calls:
+            return "model_call_budget_exhausted", "no model calls left"
+        size = len(json.dumps(message.messages, separators=(",", ":")).encode())
+        if size > broker.max_prompt_bytes:
+            return "prompt_too_large", f"the conversation is over {broker.max_prompt_bytes} bytes"
+        # Worst case for this call, so that a run cannot pass what was reserved for it.
+        worst = out.tokens.total_tokens + size // 2 + broker.max_completion_tokens
+        if worst > broker.max_total_tokens:
+            return "token_budget_exhausted", "no tokens left"
+        return None
 
     def _model(self, message: ModelCallMessage) -> None:
         broker = self._broker
         out = self._outcome
-        if broker is None or Capability.MODEL.value not in self._context.capabilities:
-            self._refuse_model(message, "capability_not_granted", "no model for this run")
-            return
-        if self._cancel_deadline is not None:
-            self._refuse_model(message, "cancelled", "run cancelled")
-            return
-        if len(out.model_steps) >= broker.max_model_calls:
-            self._refuse_model(message, "model_call_budget_exhausted", "no model calls left")
-            return
-        if out.tokens.total_tokens >= broker.max_total_tokens:
-            self._refuse_model(message, "token_budget_exhausted", "no tokens left")
+        request_id = f"{self._context.run_id}.m{len(out.model_requests) + 1}"
+        refusal = self._model_refusal(message, broker)
+        if refusal is not None or broker is None:
+            code, text = refusal or ("capability_not_granted", "no model for this run")
+            self._refuse_model(message, request_id, code, text)
             return
         try:
             request = InferenceRequest(
@@ -504,25 +647,149 @@ class AdapterDriver:
                 temperature=0.0,
             )
         except ValidationError:
-            self._refuse_model(message, "invalid_messages", "the conversation is not valid")
-            return
-        try:
-            result = broker.inference.complete(request)
-        except MoodyBluesError as exc:
-            # A failed request may still be billed, so the reservation must stay open in full.
-            out.tokens = out.tokens.model_copy(update={"complete": False})
-            self._refuse_model(message, "provider_error", exc.detail.category.value)
-            return
-        self._account(request, result)
-        self._send(
-            ModelResultMessage(
-                call_id=message.call_id,
-                content=result.content,
-                tool_calls=result.tool_calls,
-                finish_reason=result.finish_reason,
+            self._refuse_model(
+                message, request_id, "invalid_messages", "the conversation is not valid"
             )
+            return
+        self._event(AdapterEventKind.MODEL_REQUEST_ACCEPTED, call_id=message.call_id)
+        self._write_intent({"request_id": request_id, "status": "requested"})
+        self._broker_call(message, request_id, broker, request)
+
+    def _broker_call(
+        self,
+        message: ModelCallMessage,
+        request_id: str,
+        broker: InferenceBroker,
+        request: InferenceRequest,
+    ) -> None:
+        """Exactly one provider request. Whatever comes of it, it is recorded before the reply."""
+        out = self._outcome
+        started = self._monotonic()
+        answer = self._await_provider(broker, request)
+        waited = int((self._monotonic() - started) * 1000)
+        if answer is None or isinstance(answer, MoodyBluesError | ValidationError):
+            out.tokens = out.tokens.model_copy(update={"complete": False})
+        match answer:
+            case None:
+                self._model_abandoned(message, request_id, waited)
+            case MoodyBluesError() if (
+                answer.detail.category is ErrorCategory.PROVIDER_INVALID_RESPONSE
+            ):
+                self._model_malformed(message, request_id, None, waited)
+            case MoodyBluesError():
+                out.model_error = answer.detail
+                ambiguous = answer.detail.category in _AMBIGUOUS_FAILURES
+                self._refuse_model(
+                    message,
+                    request_id,
+                    "provider_error",
+                    answer.detail.category.value,
+                    status=ModelCallStatus.UNCERTAIN if ambiguous else ModelCallStatus.FAILED,
+                    latency_ms=waited,
+                )
+            case ValidationError():
+                self._model_malformed(message, request_id, None, waited)
+            case InferenceResult() if not answer.content and not answer.tool_calls:
+                self._account(request, answer)
+                self._model_malformed(message, request_id, answer, answer.latency_ms)
+            case InferenceResult():
+                self._account(request, answer)
+                self._note_model(
+                    message,
+                    request_id,
+                    ModelCallStatus.COMPLETED,
+                    None,
+                    answer,
+                    answer.latency_ms,
+                )
+                self._send(
+                    ModelResultMessage(
+                        call_id=message.call_id,
+                        content=answer.content,
+                        tool_calls=answer.tool_calls,
+                        finish_reason=answer.finish_reason,
+                    )
+                )
+                self._event(AdapterEventKind.MODEL_CALL_BROKERED, call_id=message.call_id)
+
+    def _model_malformed(
+        self,
+        message: ModelCallMessage,
+        request_id: str,
+        result: InferenceResult | None,
+        latency_ms: int,
+    ) -> None:
+        self._outcome.model_error = ErrorDetail(
+            category=ErrorCategory.PROVIDER_INVALID_RESPONSE,
+            message="the provider's answer could not be used",
         )
-        self._event(AdapterEventKind.MODEL_CALL_BROKERED, call_id=message.call_id)
+        self._refuse_model(
+            message,
+            request_id,
+            "provider_malformed",
+            "the provider's answer could not be used",
+            status=ModelCallStatus.MALFORMED,
+            result=result,
+            latency_ms=latency_ms,
+        )
+
+    def _model_abandoned(self, message: ModelCallMessage, request_id: str, waited: int) -> None:
+        """No answer in time. It may still run and be billed, so nothing here calls it finished."""
+        out = self._outcome
+        out.model_error = ErrorDetail(
+            category=ErrorCategory.PROVIDER_TIMEOUT,
+            message=f"{request_id} was abandoned; it may have run and may be billed",
+        )
+        cancelled = self._cancel_deadline is not None
+        if cancelled or self._monotonic() >= self._deadline:
+            self._note_model(
+                message, request_id, ModelCallStatus.UNCERTAIN, "model_call_abandoned", None, waited
+            )
+            self._event(
+                AdapterEventKind.MODEL_CALL_UNCERTAIN,
+                call_id=message.call_id,
+                code="model_call_abandoned",
+            )
+            if cancelled:
+                self._send(
+                    ModelResultMessage(
+                        call_id=message.call_id,
+                        rejection=CallRejection(code="cancelled", message="run cancelled"),
+                    )
+                )
+                return
+            raise _Stopped(TerminationReason.WALL_TIMEOUT)
+        self._refuse_model(
+            message,
+            request_id,
+            "model_call_timeout",
+            "no answer in time; the call may still be billed and is not repeated",
+            status=ModelCallStatus.UNCERTAIN,
+            latency_ms=waited,
+        )
+
+    def _await_provider(
+        self, broker: InferenceBroker, request: InferenceRequest
+    ) -> InferenceResult | MoodyBluesError | ValidationError | None:
+        """The answer, or None if the host stopped waiting. A late answer is never delivered."""
+        answers: list[InferenceResult | MoodyBluesError | ValidationError] = []
+        finished = Event()
+
+        def work() -> None:
+            try:
+                answers.append(broker.inference.complete(request))
+            except (MoodyBluesError, ValidationError) as exc:
+                answers.append(exc)
+            finally:
+                finished.set()
+
+        Thread(target=work, name="mb-model-call", daemon=True).start()
+        limit = min(self._monotonic() + broker.call_timeout_seconds, self._deadline)
+        while not finished.wait(_POLL_SECONDS):
+            self._check_cancel()
+            if self._cancel_deadline is not None or self._monotonic() >= limit:
+                return None
+        return answers[0] if answers else None
 
     def _account(self, request: InferenceRequest, result: InferenceResult) -> None:
         out = self._outcome

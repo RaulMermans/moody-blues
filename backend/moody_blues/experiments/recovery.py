@@ -9,6 +9,7 @@ or FAILED (when nothing with effects was). It never resumes or repeats anything.
 from __future__ import annotations
 
 import fcntl
+import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,6 +17,7 @@ from typing import cast
 
 from pydantic import JsonValue, ValidationError
 
+from moody_blues.contracts.adapter import MODEL_INTENTS_SUFFIX
 from moody_blues.contracts.experiment_evidence import (
     EVIDENCE_SCHEMA_VERSION,
     EXTERNAL_EVIDENCE_SCHEMA_VERSION,
@@ -56,6 +58,21 @@ def inspect_worlds(worlds_dir: Path, scenario_id: str) -> list[str] | None:
         return None
 
 
+def unresolved_model_calls(worlds_dir: Path) -> int:
+    """Model calls written down before they were made, with no outcome after them."""
+    requested: set[str] = set()
+    settled: set[str] = set()
+    for path in worlds_dir.glob(f"*{MODEL_INTENTS_SUFFIX}"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                entry = json.loads(line)
+            except ValueError:  # the crash may have cut the last line; it was still a request
+                continue
+            target = requested if entry.get("status") == "requested" else settled
+            target.add(str(entry.get("request_id")))
+    return len(requested - settled)
+
+
 def _owned_by_live_process(directory: Path) -> bool:
     lock_path = directory / ".lock"
     if not lock_path.exists():
@@ -91,6 +108,7 @@ def _unresolved(records: list[JournalRecord], worlds_dir: Path) -> list[Unresolv
                 committed_new_customer_ids=found,
                 note="the coordinator died during this run; its effects and any claim are "
                 "unverified and no Oracle verdict exists; not retried",
+                model_calls_unresolved=unresolved_model_calls(worlds_dir),
             )
         )
     return out
