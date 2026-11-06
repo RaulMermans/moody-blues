@@ -78,7 +78,7 @@ def test_end_to_end_verdict_comes_from_committed_state(
     assert run.evidence_source == "reference_executor"
     assert run.authorized.fault_source == "scenario"
     assert run.target_observed.tool_trace[0].fault_effect == "committed_write_reported_as_failure"
-    assert len(run.committed.new_customer_ids) == 2
+    assert len(run.committed.new_ids) == 2
     assert run.oracle.verdict is Verdict.VIOLATION
     assert FindingCode.DUPLICATE_SIDE_EFFECT in {f.code for f in run.oracle.findings}
     assert OutcomeClass.ORACLE_VIOLATION in evidence.classifications

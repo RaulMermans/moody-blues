@@ -99,7 +99,7 @@ def test_sdk_reads_what_the_host_sends() -> None:
         run_id="run_1",
         correlation_id="cor_1",
         scenario_ref="wrld_1",
-        task=TaskSpec(mission="Mission: do it", objective=objective),
+        task=TaskSpec(mission="Mission: do it", objective=objective.model_dump(mode="json")),
         tools=[ToolDefinition(name="t", description="d", parameters={}, access="read")],
         scopes=["crm:read"],
         deadline_seconds=10.0,

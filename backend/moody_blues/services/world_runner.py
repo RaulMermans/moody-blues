@@ -9,16 +9,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
-from moody_blues.contracts.oracle import OracleReport
+from pydantic import BaseModel
+
+from moody_blues.contracts.oracle import AnyOracleReport
 from moody_blues.contracts.run import RunReport, ToolTraceEntry
-from moody_blues.contracts.scenario import Scenario
-from moody_blues.contracts.world import CustomerRecord, EventKind, ToolResponse, WorldEvent
-from moody_blues.world.engine import World
-from moody_blues.world.oracle import TruthOracle
-from moody_blues.world.reference import EXECUTORS, REFERENCE_CASES, Executor, ReferenceCase
+from moody_blues.contracts.scenario import ScenarioBase
+from moody_blues.contracts.world import EventKind, ToolResponse, WorldEvent
+from moody_blues.world.plugin import WorldRun
+from moody_blues.world.reference import EXECUTORS, REFERENCE_CASES, ReferenceCase
+from moody_blues.world.registry import plugin_for
 from moody_blues.world.scenarios import load_scenario
+from moody_blues.world.verification import verify_world
 
 EXECUTORS_AVAILABLE: list[str] = sorted(EXECUTORS)
 
@@ -27,28 +32,30 @@ class UnknownExecutorError(LookupError):
     pass
 
 
-def resolve_executor(name: str) -> Executor:
+def resolve_executor(name: str, scenario: ScenarioBase | None = None) -> Any:
+    """A world's scripts only: one world's executor never runs against another's tools."""
+    executors = EXECUTORS if scenario is None else plugin_for(scenario).executors()
     try:
-        return EXECUTORS[name]
+        return executors[name]
     except KeyError:
         raise UnknownExecutorError(
-            f"unknown executor {name!r}; known: {', '.join(sorted(EXECUTORS))}"
+            f"unknown executor {name!r}; known: {', '.join(sorted(executors))}"
         ) from None
 
 
-def execute_in_world(world: World, executor_name: str, *, case_id: str | None = None) -> RunReport:
+def execute_in_world(
+    world: WorldRun, executor_name: str, *, case_id: str | None = None
+) -> RunReport:
     """Run one executor against an already-initialized world and evaluate the outcome."""
-    executor = resolve_executor(executor_name)
+    executor = resolve_executor(executor_name, world.scenario)
     claim = executor(world.gateway, world.scenario.objective)
     claim_seq = world.record_claim(claim)
 
-    with world.view() as view:
-        oracle = TruthOracle().evaluate(view, world.scenario, claim)
+    oracle = verify_world(world, claim)
     verdict_seq = world.record_verdict(oracle)
 
     with world.view() as view:
-        customers = view.all_customers()
-        changes = view.committed_changes()
+        state = plugin_for(world.scenario).read_state(view)
         events = view.events()
 
     return RunReport(
@@ -57,26 +64,26 @@ def execute_in_world(world: World, executor_name: str, *, case_id: str | None = 
         executor=executor_name,
         world_id=world.world_id,
         tool_trace=tool_trace(events),
-        final_state=customers,
-        committed_changes=changes,
+        final_state=state.records,
+        committed_changes=state.changes,
         claim=claim,
         claim_event_seq=claim_seq,
         oracle=oracle,
         verdict_event_seq=verdict_seq,
         event_count=len(events),
-        fingerprint=fingerprint(executor_name, world.scenario, events, customers, oracle),
+        fingerprint=fingerprint(executor_name, world.scenario, events, state.records, oracle),
     )
 
 
 def run_scenario(
-    scenario: Scenario,
+    scenario: ScenarioBase,
     executor_name: str,
     *,
     case_id: str | None = None,
     root_dir: Path | None = None,
     keep: bool = False,
 ) -> RunReport:
-    world = World(scenario, root_dir=root_dir)
+    world = plugin_for(scenario).create_run(scenario, root_dir=root_dir)
     try:
         return execute_in_world(world, executor_name, case_id=case_id)
     finally:
@@ -132,22 +139,22 @@ def tool_trace(events: list[WorldEvent]) -> list[ToolTraceEntry]:
 
 def fingerprint(
     executor: str,
-    scenario: Scenario,
+    scenario: ScenarioBase,
     events: list[WorldEvent],
-    customers: list[CustomerRecord],
-    oracle: OracleReport,
+    records: Sequence[BaseModel],
+    oracle: AnyOracleReport,
 ) -> str:
     """Canonical hash of a run's deterministic content.
 
     Includes the scenario ref, executor, full ordered evidence trail (kinds, call seqs,
-    logical times, payloads), the final customer rows and the Oracle report. Excludes
+    logical times, payloads), the final rows and the Oracle report. Excludes
     ``world_id`` (random per world), the only run-specific identifier.
     """
     body = {
         "scenario": scenario.ref,
         "executor": executor,
         "events": [e.model_dump(mode="json", exclude={"world_id"}) for e in events],
-        "customers": [c.model_dump(mode="json") for c in customers],
+        "customers": [r.model_dump(mode="json") for r in records],
         "oracle": oracle.model_dump(mode="json", exclude={"world_id"}),
     }
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"))

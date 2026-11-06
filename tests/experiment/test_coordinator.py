@@ -99,7 +99,7 @@ def test_full_cycle_runs_the_target_and_records_every_layer(tmp_path: Path) -> N
     (target,) = evidence.target_runs
     assert target.authorized.scenario_id == "phantom-failure"
     assert target.target_observed.tool_trace[0].delivered.ok is False
-    assert len(target.committed.new_customer_ids) == 1
+    assert len(target.committed.new_ids) == 1
     assert target.oracle.verdict is Verdict.PASS
     assert OutcomeClass.EXPECTED_ENVIRONMENTAL_FAULT in evidence.classifications
     assert verify_experiment(tmp_path / evidence.experiment_id) == []
@@ -465,7 +465,7 @@ def test_cancel_during_a_target_run_records_what_committed(tmp_path: Path) -> No
     evidence = coordinator(sandbox, fixture_target(model), tmp_path).run(SPEC, cancel=cancel)
     assert evidence.status is ExperimentState.CANCELLED
     (target,) = evidence.target_runs
-    assert len(target.committed.new_customer_ids) == 1  # truthfully kept, never rolled back
+    assert len(target.committed.new_ids) == 1  # truthfully kept, never rolled back
     assert target.target_observed.termination == "cancelled"
     assert len(sandbox.requests) == 1
 

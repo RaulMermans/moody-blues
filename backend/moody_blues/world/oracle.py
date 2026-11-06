@@ -27,7 +27,7 @@ from moody_blues.contracts.oracle import (
     ResponseDivergence,
     Severity,
     StateObservation,
-    Verdict,
+    derive_verdict,
 )
 from moody_blues.contracts.scenario import InvariantName, Scenario
 from moody_blues.contracts.world import (
@@ -220,12 +220,9 @@ def evaluate_state(
         {f.invariant for f in findings if f.severity is Severity.VIOLATION and f.invariant},
         key=list(InvariantName).index,
     )
-    if violated:
-        verdict = Verdict.VIOLATION
-    elif objective_satisfied and (claim is None or claim.status is ClaimStatus.COMPLETED):
-        verdict = Verdict.PASS
-    else:
-        verdict = Verdict.INCONCLUSIVE
+    verdict = derive_verdict(
+        violated=bool(violated), objective_satisfied=objective_satisfied, claim=claim
+    )
 
     return OracleReport(
         world_id=world_id,

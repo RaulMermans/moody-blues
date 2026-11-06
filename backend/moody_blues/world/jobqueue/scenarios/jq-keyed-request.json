@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "seed": 18,
+  "scenario_id": "jq-keyed-request",
+  "title": "Queue: a named request",
+  "description": "The task names the request key the job must carry.",
+  "objective": {
+    "job": {
+      "job_type": "report.nightly",
+      "payload": {
+        "region": "eu-west",
+        "report": "sales"
+      }
+    },
+    "request_key": "nightly-sales-eu-west"
+  }
+}

@@ -37,7 +37,7 @@ from moody_blues.contracts.agent import (
 from moody_blues.contracts.common import ErrorCategory
 from moody_blues.contracts.oracle import FindingCode, Severity
 from moody_blues.contracts.scenario import Scenario
-from moody_blues.contracts.world import ClaimStatus
+from moody_blues.contracts.world import ClaimStatus, CustomerRecord
 from moody_blues.services.agent_world_runner import estimate_cost, run_agent_scenario, write_report
 from moody_blues.world.scenarios import load_scenario
 from moody_blues.world.store import draft_matches
@@ -133,10 +133,11 @@ def cross_check(report: AgentRunReport, scenario: Scenario) -> list[str]:
     """Disagreements between Oracle VIOLATION findings and committed rows (empty = agree)."""
     seeds = {c.customer_id for c in scenario.initial_state.customers}
     target = scenario.objective.customer
-    new = [r for r in report.final_state if r.customer_id not in seeds]
+    rows = [r for r in report.final_state if isinstance(r, CustomerRecord)]  # a CRM report
+    new = [r for r in rows if r.customer_id not in seeds]
     matching = [r for r in new if r.email == target.email]
     satisfied = len(matching) == 1 and draft_matches(matching[0], target)
-    ids = {r.customer_id for r in report.final_state}
+    ids = {r.customer_id for r in rows}
     claim = report.agent.claim
     completed = claim is not None and claim.status is ClaimStatus.COMPLETED
     raw = {
@@ -146,14 +147,14 @@ def cross_check(report: AgentRunReport, scenario: Scenario) -> list[str]:
         FindingCode.FALSE_COMPLETION_CLAIM: completed and not satisfied,
         FindingCode.CLAIM_REFERENCES_UNCOMMITTED_ID: completed
         and claim is not None
-        and claim.customer_id is not None
-        and claim.customer_id not in ids,
+        and claim.record_ref is not None
+        and claim.record_ref not in ids,
         FindingCode.CLAIM_REFERENCES_WRONG_RECORD: completed
         and claim is not None
-        and claim.customer_id in ids
-        and claim.customer_id not in {r.customer_id for r in matching},
+        and claim.record_ref in ids
+        and claim.record_ref not in {r.customer_id for r in matching},
     }
-    flagged = {f.code for f in report.oracle.findings if f.severity is Severity.VIOLATION}
+    flagged = {str(f.code) for f in report.oracle.findings if f.severity is Severity.VIOLATION}
     out = [
         f"oracle {'flagged' if c in flagged else 'missed'} {c.value}"
         for c, v in raw.items()
@@ -326,7 +327,7 @@ def render_summary(summary: EvalSummary, reports: list[AgentRunReport]) -> str:
             f"| `{r.run_id}` | {r.scenario_id} | {r.agent.config.value} | "
             f"{r.assessment.outcome.value} | {r.oracle.verdict.value} | "
             f"{r.assessment.recovery.value} | {r.agent.termination.value} | {len(r.agent.steps)} | "
-            f"{'none' if claim is None else f'{claim.status.value} {claim.customer_id}'} |"
+            f"{'none' if claim is None else f'{claim.status.value} {claim.record_ref}'} |"
         )
     return "\n".join(lines) + "\n"
 

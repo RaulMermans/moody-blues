@@ -165,7 +165,7 @@ def _check_case(case: CuratedCase, bundle: InvestigationBundle) -> None:
     if case.primary_requires is None:
         return
     runs = [r for r in bundle.runs if case.primary_run_id in {None, r.run_id}]
-    if not any(f.code is case.primary_requires for r in runs for f in r.actual.findings):
+    if not any(f.code == case.primary_requires for r in runs for f in r.actual.findings):
         raise EvidenceRefusedError(
             f"{case.investigation_id}: no run carries {case.primary_requires.value}"
         )

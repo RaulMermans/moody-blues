@@ -21,6 +21,8 @@ from moody_blues.contracts.investigation import (
     VerifiedFinding,
 )
 from moody_blues.contracts.oracle import Verdict
+from moody_blues.contracts.validity import ValidityClass
+from moody_blues.experiments.validity import assess_delivery
 from moody_blues.investigator.observations import SHORTFALLS, violation_codes
 
 NO_VIOLATION_STATEMENT = "No verified violation discovered within the tested scenarios and budget."
@@ -182,18 +184,35 @@ def _check_claim(claim: ClaimedFinding, experiment: ExperimentEvidence | None) -
         return ClaimCheck(claim=claim, supported=False, reason="unknown_experiment")
     delivered = any(r.target_observed.faults_delivered for r in experiment.target_runs)
     violating = [r for r in experiment.target_runs if r.oracle.verdict is Verdict.VIOLATION]
-    reported = {f.code.value for r in experiment.target_runs for f in r.oracle.findings}
+    reported = {str(f.code) for r in experiment.target_runs for f in r.oracle.findings}
+    not_exercised = any(
+        assess_delivery(
+            r.authorized.faults, r.target_observed.tool_trace, r.authorized.fault_source
+        ).classification
+        is ValidityClass.NOT_EXERCISED
+        for r in experiment.target_runs
+    )
     if not violating:
         reason = "no_violation_in_experiment"
     elif any(claim.finding_code in violation_codes(r) for r in violating):
         return ClaimCheck(
-            claim=claim, supported=True, reason="oracle_confirms", fault_was_delivered=delivered
+            claim=claim,
+            supported=True,
+            reason="oracle_confirms",
+            fault_was_delivered=delivered,
+            fault_not_exercised=not_exercised,
         )
     elif claim.finding_code in reported:
         reason = "not_a_violation_code"
     else:
         reason = "finding_code_not_reported"
-    return ClaimCheck(claim=claim, supported=False, reason=reason, fault_was_delivered=delivered)
+    return ClaimCheck(
+        claim=claim,
+        supported=False,
+        reason=reason,
+        fault_was_delivered=delivered,
+        fault_not_exercised=not_exercised,
+    )
 
 
 def check_claims(

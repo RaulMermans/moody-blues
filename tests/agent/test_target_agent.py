@@ -88,7 +88,7 @@ def test_create_verify_claim_trajectory(world: World) -> None:
     assert traj.claim_outcome is ClaimOutcome.VALID
     assert traj.claim is not None
     assert traj.claim.status is ClaimStatus.COMPLETED
-    assert traj.claim.customer_id == ADA_ID
+    assert traj.claim.record_ref == ADA_ID
     assert [s.index for s in traj.steps] == [1, 2, 3]
     executed = [c for c in traj.tool_calls if c.disposition is ToolCallDisposition.EXECUTED]
     assert [c.gateway_call_id for c in executed] == ["call_0001", "call_0002"]
@@ -229,7 +229,7 @@ def test_only_invalid_claims_leave_no_claim(world: World) -> None:
 def test_empty_customer_id_in_claim_is_treated_as_absent(world: World) -> None:
     traj, _ = run(world, [claim("not_completed", "", "nothing created")])
     assert traj.claim is not None
-    assert traj.claim.customer_id is None
+    assert traj.claim.record_ref is None
 
 
 def test_calls_after_the_claim_in_the_same_turn_are_not_executed(world: World) -> None:

@@ -25,7 +25,8 @@ from moody_blues.contracts.investigation import (
     Strategy,
     WorldTier,
 )
-from moody_blues.contracts.oracle import FindingCode, Severity, Verdict
+from moody_blues.contracts.oracle import Severity, Verdict
+from moody_blues.contracts.validity import InvestigationValidity
 
 EXPORT_VERSION = 1
 
@@ -155,7 +156,7 @@ class InvestigationSummary(_Public):
 
 class HypothesisView(_Public):
     hypothesis_id: str
-    status: Literal["open", "supported", "refuted", "inconclusive"]
+    status: Literal["open", "supported", "refuted", "inconclusive", "not_exercised"]
     behavior: str
     suspected_mechanism: str
     motivation: str
@@ -280,6 +281,8 @@ class ClaimView(_Public):
     status: str
     customer_id: str | None
     message: BoundedText
+    # Sprint 18: the claimed record in a world without customers. Left out when absent.
+    record_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class DisclosureView(_Public):
@@ -316,20 +319,39 @@ class CustomerView(_Public):
     named_in_claim: bool
 
 
+class RecordView(_Public):
+    """One authoritative row of a world without customers."""
+
+    record_id: str
+    kind: str
+    title: str  # the world's own label for the row, e.g. a job's type
+    status: str | None
+    status_history: list[str]
+    identity_key: str | None
+    attributes: dict[str, JsonValue]
+    created_by_call: int
+    role: Literal["seed", "new"]
+    objective_match: bool
+    flagged_duplicate: bool
+    named_in_claim: bool
+
+
 class ChangeView(_Public):
     change_seq: int
     operation: str
-    customer_id: str
+    customer_id: str | None
     created_by_call: int
+    record_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class OracleFindingView(_Public):
-    code: FindingCode
+    code: str  # a ``FindingCode`` value, or a code the selected world defines
     severity: Severity
     invariant: str | None
     message: str
     customer_ids: list[str]
     call_seqs: list[int]
+    record_ids: list[str] = Field(default_factory=list[str], exclude_if=lambda v: not v)
 
 
 class ActualReality(_Public):
@@ -341,6 +363,9 @@ class ActualReality(_Public):
     invariants_evaluated: list[str]
     invariants_violated: list[str]
     findings: list[OracleFindingView]
+    # Sprint 18. A world without customers fills these and leaves the customer fields empty.
+    records: list[RecordView] = Field(default_factory=list[RecordView], exclude_if=lambda v: not v)
+    new_record_ids: list[str] = Field(default_factory=list[str], exclude_if=lambda v: not v)
 
 
 class DiscrepancyKind(StrEnum):
@@ -376,6 +401,45 @@ class ExternalTargetView(_Public):
     model_digest: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
+class InvariantView(_Public):
+    invariant_id: str
+    scope: Literal["task", "world"]
+    description: str
+    violated: bool
+
+
+class WorldView(_Public):
+    """Which environment this run tested. Present only where the run recorded it."""
+
+    world_type: str
+    name: str
+    plugin_version: str
+    config_sha256: str
+    record_noun: str
+    store_noun: str
+    write_tool: str
+    selected_tools: list[str]
+    invariants: list[InvariantView]
+
+
+class FaultDeliveryView(_Public):
+    kind: str
+    operation: str
+    occurrence: int
+    trigger_reached: bool
+    delivered: int
+    delivered_at_calls: list[int]
+
+
+class ValidityView(_Public):
+    """Whether the run could test what it set out to. Never a verdict."""
+
+    classification: str
+    faults: list[FaultDeliveryView]
+    eligible_fault_kinds: list[str]
+    not_exercised_fault_kinds: list[str]
+
+
 class RealityRun(_Public):
     run_id: str
     run_ref: str
@@ -397,6 +461,10 @@ class RealityRun(_Public):
     discrepancies: list[Discrepancy]
     # Sprint 15. Left out when absent, so a bundle of an internal run is byte-identical.
     external: ExternalTargetView | None = Field(default=None, exclude_if=lambda v: v is None)
+    # Sprint 18. Left out when the run has no provenance, so a historical bundle re-projects to the
+    # same bytes. Read a missing world as the CRM: see ``LEGACY_WORLD_TYPE``.
+    world: WorldView | None = Field(default=None, exclude_if=lambda v: v is None)
+    validity: ValidityView | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class TimelineStage(StrEnum):
@@ -493,6 +561,8 @@ class InvestigationBundle(_Public):
     timeline: list[TimelineEntry]
     case_study: CaseStudy | None = None
     provenance: Provenance
+    # Sprint 18: what trusted code made of the model's assessments. Left out of earlier bundles.
+    validity: InvestigationValidity | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class ManifestEntry(_Public):

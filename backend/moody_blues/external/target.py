@@ -19,8 +19,6 @@ from uuid import uuid4
 
 from pydantic import JsonValue
 
-from moody_blues.agents.policies import mission_prompt
-from moody_blues.agents.tooling import agent_tool_specs
 from moody_blues.contracts.adapter import (
     ADAPTER_PROTOCOL,
     MAX_AGENT_MESSAGE_BYTES,
@@ -31,10 +29,10 @@ from moody_blues.contracts.adapter import (
     AdapterEventKind,
     AdapterExit,
     AdapterLimits,
+    AgentManifest,
     Capability,
     ExecutionContext,
     ExternalAgentRecord,
-    Scope,
     TaskSpec,
     ToolDefinition,
 )
@@ -42,8 +40,8 @@ from moody_blues.contracts.agent import AgentBudget, AgentTrajectory, ExternalEv
 from moody_blues.contracts.common import ErrorCategory, ErrorDetail
 from moody_blues.contracts.inference import ChatMessage, ToolSpec
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
-from moody_blues.contracts.scenario import Scenario
-from moody_blues.contracts.world import ToolName, ToolResponse
+from moody_blues.contracts.scenario import ScenarioBase
+from moody_blues.contracts.world import ToolResponse
 from moody_blues.experiments.budget import SpendPort, worst_case_run_tokens
 from moody_blues.experiments.target import TargetRequest, TargetResult
 from moody_blues.external.bundle import AgentBundle
@@ -51,14 +49,12 @@ from moody_blues.external.driver import AdapterDriver, DriverOutcome, InferenceB
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.session import SandboxSession, SessionRunner
 from moody_blues.services.agent_world_runner import build_report, observe_world
-from moody_blues.world.engine import World
+from moody_blues.world.crm_plugin import WORLD_TYPE as CRM_WORLD_TYPE
+from moody_blues.world.plugin import WorldPlugin, WorldRun, WorldTool
+from moody_blues.world.registry import plugin_for, world_plugin, world_types
 
 log = logging.getLogger("moody_blues.external")
 
-_SCOPE_TOOLS: dict[Scope, frozenset[str]] = {
-    Scope.CRM_READ: frozenset({ToolName.GET_CUSTOMER.value, ToolName.SEARCH_CUSTOMERS.value}),
-    Scope.CRM_WRITE: frozenset({ToolName.CREATE_CUSTOMER.value}),
-}
 _FINISH_LINE = "When you are finished, return your final result."
 _NOT_CHARGED = "no model was used through the host; nothing was charged"
 LOCAL_COST_NOTE = "a model on this machine; no provider was paid, and the ledger was not touched"
@@ -72,10 +68,39 @@ class LiveInference:
     ledger: SpendPort | None
 
 
-def granted_specs(bundle: AgentBundle) -> list[ToolSpec]:
-    """The manifest's scopes against the host's tools, never the other way round."""
-    allowed = {tool for scope in bundle.manifest.scopes for tool in _SCOPE_TOOLS[scope]}
-    return [s for s in agent_tool_specs() if s.name in allowed]
+class WrongWorldError(ValueError):
+    """This agent's scopes do not belong to the selected world. Nothing is started."""
+
+
+def granted_tools(bundle: AgentBundle, world: WorldPlugin) -> list[WorldTool]:
+    """The manifest's scopes against the world's tools, never the other way round.
+
+    A scope is the world's own name for its tools, so a grant can only ever be in one world. An
+    agent that asks for a scope the selected world does not have was built for another one.
+    """
+    tools = world.tools()
+    offered = {t.scope for t in tools}
+    wanted = {s.value for s in bundle.manifest.scopes}
+    if not wanted <= offered:
+        raise WrongWorldError(
+            f"{bundle.manifest.agent_id} asks for scopes this world does not have: "
+            f"{', '.join(sorted(wanted - offered))}"
+        )
+    return [t for t in tools if t.scope in wanted]
+
+
+def world_for_manifest(manifest: AgentManifest) -> WorldPlugin:
+    """The world whose scopes this agent asks for. An agent is registered against one world."""
+    wanted = {s.value for s in manifest.scopes}
+    for world_type in world_types():
+        plugin = world_plugin(world_type)
+        if wanted <= {t.scope for t in plugin.tools()}:
+            return plugin
+    raise WrongWorldError(f"{manifest.agent_id} asks for scopes no single world has")
+
+
+def granted_specs(bundle: AgentBundle, world: WorldPlugin | None = None) -> list[ToolSpec]:
+    return [t.spec for t in granted_tools(bundle, world or world_plugin(CRM_WORLD_TYPE))]
 
 
 def _opaque_scenario_ref(run_id: str, scenario_ref: str) -> str:
@@ -145,24 +170,25 @@ class ExternalAgentTarget:
         return sorted(declared)
 
     def _context(
-        self, scenario: Scenario, run_id: str, deadline: float, specs: list[ToolSpec]
+        self, scenario: ScenarioBase, run_id: str, deadline: float, tools: list[WorldTool]
     ) -> ExecutionContext:
-        objective = scenario.objective
+        plugin = plugin_for(scenario)
         return ExecutionContext(
             run_id=run_id,
             correlation_id=f"cor_{uuid4().hex[:12]}",
             scenario_ref=_opaque_scenario_ref(run_id, scenario.ref),
             task=TaskSpec(
-                mission=mission_prompt(objective, closing=_FINISH_LINE), objective=objective
+                mission=plugin.mission(scenario, closing=_FINISH_LINE),
+                objective=plugin.objective_wire(scenario),
             ),
             tools=[
                 ToolDefinition(
-                    name=s.name,
-                    description=s.description,
-                    parameters=s.parameters,
-                    access="write" if s.name in _SCOPE_TOOLS[Scope.CRM_WRITE] else "read",
+                    name=t.spec.name,
+                    description=t.spec.description,
+                    parameters=t.spec.parameters,
+                    access=t.access,
                 )
-                for s in specs
+                for t in tools
             ],
             scopes=[s.value for s in self._bundle.manifest.scopes],
             deadline_seconds=deadline,
@@ -289,7 +315,7 @@ class ExternalAgentTarget:
     def _drive(
         self,
         request: TargetRequest,
-        world: World,
+        world: WorldRun,
         context: ExecutionContext,
         specs: list[ToolSpec],
         limits: AdapterLimits,
@@ -324,6 +350,7 @@ class ExternalAgentTarget:
             broker=self._live.broker if self._live is not None else None,
             cancel=request.cancel,
             model_intents=intents if self._live is not None else None,
+            world=plugin_for(request.scenario),
         )
         outcome = driver.run()
         error = outcome.model_error if outcome.termination.value == "provider_error" else None
@@ -334,9 +361,10 @@ class ExternalAgentTarget:
             )
         return outcome, environment, error
 
-    def check_handshake(self, scenario: Scenario) -> DriverOutcome:
+    def check_handshake(self, scenario: ScenarioBase) -> DriverOutcome:
         """Start the agent in its sandbox and shake hands. No world exists, and nothing runs."""
-        specs = granted_specs(self._bundle)
+        tools = granted_tools(self._bundle, plugin_for(scenario))
+        specs = [t.spec for t in tools]
         run_id = f"run_{uuid4().hex[:12]}"
         session = self._runner.open_session(
             SandboxRequest(code=self._bundle.bootstrap, limits=self._sandbox_limits),
@@ -346,7 +374,7 @@ class ExternalAgentTarget:
             session=session,
             port=_NoTools(),
             manifest=self._bundle.manifest,
-            context=self._context(scenario, run_id, self._limits.run_timeout_seconds, specs),
+            context=self._context(scenario, run_id, self._limits.run_timeout_seconds, tools),
             limits=self._limits,
             specs=specs,
             bundle_frame=self._bundle.frame,
@@ -354,14 +382,16 @@ class ExternalAgentTarget:
 
     def run(self, request: TargetRequest) -> TargetResult:
         manifest = self._bundle.manifest
-        specs = granted_specs(self._bundle)
+        plugin = plugin_for(request.scenario)
+        tools = granted_tools(self._bundle, plugin)
+        specs = [t.spec for t in tools]
         run_id = f"run_{uuid4().hex[:12]}"
         entry = self._reserve(request)
         started_at = datetime.now(UTC)
         deadline = min(self._limits.run_timeout_seconds, request.max_wall_seconds)
         limits = self._limits.model_copy(update={"run_timeout_seconds": deadline})
-        context = self._context(request.scenario, run_id, deadline, specs)
-        world = World(request.scenario, root_dir=request.world_root)
+        context = self._context(request.scenario, run_id, deadline, tools)
+        world = plugin.create_run(request.scenario, root_dir=request.world_root)
         # Kept, so that recovery can read committed state if this process dies. The coordinator
         # removes resolved worlds when the experiment closes.
         try:

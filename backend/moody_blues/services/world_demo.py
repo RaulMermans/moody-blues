@@ -12,6 +12,7 @@ from pathlib import Path
 
 from moody_blues.contracts.oracle import Severity, Verdict
 from moody_blues.contracts.run import RunReport, ToolTraceEntry
+from moody_blues.contracts.world import CustomerRecord
 from moody_blues.services.world_runner import run_reference_case
 from moody_blues.world.reference import REFERENCE_CASES, ReferenceCase
 
@@ -78,11 +79,12 @@ def render_report(report: RunReport, *, purpose: str = "", color: bool = False) 
         *(_response_line(t, s) for t in report.tool_trace),
     ]
     c = report.claim
-    claim = "none" if c is None else f"{c.status.value} customer_id={c.customer_id}"
+    claim = "none" if c is None else f"{c.status.value} customer_id={c.record_ref}"
     lines += [f"    final claim: {claim}  {s.dim(f'event #{report.claim_event_seq}')}", ""]
 
-    seeds = set(o.observation.seed_customer_ids)
-    new_rows = [r for r in report.final_state if r.customer_id not in seeds]
+    seeds = set(o.observation.seed_ids)
+    rows = [r for r in report.final_state if isinstance(r, CustomerRecord)]  # the demo is the CRM
+    new_rows = [r for r in rows if r.customer_id not in seeds]
     lines.append(
         s.bold("  Layer A - committed state (read back via read-only connection)")
         + s.dim(f"  {len(seeds)} seed + {len(new_rows)} new")
@@ -102,9 +104,9 @@ def render_report(report: RunReport, *, purpose: str = "", color: bool = False) 
     ]
     marks = {Severity.VIOLATION: s.red("x"), Severity.WARNING: s.yellow("!"), Severity.INFO: "-"}
     for f in o.findings:
-        inv = f" [{f.invariant.value}]" if f.invariant else ""
+        inv = f" [{f.invariant}]" if f.invariant else ""
         calls = f" calls={f.call_seqs}" if f.call_seqs else ""
-        lines.append(f"    {marks[f.severity]} {f.code.value}{inv}: {f.message}{s.dim(calls)}")
+        lines.append(f"    {marks[f.severity]} {f.code}{inv}: {f.message}{s.dim(calls)}")
     if not o.findings:
         lines.append("    (no findings)")
     lines.append(
@@ -142,7 +144,7 @@ def run_demo(
     print(s.bold("Summary"))
     for case, report in zip(cases, reports, strict=True):
         o = report.oracle
-        new = len(o.observation.new_customer_ids)
+        new = len(o.observation.new_ids)
         div = len(o.response_divergences)
         print(
             f"  {case.case_id:<26} {s.verdict(o.verdict):<12} "

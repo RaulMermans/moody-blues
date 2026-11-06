@@ -32,16 +32,11 @@ from moody_blues.contracts.protocol import (
     RunTargetAgent,
 )
 from moody_blues.contracts.sandbox import SandboxResult
-from moody_blues.contracts.scenario import READ_OPERATION, FaultKind, FaultSpec, Scenario
+from moody_blues.contracts.scenario import READ_OPERATION, FaultKind, FaultSpec, ScenarioBase
 from moody_blues.contracts.world import ToolErrorCode
-
-APPROVED_SCENARIOS: tuple[str, ...] = (
-    "clean-negative-control",
-    "normal-success",
-    "phantom-failure",
-    "phantom-success",
-    "preexisting-email",
-)
+from moody_blues.world.crm_plugin import APPROVED_SCENARIOS as APPROVED_SCENARIOS
+from moody_blues.world.plugin import WorldPlugin
+from moody_blues.world.registry import plugin_for
 
 _ACTION_ADAPTER: TypeAdapter[RunTargetAgent | InspectObservation | FinishExperiment] = TypeAdapter(
     ExperimentAction
@@ -116,8 +111,15 @@ def parse_action(
         return _reject(RejectionCode.SCHEMA_VIOLATION, f"invalid fields: {', '.join(bad)}")
 
 
-def fault_specs(selections: list[FaultSelection]) -> list[FaultSpec]:
-    """Approved selections -> trusted specs. Messages come from the approved table only."""
+def fault_specs(
+    selections: list[FaultSelection], world: WorldPlugin | None = None
+) -> list[FaultSpec]:
+    """Approved selections -> trusted specs. Messages come from the world's approved table only.
+
+    The selection carries no operation: a fault lands on the selected world's own write.
+    """
+    messages = world.fault_messages() if world is not None else APPROVED_FAULT_MESSAGES
+    operation = world.descriptor.shape.write_tool if world is not None else None
     specs: list[FaultSpec] = []
     for selection in selections:
         code = ToolErrorCode(selection.error_code)
@@ -132,11 +134,14 @@ def fault_specs(selections: list[FaultSelection]) -> list[FaultSpec]:
             )
             continue
         specs.append(
-            FaultSpec(
-                kind=selection.kind,
-                occurrence=selection.occurrence,
-                error_code=code,
-                error_message=APPROVED_FAULT_MESSAGES[code],
+            FaultSpec.model_validate(
+                {
+                    "kind": selection.kind,
+                    "occurrence": selection.occurrence,
+                    "error_code": code,
+                    "error_message": messages[code],
+                }
+                | ({"operation": operation} if operation is not None else {})
             )
         )
     return specs
@@ -144,13 +149,13 @@ def fault_specs(selections: list[FaultSelection]) -> list[FaultSpec]:
 
 @dataclass(frozen=True, slots=True)
 class AuthorizedTargetRun:
-    scenario: Scenario
+    scenario: ScenarioBase
     config: str
     fault_source: str
 
 
 def authorize_run(
-    action: RunTargetAgent, *, scenario: Scenario, runs_done: int, max_runs: int
+    action: RunTargetAgent, *, scenario: ScenarioBase, runs_done: int, max_runs: int
 ) -> AuthorizedTargetRun | ProtocolRejection:
     if runs_done >= max_runs:
         return _reject(RejectionCode.TARGET_RUN_LIMIT, f"limit of {max_runs} target run(s) reached")
@@ -172,5 +177,8 @@ def authorize_run(
         return _reject(RejectionCode.INVALID_FAULT, "only phantom_failure takes an error_code")
     # Rebuilt through the validator: the scenario's own rules still apply to the result.
     data = scenario.model_dump(mode="json")
-    data["faults"] = [f.model_dump(mode="json") for f in fault_specs(action.faults)]
-    return AuthorizedTargetRun(Scenario.model_validate(data), action.config, "experiment_selection")
+    selected = fault_specs(action.faults, plugin_for(scenario))
+    data["faults"] = [f.model_dump(mode="json") for f in selected]
+    return AuthorizedTargetRun(
+        type(scenario).model_validate(data), action.config, "experiment_selection"
+    )

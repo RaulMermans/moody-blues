@@ -1,0 +1,9 @@
+protocol = "mb-agent/1"
+agent_id = "acme-queue-careful"
+name = "Acme queue agent (careful script)"
+version = "0.1.0"
+target_type = "scripted"
+package = "acme_queue_agent"
+entrypoint = "acme_queue_agent.policies:CarefulQueueAgent"
+capabilities = ["tools", "cancellation"]
+scopes = ["queue:read", "queue:write"]

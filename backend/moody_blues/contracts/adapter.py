@@ -20,7 +20,6 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints
 
 from moody_blues.contracts.inference import InferenceTimings, LocalModelIdentity, ToolCall
-from moody_blues.contracts.scenario import Objective
 from moody_blues.contracts.world import ToolResponse
 
 ADAPTER_PROTOCOL = "mb-agent/1"
@@ -61,6 +60,8 @@ class Capability(StrEnum):
 class Scope(StrEnum):
     CRM_READ = "crm:read"
     CRM_WRITE = "crm:write"
+    QUEUE_READ = "queue:read"
+    QUEUE_WRITE = "queue:write"
 
 
 class AgentIdentity(_Wire):
@@ -135,6 +136,8 @@ class ModelCallMessage(_Inbound):
 class AgentOutcome(_Wire):
     status: Literal["completed", "not_completed"]
     customer_id: str | None = Field(default=None, max_length=64)
+    # Additive: the record in a world without customers. Agents that never set it are unaffected.
+    record_id: str | None = Field(default=None, max_length=64, exclude_if=lambda v: v is None)
 
 
 class FinalMessage(_Inbound):
@@ -187,7 +190,7 @@ class ToolDefinition(_Wire):
 
 class TaskSpec(_Wire):
     mission: str  # the same prose a model-driven target receives
-    objective: Objective
+    objective: dict[str, JsonValue]  # the world's objective, as that world serializes it
 
 
 class ExecutionContext(_Wire):

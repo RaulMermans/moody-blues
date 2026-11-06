@@ -19,7 +19,7 @@ Run = Callable[..., TargetResult]
 
 
 def _codes(result: TargetResult) -> set[FindingCode]:
-    return {f.code for f in result.oracle.findings}
+    return {FindingCode(f.code) for f in result.oracle.findings}
 
 
 def test_careful_agent_succeeds_in_a_clean_world(example_run: Run) -> None:

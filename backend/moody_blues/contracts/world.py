@@ -45,7 +45,7 @@ def normalize_email(value: str) -> str:
     return email
 
 
-def _check_metadata(value: dict[str, str]) -> dict[str, str]:
+def check_metadata(value: dict[str, str]) -> dict[str, str]:
     if len(value) > 16:
         raise ValueError("metadata may contain at most 16 keys")
     for key, item in value.items():
@@ -58,7 +58,7 @@ def _check_metadata(value: dict[str, str]) -> dict[str, str]:
 
 CustomerName = Annotated[str, AfterValidator(normalize_name)]
 CustomerEmail = Annotated[str, AfterValidator(normalize_email)]
-CustomerMetadata = Annotated[dict[str, str], AfterValidator(_check_metadata)]
+CustomerMetadata = Annotated[dict[str, str], AfterValidator(check_metadata)]
 
 
 class CustomerDraft(BaseModel):
@@ -84,6 +84,10 @@ class CustomerRecord(BaseModel):
     created_at: datetime
     # The gateway call (``call_seq``) whose transaction inserted this row; 0 for seed data.
     created_by_call: int = Field(ge=0)
+
+    @property
+    def record_id(self) -> str:
+        return self.customer_id
 
 
 # --- agent-facing tools -----------------------------------------------------------------------
@@ -175,6 +179,31 @@ class FinalClaim(BaseModel):
     customer_id: str | None = Field(default=None, max_length=64)
     message: str = Field(default="", max_length=2000)
 
+    @property
+    def record_ref(self) -> str | None:
+        return self.customer_id
+
+
+class WorldClaim(BaseModel):
+    """``FinalClaim`` for a world that has no customers. Evidence to check, never truth.
+
+    A sibling, not a widening: ``FinalClaim`` serializes into every record written so far, and
+    ``extra="forbid"`` on both keeps a stored claim from being read as the other kind.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: ClaimStatus
+    record_id: str | None = Field(default=None, max_length=64)
+    message: str = Field(default="", max_length=2000)
+
+    @property
+    def record_ref(self) -> str | None:
+        return self.record_id
+
+
+AnyClaim = FinalClaim | WorldClaim
+
 
 # --- evidence ---------------------------------------------------------------------------------
 
@@ -213,4 +242,33 @@ class CommittedChange(BaseModel):
     change_seq: int = Field(ge=1)
     operation: str
     customer_id: str
+    created_by_call: int
+
+    @property
+    def record_id(self) -> str:
+        return self.customer_id
+
+
+class WorldRecord(BaseModel):
+    """One authoritative row of a world without customers, as evidence holds it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    record_id: str
+    kind: str  # the plugin's noun, e.g. ``job``
+    title: str  # the world's own label for the row, e.g. a job's type
+    status: str | None = None
+    identity_key: str | None = None  # the idempotency key the row was written under, if any
+    attributes: dict[str, JsonValue] = Field(default_factory=dict[str, JsonValue])
+    created_by_call: int = Field(ge=0)
+
+
+class WorldChange(BaseModel):
+    """``CommittedChange`` for a world without customers. Same transaction, same meaning."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    change_seq: int = Field(ge=1)
+    operation: str
+    record_id: str
     created_by_call: int

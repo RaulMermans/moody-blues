@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, Self, cast
 
 from pydantic import JsonValue
 
@@ -40,12 +40,29 @@ from moody_blues.contracts.world import (
 DB_FILENAME = "world.sqlite3"
 SCHEMA_VERSION = 1
 
-_SCHEMA = """
+SCHEMA_CORE = """
 CREATE TABLE world_meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 ) STRICT;
 
+CREATE TABLE events (
+    seq          INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind         TEXT NOT NULL,
+    call_seq     INTEGER,
+    logical_time TEXT NOT NULL,
+    payload      TEXT NOT NULL CHECK (json_valid(payload))
+) STRICT;
+
+CREATE TRIGGER events_append_only_u BEFORE UPDATE ON events BEGIN
+    SELECT RAISE(ABORT, 'events are append-only');
+END;
+CREATE TRIGGER events_append_only_d BEFORE DELETE ON events BEGIN
+    SELECT RAISE(ABORT, 'events are append-only');
+END;
+"""
+
+_CRM_TABLES = """
 CREATE TABLE customers (
     customer_id       TEXT PRIMARY KEY CHECK (customer_id GLOB 'cus_?*'),
     name              TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 120),
@@ -79,20 +96,6 @@ CREATE TRIGGER customers_after_delete AFTER DELETE ON customers BEGIN
     VALUES ('delete', OLD.customer_id, OLD.created_by_call);
 END;
 
-CREATE TABLE events (
-    seq          INTEGER PRIMARY KEY AUTOINCREMENT,
-    kind         TEXT NOT NULL,
-    call_seq     INTEGER,
-    logical_time TEXT NOT NULL,
-    payload      TEXT NOT NULL CHECK (json_valid(payload))
-) STRICT;
-
-CREATE TRIGGER events_append_only_u BEFORE UPDATE ON events BEGIN
-    SELECT RAISE(ABORT, 'events are append-only');
-END;
-CREATE TRIGGER events_append_only_d BEFORE DELETE ON events BEGIN
-    SELECT RAISE(ABORT, 'events are append-only');
-END;
 CREATE TRIGGER changes_append_only_u BEFORE UPDATE ON committed_changes BEGIN
     SELECT RAISE(ABORT, 'committed_changes is append-only');
 END;
@@ -100,6 +103,8 @@ CREATE TRIGGER changes_append_only_d BEFORE DELETE ON committed_changes BEGIN
     SELECT RAISE(ABORT, 'committed_changes is append-only');
 END;
 """
+
+_SCHEMA = SCHEMA_CORE + _CRM_TABLES
 
 _CUSTOMER_COLUMNS = (
     "customer_id, name, email, metadata, client_request_id, created_at, created_by_call"
@@ -131,7 +136,7 @@ class InsertResult:
 BeforeCommit = Callable[[], CommitDecision]
 
 
-def _dumps(value: object) -> str:
+def canonical_json(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -151,10 +156,35 @@ def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-class _Reader:
-    """SQL shared by the writer and the read-only view. Every method is a pure read."""
+class CoreReader:
+    """Reads every world's store has: its metadata and its evidence trail."""
 
     _conn: sqlite3.Connection
+
+    def meta(self) -> dict[str, str]:
+        rows = self._conn.execute("SELECT key, value FROM world_meta").fetchall()
+        return {r["key"]: r["value"] for r in rows}
+
+    def events(self) -> list[WorldEvent]:
+        world_id = self.meta()["world_id"]
+        rows = self._conn.execute(
+            "SELECT seq, kind, call_seq, logical_time, payload FROM events ORDER BY seq"
+        ).fetchall()
+        return [
+            WorldEvent(
+                seq=r["seq"],
+                world_id=world_id,
+                kind=EventKind(r["kind"]),
+                call_seq=r["call_seq"],
+                logical_time=datetime.fromisoformat(r["logical_time"]),
+                payload=cast(dict[str, JsonValue], json.loads(r["payload"])),
+            )
+            for r in rows
+        ]
+
+
+class _Reader(CoreReader):
+    """SQL shared by the writer and the read-only view. Every method is a pure read."""
 
     def get_customer(self, customer_id: str) -> CustomerRecord | None:
         row = self._conn.execute(
@@ -199,27 +229,6 @@ class _Reader:
     def count_customers(self) -> int:
         return int(self._conn.execute("SELECT count(*) FROM customers").fetchone()[0])
 
-    def meta(self) -> dict[str, str]:
-        rows = self._conn.execute("SELECT key, value FROM world_meta").fetchall()
-        return {r["key"]: r["value"] for r in rows}
-
-    def events(self) -> list[WorldEvent]:
-        world_id = self.meta()["world_id"]
-        rows = self._conn.execute(
-            "SELECT seq, kind, call_seq, logical_time, payload FROM events ORDER BY seq"
-        ).fetchall()
-        return [
-            WorldEvent(
-                seq=r["seq"],
-                world_id=world_id,
-                kind=EventKind(r["kind"]),
-                call_seq=r["call_seq"],
-                logical_time=datetime.fromisoformat(r["logical_time"]),
-                payload=cast(dict[str, JsonValue], json.loads(r["payload"])),
-            )
-            for r in rows
-        ]
-
     def committed_changes(self) -> list[CommittedChange]:
         rows = self._conn.execute(
             "SELECT change_seq, operation, customer_id, created_by_call "
@@ -235,15 +244,21 @@ def _connect(target: str, *, uri: bool = False) -> sqlite3.Connection:
     return conn
 
 
-class CrmStore(_Reader):
-    """The single read-write handle on a world's authoritative state. Trusted code only."""
+class WorldStore(CoreReader):
+    """The single read-write handle on one world's state. Trusted code only.
+
+    What every world shares: one file, explicit transactions and an append-only evidence trail. A
+    world adds its own tables and writes, and never a second way to reach this file.
+    """
+
+    SCHEMA: ClassVar[str]
 
     def __init__(self, conn: sqlite3.Connection, path: Path) -> None:
         self._conn = conn
         self.path = path
 
     @classmethod
-    def initialize(cls, path: Path, *, meta: dict[str, str]) -> CrmStore:
+    def initialize(cls, path: Path, *, meta: dict[str, str]) -> Self:
         if path.exists():
             raise FileExistsError(f"world database already exists: {path}")
         conn = _connect(str(path))
@@ -251,7 +266,7 @@ class CrmStore(_Reader):
         conn.execute("PRAGMA synchronous = FULL")
         store = cls(conn, path)
         with store.transaction():
-            for statement in _split_sql(_SCHEMA):
+            for statement in split_sql(cls.SCHEMA):
                 conn.execute(statement)
             conn.executemany(
                 "INSERT INTO world_meta (key, value) VALUES (?, ?)",
@@ -269,6 +284,34 @@ class CrmStore(_Reader):
             self._conn.execute("ROLLBACK")
             raise
         self._conn.execute("COMMIT")
+
+    def append_event(
+        self,
+        kind: EventKind,
+        *,
+        call_seq: int | None,
+        logical_time: datetime,
+        payload: dict[str, Any],
+    ) -> int:
+        """Append one evidence event in its own committed transaction; returns its ``seq``."""
+        with self.transaction() as conn:
+            cur = conn.execute(
+                "INSERT INTO events (kind, call_seq, logical_time, payload) VALUES (?, ?, ?, ?)",
+                (kind.value, call_seq, logical_time.isoformat(), canonical_json(payload)),
+            )
+        seq = cur.lastrowid
+        if seq is None:  # pragma: no cover - sqlite always sets it for a rowid table
+            raise RuntimeError("sqlite did not report an event seq")
+        return seq
+
+    def close(self) -> None:
+        self._conn.close()
+
+
+class CrmStore(WorldStore, _Reader):
+    """The CRM's authoritative state."""
+
+    SCHEMA = _SCHEMA
 
     def seed_customers(self, records: list[CustomerRecord]) -> None:
         with self.transaction() as conn:
@@ -308,30 +351,8 @@ class CrmStore(_Reader):
         self._conn.execute("COMMIT")
         return InsertResult(WriteOutcome.COMMITTED, record)
 
-    def append_event(
-        self,
-        kind: EventKind,
-        *,
-        call_seq: int | None,
-        logical_time: datetime,
-        payload: dict[str, Any],
-    ) -> int:
-        """Append one evidence event in its own committed transaction; returns its ``seq``."""
-        with self.transaction() as conn:
-            cur = conn.execute(
-                "INSERT INTO events (kind, call_seq, logical_time, payload) VALUES (?, ?, ?, ?)",
-                (kind.value, call_seq, logical_time.isoformat(), _dumps(payload)),
-            )
-        seq = cur.lastrowid
-        if seq is None:  # pragma: no cover - sqlite always sets it for a rowid table
-            raise RuntimeError("sqlite did not report an event seq")
-        return seq
 
-    def close(self) -> None:
-        self._conn.close()
-
-
-class ReadOnlyWorldView(_Reader):
+class ReadOnlyView(CoreReader):
     """Read-only handle enforced by SQLite (``mode=ro`` + ``query_only``), not by convention."""
 
     def __init__(self, path: Path) -> None:
@@ -344,11 +365,15 @@ class ReadOnlyWorldView(_Reader):
     def close(self) -> None:
         self._conn.close()
 
-    def __enter__(self) -> ReadOnlyWorldView:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_exc: object) -> None:
         self.close()
+
+
+class ReadOnlyWorldView(ReadOnlyView, _Reader):
+    """The CRM through a read-only connection. The Truth Oracle uses only this."""
 
 
 def _insert_row(conn: sqlite3.Connection, record: CustomerRecord) -> None:
@@ -358,7 +383,7 @@ def _insert_row(conn: sqlite3.Connection, record: CustomerRecord) -> None:
             record.customer_id,
             record.name,
             record.email,
-            _dumps(record.metadata),
+            canonical_json(record.metadata),
             record.client_request_id,
             record.created_at.isoformat(),
             record.created_by_call,
@@ -383,7 +408,7 @@ def draft_matches(record: CustomerRecord, draft: CustomerDraft) -> bool:
     )
 
 
-def _split_sql(script: str) -> list[str]:
+def split_sql(script: str) -> list[str]:
     """Split the fixed schema script into statements, keeping trigger bodies intact."""
     statements: list[str] = []
     buf: list[str] = []

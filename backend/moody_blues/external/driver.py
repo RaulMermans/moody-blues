@@ -32,7 +32,7 @@ from typing import NoReturn
 from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from moody_blues.agents.target import InferencePort
-from moody_blues.agents.tooling import CRM_TOOLS, error_result, validate_call
+from moody_blues.agents.tooling import error_result, validate_call
 from moody_blues.contracts.adapter import (
     MODEL_ATTEMPTED,
     AdapterEvent,
@@ -41,6 +41,7 @@ from moody_blues.contracts.adapter import (
     AdapterRejection,
     AdapterRejectionCode,
     AgentManifest,
+    AgentOutcome,
     CallRejection,
     CancelMessage,
     Capability,
@@ -74,7 +75,7 @@ from moody_blues.contracts.inference import (
     ToolCall,
     ToolSpec,
 )
-from moody_blues.contracts.world import ClaimStatus, FinalClaim
+from moody_blues.contracts.world import AnyClaim, ClaimStatus
 from moody_blues.external.protocol import parse_line
 from moody_blues.sandbox.session import (
     ReadStatus,
@@ -82,7 +83,10 @@ from moody_blues.sandbox.session import (
     SessionClosedError,
     SessionExit,
 )
+from moody_blues.world.crm_plugin import WORLD_TYPE as CRM_WORLD_TYPE
 from moody_blues.world.gateway import ToolPort
+from moody_blues.world.plugin import WorldPlugin
+from moody_blues.world.registry import world_plugin
 
 log = logging.getLogger("moody_blues.external")
 
@@ -139,7 +143,7 @@ class DriverOutcome:
     termination: TerminationReason = TerminationReason.ADAPTER_STARTUP_FAILED
     hello: HelloMessage | None = None
     final: FinalMessage | None = None
-    claim: FinalClaim | None = None
+    claim: AnyClaim | None = None
     startup_ms: int | None = None
     rejection: AdapterRejection | None = None
     rejected_line_sha256: str | None = None
@@ -180,8 +184,11 @@ class AdapterDriver:
         cancel: Event | None = None,
         monotonic: Callable[[], float] = time.monotonic,
         model_intents: Path | None = None,
+        world: WorldPlugin | None = None,
     ) -> None:
         self._model_intents = model_intents
+        self._world = world or world_plugin(CRM_WORLD_TYPE)
+        self._arg_models = self._world.arg_models()
         self._session = session
         self._port = port
         self._manifest = manifest
@@ -476,13 +483,16 @@ class AdapterDriver:
         if self._cancel_deadline is not None:
             return ToolCallDisposition.CANCELLED, "not executed: run cancelled"
         if message.tool not in self._granted:
-            if message.tool in CRM_TOOLS:
+            # A tool of this world the agent's scopes leave out. Any other world's tool is, from
+            # here, simply unknown: it does not exist in this run, and no gateway hears of it.
+            if message.tool in self._arg_models:
                 return ToolCallDisposition.TOOL_NOT_PERMITTED, "outside the scopes of this agent"
             return ToolCallDisposition.UNKNOWN_TOOL, "unknown tool"
         if not isinstance(message.arguments, dict):
             return ToolCallDisposition.INVALID_ARGUMENTS, "arguments must be a JSON object"
         checked = validate_call(
-            ToolCall(id=message.call_id, name=message.tool, arguments_json=arguments_json)
+            ToolCall(id=message.call_id, name=message.tool, arguments_json=arguments_json),
+            self._arg_models,
         )
         if checked.disposition is not None:
             return checked.disposition, checked.error or checked.disposition.value
@@ -833,15 +843,19 @@ class AdapterDriver:
 
     # --- the report ---------------------------------------------------------------------
 
+    def _make_claim(self, status: ClaimStatus, outcome: AgentOutcome, message: str) -> AnyClaim:
+        """The record is read from this world's field only. The other one means nothing here."""
+        field = self._world.descriptor.shape.claim_field
+        ref = outcome.record_id if field == "record_id" else outcome.customer_id
+        return self._world.claim(status, ref or None, message)
+
     def _final(self, message: FinalMessage) -> None:
         out = self._outcome
         out.final = message
         out.unknown_evidence_refs = sorted(set(message.evidence_refs) - self._gateway_refs)
         if message.completion == "finished" and message.outcome is not None:
-            out.claim = FinalClaim(
-                status=ClaimStatus(message.outcome.status),
-                customer_id=message.outcome.customer_id or None,
-                message=message.message,
+            out.claim = self._make_claim(
+                ClaimStatus(message.outcome.status), message.outcome, message.message
             )
         if self._cancel_deadline is not None:
             out.termination = TerminationReason.CANCELLED

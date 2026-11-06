@@ -33,8 +33,9 @@ from moody_blues.contracts.investigation import (
     TargetProvenance,
     WorldTier,
 )
+from moody_blues.contracts.job_queue import JobScenario
+from moody_blues.contracts.scenario import Scenario
 from moody_blues.experiments.budget import ScopedSpend, SpendLedger, SpendPort, ledger_path
-from moody_blues.experiments.protocol import APPROVED_SCENARIOS
 from moody_blues.experiments.target import AgentTarget, TargetPort
 from moody_blues.experiments.workspace import atomic_write
 from moody_blues.explorer.factories import REHEARSAL_SEQUENCE
@@ -46,7 +47,7 @@ from moody_blues.explorer.sanitize import require_clean
 from moody_blues.external.bundle import AgentBundle, ManifestError, build_bundle
 from moody_blues.external.driver import InferenceBroker
 from moody_blues.external.fixtures import FIXTURE_MODEL as AGENT_FIXTURE_MODEL
-from moody_blues.external.fixtures import CrmModelFixture, Policy
+from moody_blues.external.fixtures import CrmModelFixture, JobModelFixture, Policy
 from moody_blues.external.local import (
     LOCAL_ADAPTER_LIMITS,
     LOCAL_INVESTIGATION_LIMITS,
@@ -58,10 +59,16 @@ from moody_blues.external.selection import (
     check_model_allowed,
     external_provenance,
 )
-from moody_blues.external.target import ExternalAgentTarget, LiveInference, granted_specs
+from moody_blues.external.target import (
+    ExternalAgentTarget,
+    LiveInference,
+    WrongWorldError,
+    granted_specs,
+    world_for_manifest,
+)
 from moody_blues.inference.vultr import PROVIDER, VultrInferenceClient
 from moody_blues.investigator.catalog import external_capability
-from moody_blues.investigator.commands import DEFAULT_OBJECTIVE, LIVE_TARGET_BUDGET
+from moody_blues.investigator.commands import LIVE_TARGET_BUDGET
 from moody_blues.investigator.fixtures import FIXTURE_MODEL, ObservationDrivenFixture
 from moody_blues.investigator.model import InvestigatorModel
 from moody_blues.investigator.preflight import (
@@ -73,7 +80,12 @@ from moody_blues.investigator.workflow import ExperimentRunner, InvestigationWor
 from moody_blues.investigator.workspace import verify_investigation
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.session import SessionRunner
-from moody_blues.world.scenarios import load_scenario
+from moody_blues.world.crm_plugin import APPROVED_SCENARIOS as APPROVED_CRM_WORLDS
+from moody_blues.world.registry import (
+    REGISTRY,
+    load_any_scenario,
+    plugin_for_scenario,
+)
 
 # What one local run delivers. Ids are plain, and the fixture delivering them is labeled as such.
 FAULT_PLANS: dict[str, list[dict[str, Any]]] = {
@@ -83,7 +95,10 @@ FAULT_PLANS: dict[str, list[dict[str, Any]]] = {
 }
 _ONE_PROVIDER = "choose local or paid inference for a run, never both"
 EXAMPLES = REPO_ROOT / "examples" / "external-agent"
+QUEUE_EXAMPLES = REPO_ROOT / "examples" / "job-queue-agent"
 DEFAULT_WORLD = "normal-success"
+# What a handshake or a demonstration uses in each world. Never a fault: nothing runs on it.
+DEFAULT_WORLDS: dict[str, str] = {"crm": DEFAULT_WORLD, "job-queue": "jq-normal"}
 _LIMITS = InvestigationLimits(max_experiments=2, max_model_calls=3, max_wall_seconds=120)
 # A live run is paid for, so it stays small. These are ceilings, not targets.
 LIVE_MODEL_CALLS = 8
@@ -113,6 +128,22 @@ def _sandbox_ready(settings: Settings) -> bool:
         )
     )
     return False
+
+
+def runnable_worlds() -> tuple[str, ...]:
+    """Worlds an operator may name. Evaluation and reserved worlds have registered meaning."""
+    return tuple(w for plugin in REGISTRY.values() for w in plugin.approved_scenarios())
+
+
+def _agent_model_fixture(
+    world: str, policy: Policy = "verify"
+) -> CrmModelFixture | JobModelFixture:
+    scenario = load_any_scenario(world)
+    if isinstance(scenario, JobScenario):
+        return JobModelFixture(scenario.objective, policy)
+    if isinstance(scenario, Scenario):
+        return CrmModelFixture(scenario.objective, policy)
+    raise TypeError(f"no model fixture for {world}")
 
 
 def fixture_investigator(
@@ -157,7 +188,7 @@ def external_workflow(
     model = investigator or fixture_investigator(world, limits)
     return InvestigationWorkflow(
         request=InvestigationRequest(
-            objective=DEFAULT_OBJECTIVE,
+            objective=plugin_for_scenario(world).investigation_objective(),
             strategy=Strategy.ADAPTIVE,
             tier=WorldTier.DEVELOPMENT,
             world_ids=(world,),
@@ -182,7 +213,9 @@ def external_workflow(
         root=artifacts / "investigations",
         model=model,
         capability=external_capability(
-            bundle.manifest, [s.name for s in granted_specs(bundle)], (world,)
+            bundle.manifest,
+            [s.name for s in granted_specs(bundle, plugin_for_scenario(world))],
+            (world,),
         ),
         cancel=cancel,
         investigation_id=investigation_id,
@@ -273,7 +306,7 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
                 print(f"    model calls:      {record.model_calls} brokered ({states})")
                 _print_local_usage(record)
             print(f"    agent reported:   {claim.status.value if claim else 'no valid report'}")
-            print(f"    committed new:    {len(run.committed.new_customer_ids)} record(s)")
+            print(f"    committed new:    {len(run.committed.new_ids)} record(s)")
             print(f"    Oracle verdict:   {run.oracle.verdict.value}")
             print(f"    run outcome:      {run.run_outcome}")
             print(f"    evidence:         {artifacts / 'experiments' / evidence.experiment_id}")
@@ -334,7 +367,10 @@ def preflight(settings: Settings, manifest: Path) -> int:
         sandbox_limits=sandbox_limits(settings),
     )
     try:
-        outcome = target.check_handshake(load_scenario(DEFAULT_WORLD))
+        world = world_for_manifest(bundle.manifest)
+        outcome = target.check_handshake(
+            world.load_scenario(DEFAULT_WORLDS[world.descriptor.world_type])
+        )
     except SandboxError as exc:
         print(json.dumps({"status": "FAIL", "reason": exc.detail.message}, indent=2))
         return 1
@@ -376,13 +412,14 @@ def run(
     if live_inference and local_inference:
         print(json.dumps({"status": "FAIL", "reason": _ONE_PROVIDER}, indent=2))
         return 1
-    if world not in APPROVED_SCENARIOS:
+    if world not in runnable_worlds():
         # Evaluation and reserved worlds have registered meaning, and are never run from here.
-        print(json.dumps({"status": "FAIL", "reason": f"choose: {APPROVED_SCENARIOS}"}, indent=2))
+        print(json.dumps({"status": "FAIL", "reason": f"choose: {runnable_worlds()}"}, indent=2))
         return 1
     try:
         bundle = build_bundle(manifest)
-    except ManifestError as exc:
+        granted_specs(bundle, plugin_for_scenario(world))
+    except (ManifestError, WrongWorldError) as exc:
         print(json.dumps({"status": "FAIL", "reason": str(exc)}, indent=2))
         return 1
     if local_inference:
@@ -491,7 +528,7 @@ def _no_retry_client(settings: Settings, key: str, model: str) -> VultrInference
 def fixture_broker(world: str, *, policy: Policy = "verify") -> InferenceBroker:
     """A labeled stand-in, for the whole model path with nothing paid for."""
     return InferenceBroker(
-        inference=CrmModelFixture(load_scenario(world).objective, policy),
+        inference=_agent_model_fixture(world, policy),
         evidence="offline_fixture",
         provider="fixture",
         model=AGENT_FIXTURE_MODEL,
@@ -521,7 +558,7 @@ def _investigator_live(
 def _internal_target(world: str) -> TargetPort:
     """The internal agent, on the labeled fixture. A live one is ``make investigator-live``."""
     return AgentTarget(
-        inference=CrmModelFixture(load_scenario(world).objective),
+        inference=_agent_model_fixture(world),
         evidence="offline_fixture",
         provider="fixture",
         model=AGENT_FIXTURE_MODEL,
@@ -535,7 +572,7 @@ def _internal_workflow(
     sandbox = generated_code_runner(settings)
     return InvestigationWorkflow(
         request=InvestigationRequest(
-            objective=DEFAULT_OBJECTIVE,
+            objective=plugin_for_scenario(world).investigation_objective(),
             strategy=Strategy.ADAPTIVE,
             tier=WorldTier.DEVELOPMENT,
             world_ids=(world,),
@@ -601,10 +638,14 @@ def investigate(
     if live.any and live.any_local:
         print(json.dumps({"status": "FAIL", "reason": _ONE_PROVIDER}, indent=2))
         return 1
-    if world not in APPROVED_SCENARIOS:
-        print(json.dumps({"status": "FAIL", "reason": f"choose: {APPROVED_SCENARIOS}"}, indent=2))
+    if world not in runnable_worlds():
+        print(json.dumps({"status": "FAIL", "reason": f"choose: {runnable_worlds()}"}, indent=2))
         return 1
     if kind is TargetKind.INTERNAL_LLM:
+        if world not in APPROVED_CRM_WORLDS:
+            reason = "the internal target runs in the CRM only; use an external agent here"
+            print(json.dumps({"status": "FAIL", "reason": reason}, indent=2))
+            return 1
         if live.any or live.any_local or manifest is not None:
             reason = "the internal target has no bundle; a live one is make investigator-live"
             print(json.dumps({"status": "FAIL", "reason": reason}, indent=2))
@@ -664,7 +705,7 @@ def investigate(
         bundle=bundle,
         sandbox_limits=sandbox_limits(settings),
         live=lent,
-    ).check_handshake(load_scenario(world))
+    ).check_handshake(load_any_scenario(world))
     if hello.startup_ms is None:
         code = hello.rejection.code.value if hello.rejection else hello.termination.value
         print(json.dumps({"status": "FAIL", "reason": f"handshake: {code}"}, indent=2))
@@ -712,11 +753,20 @@ def demo(settings: Settings) -> int:
         return 2
     print("OFFLINE DEMONSTRATION. Both agents are deterministic scripts, not models. This proves")
     print("the adapter boundary and that the Oracle separates them. It says nothing about LLMs.\n")
+    separated = all(_demo_world(settings, root, world) for root, world in _DEMOS)
+    sys.stdout.flush()
+    return 0 if separated else 1
+
+
+_DEMOS = ((EXAMPLES, DEFAULT_WORLD), (QUEUE_EXAMPLES, DEFAULT_WORLDS["job-queue"]))
+
+
+def _demo_world(settings: Settings, root: Path, world: str) -> bool:
     rows: list[_DemoRow] = []
     for name in ("careful", "unsafe"):
-        bundle = build_bundle(EXAMPLES / f"{name}.agent.toml")
+        bundle = build_bundle(root / f"{name}.agent.toml")
         print(f"--- {bundle.manifest.name} ---")
-        report, artifacts = _run_one(settings, bundle, DEFAULT_WORLD, None)
+        report, artifacts = _run_one(settings, bundle, world, None)
         job_id = publish_run(report, artifacts, settings)
         _print_run(report, artifacts, job_id)
         print()
@@ -747,5 +797,5 @@ def demo(settings: Settings) -> int:
         f"unsafe: {unsafe.violations}/{unsafe.runs}"
     )
     print("the Oracle separated them" if separated else "the Oracle did NOT separate them")
-    sys.stdout.flush()
-    return 0 if separated else 1
+    print()
+    return separated

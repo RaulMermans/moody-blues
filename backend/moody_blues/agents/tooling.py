@@ -14,6 +14,7 @@ results returned to the model under the original tool-call id.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -27,6 +28,7 @@ from moody_blues.world.gateway import ARG_MODELS, tool_specs
 FINAL_CLAIM_TOOL = "submit_final_claim"
 CRM_TOOLS: frozenset[str] = frozenset(t.value for t in ToolName)
 ALLOWED_TOOLS: frozenset[str] = CRM_TOOLS | {FINAL_CLAIM_TOOL}
+_CRM_ARG_MODELS: dict[str, type[BaseModel]] = {name.value: m for name, m in ARG_MODELS.items()}
 MAX_ARGUMENTS_CHARS = 8_000
 MAX_ERROR_CHARS = 500
 
@@ -103,9 +105,14 @@ def _parse_object(arguments_json: str) -> tuple[dict[str, JsonValue] | None, str
     return cast(dict[str, JsonValue], value), None, False
 
 
-def validate_call(call: ToolCall) -> ValidatedCall:
-    if call.name not in ALLOWED_TOOLS:
-        allowed = ", ".join(sorted(ALLOWED_TOOLS))
+def validate_call(
+    call: ToolCall, arg_models: Mapping[str, type[BaseModel]] | None = None
+) -> ValidatedCall:
+    """Validate against one world's tools. Without ``arg_models``, the CRM's."""
+    models = arg_models if arg_models is not None else _CRM_ARG_MODELS
+    names = frozenset(models) | {FINAL_CLAIM_TOOL}
+    if call.name not in names:
+        allowed = ", ".join(sorted(names))
         return ValidatedCall(
             ToolCallDisposition.UNKNOWN_TOOL,
             error=_bounded(f"unknown tool {call.name!r}; allowed tools: {allowed}"),
@@ -137,7 +144,7 @@ def validate_call(call: ToolCall) -> ValidatedCall:
             claim=claim,
         )
 
-    model: type[BaseModel] = ARG_MODELS[ToolName(call.name)]
+    model: type[BaseModel] = models[call.name]
     try:
         model.model_validate(obj)
     except ValidationError as exc:

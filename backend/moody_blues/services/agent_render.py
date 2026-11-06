@@ -8,6 +8,7 @@ shown here for the operator; the agent never saw them.
 from __future__ import annotations
 
 from moody_blues.contracts.agent import AgentRunReport, ToolCallDisposition
+from moody_blues.contracts.world import CustomerRecord
 
 
 def _short(text: str, limit: int = 140) -> str:
@@ -63,8 +64,9 @@ def render_agent_report(report: AgentRunReport) -> str:
         "",
         "  Committed state (read-only)",
     ]
-    seeds = set(report.oracle.observation.seed_customer_ids)
-    new = [r for r in report.final_state if r.customer_id not in seeds]
+    seeds = set(report.oracle.observation.seed_ids)
+    rows = [r for r in report.final_state if isinstance(r, CustomerRecord)]  # a CRM report
+    new = [r for r in rows if r.customer_id not in seeds]
     lines += [
         f"   {r.customer_id} {r.name} <{r.email}> {r.metadata} key={r.client_request_id} "
         f"(call_{r.created_by_call:04d})"
@@ -76,7 +78,7 @@ def render_agent_report(report: AgentRunReport) -> str:
         f"  Truth Oracle: {o.verdict.value}  objective_satisfied="
         f"{str(o.objective_satisfied).lower()}",
     ]
-    lines += [f"   - {f.severity.value} {f.code.value}: {f.message}" for f in o.findings]
+    lines += [f"   - {f.severity.value} {f.code}: {f.message}" for f in o.findings]
     lines.append(
         f"  Assessment: outcome={s.outcome.value} recovery={s.recovery.value} "
         f"attribution={s.attribution} distortions={s.distortions_delivered} "
@@ -88,4 +90,4 @@ def render_agent_report(report: AgentRunReport) -> str:
 
 def _claim(report: AgentRunReport) -> str:
     c = report.agent.claim
-    return "none" if c is None else f"{c.status.value} {c.customer_id}"
+    return "none" if c is None else f"{c.status.value} {c.record_ref}"

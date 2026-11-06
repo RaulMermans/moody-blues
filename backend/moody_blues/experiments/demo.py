@@ -207,14 +207,14 @@ def render_evidence(evidence: ExperimentEvidence, *, title: str, root: Path) -> 
         claim = run.target_observed.claim
         lines.append(
             "     claimed: "
-            + ("nothing" if claim is None else f"{claim.status.value} {claim.customer_id}")
+            + ("nothing" if claim is None else f"{claim.status.value} {claim.record_ref}")
         )
-        lines.append(f"     committed (authoritative): {run.committed.new_customer_ids or 'none'}")
+        lines.append(f"     committed (authoritative): {run.committed.new_ids or 'none'}")
         o = run.oracle
         lines.append(
             f"     Truth Oracle: {o.verdict.value} objective_satisfied="
             f"{str(o.objective_satisfied).lower()} "
-            f"findings={sorted({f.code.value for f in o.findings}) or 'none'}"
+            f"findings={sorted({str(f.code) for f in o.findings}) or 'none'}"
         )
         if run.run_outcome is not None:
             lines.append(

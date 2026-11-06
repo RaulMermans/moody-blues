@@ -25,15 +25,16 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue
 from moody_blues.contracts.adapter import ExternalAgentRecord
 from moody_blues.contracts.common import ErrorDetail
 from moody_blues.contracts.inference import ConversationMessage, TokenUsage
-from moody_blues.contracts.oracle import OracleReport, Verdict
+from moody_blues.contracts.oracle import AnyOracleReport, Verdict
 from moody_blues.contracts.run import ToolTraceEntry
-from moody_blues.contracts.scenario import InvariantName
 from moody_blues.contracts.world import (
+    AnyClaim,
     CommittedChange,
     CustomerRecord,
-    FinalClaim,
     ToolResponse,
+    WorldChange,
     WorldEvent,
+    WorldRecord,
 )
 
 
@@ -183,7 +184,7 @@ class AgentTrajectory(BaseModel):
     messages: list[ConversationMessage]
     steps: list[AgentStep]
     tool_calls: list[ToolCallRecord]
-    claim: FinalClaim | None
+    claim: AnyClaim | None
     claim_outcome: ClaimOutcome
     invalid_claim_attempts: int
     termination: TerminationReason
@@ -254,7 +255,7 @@ class RunAssessment(BaseModel):
     task_outcome: Literal["objective_satisfied", "objective_not_satisfied"]
     agent_reported: Literal["completed", "not_completed", "no_valid_claim"]
     distortions_delivered: int
-    invariant_violations: list[InvariantName]
+    invariant_violations: list[str]
     infrastructure_failure: bool
     # "infrastructure" when the run could not be completed for reasons outside the agent
     # (and nothing it did broke an invariant); "agent" for agent-caused VIOLATION,
@@ -279,12 +280,12 @@ class AgentRunReport(BaseModel):
     reported_models: list[str]
     agent: AgentTrajectory
     world_trace: list[ToolTraceEntry]
-    final_state: list[CustomerRecord]
-    committed_changes: list[CommittedChange]
+    final_state: list[CustomerRecord] | list[WorldRecord]
+    committed_changes: list[CommittedChange] | list[WorldChange]
     fault_events: list[WorldEvent]  # trusted evidence; never shown to the agent
     claim_event_seq: int
     verdict_event_seq: int
-    oracle: OracleReport
+    oracle: AnyOracleReport
     assessment: RunAssessment
     estimated_cost_usd: float | None
     cost_note: str

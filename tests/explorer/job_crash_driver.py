@@ -10,6 +10,7 @@ import sys
 import time
 from pathlib import Path
 
+from moody_blues.contracts.scenario import Scenario
 from moody_blues.contracts.world import ToolName
 from moody_blues.experiments.target import TargetRequest, TargetResult
 from moody_blues.explorer.jobs import JobManager, JobStore
@@ -22,6 +23,7 @@ from tests.investigator.conftest import CODE, PF, experiment
 
 class CommitThenHang:
     def run(self, request: TargetRequest) -> TargetResult:
+        assert isinstance(request.scenario, Scenario)
         world = World(request.scenario, root_dir=request.world_root)
         customer = request.scenario.objective.customer
         world.gateway.call(

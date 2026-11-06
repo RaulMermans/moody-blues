@@ -235,7 +235,7 @@ def test_empty_selection_removes_faults() -> None:
         action_with([]), scenario=load_scenario("phantom-failure"), runs_done=0, max_runs=1
     )
     assert not isinstance(authorized, ProtocolRejection)
-    assert authorized.scenario.faults == []
+    assert authorized.scenario.fault_list() == []
 
 
 def test_two_faults_on_one_occurrence_are_refused() -> None:
