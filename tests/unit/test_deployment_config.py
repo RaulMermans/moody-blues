@@ -129,3 +129,11 @@ def test_the_migration_refuses_to_replace_a_different_ledger() -> None:
     script = text("migrate-ledger.sh")
     assert "refusing to overwrite" in script
     assert "open_reservations" in script
+
+
+def test_a_release_always_asks_and_ships_only_a_pushed_commit() -> None:
+    release = text("release.sh")
+    assert "read -r -p" in release  # a person confirms each deployment
+    assert "git branch -r --contains" in release  # what ships is on GitHub
+    assert "git worktree add --quiet --detach" in release  # the commit, not the current checkout
+    assert "infra/vultr/deploy.sh" in release  # one way onto the VM

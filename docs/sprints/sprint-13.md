@@ -1,9 +1,10 @@
 # Sprint 13: Final Product Polish
 
 - **Date:** 2026-11-06
-- **Branch:** `sprint/13-final-product-polish`, from `main` `4060c8f`, which holds Sprint 12 and the KI-51 merge. Local. Not pushed, merged or deployed.
+- **Branch:** `sprint/13-final-product-polish`, from `main` `4060c8f`, which holds Sprint 12 and the KI-51 merge. Merged by PR #18 as `88d3363`.
+- **Deployed:** `6405817` on 2026-11-06, at the owner's request. Its tree equals `main`.
 - **Working folder:** `~/Desktop/GitHub/Moody-Blues`, by the owner's decision. See KI-61.
-- **Outcome:** `RELEASE CANDIDATE`, pending the owner's review of the renders. No person has used it yet.
+- **Outcome:** `DEPLOYED`. No person has used it yet.
 - **Inference spend this sprint:** $0. No model was called. No backend, Oracle, contract, evidence, infrastructure or rule-copy file changed.
 
 ## Gates
@@ -18,7 +19,7 @@
 | C13-E Landing clarity | **PASS** | No setting name on the page or in `/api/status`. Whether a stranger understands it is untested |
 | C13-F Usability validation | **NOT_RUN** | `HUMAN_TEST_NOT_RUN`. No participant was available. Script and heuristic evaluation: [usability-session.md](../testing/usability-session.md) |
 | C13-G Accessibility | **Automated PASS. Manual NOT_RUN** | axe, keyboard, headings, motion and contrast pass. VoiceOver and real Safari were not performed |
-| C13-H Release readiness | **PASS** | Candidate committed locally, `make check` exit 0, rollback documented. Hosted suite NOT_RUN: nothing was deployed |
+| C13-H Release readiness | **PASS** | `make check` exit 0, deployed, hosted suite 14 passed with 2 NOT_RUN. See Deployment |
 
 ## C13-0 Preflight, 2026-11-06
 
@@ -116,7 +117,7 @@ Run on the committed code.
 | Product e2e, `make test-e2e` | PASS, 34, specs unmodified |
 | Design, rules, axe and browsers, `make test-design` | PASS, 175: 8 WebKit, 8 Firefox, the rest Chromium and no-browser |
 | `make recorded-verify` | PASS |
-| Hosted tests | NOT_RUN: nothing was deployed |
+| Hosted tests, after deploying | PASS, 14. 2 NOT_RUN: operator journey (no token given) and the live model run (not authorized) |
 | VoiceOver, real Safari, stock Firefox, a real phone | NOT_RUN |
 | User testing | NOT_RUN |
 
@@ -141,13 +142,30 @@ What is still not good enough:
 - **The list on the landing is still long**, with one tag repeated five times because a test pins it.
 - **The tablet width got the least attention.** No overflow, and renders were captured, but only phone and desktop were read closely.
 
+## Deployment
+
+The owner chose the most up-to-date version over the wording fix alone, so `6405817` shipped, replacing `d592879` by `deploy.sh` from
+a detached tree. Checked from outside the VM afterwards:
+
+| Check | Result |
+|---|---|
+| `/`, `/containment`, `/operator`, Overview, Timeline, Investigator | 200 |
+| KI-51 | Gone from the public page: 0 occurrences of "wrong status" |
+| `/api/status` | Named fields only, no setting name, backend connected |
+| CSS | SHA-256 `135f1acf…`, replacing `f5120e40…` |
+| Hosted suite | 14 passed, 2 NOT_RUN |
+
+Rollback, if needed: `infra/vultr/rollback.sh 45.63.119.197`. It returns to `d592879`, which still carries KI-51 and KI-60.
+
+Deployments now go through `make release REF=<commit>`. It was tested on a scratch repository with a stub `deploy.sh`, against the
+live site read-only: refusal of an unpushed commit, a wrong confirmation, the full path, a failure, and cleanup. It has not yet
+carried a real deployment.
+
 ## Remaining owner decisions
 
-See [release-sprint-13.md](../deployment/release-sprint-13.md).
-
-1. **Submit on lablab** before 2026-11-08 22:00 UTC. Nothing else here blocks it.
-2. **Deploy the KI-51 fix** from `6dafdda`.
+1. **Submit on lablab** before 2026-11-08 22:00 UTC.
+2. **Decide on the video and deck.** They show the pre-Sprint 11 site, so they no longer match it. Rebuilding needs the operator
+   token and `.artifacts/submission`, which is in `~/dev`.
 3. **Rotate both Vultr keys**, and remove them from the Desktop `.env`.
-4. **Decide on this branch.** It would make the video stale.
-5. **Run the first-reader test and VoiceOver.** Enable "Allow remote automation" in Safari if real Safari should be automated.
-6. **Update `AGENTS.md`**, which still says not to develop in the Desktop folder. It was left unchanged as the owner's call.
+4. **Run the first-reader test and VoiceOver.** Enable "Allow remote automation" in Safari if real Safari should be automated.
+5. **Update `AGENTS.md`**, which still says not to develop in the Desktop folder. It was left unchanged as the owner's call.

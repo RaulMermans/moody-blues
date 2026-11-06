@@ -1,7 +1,19 @@
 # Release plan: KI-51 hotfix and Sprint 13
 
-Nothing here has been run. Every step deploys to a public site and needs the owner's approval. The deadline is
-**2026-11-08 22:00 UTC**. The two releases are independent, and the first does not need the second.
+**Outcome, 2026-11-06:** the owner chose Option B. `6405817` is deployed and PR #18 merged it to `main`, so Option A is no longer
+needed. The rest of this file is the plan as written before that. See the [Sprint 13 record](../sprints/sprint-13.md#deployment).
+
+## Deploying from now on
+
+```bash
+make release-check REF=origin/main   # read-only: what would ship, and what is live now
+make release REF=origin/main         # asks for the short sha, deploys, checks the public site
+```
+
+It ships exactly that commit from a temporary detached tree, so the current branch and uncommitted work do not matter. It refuses
+a commit that is not on GitHub, and it never runs by itself: every deployment needs the owner's approval. Merging to `main` does
+**not** deploy. It uses `~/.ssh` and needs nothing from `.artifacts`. If a check fails it prints the rollback command and does not
+roll back on its own.
 
 ## Starting production
 
@@ -10,7 +22,7 @@ Nothing here has been run. Every step deploys to a public site and needs the own
 | Site | https://45-63-119-197.sslip.io, `/` and `/containment` return 200 on 2026-11-06 |
 | Release | `d59287981410c10cd532f404a5f918d02bcddc46` by the Sprint 9 record. `967dc88` has identical `frontend`, `backend` and `infra`. Inferred, not read from the host |
 | Fingerprint | CSS SHA-256 `f5120e40…c91`, the pre-Sprint 11 release. Unchanged on 2026-11-06 |
-| KI-51 | **Still live.** "wrong status" is on the public `inv_4e32358d2ff9` page |
+| KI-51 | Live when this was written. "wrong status" was on the public `inv_4e32358d2ff9` page |
 
 `deploy.sh` ships `HEAD` of the checkout it runs in, so the checkout decides what goes out. Run these from your own terminal:
 SSH from an agent session has been refused by its permission layer. A deploy also needs `~/.ssh` access to the VM.

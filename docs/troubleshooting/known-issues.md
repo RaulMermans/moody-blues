@@ -356,6 +356,7 @@ contributor might also hit.
 - **Cause:** PR #15 merged Sprint 11 with no deploy.
 - **Fix:** `hotfix/ki-51-disclosure-wording`, from `967dc88`. Its `frontend`, `backend` and `infra` trees match the
   recorded `d592879` release. Pushed, not deployed: the owner decides.
+- **Closed 2026-11-06:** Sprint 13 was deployed, so production and `main` match again.
 
 ### KI-58: An unknown run id said no run took place
 - **Symptom:** `?view=overview&run=<unknown id>` read "No target run took place", on a case with five runs.
@@ -375,7 +376,7 @@ contributor might also hit.
 
 ### KI-60: Public status carried server details
 - **Symptom:** the landing showed `MOODY_VULTR_API_KEY`, and `/api/status` also returned the environment, uptime, a request
-  id and any backend error reason. Never a credential value. Still true of the deployed release.
+  id and any backend error reason. Never a credential value. Live until the Sprint 13 deployment.
 - **Cause:** the proxy forwarded the backend's body unchanged.
 - **Fix:** `publicStatus()` is an allowlist. The backend's own `/health` and `/ready` are unchanged and not public.
 
