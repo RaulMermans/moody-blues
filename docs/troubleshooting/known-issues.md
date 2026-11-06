@@ -356,3 +356,37 @@ contributor might also hit.
 - **Cause:** PR #15 merged Sprint 11 with no deploy.
 - **Fix:** `hotfix/ki-51-disclosure-wording`, from `967dc88`. Its `frontend`, `backend` and `infra` trees match the
   recorded `d592879` release. Pushed, not deployed: the owner decides.
+
+### KI-58: An unknown run id said no run took place
+- **Symptom:** `?view=overview&run=<unknown id>` read "No target run took place", on a case with five runs.
+- **Cause:** the Overview took a failed lookup of the requested run to mean there were no runs.
+- **Fix:** it keeps the primary run, and the run line says the id is not part of this investigation. Covered by
+  `final-polish.spec.ts`.
+
+### KI-62: The Overview showed PASS on an Inconclusive case with no scope note
+- **Symptom:** `inv_5c9f95de6c09` is tagged Inconclusive, and its Overview led with a PASS seal and nothing to say why.
+- **Cause:** only the Comparison called `scopeNote`. Found by reading a screenshot.
+- **Fix:** the Overview uses the same rule. Tested on all five cases.
+
+### KI-59: A text control that did nothing
+- **Symptom:** at desktop width "Show the full text" appeared on text that already fit in three lines.
+- **Cause:** whether lines are cut depends on width, and a character count cannot know it.
+- **Fix:** `ClampText` measures with a `ResizeObserver`, which also covers text inside a folded cycle.
+
+### KI-60: Public status carried server details
+- **Symptom:** the landing showed `MOODY_VULTR_API_KEY`, and `/api/status` also returned the environment, uptime, a request
+  id and any backend error reason. Never a credential value. Still true of the deployed release.
+- **Cause:** the proxy forwarded the backend's body unchanged.
+- **Fix:** `publicStatus()` is an allowlist. The backend's own `/health` and `/ready` are unchanged and not public.
+
+### KI-61: Working in the iCloud Desktop folder (see KI-34)
+- **Context:** on 2026-11-06 the owner chose `~/Desktop/GitHub/Moody-Blues` as the working folder.
+- **Symptoms met in one session:** a duplicate ref `sprint/06-scientific-validation 2` broke `git fetch`. `.venv` and
+  `node_modules` were evicted (about 41,000 files). `make test` hung in `read()` on an evicted `.artifacts` file, with no
+  error, and iCloud restored about 3 files a minute.
+- **Fix:** check `find <path> -type f -flags +dataless`. `.venv` links to `.venv.nosync`. `frontend/node_modules` must be a real
+  folder, because pnpm deletes the target of a symlink: mark it with `xattr -w 'com.apple.fileprovider.ignore#P' 1`, again
+  after each install. The 248 evicted `.artifacts/investigations` files came from the `~/dev` copy, and all 277 matched by hash.
+- **Still at risk:** `.git` is synced, and 1,800 or so other `.artifacts` files remain evicted. `~/dev` alone holds
+  `vultr-state.json` and the deploy logs. Keep it.
+

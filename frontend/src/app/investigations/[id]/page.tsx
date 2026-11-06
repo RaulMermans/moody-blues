@@ -316,9 +316,11 @@ async function Overview({
 }) {
   const journey = await loadJourney(id, detail);
   if (journey.failure) return <FailurePanel failure={journey.failure} />;
-  const chosen = runId ?? journey.list.primary_run_id;
-  const run = journey.runs.find((r) => r.run_id === chosen) ?? null;
-  return <OverviewView id={id} detail={detail} run={run} cycles={journey.cycles} runId={runId} />;
+  // An unknown run id is the link's mistake, not a fact about the investigation: RunContext names it,
+  // and the page keeps the primary run rather than saying no run took place.
+  const byId = (id: string | null | undefined) => journey.runs.find((r) => r.run_id === id);
+  const run = byId(runId) ?? byId(journey.list.primary_run_id) ?? null;
+  return <OverviewView id={id} detail={detail} run={run} runs={journey.runs} list={journey.list} cycles={journey.cycles} runId={runId} />;
 }
 
 /** Which run the other views are following, so a tab change never loses it silently. */
@@ -351,7 +353,7 @@ function RunLine({ id, runs, runId, view }: { id: string; runs: RunList; runId: 
   );
 }
 
-/** The same record on every view. Only the Overview and the Comparison lead with it open. */
+/** The same record on every view. Only the Comparison leads with it open. */
 function AboutPanel({ detail }: { detail: InvestigationDetail }) {
   return (
     <details className="rf-disclose rf-panel" data-testid="about-panel">
@@ -398,7 +400,7 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
         <Investigator id={id} detail={detail.data} runId={runId} cycle={cycle} />
       ) : null}
       {view === "evidence" ? <Evidence id={id} detail={detail.data} runId={runId} /> : null}
-      {view === "overview" || view === "reality" ? (
+      {view === "reality" ? (
         <>
           <About detail={detail.data} note={view === "reality"} />
           <EvidencePanel detail={detail.data} />

@@ -10,9 +10,10 @@ The visual identity for MOODY BLUES: **Beautifully Wrong**, editorial precision 
 | [tokens.md](tokens.md) | Every design token and how to use it |
 | [components.md](components.md) | The primitives, their typed inputs, and what each may never do |
 | [accessibility-and-motion.md](accessibility-and-motion.md) | Accessibility results and the motion rules |
+| [timeline-performance.md](timeline-performance.md) | What the Timeline costs, measured, and why lazy mounting was not built |
 
-Status: Sprint 11 is **merged to `main`** (PR #15) and not deployed. Sprint 12 is on
-`sprint/12-investigation-experience`, pushed, not merged. The system lives in
+Status: Sprints 11 and 12 are **merged to `main`** (PRs #15, #16) and not deployed. Sprint 13 is on
+`sprint/13-final-product-polish`, local, not pushed. The system lives in
 `frontend/src/design/` and every product screen reads its tokens. The local design lab now holds one
 specimen page, and it does not exist in a production build ([ADR 0009](../adr/0009-design-lab-isolation.md),
 [ADR 0010](../adr/0010-design-system-in-the-product.md)).

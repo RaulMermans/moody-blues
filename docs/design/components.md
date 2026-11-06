@@ -98,3 +98,15 @@ There is one theme. Other product screens use Tailwind utilities pointed at the 
 - `frontend/e2e-design/design.spec.ts`: every recorded run renders what its evidence holds, in a real browser,
   along with navigation, access, axe and contrast.
 - `frontend/e2e-design/cross-browser.spec.ts`: layout in Chromium and WebKit.
+
+## Sprint 13
+
+| Component | Rule |
+|---|---|
+| `ClampText` | Shortens recorded text on screen and never rewrites it. Texts up to 240 characters are left alone. The control exists only when lines are really cut at the current width. Whole text stays in the DOM, and a `noscript` rule shows it all |
+| `.rf-voice` | A hairline beside the model's own words, so reasoning never reads as a recorded outcome. Not a colour: identity colours belong to the two realities |
+| Overview `Tally` | Counts verdicts from the runs themselves. A zero is left out |
+| Overview `NextStep` | "Open the verified finding" only when the Oracle's verdict on the shown run is `VIOLATION` |
+| `StatusPanel` | Reads `PublicStatus` only. Plain names, no setting names, environment, request ids or error reasons |
+| `publicStatus()` | Allowlist at the proxy. A field reaches a browser only by being named there |
+
