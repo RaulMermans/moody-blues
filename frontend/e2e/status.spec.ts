@@ -11,7 +11,7 @@ test("renders product identity", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("MOODY BLUES");
   await expect(page.getByRole("heading", { level: 1, name: "MOODY BLUES" })).toBeVisible();
-  await expect(page.getByText("autonomous adversarial experimentation system")).toBeVisible();
+  await expect(page.getByText("Test what agents do.")).toBeVisible();
 });
 
 test("shows the real backend connection and integration states", async ({ page, request }) => {

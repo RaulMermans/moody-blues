@@ -100,7 +100,7 @@ test.describe("overview", () => {
   test("a run whose verdict differs from its investigation is never left unexplained", async ({ page }) => {
     await settled(page, overview("inv_5c9f95de6c09"));
     await expect(page.getByTestId("outcome")).toHaveText("Inconclusive");
-    await expect(page.getByTestId("strip-verdict")).toHaveText("PASS");
+    await expect(page.getByTestId("oracle-verdict")).toHaveText("PASS");
     await expect(page.getByTestId("scope-note")).toBeVisible();
   });
 
@@ -116,7 +116,7 @@ test.describe("overview", () => {
     await page.goto(`${overview(VIOLATION)}&run=run_000000000000`);
     await expect(page.getByTestId("run-following")).toContainText("not part of this investigation");
     await expect(page.getByTestId("overview-no-run")).toHaveCount(0);
-    await expect(page.getByTestId("strip-verdict")).toHaveText("VIOLATION");
+    await expect(page.getByTestId("oracle-verdict")).toHaveText("VIOLATION");
   });
 
   test("the primary action is reached by keyboard and opens the run", async ({ page }) => {
@@ -310,7 +310,8 @@ test.describe("motion and structure", () => {
   for (const [name, path] of [
     ["landing", "/"],
     ["overview", overview(VIOLATION)],
-    ["comparison", `/investigations/${VIOLATION}`],
+    ["comparison", `/investigations/${VIOLATION}?view=reality`],
+    ["result", `/investigations/${VIOLATION}`],
     ["timeline", `/investigations/${VIOLATION}?view=timeline`],
     ["investigator", investigator(VIOLATION)],
     ["evidence", `/investigations/${VIOLATION}?view=evidence`],

@@ -81,6 +81,12 @@ async function settled(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
+/** Level 3 is folded by default. A reader opens it with a click, so these tests do too. */
+async function unfold(page: Page) {
+  const closed = page.locator(".rf-fold:not([open]) > summary");
+  while (await closed.count()) await closed.first().click();
+}
+
 async function shot(page: Page, name: string, fullPage = false) {
   await settled(page);
   if (!process.env.MOODY_DESIGN_SHOTS) return;
@@ -93,10 +99,10 @@ test.describe("screenshots", () => {
     test.slow();
     const states: [string, string][] = [
       ["landing", "/"],
-      ["violation", `/investigations/${VIOLATION}`],
-      ["honest-violation", `/investigations/${HONEST}`],
-      ["recovery", `/investigations/${RECOVERY}`],
-      ["negative", `/investigations/${NEGATIVE}`],
+      ["violation", `/investigations/${VIOLATION}?view=reality`],
+      ["honest-violation", `/investigations/${HONEST}?view=reality`],
+      ["recovery", `/investigations/${RECOVERY}?view=reality`],
+      ["negative", `/investigations/${NEGATIVE}?view=reality`],
       ["inconclusive-no-claim", runUrl(INCONCLUSIVE, NO_CLAIM_RUN)],
       ["inconclusive-under-report", runUrl(HONEST, UNDER_REPORT_RUN)],
       ["overview", `/investigations/${VIOLATION}?view=overview`],
@@ -122,7 +128,7 @@ test.describe("screenshots", () => {
 
   test("with every offset removed, the page reads the same", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const before = await page.locator("main").innerText();
     await page.addStyleTag({
@@ -216,7 +222,7 @@ test.describe("truth", () => {
   });
 
   test("the false completion states the contradiction and the disclosure", async ({ page }) => {
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     await expect(page.getByTestId("headline")).toHaveText(
       "The agent reported completion. Reality recorded a duplicate.",
@@ -229,7 +235,7 @@ test.describe("truth", () => {
 
   test("the duplicate slips as a whole, and only that record moves", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const lefts = await page.getByTestId("record-slab").evaluateAll((slabs) =>
       slabs.map((s) => ({ extra: s.getAttribute("data-extra"), left: s.getBoundingClientRect().left })),
@@ -245,18 +251,18 @@ test.describe("truth", () => {
   });
 
   test("an honest report of a real duplicate keeps its status and draws no contradiction", async ({ page }) => {
-    await page.goto(`/investigations/${HONEST}`);
+    await page.goto(`/investigations/${HONEST}?view=reality`);
     await settled(page);
     await expect(page.getByTestId("reality-view")).toHaveAttribute("data-story", "reported_violation");
     await expect(page.getByTestId("disclosure")).not.toContainText("wrong status");
     await expect(page.getByTestId("disclosure")).toContainText("no false claim");
-    const outcome = page.getByTestId("comparison-row").first().getByTestId("seam");
+    const outcome = page.getByRole("region", { name: "Outcome" }).getByTestId("seam");
     await expect(outcome).toHaveAttribute("data-relation", "equal");
     await expect(page.locator('.rf-slab[data-extra="true"]')).toHaveCount(1);
   });
 
   test("a clean recovery stays calm and says what the agent did", async ({ page }) => {
-    await page.goto(`/investigations/${RECOVERY}`);
+    await page.goto(`/investigations/${RECOVERY}?view=reality`);
     await settled(page);
     await expect(page.getByTestId("headline")).toHaveText("The agent reported completion. Reality agrees.");
     await expect(page.getByTestId("explain-happened")).toContainText("It checked state and ended with exactly one record");
@@ -282,7 +288,7 @@ test.describe("truth", () => {
   });
 
   test("a negative result is not called safe", async ({ page }) => {
-    await page.goto(`/investigations/${NEGATIVE}`);
+    await page.goto(`/investigations/${NEGATIVE}?view=reality`);
     await settled(page);
     await expect(page.getByTestId("explain-matters")).toContainText("does not show the agent is safe");
     const text = await page.getByTestId("reality-view").innerText();
@@ -297,7 +303,8 @@ test.describe("truth", () => {
     await expect(page.getByTestId("headline")).not.toContainText("false");
     await expect(page.getByTestId("strip-claim")).toHaveText("no valid claim");
     await expect(page.getByTestId("strip-verdict")).toHaveText("INCONCLUSIVE");
-    await expect(page.getByTestId("comparison-row").first().getByTestId("seam")).toHaveAttribute(
+    await unfold(page);
+    await expect(page.getByRole("region", { name: "Outcome" }).getByTestId("seam")).toHaveAttribute(
       "data-relation",
       "unknown",
     );
@@ -309,24 +316,25 @@ test.describe("truth", () => {
     await settled(page);
     await expect(page.getByTestId("reality-view")).toHaveAttribute("data-story", "under_reported");
     await expect(page.getByTestId("headline")).toHaveAttribute("data-register", "in");
-    const seam = page.getByTestId("comparison-row").first().getByTestId("seam");
+    await unfold(page);
+    const seam = page.getByRole("region", { name: "Outcome" }).getByTestId("seam");
     await expect(seam).toHaveAttribute("data-relation", "differs");
     await expect(seam).toHaveAttribute("data-tone", "distortion");
   });
 
   test("a PASS run inside an inconclusive case is scoped, not contradicted", async ({ page }) => {
-    await page.goto(`/investigations/${INCONCLUSIVE}`);
+    await page.goto(`/investigations/${INCONCLUSIVE}?view=reality`);
     await settled(page);
     await expect(page.getByTestId("outcome")).toHaveText("Inconclusive");
     await expect(page.getByTestId("strip-verdict")).toHaveText("PASS");
-    await expect(page.getByTestId("scope-note")).toContainText("reads Inconclusive");
-    await page.getByTestId("scope-link").click();
+    await expect(page.getByTestId("scope-note").first()).toContainText("reads Inconclusive");
+    await page.getByTestId("scope-link").first().click();
     await expect(page.getByTestId("reality-view")).toHaveAttribute("data-run", NO_CLAIM_RUN);
     await expect(page.getByTestId("scope-note")).toHaveCount(0);
   });
 
   test("the seal is square to the grid and never carries an offset", async ({ page }) => {
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const transform = await page
       .getByTestId("oracle-seal")
@@ -336,7 +344,7 @@ test.describe("truth", () => {
   });
 
   test("nothing decorative exists to be mistaken for evidence", async ({ page }) => {
-    for (const url of ["/", `/investigations/${VIOLATION}`]) {
+    for (const url of ["/", `/investigations/${VIOLATION}?view=reality`]) {
       await page.goto(url);
       await settled(page);
       await expect(page.locator("[data-rf-decorative]")).toHaveCount(0);
@@ -349,23 +357,21 @@ test.describe("truth", () => {
     await settled(page);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("MOODY BLUES");
     await expect(page.getByRole("heading", { level: 2 }).first()).toHaveText(
-      "What the agent reported. What reality recorded.",
+      "Test what agents do. Verify what actually happened.",
     );
     await expect(page.getByTestId("hero")).toContainText(
-      "MOODY BLUES investigates the gap between an AI agent's reported outcome and what actually happened.",
+      "Put AI agents through controlled failures and see whether they recover, make mistakes or report incorrect outcomes.",
     );
     await expect(page.getByText("not concealment").first()).toBeVisible();
-    await page.getByTestId("hero-how").click();
-    await expect(page).toHaveURL(/#how$/);
-    await page.getByTestId("hero-cta").click();
+    await page.getByTestId("open-signature").click();
     await expect(page).toHaveURL(new RegExp(VIOLATION));
-    await expect(page.getByRole("main").getByTestId("strip-verdict")).toHaveText("VIOLATION");
+    await expect(page.getByRole("main").getByTestId("oracle-verdict")).toHaveText("VIOLATION");
   });
 
   test("the screens ask only for read-only evidence, and nothing leaves the origin", async ({ page }) => {
     const seen: string[] = [];
     page.on("request", (r) => seen.push(r.url()));
-    for (const url of ["/", `/investigations/${VIOLATION}`, `/investigations/${VIOLATION}?view=evidence`]) {
+    for (const url of ["/", `/investigations/${VIOLATION}?view=reality`, `/investigations/${VIOLATION}?view=evidence`]) {
       await page.goto(url);
       await settled(page);
     }
@@ -414,6 +420,7 @@ test.describe("navigation", () => {
   test("a call leads to its journal record, and the record leads back", async ({ page }) => {
     await page.goto(runUrl(VIOLATION, FALSE_RUN));
     await settled(page);
+    await unfold(page);
     const call = page.getByTestId("call-5");
     await call.locator("summary").click();
     await call.getByTestId("trace-link").click();
@@ -615,7 +622,8 @@ test.describe("the investigation journey", () => {
     const run = await api<Run>(`/investigations/${VIOLATION}/runs/${FALSE_RUN}`);
     await page.goto(`/investigations/${VIOLATION}?view=overview`);
     await settled(page);
-    await expect(page.getByTestId("strip-verdict")).toHaveText(run.verdict);
+    await expect(page.getByTestId("oracle-verdict")).toHaveText(run.verdict);
+    await unfold(page);
     await expect(page.getByTestId("overview-answers")).toContainText("Duplicate side effect");
     await expect(page.getByTestId("overview-answers")).toContainText("interpretation, not a verdict");
     await expect(page.getByTestId("overview-causal")).toContainText("None in this record");
@@ -626,6 +634,7 @@ test.describe("the investigation journey", () => {
   test("causal evidence stays neutral and leads to the method", async ({ page }) => {
     await page.goto(runUrl(VIOLATION, FALSE_RUN));
     await settled(page);
+    await unfold(page);
     await expect(page.getByTestId("causal-evidence")).not.toContainText("3/3");
     await page.getByTestId("method-link").click();
     await expect(page).toHaveURL(/\/#method$/);
@@ -633,13 +642,15 @@ test.describe("the investigation journey", () => {
     await expect(page.getByTestId("method")).toContainText("A rerun is not a control");
   });
 
-  test("the landing explains four stages and keeps How it works without the evidence", async ({ page }) => {
+  test("the landing states the journey in four steps and keeps How it works without the evidence", async ({ page }) => {
     await page.goto("/");
     await settled(page);
-    await expect(page.locator(".rf-how li h3")).toHaveText(["Hypothesize", "Experiment", "Observe", "Verify"]);
-    await page.getByTestId("hero-how").click();
-    await expect(page).toHaveURL(/#how$/);
-    await expect(page.locator("#how")).toBeInViewport();
+    await expect(page.locator(".rf-how-steps strong")).toHaveText([
+      "Choose a test",
+      "Run it",
+      "See what happened",
+      "Explore the evidence",
+    ]);
     const signature = await page.getByTestId("signature").boundingBox();
     const how = await page.locator("#how").boundingBox();
     const list = await page.locator("#investigations").boundingBox();
@@ -650,20 +661,20 @@ test.describe("the investigation journey", () => {
   test("each tab is reachable at phone widths, with nothing hidden in overflow", async ({ page }) => {
     for (const width of [320, 390]) {
       await page.setViewportSize({ width, height: 844 });
-      await page.goto(`/investigations/${VIOLATION}`);
+      await page.goto(`/investigations/${VIOLATION}?view=reality`);
       await settled(page);
       const nav = page.locator(".rf-tabs");
       const clipped = await nav.evaluate((el) => el.scrollWidth - el.clientWidth);
       expect(clipped, `${width}px`).toBeLessThanOrEqual(0);
-      for (const key of ["overview", "reality", "timeline", "investigator", "evidence"]) {
+      for (const key of ["overview", "reality", "investigator", "evidence"]) {
         const box = await page.getByTestId(`tab-${key}`).boundingBox();
         expect(box!.x, key).toBeGreaterThanOrEqual(0);
         expect(box!.x + box!.width, key).toBeLessThanOrEqual(width);
       }
     }
     const tabs = page.locator(".rf-tabs");
-    await expect(tabs.getByRole("link", { name: "Raw evidence" })).toBeVisible();
-    await expect(tabs.getByRole("link", { name: "Reality Comparison" })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: "Evidence" })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: "What happened" })).toBeVisible();
   });
 
   test("the investigation and the followed run stay named on every view", async ({ page }) => {
@@ -708,14 +719,14 @@ test.describe("access", () => {
       await page.setViewportSize(viewport);
       for (const url of [
         "/",
-        `/investigations/${VIOLATION}`,
+        `/investigations/${VIOLATION}?view=reality`,
         `/investigations/${VIOLATION}?view=timeline&show=all`,
         `/investigations/${VIOLATION}?view=investigator`,
         `/investigations/${VIOLATION}?view=evidence`,
         `/investigations/${VIOLATION}?view=overview`,
         `/investigations/${VIOLATION}?view=timeline`,
         `/investigations/${INCONCLUSIVE}?view=investigator`,
-        `/investigations/${RECOVERY}`,
+        `/investigations/${RECOVERY}?view=reality`,
         runUrl(INCONCLUSIVE, NO_CLAIM_RUN),
         "/design-lab",
         "/design-lab/system",
@@ -759,8 +770,8 @@ test.describe("access", () => {
       await page.setViewportSize(viewport);
       for (const url of [
         "/",
-        `/investigations/${VIOLATION}`,
-        `/investigations/${RECOVERY}`,
+        `/investigations/${VIOLATION}?view=reality`,
+        `/investigations/${RECOVERY}?view=reality`,
         runUrl(INCONCLUSIVE, NO_CLAIM_RUN),
         `/investigations/${VIOLATION}?view=timeline`,
         `/investigations/${VIOLATION}?view=investigator`,
@@ -792,7 +803,7 @@ test.describe("access", () => {
     const targets: [string, string][] = [
       ["/", '[data-testid="hero-cta"], [data-testid="hero-how"], [data-testid="open-signature"], header nav a, .rf-wordmark'],
       [
-        `/investigations/${VIOLATION}`,
+        `/investigations/${VIOLATION}?view=reality`,
         ".rf-crumb-back, .rf-tabs a, .rf-run, .rf-disclose summary, .rf-call summary, .rf-deeper a, [data-testid=\"copy-id\"]",
       ],
       [`/investigations/${VIOLATION}?view=timeline`, ".rf-step > details > summary, .rf-trace-group > details > summary, [data-testid=\"timeline-scope\"]"],
@@ -816,7 +827,7 @@ test.describe("access", () => {
     for (const url of [
       "/",
       `/investigations/${VIOLATION}?view=overview`,
-      `/investigations/${VIOLATION}`,
+      `/investigations/${VIOLATION}?view=reality`,
       `/investigations/${VIOLATION}?view=timeline`,
       `/investigations/${VIOLATION}?view=investigator`,
       `/investigations/${VIOLATION}?view=evidence`,
@@ -842,9 +853,9 @@ test.describe("access", () => {
     await settled(page);
     const nav = page.getByRole("navigation", { name: "Investigation views" });
     await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
-    await expect(nav.getByRole("link", { name: "Raw evidence" })).toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("link", { name: "Evidence" })).toHaveAttribute("aria-current", "page");
     const snapshot = await nav.ariaSnapshot();
-    for (const name of ["Overview", "Reality Comparison", "Timeline", "Investigator", "Raw evidence"]) {
+    for (const name of ["Result", "What happened", "Investigation", "Evidence"]) {
       expect(snapshot).toContain(name);
     }
   });
@@ -854,7 +865,7 @@ test.describe("access", () => {
     await settled(page);
     await page.waitForLoadState("networkidle");
     await page.getByTestId("tab-overview").focus();
-    for (const key of ["reality", "timeline", "investigator", "evidence"]) {
+    for (const key of ["reality", "investigator", "evidence"]) {
       await page.keyboard.press("Tab");
       await expect(page.getByTestId(`tab-${key}`)).toBeFocused();
     }
@@ -868,7 +879,7 @@ test.describe("access", () => {
 
   test("a phone stacks the comparison and keeps both labels", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const row = page.getByTestId("comparison-row").first();
     const agent = await row.locator('[data-reality="agent"]').boundingBox();
@@ -883,7 +894,7 @@ test.describe("access", () => {
 
   test("evidence text is not clipped at phone width", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const clipped = await page
       .locator(".rf-slab-id, .rf-call-value, .rf-findings code, [data-testid='first-told']")
@@ -892,10 +903,10 @@ test.describe("access", () => {
   });
 
   test("the keyboard reaches every control, with a strong focus ring", async ({ page }) => {
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     await page.waitForLoadState("networkidle");
-    const tab = page.getByTestId("tab-timeline");
+    const tab = page.getByTestId("tab-evidence");
     await tab.focus();
     const ring = await tab.evaluate((el) => {
       const s = getComputedStyle(el);
@@ -903,6 +914,9 @@ test.describe("access", () => {
     });
     expect(ring.style).toBe("solid");
     expect(ring.width).toBeGreaterThanOrEqual(2);
+    const fold = page.getByTestId("ledger-panel").locator("> summary");
+    await fold.focus();
+    await page.keyboard.press("Enter");
     const summary = page.getByTestId("call-1").locator("summary");
     await summary.focus();
     await page.keyboard.press("Enter");
@@ -913,23 +927,25 @@ test.describe("access", () => {
   });
 
   test("the comparison reads in order to assistive technology", async ({ page }) => {
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     const h1 = await page.locator("h1").ariaSnapshot();
     expect(h1.match(/Reality recorded a duplicate/g)?.length).toBe(1);
-    const row = await page.getByTestId("comparison-row").first().ariaSnapshot();
-    expect(row.indexOf("What it reported")).toBeLessThan(row.indexOf("The two sides differ"));
+    const row = await page.getByRole("region", { name: "Outcome" }).ariaSnapshot();
+    expect(row.indexOf("final status")).toBeGreaterThanOrEqual(0);
+    expect(row.indexOf("final status")).toBeLessThan(row.indexOf("The two sides differ"));
     expect(row.indexOf("The two sides differ")).toBeLessThan(row.indexOf("What committed"));
     await expect(page.getByRole("region", { name: "Outcome" })).toBeVisible();
   });
 
   test("meaning is never carried by colour alone", async ({ page }) => {
-    await page.goto(`/investigations/${VIOLATION}`);
+    await page.goto(`/investigations/${VIOLATION}?view=reality`);
     await settled(page);
     await page.addStyleTag({ content: "* { color: #888 !important; border-color: #888 !important; }" });
     await expect(page.getByTestId("strip-verdict")).toHaveText("VIOLATION");
     await expect(page.locator(".rf-seal-mark").first()).toHaveText("✕");
     await expect(page.locator(".rf-slab-flag").first()).toHaveText("✕ Duplicate");
+    await unfold(page);
     await expect(page.getByTestId("call-5").locator(".rf-call-fault")).toHaveText("stale_read");
   });
 
@@ -939,7 +955,7 @@ test.describe("access", () => {
       viewport: { width: 1440, height: 900 },
     });
     const reduced = await context.newPage();
-    for (const url of ["/", `/investigations/${VIOLATION}`]) {
+    for (const url of ["/", `/investigations/${VIOLATION}?view=reality`]) {
       await reduced.goto(url);
       await settled(reduced);
       expect(await reduced.evaluate(() => document.getAnimations().length)).toBe(0);
@@ -952,7 +968,7 @@ test.describe("access", () => {
 
   test("the signature pages stay cheap to render", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    for (const url of ["/", `/investigations/${VIOLATION}`]) {
+    for (const url of ["/", `/investigations/${VIOLATION}?view=reality`]) {
       await page.goto(url);
       await settled(page);
       const metrics = await page.evaluate(

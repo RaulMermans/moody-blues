@@ -18,7 +18,9 @@ import {
   timelineNodes,
   traceLine,
 } from "@/design/journey";
-import { claimRelation, firstDivergence, recordsFrom, seamFor, sealFromRun } from "@/design/model";
+import { claimRelation, firstDivergence, recordsFrom, seamFor, sealFromRun, targetNoun } from "@/design/model";
+import { conditionLine, outcomeFrom, relationLine, targetNote, testedFrom, verdictMeaning } from "@/design/outcome";
+import { stepsFrom } from "@/design/sequence";
 import {
   disclosureLine,
   environmentLine,
@@ -290,6 +292,125 @@ test.describe("derived fixtures: states no recorded run reaches", () => {
     expect(stateLine(run)).toBe("0 new records committed");
     expect(environmentLine(run)).toBe("No fault was selected for this run.");
     expect(explanationFrom(run, null, false).why).toContain("No fault reached the agent");
+  });
+});
+
+// Sprint 14. `derived` runs reach the rehearsal and empty states no committed bundle holds. Rehearsal
+// records are not committed, so these fixtures take a real run and set the fields a script's run has.
+const scripted = (run: RealityRun) => {
+  run.target_evidence = "reference_executor";
+  run.reported_models = [];
+  run.run_outcome = null;
+  run.agent.mission = null;
+  run.agent.recovery_pattern = null;
+};
+const scriptSummary = { target_model: "reference:verify_then_report" } as InvestigationSummary;
+
+test.describe("the first screen's rules", () => {
+  test("a script is a script in every sentence", () => {
+    const run = derived(find(RECOVERY), scripted);
+    expect(targetNoun(run)).toBe("script");
+    const copy = outcomeFrom(run);
+    for (const text of [copy.headline, copy.support, storyFrom(run).reported, relationLine(run)]) {
+      expect(text).not.toMatch(/\bagent\b/i);
+    }
+    expect(copy.headline).toContain("The script");
+  });
+
+  test("a script's PASS says no model ran; a model's says one run is one sample", () => {
+    expect(targetNote(derived(find(RECOVERY), scripted))).toContain("No AI model ran here");
+    expect(targetNote(find(RECOVERY))).toContain("does not show the agent is safe");
+  });
+
+  test("a task that is not in the record is sourced or admitted, never invented", () => {
+    const run = derived(find(RECOVERY), scripted);
+    const catalog = testedFrom(run, scriptSummary);
+    expect(catalog.source).toContain("not this record");
+    const unknown = testedFrom(run, { target_model: "reference:unknown" } as InvestigationSummary);
+    expect(unknown.text).toBe("The task text is not in this record.");
+  });
+
+  test("a recorded task needs no qualifier", () => {
+    expect(testedFrom(find(RECOVERY), scriptSummary).source).toBeNull();
+  });
+
+  test("a live run with no recorded outcome keeps the narrow copy", () => {
+    const run = derived(find(RECOVERY), (r) => {
+      r.run_outcome = null;
+    });
+    expect(outcomeFrom(run).headline).toBe("The Oracle found no violation in this run.");
+  });
+
+  test("a missing claim is never success, on any verdict", () => {
+    const pass = derived(find(RECOVERY), (r) => {
+      r.agent.claim = null;
+      r.run_outcome = "state_correct_claim_missing";
+    });
+    expect(outcomeFrom(pass).headline).toBe("The task was done, but the agent filed no valid report.");
+    expect(outcomeFrom(find(NO_CLAIM)).headline).toContain("without a valid report");
+    expect(outcomeFrom(find(NO_CLAIM)).headline).not.toMatch(/correct|success/i);
+  });
+
+  test("only a false completion claim may say the report and the CRM disagree", () => {
+    expect(relationLine(find(FALSE_COMPLETION))).toContain("does not match the CRM");
+    expect(relationLine(find(HONEST))).toContain("matches the CRM");
+    expect(relationLine(find(HONEST))).not.toContain("does not match");
+  });
+
+  test("the verdict's meaning names only what the Oracle recorded", () => {
+    expect(verdictMeaning(find(FALSE_COMPLETION))).toContain("duplicate side effect and false completion claim");
+    expect(verdictMeaning(find(RECOVERY))).toContain("found no broken rule");
+    expect(verdictMeaning(find(NO_CLAIM))).toContain("could not decide");
+  });
+
+  test("a fault that never arrived is not a condition of the run", () => {
+    const run = derived(find(RECOVERY), (r) => {
+      r.faults_delivered = 0;
+      r.agent.tool_events = r.agent.tool_events.map((e) => ({ ...e, fault_injected: null }));
+    });
+    expect(conditionLine(run)).toContain("none reached the agent");
+  });
+});
+
+test.describe("the story's rules", () => {
+  const detailOf = (evidence: InvestigationSummary["investigator_evidence"]) =>
+    ({ summary: { investigator_evidence: evidence } }) as unknown as InvestigationDetail;
+  const kinds = (run: RealityRun, evidence: InvestigationSummary["investigator_evidence"], cycle?: Cycle) =>
+    stepsFrom(run, detailOf(evidence), cycle).map((s) => s.kind);
+
+  test("a script's story has no Investigator steps, whatever the fixture recorded", () => {
+    const cycle = { key: "h1", hypothesis: null, proposals: [], trials: [], decision: { title: "Concluded" } } as unknown as Cycle;
+    const run = derived(find(RECOVERY), scripted);
+    expect(kinds(run, "offline_fixture", cycle)).toEqual(["attempt", "fault", "actual", "response", "verdict"]);
+  });
+
+  test("a run with no fault has no fault step and no invented truth", () => {
+    const run = derived(find(RECOVERY), (r) => {
+      r.faults_delivered = 0;
+      r.discrepancies = [];
+      r.agent.tool_events = r.agent.tool_events.map((e) => ({ ...e, fault_injected: null }));
+    });
+    expect(kinds(run, "offline_fixture")).toEqual(["attempt", "response", "verdict"]);
+  });
+
+  test("a run with no calls says so and links nowhere", () => {
+    const run = derived(find(NO_CLAIM), (r) => {
+      r.agent.tool_events = [];
+      r.faults_delivered = 0;
+      r.discrepancies = [];
+    });
+    const steps = stepsFrom(run, detailOf("offline_fixture"), undefined);
+    expect(steps.map((s) => s.kind)).toEqual(["response", "verdict"]);
+    expect(steps[0].link).toBeNull();
+    expect(steps[0].detail).toContain("no valid report");
+  });
+
+  test("recovery is named only where the record classifies it", () => {
+    const run = derived(find(RECOVERY), (r) => {
+      r.finding_class = null;
+    });
+    const response = stepsFrom(run, detailOf("offline_fixture"), undefined).find((s) => s.kind === "response");
+    expect(response?.label).toBe("What the agent did");
   });
 });
 

@@ -116,6 +116,7 @@ test.describe("public recorded investigation", () => {
     await expect(main.getByTestId("verified-count")).toHaveText(
       String(expected.summary.verified_finding_count),
     );
+    await main.getByTestId("tab-evidence").click();
     await main.getByTestId("tab-timeline").click();
     await expect(main.getByTestId("timeline-view")).toBeVisible();
   });
@@ -205,6 +206,7 @@ test.describe("operator access", () => {
     expect(cookie?.sameSite).toBe("Strict");
 
     await page.getByTestId("start-rehearsal-blind-retry").click();
+    await page.getByTestId("confirm-rehearsal-blind-retry").click();
     const panel = page.getByTestId("job-panel");
     await expect(panel).toHaveAttribute("data-status", "completed", { timeout: 120_000 });
     await page.getByTestId("open-job-evidence").click();
