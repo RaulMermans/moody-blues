@@ -167,7 +167,13 @@ def build_messages(context: InvestigationContext) -> list[ChatMessage]:
         )
     if context.menu is not None:
         document["experiment_menu"] = context.menu
-    body = json.dumps(document, indent=1, sort_keys=True)
+    # A menu prompt is compact: six observations in the readable form would not fit a local
+    # context. Everywhere else stays byte for byte as registered manifests hashed it.
+    body = (
+        json.dumps(document, indent=1, sort_keys=True)
+        if context.menu is None
+        else json.dumps(document, sort_keys=True, separators=(",", ":"))
+    )
     system = (
         system_prompt(context.subject)
         if context.menu is None
