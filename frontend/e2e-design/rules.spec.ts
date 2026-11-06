@@ -3,6 +3,21 @@ import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import {
+  assessmentCheck,
+  type Cycle,
+  cyclesFrom,
+  cycleVerdicts,
+  eventTitle,
+  explainEvent,
+  holdsRun,
+  isMilestone,
+  journeyLine,
+  openCycle,
+  plainQuestion,
+  timelineNodes,
+  traceLine,
+} from "@/design/journey";
 import { claimRelation, firstDivergence, recordsFrom, seamFor, sealFromRun } from "@/design/model";
 import {
   disclosureLine,
@@ -13,7 +28,14 @@ import {
   stateLine,
   storyFrom,
 } from "@/design/story";
-import type { InvestigationSummary, RealityRun, RunList } from "@/lib/evidence-types";
+import type {
+  ExperimentView,
+  InvestigationDetail,
+  InvestigationSummary,
+  RealityRun,
+  RunList,
+  TimelineEntry,
+} from "@/lib/evidence-types";
 
 // The presentation rules, read directly against the committed bundles. No browser and no server.
 // `derived` cases are labeled fixtures: a real run with named fields changed, to reach states that no
@@ -25,6 +47,8 @@ interface Bundle {
   summary: InvestigationSummary;
   case_study: Parameters<typeof explanationFrom>[1];
   runs: RealityRun[];
+  experiments: ExperimentView[];
+  timeline: TimelineEntry[];
 }
 
 const bundles: Bundle[] = readdirSync(DIR)
@@ -266,5 +290,238 @@ test.describe("derived fixtures: states no recorded run reaches", () => {
     expect(stateLine(run)).toBe("0 new records committed");
     expect(environmentLine(run)).toBe("No fault was selected for this run.");
     expect(explanationFrom(run, null, false).why).toContain("No fault reached the agent");
+  });
+});
+
+// The journey: Investigator cycles and Timeline milestones, read against all five bundles.
+const journeyOf = (bundle: Bundle, change?: (copy: Bundle) => void): Cycle[] => {
+  const copy = structuredClone(bundle);
+  change?.(copy);
+  const list: RunList = {
+    investigation_id: copy.summary.investigation_id,
+    primary_run_id: copy.runs[0]?.run_id ?? null,
+    runs: copy.runs.map((r) => ({
+      run_id: r.run_id,
+      experiment_id: r.experiment_id,
+      world_ref: r.world_ref,
+      config: r.config,
+      verdict: r.verdict,
+      run_outcome: r.run_outcome,
+      faults_delivered: r.faults_delivered,
+    })),
+  };
+  return cyclesFrom(copy as unknown as InvestigationDetail, copy.experiments, copy.runs, list);
+};
+const detailOf = (bundle: Bundle) => bundle as unknown as InvestigationDetail;
+const bundleOf = (id: string) => bundles.find((b) => b.summary.investigation_id === id)!;
+const FALSE_CASE = bundleOf("inv_d0bc87de6010");
+const HONEST_CASE = bundleOf("inv_4e32358d2ff9");
+const PLANNED_CASE = bundleOf("inv_8058b370bc59");
+const REFUSED_CASE = bundleOf("inv_5c9f95de6c09");
+
+// What a page may not attribute to anyone. The record holds actions, not motives.
+const MOTIVE = /believ|thought|knew|lied|decided|because|realis|realiz|tried to|wanted|in order to/i;
+
+test.describe("investigator cycles", () => {
+  test("every run belongs to exactly one cycle, in its recorded numbering", () => {
+    for (const bundle of bundles) {
+      const seen = journeyOf(bundle).flatMap((c) => c.trials.map((t) => t.run?.run_id));
+      expect(seen.sort()).toEqual(bundle.runs.map((r) => r.run_id).sort());
+      for (const cycle of journeyOf(bundle)) {
+        for (const trial of cycle.trials) {
+          expect(bundle.runs[trial.runNumber! - 1].run_id).toBe(trial.run!.run_id);
+        }
+      }
+    }
+  });
+
+  test("every hypothesis and proposal is kept, in recorded order", () => {
+    for (const bundle of bundles) {
+      const detail = detailOf(bundle);
+      const cycles = journeyOf(bundle);
+      expect(cycles.flatMap((c) => (c.hypothesis ? [c.hypothesis.hypothesis_id] : []))).toEqual(
+        detail.hypotheses.map((h) => h.hypothesis_id),
+      );
+      expect(cycles.flatMap((c) => c.proposals.map((p) => p.proposal_id)).sort()).toEqual(
+        detail.proposals.map((p) => p.proposal_id).sort(),
+      );
+    }
+  });
+
+  test("a stated reason is the model's own recorded text, and its citations are real", () => {
+    let reasons = 0;
+    for (const bundle of bundles) {
+      const detail = detailOf(bundle);
+      const observations = new Set(detail.observations.map((o) => o.observation_id));
+      journeyOf(bundle).forEach((cycle, i, cycles) => {
+        const { reason } = cycle.decision;
+        if (!reason) return;
+        reasons += 1;
+        expect(reason.text).toBe(cycles[i + 1].hypothesis?.motivation);
+        for (const cite of reason.cites) expect(observations.has(cite), cite).toBe(true);
+      });
+    }
+    expect(reasons).toBeGreaterThan(5);
+  });
+
+  test("a result never chose an experiment that was written before it", () => {
+    const cycles = journeyOf(PLANNED_CASE);
+    for (const cycle of cycles.slice(0, -1)) {
+      expect(cycle.decision.kind).toBe("planned");
+      expect(cycle.decision.reason).toBeNull();
+      expect(cycle.decision.sequence).toContain("did not choose it");
+    }
+    expect(cycles[cycles.length - 1].decision.kind).toBe("plan_finished");
+  });
+
+  test("only the record's own link makes a revision", () => {
+    for (const bundle of bundles) {
+      journeyOf(bundle).forEach((cycle, i, cycles) => {
+        if (cycle.decision.kind === "revised") expect(cycles[i + 1].hypothesis?.revises).toBeTruthy();
+        if (cycle.decision.kind === "new_hypothesis") expect(cycles[i + 1].hypothesis?.revises).toBeNull();
+      });
+    }
+  });
+
+  test("refused programs stop the story where the record stops", () => {
+    const cycles = journeyOf(REFUSED_CASE);
+    const refused = cycles[cycles.length - 1];
+    expect(refused.hypothesis).toBeNull();
+    expect(refused.proposals).toHaveLength(2);
+    expect(refused.trials).toHaveLength(0);
+    expect(refused.decision.kind).toBe("generation_failed");
+    expect(cycles[cycles.length - 2].decision.kind).toBe("next_refused");
+    expect(journeyLine(detailOf(REFUSED_CASE))).toContain("2 generated programs refused");
+  });
+
+  test("a conclusion is named as the model's, and a rerun is not hidden", () => {
+    const cycles = journeyOf(HONEST_CASE);
+    const last = cycles[cycles.length - 1];
+    expect(last.decision.kind).toBe("concluded");
+    expect(last.trials.filter((t) => t.rerun)).toHaveLength(1);
+    expect(last.decision.sequence).toContain("A rerun of the same program");
+    // A rerun's verdict is a different run's: it does not restate the cycle's result.
+    expect(cycleVerdicts(last)).toEqual(["VIOLATION"]);
+  });
+
+  test("stopping for budget or failure is stated, not smoothed over", () => {
+    const stopped = (outcome: InvestigationSummary["outcome"]) =>
+      journeyOf(FALSE_CASE, (b) => {
+        b.summary.outcome = outcome;
+        b.summary.termination = null;
+      }).at(-1)!.decision;
+    expect(stopped("budget_exhausted").kind).toBe("budget");
+    expect(stopped("failed").kind).toBe("failed");
+    expect(stopped("cancelled").title).toBe("Cancelled");
+  });
+
+  test("a supported hypothesis is not a verified one", () => {
+    const cycles = journeyOf(FALSE_CASE);
+    const supported = cycles.find((c) => c.hypothesis?.status === "supported")!;
+    expect(assessmentCheck(supported)).toBe("The Oracle recorded a VIOLATION in this experiment.");
+    // Derived: the same assessment with no VIOLATION behind it.
+    const unbacked = journeyOf(FALSE_CASE, (b) => {
+      b.runs.forEach((r) => (r.verdict = "PASS"));
+    }).find((c) => c.hypothesis?.status === "supported")!;
+    expect(assessmentCheck(unbacked)).toContain("The Oracle recorded no VIOLATION");
+    for (const cycle of cycles.filter((c) => c.hypothesis?.status === "refuted")) {
+      expect(assessmentCheck(cycle)).toBeNull();
+    }
+  });
+
+  test("a reader lands on the cycle that mattered", () => {
+    const cycles = journeyOf(FALSE_CASE);
+    expect(openCycle(cycles, undefined, undefined)).toBe("h5");
+    expect(openCycle(cycles, "h2", undefined)).toBe("h2");
+    expect(openCycle(cycles, undefined, "run_d48284d5a019")).toBe("h1");
+    expect(openCycle(cycles, "nonsense", undefined)).toBe("h5");
+    expect(openCycle(journeyOf(REFUSED_CASE), undefined, undefined)).toBe("h2");
+    expect(openCycle([], undefined, undefined)).toBeNull();
+  });
+
+  test("an investigation with no record of steps yields no invented ones", () => {
+    const cycles = journeyOf(FALSE_CASE, (b) => {
+      const detail = b as unknown as InvestigationDetail;
+      detail.hypotheses = [];
+      detail.proposals = [];
+      b.experiments = [];
+      b.runs = [];
+    });
+    expect(cycles).toEqual([]);
+  });
+
+  test("the plain question comes from the configured faults and needs a known fault", () => {
+    const cycles = journeyOf(FALSE_CASE);
+    expect(plainQuestion(cycles[0])).toContain("reports success although it rolled back");
+    const unknown = journeyOf(FALSE_CASE, (b) => {
+      b.runs.forEach((r) => r.faults.forEach((f) => (f.kind = "new_fault")));
+    });
+    expect(plainQuestion(unknown[0])).toBeNull();
+  });
+
+  test("no rule attributes a motive", () => {
+    for (const bundle of bundles) {
+      for (const cycle of journeyOf(bundle)) {
+        const text = [plainQuestion(cycle), cycle.decision.title, cycle.decision.sequence, assessmentCheck(cycle)];
+        expect(text.join(" "), cycle.key).not.toMatch(MOTIVE);
+      }
+      for (const entry of bundle.timeline) {
+        expect(explainEvent(entry, false), entry.stage).not.toMatch(MOTIVE);
+      }
+    }
+  });
+});
+
+test.describe("timeline milestones", () => {
+  test("folding keeps every record, in recorded order", () => {
+    for (const bundle of bundles) {
+      const flat = timelineNodes(bundle.timeline).flatMap((n) => (n.kind === "step" ? [n.entry] : n.entries));
+      expect(flat.map((e) => e.seq)).toEqual(bundle.timeline.map((e) => e.seq));
+    }
+  });
+
+  test("a delivered fault is detail, and every verdict and conclusion is a milestone", () => {
+    for (const entry of bundles.flatMap((b) => b.timeline)) {
+      if (entry.stage === "fault_delivered") expect(isMilestone(entry)).toBe(false);
+      if (["oracle_verdict", "conclusion", "investigation_finished", "experiment_rejected"].includes(entry.stage)) {
+        expect(isMilestone(entry), entry.stage).toBe(true);
+      }
+    }
+  });
+
+  test("a run's folded row counts what is inside it", () => {
+    for (const bundle of bundles) {
+      for (const node of timelineNodes(bundle.timeline)) {
+        if (node.kind !== "group" || !holdsRun(node.entries)) continue;
+        const calls = node.entries.filter((e) => e.stage === "tool_interaction").length;
+        const faults = node.entries.filter((e) => e.stage === "fault_delivered").length;
+        const finished = node.entries.find((e) => e.stage === "target_run_finished")!;
+        expect(faults).toBe(finished.facts.faults_delivered);
+        expect(calls).toBe(finished.facts.tool_calls);
+        const line = traceLine(node.entries);
+        expect(line).toContain(`${calls} tool call`);
+        expect(line).toContain(`${faults} fault`);
+        expect(line).toContain(
+          finished.facts.claim_status ? `reported ${String(finished.facts.claim_status)}` : "filed no final claim",
+        );
+      }
+    }
+  });
+
+  test("a fault's explanation never calls it a failure", () => {
+    const fault = FALSE_CASE.timeline.find((e) => e.stage === "fault_delivered")!;
+    expect(explainEvent(fault, false)).toContain("not by itself a failure");
+    expect(eventTitle(fault)).toBe(fault.title);
+  });
+
+  test("a verdict's explanation claims the state, not the cause", () => {
+    const verdict = FALSE_CASE.timeline.find((e) => e.stage === "oracle_verdict")!;
+    expect(explainEvent(verdict, false)).toContain("not why it came about");
+  });
+
+  test("a fixture is never described as a model", () => {
+    for (const entry of FALSE_CASE.timeline.filter((e) => e.authorship === "investigator_model")) {
+      expect(explainEvent(entry, true)).not.toMatch(/\bmodel\b/);
+    }
   });
 });

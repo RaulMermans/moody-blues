@@ -2,16 +2,21 @@
 
 ## Results
 
-Measured by `make test-design` on the product's real screens, at 390, 768 and 1440 px.
+Measured by `make test-design` on the product's real screens, at 390, 768 and 1440 px. Every row here is an automated
+check. **No screen reader, no real Safari and no person was involved:** see [Not covered](#not-covered).
 
 | Check | Result |
 |---|---|
-| axe (WCAG 2.0, 2.1, 2.2 A and AA, plus best practice), 7 screens × 3 widths, Chromium | 0 violations |
+| axe (WCAG 2.0, 2.1, 2.2 A and AA, plus best practice), 12 screens × 3 widths, Chromium, **every disclosure opened first** | 0 violations |
 | The task, report, outcome and verdict inside the first screen, 20 runs × 3 widths | All |
-| Horizontal overflow, 9 routes × 3 widths | None |
+| Horizontal overflow, 12 routes × 3 widths, every disclosure opened first | None |
+| All five tabs on screen with nothing scrolled away, 320 and 390 px | Yes |
+| Headings: one `h1`, no level skipped, 7 screens with everything open | Yes |
+| The current tab: `aria-current="page"`, under its full name at 390 px | Yes, from the accessibility tree |
+| Keyboard: walks the tabs in order, opens a cycle with Space and a run's trace with Enter | Yes |
 | A verdict wrapping inside a word, or a recorded value covered | None |
 | Evidence text clipped at 390 px | None |
-| Primary controls at least 44×44 px at 390 px | All measured: site nav, breadcrumb, tabs, run picker, ledger rows, disclosures, CTAs, Go deeper, copy, timeline steps |
+| Primary controls at least 44×44 px at 390 px | All measured: site nav, breadcrumb, tabs, run picker, ledger rows, disclosures, CTAs, Go deeper, copy, timeline steps and traces, cycles, Overview ladder |
 | Keyboard: tabs, ledger rows, run picker; scrollable tables and code blocks are focusable | Yes |
 | Focus ring | 2px solid paper, plus an outer ink ring |
 | Comparison read order | Label, agent side, the seam as a sentence, authoritative side |
@@ -45,21 +50,36 @@ axe and the 44px check found these in existing screens. All are fixed:
 - Wide tables were scrollable but not reachable by keyboard. `TableScroll` makes them named, focusable regions.
 - The copy button was 22px tall.
 
+Sprint 12 opened every disclosure before checking, and that found more:
+
+- A nested wrapper broke `dl` structure on opened timeline events. Fixed.
+- At 390 px, opening a tool call widened the page by 4,449 px (KI-55). It predates this sprint and is fixed.
+
 ### Browsers
 
 | Engine | Covered |
 |---|---|
 | Chromium | Everything above |
-| WebKit (Playwright build) | Layout at 3 widths: first-screen fit, overflow, ledger rows as a grid, condensed variable font, deep links. Screenshots inspected |
+| WebKit (Playwright build) | Layout at 3 widths: first-screen fit, overflow on all five views, tabs on screen, ledger rows as a grid, condensed variable font, deep links to calls, cycles and events. Screenshots inspected |
 | Safari on real iOS or macOS | NOT_RUN. Playwright's WebKit is close to Safari and is not the same thing |
 | Firefox | NOT_RUN |
 
 ### Not covered
 
-- **No screen reader was used.** Names and order come from Playwright's accessibility snapshot. VoiceOver and NVDA are NOT_RUN.
-- **No user testing.** The 10-second and 30-second goals are design targets.
+- **No screen reader was used.** Names and order come from Playwright's accessibility snapshot. VoiceOver and NVDA are NOT_RUN. VoiceOver needs a person listening at the machine, and this sprint ran without one.
+- **No user testing.** The 10-second and 30-second goals are design targets. The test is ready to run: [First-reader test](investigation-experience.md#first-reader-test).
 - axe was not run in WebKit, and does not cover operator or containment screens.
 - Inline links in running text are exempt from the 44px target and are smaller, as WCAG 2.5.8 allows.
+
+### VoiceOver checklist, for a person
+
+Turn on VoiceOver (Cmd-F5) in Safari and open `/investigations/inv_d0bc87de6010`. Record what is actually said.
+
+1. Rotor, Landmarks: "Investigation views" is listed. Rotor, Headings: one heading 1, in order.
+2. On a tab: it says "current page" and, at phone width, the full name "Raw evidence".
+3. Timeline: a row announces collapsed or expanded, and the VIOLATION row says the word VIOLATION.
+4. Investigator: a closed cycle reads its id, its hypothesis, the verdict and the model's reading, in that order.
+5. Oracle seal: the verdict is read once, with no stray glyph.
 
 ## Rules
 

@@ -338,3 +338,21 @@ contributor might also hit.
 - **Symptom:** a heading "Reading the evidence" timed out `shot()` in the e2e suite.
 - **Cause:** the suite waits for `/^(Loading|Reading|Checking)\b/` to leave the page.
 - **Fix:** keep those three words off the start of permanent text. The heading was renamed.
+
+### KI-55: Opening a tool call widened a phone page by 4,449 px
+- **Symptom:** at 390 px, expanding a ledger row let a long JSON line push the page sideways.
+- **Cause:** the phone's single grid track was `auto`, so `min-width: auto` let a `pre` set the width. Tablet and up
+  already used `minmax(0, 1fr)`. Sprint 11 only measured overflow with rows closed.
+- **Fix:** `minmax(0, 1fr)`. The overflow, cover and axe checks now open every disclosure first.
+
+### KI-56: A refused program read as "First experiment"
+- **Symptom:** in `inv_5c9f95de6c09`, programs refused after two real experiments carried that tag.
+- **Cause:** the contract files a proposal with no prior citation under `first_experiment`.
+- **Fix:** the tag is not shown on a refused program. The evidence is unchanged. Covered by `design.spec.ts`.
+
+### KI-57: The deployed release and `main` differ
+- **Symptom:** KI-51 is fixed on `main` and still live, so a hotfix cut from `main` would be empty, and deploying `main`
+  ships the Sprint 11 restyle.
+- **Cause:** PR #15 merged Sprint 11 with no deploy.
+- **Fix:** `hotfix/ki-51-disclosure-wording`, from `967dc88`. Its `frontend`, `backend` and `infra` trees match the
+  recorded `d592879` release. Pushed, not deployed: the owner decides.

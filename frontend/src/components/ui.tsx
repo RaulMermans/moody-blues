@@ -91,9 +91,17 @@ export function TableScroll({
   );
 }
 
-export function Fact({ label, children }: { label: string; children: ReactNode }) {
+export function Fact({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${className}`}>
       <dt className="text-xs text-faint">{label}</dt>
       <dd className="mt-0.5 break-words font-mono text-sm text-foreground">{children}</dd>
     </div>

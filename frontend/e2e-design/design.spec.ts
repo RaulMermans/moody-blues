@@ -9,7 +9,7 @@ import { BACKEND_URL } from "../playwright.design.config";
 // The investigation screens against the real recorded evidence. Expected values come from the API,
 // never from this file. The copy rules themselves are covered in rules.spec.ts.
 
-const SHOTS = join(__dirname, "..", "..", "docs", "design", "screenshots", "sprint-11");
+const SHOTS = join(__dirname, "..", "..", "docs", "design", "screenshots", "sprint-12");
 const VIEWPORTS = [
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
@@ -99,6 +99,13 @@ test.describe("screenshots", () => {
       ["negative", `/investigations/${NEGATIVE}`],
       ["inconclusive-no-claim", runUrl(INCONCLUSIVE, NO_CLAIM_RUN)],
       ["inconclusive-under-report", runUrl(HONEST, UNDER_REPORT_RUN)],
+      ["overview", `/investigations/${VIOLATION}?view=overview`],
+      ["timeline", `/investigations/${VIOLATION}?view=timeline`],
+      ["timeline-recovery", `/investigations/${RECOVERY}?view=timeline`],
+      ["timeline-inconclusive", `/investigations/${INCONCLUSIVE}?view=timeline`],
+      ["investigator", `/investigations/${VIOLATION}?view=investigator`],
+      ["investigator-recovery", `/investigations/${RECOVERY}?view=investigator`],
+      ["investigator-inconclusive", `/investigations/${INCONCLUSIVE}?view=investigator`],
     ];
     for (const { width, height } of VIEWPORTS) {
       const size = width === 390 ? "mobile" : width === 768 ? "tablet" : "desktop";
@@ -106,7 +113,9 @@ test.describe("screenshots", () => {
       for (const [name, url] of states) {
         await page.goto(url);
         await shot(page, `after-${name}-${size}`);
-        if (name === "violation") await shot(page, `after-${name}-${size}-full`, true);
+        if (["violation", "landing", "timeline", "investigator", "overview"].includes(name)) {
+          await shot(page, `after-${name}-${size}-full`, true);
+        }
       }
     }
   });
@@ -457,6 +466,228 @@ test.describe("navigation", () => {
   });
 });
 
+test.describe("the investigation journey", () => {
+  const investigator = (id: string) => `/investigations/${id}?view=investigator`;
+  const timeline = (id: string) => `/investigations/${id}?view=timeline`;
+
+  test("every experiment in the Investigator states its own run's recorded result", async ({ page }) => {
+    test.slow();
+    for (const id of ALL) {
+      await page.goto(investigator(id));
+      await settled(page);
+      const { runs } = await api<Runs>(`/investigations/${id}/runs`);
+      for (const { run_id: runId } of runs) {
+        const run = await api<Run>(`/investigations/${id}/runs/${runId}`);
+        const trial = page.getByTestId(`trial-${runId}`);
+        await expect(trial).toHaveAttribute("data-verdict", run.verdict);
+        await expect(trial.getByTestId("trial-verdict")).toHaveText(run.verdict);
+        await expect(trial.getByTestId("trial-claim")).toHaveText(run.agent.claim?.status ?? "no valid claim");
+        await expect(trial.getByTestId("trial-faults")).toHaveText(String(run.faults_delivered));
+        await expect(trial.getByTestId("trial-discrepancies")).toHaveText(String(run.discrepancies.length));
+      }
+    }
+  });
+
+  test("a hypothesis is never styled as a verdict", async ({ page }) => {
+    await page.goto(investigator(VIOLATION));
+    await settled(page);
+    const row = page.getByTestId("hypothesis-h5").locator("summary").first();
+    await expect(row).toContainText("Model: supported");
+    await expect(page.getByTestId("hypothesis-h5").locator('[data-stage="hypothesis"]')).toContainText(
+      "Model's proposal, not a finding",
+    );
+    await expect(page.getByTestId("hypothesis-h5").locator('[data-stage="decision"]')).toContainText(
+      "The model's assessment: supported",
+    );
+  });
+
+  test("a recorded reason is labeled the model's, and shows what it cited", async ({ page }) => {
+    await page.goto(`${investigator(VIOLATION)}&cycle=h2#h2`);
+    await settled(page);
+    const decision = page.getByTestId("hypothesis-h2").locator('[data-stage="decision"]');
+    await expect(decision).toContainText("The model's stated reason for the next step, citing obs_1, obs_2");
+    await expect(decision).toContainText("A citation is not proof");
+  });
+
+  test("a planned experiment has no reason invented for it", async ({ page }) => {
+    await page.goto(investigator(RECOVERY));
+    await settled(page);
+    await expect(page.getByTestId("investigator-view")).not.toContainText("stated reason");
+    await expect(page.getByTestId("decision-h1")).toHaveAttribute("data-kind", "planned");
+  });
+
+  test("a refused program carries no place in the sequence", async ({ page }) => {
+    await page.goto(`${investigator(INCONCLUSIVE)}&cycle=prop_3#prop_3`);
+    await settled(page);
+    const cycle = page.getByTestId("program-prop_3");
+    await expect(cycle).toContainText("2 generated programs refused before execution");
+    await expect(cycle).toContainText("Refused: Truncated response");
+    await expect(cycle).not.toContainText("First experiment");
+    await expect(cycle).toContainText("Nothing ran");
+  });
+
+  test("the next decision leads to the next hypothesis, and back returns", async ({ page }) => {
+    await page.goto(`${investigator(VIOLATION)}&cycle=h1#h1`);
+    await settled(page);
+    await page.getByTestId("next-h1").click();
+    await expect(page).toHaveURL(/cycle=h2#h2$/);
+    await expect(page.getByTestId("hypothesis-h2").locator("details").first()).toHaveJSProperty("open", true);
+    await expect(page.getByTestId("hypothesis-h2")).toBeInViewport();
+    await page.goBack();
+    await expect(page).toHaveURL(/cycle=h1#h1$/);
+    await expect(page.getByTestId("hypothesis-h1").locator("details").first()).toHaveJSProperty("open", true);
+  });
+
+  test("the default timeline shows milestones, and a run's trace opens in place", async ({ page }) => {
+    await page.goto(timeline(VIOLATION));
+    await settled(page);
+    const entries = (await api<{ entries: { seq: number; stage: string }[] }>(
+      `/investigations/${VIOLATION}/timeline`,
+    )).entries;
+    const verdict = entries.find((e) => e.stage === "oracle_verdict")!;
+    const fault = entries.find((e) => e.stage === "fault_delivered")!;
+    await expect(page.getByTestId(`step-${verdict.seq}`)).toBeVisible();
+    await expect(page.getByTestId(`step-${fault.seq}`)).toBeHidden();
+    const trace = page.locator(".rf-trace-group").first();
+    await trace.locator("summary").first().focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId(`step-${fault.seq}`)).toBeVisible();
+  });
+
+  test("only a verified violation is marked, on every case", async ({ page }) => {
+    for (const id of ALL) {
+      const { runs } = await api<Runs>(`/investigations/${id}/runs`);
+      await page.goto(timeline(id));
+      await settled(page);
+      await expect(page.getByTestId("discrepancy-mark")).toHaveCount(
+        runs.filter((r) => r.verdict === "VIOLATION").length,
+      );
+    }
+    await page.goto(timeline(RECOVERY));
+    await settled(page);
+    const coral = await page.locator(".rf-step").evaluateAll((els) =>
+      els.filter((el) => {
+        const dot = getComputedStyle(el, "::before").backgroundColor;
+        return dot === "rgb(240, 112, 90)";
+      }).length,
+    );
+    expect(coral).toBe(0);
+  });
+
+  test("selecting an event explains it and gives its evidence and its links", async ({ page }) => {
+    await page.goto(`${timeline(VIOLATION)}&run=${FALSE_RUN}`);
+    await settled(page);
+    const step = page.locator('.rf-step[data-verdict="VIOLATION"]');
+    await step.locator("summary").first().click();
+    await expect(step).toContainText("not why it came about");
+    await expect(step).toContainText("experiment journal, seq");
+    await expect(step.getByTestId("event-link")).toHaveAttribute("href", new RegExp(`run=${FALSE_RUN}`));
+    await step.getByTestId("open-comparison").click();
+    await expect(page.getByTestId("reality-view")).toHaveAttribute("data-run", FALSE_RUN);
+  });
+
+  test("an event link opened fresh selects that event, even bookkeeping behind a fold", async ({ page }) => {
+    const entries = (await api<{ entries: { seq: number; stage: string }[] }>(
+      `/investigations/${VIOLATION}/timeline`,
+    )).entries;
+    for (const stage of ["oracle_verdict", "fault_delivered", "observation"]) {
+      const { seq } = entries.find((e) => e.stage === stage)!;
+      await page.goto(`${timeline(VIOLATION)}&event=${seq}#event-${seq}`);
+      await settled(page);
+      const step = page.getByTestId(`step-${seq}`);
+      await expect(step).toHaveAttribute("data-focus", "exact");
+      await expect(step.locator("details").first()).toHaveJSProperty("open", true);
+      await expect(step).toBeInViewport();
+    }
+  });
+
+  test("a hypothesis on the timeline opens in the Investigator, keeping the run", async ({ page }) => {
+    await page.goto(`${timeline(VIOLATION)}&run=${FALSE_RUN}`);
+    await settled(page);
+    const step = page.locator('.rf-step[data-stage="hypothesis_revised"]').first();
+    await step.locator("summary").first().click();
+    await step.getByTestId("open-hypothesis").click();
+    await expect(page).toHaveURL(new RegExp(`view=investigator.*run=${FALSE_RUN}.*#h2$`));
+    await expect(page.getByTestId("hypothesis-h2").locator("details").first()).toHaveJSProperty("open", true);
+  });
+
+  test("the overview answers from the evidence and leads to each view", async ({ page }) => {
+    const run = await api<Run>(`/investigations/${VIOLATION}/runs/${FALSE_RUN}`);
+    await page.goto(`/investigations/${VIOLATION}?view=overview`);
+    await settled(page);
+    await expect(page.getByTestId("strip-verdict")).toHaveText(run.verdict);
+    await expect(page.getByTestId("overview-answers")).toContainText("Duplicate side effect");
+    await expect(page.getByTestId("overview-answers")).toContainText("interpretation, not a verdict");
+    await expect(page.getByTestId("overview-causal")).toContainText("None in this record");
+    await page.getByTestId("ladder-h5").click();
+    await expect(page.getByTestId("hypothesis-h5").locator("details").first()).toHaveJSProperty("open", true);
+  });
+
+  test("causal evidence stays neutral and leads to the method", async ({ page }) => {
+    await page.goto(runUrl(VIOLATION, FALSE_RUN));
+    await settled(page);
+    await expect(page.getByTestId("causal-evidence")).not.toContainText("3/3");
+    await page.getByTestId("method-link").click();
+    await expect(page).toHaveURL(/\/#method$/);
+    await expect(page.getByTestId("method")).toBeInViewport();
+    await expect(page.getByTestId("method")).toContainText("A rerun is not a control");
+  });
+
+  test("the landing explains four stages and keeps How it works without the evidence", async ({ page }) => {
+    await page.goto("/");
+    await settled(page);
+    await expect(page.locator(".rf-how li h3")).toHaveText(["Hypothesize", "Experiment", "Observe", "Verify"]);
+    await page.getByTestId("hero-how").click();
+    await expect(page).toHaveURL(/#how$/);
+    await expect(page.locator("#how")).toBeInViewport();
+    const signature = await page.getByTestId("signature").boundingBox();
+    const how = await page.locator("#how").boundingBox();
+    const list = await page.locator("#investigations").boundingBox();
+    expect(signature!.y).toBeLessThan(how!.y);
+    expect(how!.y).toBeLessThan(list!.y);
+  });
+
+  test("each tab is reachable at phone widths, with nothing hidden in overflow", async ({ page }) => {
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`/investigations/${VIOLATION}`);
+      await settled(page);
+      const nav = page.locator(".rf-tabs");
+      const clipped = await nav.evaluate((el) => el.scrollWidth - el.clientWidth);
+      expect(clipped, `${width}px`).toBeLessThanOrEqual(0);
+      for (const key of ["overview", "reality", "timeline", "investigator", "evidence"]) {
+        const box = await page.getByTestId(`tab-${key}`).boundingBox();
+        expect(box!.x, key).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width, key).toBeLessThanOrEqual(width);
+      }
+    }
+    const tabs = page.locator(".rf-tabs");
+    await expect(tabs.getByRole("link", { name: "Raw evidence" })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: "Reality Comparison" })).toBeVisible();
+  });
+
+  test("the investigation and the followed run stay named on every view", async ({ page }) => {
+    for (const view of ["overview", "timeline", "investigator", "evidence"]) {
+      await page.goto(`/investigations/${VIOLATION}?view=${view}&run=${FALSE_RUN}`);
+      await settled(page);
+      await expect(page.getByTestId("investigation-id")).toHaveText(VIOLATION);
+      await expect(page.getByTestId("tab-reality")).toHaveAttribute("href", new RegExp(`run=${FALSE_RUN}`));
+      await expect(page.getByTestId("run-following")).toContainText("Run 5 of 5");
+      await expect(page.getByTestId("run-following")).toContainText("VIOLATION");
+      await expect(page.locator("h1")).toHaveCount(1);
+    }
+    await page.getByTestId("run-clear").click();
+    await expect(page).not.toHaveURL(/run=/);
+    await expect(page.getByTestId("run-following")).toHaveCount(0);
+  });
+
+  test("a run from elsewhere is named as foreign, not followed", async ({ page }) => {
+    await page.goto(`${timeline(VIOLATION)}&run=run_000000000000`);
+    await settled(page);
+    await expect(page.getByTestId("run-following")).toContainText("not part of this investigation");
+  });
+});
+
 test.describe("access", () => {
   for (const viewport of VIEWPORTS) {
     test(`the four answers fit the first screen on every run at ${viewport.width}px`, async ({ page }) => {
@@ -481,6 +712,9 @@ test.describe("access", () => {
         `/investigations/${VIOLATION}?view=timeline&show=all`,
         `/investigations/${VIOLATION}?view=investigator`,
         `/investigations/${VIOLATION}?view=evidence`,
+        `/investigations/${VIOLATION}?view=overview`,
+        `/investigations/${VIOLATION}?view=timeline`,
+        `/investigations/${INCONCLUSIVE}?view=investigator`,
         `/investigations/${RECOVERY}`,
         runUrl(INCONCLUSIVE, NO_CLAIM_RUN),
         "/design-lab",
@@ -488,6 +722,8 @@ test.describe("access", () => {
       ]) {
         await page.goto(url);
         await settled(page);
+        // Opened, so the check also covers what a reader sees after expanding everything.
+        await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
         const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         );
@@ -529,9 +765,16 @@ test.describe("access", () => {
         `/investigations/${VIOLATION}?view=timeline`,
         `/investigations/${VIOLATION}?view=investigator`,
         `/investigations/${VIOLATION}?view=evidence`,
+        `/investigations/${VIOLATION}?view=overview`,
+        `/investigations/${VIOLATION}?view=timeline&show=all`,
+        `/investigations/${RECOVERY}?view=investigator`,
+        `/investigations/${INCONCLUSIVE}?view=investigator`,
+        `/investigations/${INCONCLUSIVE}?view=timeline`,
       ]) {
         await page.goto(url);
         await settled(page);
+        // Closed disclosures hide their content from axe, so everything is opened first.
+        await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
         const results = await new AxeBuilder({ page })
           .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"])
           .analyze();
@@ -552,7 +795,9 @@ test.describe("access", () => {
         `/investigations/${VIOLATION}`,
         ".rf-crumb-back, .rf-tabs a, .rf-run, .rf-disclose summary, .rf-call summary, .rf-deeper a, [data-testid=\"copy-id\"]",
       ],
-      [`/investigations/${VIOLATION}?view=timeline`, ".rf-step summary"],
+      [`/investigations/${VIOLATION}?view=timeline`, ".rf-step > details > summary, .rf-trace-group > details > summary, [data-testid=\"timeline-scope\"]"],
+      [`/investigations/${VIOLATION}?view=investigator`, ".rf-cycle > details > summary, .rf-disclose summary"],
+      [`/investigations/${VIOLATION}?view=overview`, ".rf-ladder a, .rf-deeper a"],
     ];
     for (const [url, selector] of targets) {
       await page.goto(url);
@@ -565,6 +810,60 @@ test.describe("access", () => {
       );
       expect(small, url).toEqual([]);
     }
+  });
+
+  test("headings never skip a level, on any view, with everything open", async ({ page }) => {
+    for (const url of [
+      "/",
+      `/investigations/${VIOLATION}?view=overview`,
+      `/investigations/${VIOLATION}`,
+      `/investigations/${VIOLATION}?view=timeline`,
+      `/investigations/${VIOLATION}?view=investigator`,
+      `/investigations/${VIOLATION}?view=evidence`,
+      `/investigations/${INCONCLUSIVE}?view=investigator`,
+    ]) {
+      await page.goto(url);
+      await settled(page);
+      await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
+      const levels = await page
+        .locator("main h1, main h2, main h3, main h4")
+        .evaluateAll((els) => els.map((el) => Number(el.tagName[1])));
+      expect(levels[0], url).toBe(1);
+      expect(levels.filter((l) => l === 1), url).toHaveLength(1);
+      levels.forEach((level, i) => {
+        if (i) expect(level - levels[i - 1], `${url} heading ${i}`).toBeLessThanOrEqual(1);
+      });
+    }
+  });
+
+  test("the current view is exposed to assistive technology, under its full name", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/investigations/${VIOLATION}?view=evidence`);
+    await settled(page);
+    const nav = page.getByRole("navigation", { name: "Investigation views" });
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+    await expect(nav.getByRole("link", { name: "Raw evidence" })).toHaveAttribute("aria-current", "page");
+    const snapshot = await nav.ariaSnapshot();
+    for (const name of ["Overview", "Reality Comparison", "Timeline", "Investigator", "Raw evidence"]) {
+      expect(snapshot).toContain(name);
+    }
+  });
+
+  test("the keyboard walks the tabs and opens a cycle and a trace", async ({ page }) => {
+    await page.goto(`/investigations/${VIOLATION}?view=investigator`);
+    await settled(page);
+    await page.waitForLoadState("networkidle");
+    await page.getByTestId("tab-overview").focus();
+    for (const key of ["reality", "timeline", "investigator", "evidence"]) {
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId(`tab-${key}`)).toBeFocused();
+    }
+    const row = page.getByTestId("hypothesis-h1").locator("summary").first();
+    await row.focus();
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("hypothesis-h1").locator("details").first()).toHaveJSProperty("open", true);
+    const ring = await row.evaluate((el) => getComputedStyle(el).outlineStyle);
+    expect(ring).toBe("solid");
   });
 
   test("a phone stacks the comparison and keeps both labels", async ({ page }) => {

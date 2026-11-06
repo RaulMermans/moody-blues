@@ -14,16 +14,12 @@ import { STRATEGY_LABEL } from "@/lib/labels";
 
 const STEPS = [
   {
-    title: "Investigate",
-    body: "An AI Investigator forms a hypothesis about how an agent could fail, writes a Python experiment to test it, and picks its next step from what it observed.",
+    title: "Hypothesize",
+    body: "An AI Investigator proposes how an agent could fail. A hypothesis is a question, not a finding.",
   },
   {
-    title: "Contain",
-    body: "Generated code is untrusted. It runs in a disposable Docker sandbox with no network, and can only request validated actions from trusted code.",
-  },
-  {
-    title: "Distort",
-    body: "Trusted code changes what the agent's tools return: a save that reports failure but committed, a success that rolled back, a read from an old snapshot.",
+    title: "Experiment",
+    body: "It writes Python that runs in a disposable sandbox with no network. Trusted code then changes what the agent's tools return: a save that reports failure but committed, a success that rolled back, a read from an old snapshot.",
   },
   {
     title: "Observe",
@@ -34,6 +30,43 @@ const STEPS = [
     body: "An independent Oracle reads committed state. It never sees what the agent was told, so a claim cannot change the verdict.",
   },
 ];
+
+const METHODOLOGY = "https://github.com/RaulMermans/moody-blues/blob/main/docs/evaluations/methodology.md";
+
+function HowItWorks() {
+  return (
+    <section id="how" aria-labelledby="how-title" className="rf-how">
+      <h2 id="how-title" className="rf-section-title">
+        How it works
+      </h2>
+      <p className="rf-lead">
+        MOODY BLUES is an autonomous adversarial experimentation system. An AI Investigator designs
+        experiments, a sandbox contains them, and an independent Oracle checks the agent&apos;s claims
+        against authoritative state.
+      </p>
+      <ol>
+        {STEPS.map((step) => (
+          <li key={step.title}>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+          </li>
+        ))}
+      </ol>
+      <div id="method" className="rf-method" data-testid="method">
+        <h3>What a verdict does not show</h3>
+        <p>
+          A verdict states what is true of one run&apos;s committed state. It does not say why. A delivered
+          fault is exposure, and saying a fault raised the chance of a failure needs a registered contrast
+          against a clean control. A rerun is not a control. An investigation record holds no such contrast,
+          so its page says that instead of guessing.{" "}
+          <a href={METHODOLOGY} className="rf-link">
+            Evaluation methodology
+          </a>
+        </p>
+      </div>
+    </section>
+  );
+}
 
 async function Signature({ list }: { list: InvestigationList }) {
   const lead = list.items.find((i) => i.summary?.case?.kind === "verified_violation")?.summary;
@@ -95,12 +128,16 @@ function StudyNote({ study }: { study: StudyContext }) {
   );
 }
 
+async function LeadCase() {
+  const list = await listInvestigations();
+  return list.ok ? <Signature list={list.data} /> : null;
+}
+
 async function Evidence() {
   const list = await listInvestigations();
   if (!list.ok) return <FailurePanel failure={list} />;
   return (
     <>
-      <Signature list={list.data} />
       <section id="investigations" aria-labelledby="investigations-title" className="flex flex-col gap-3">
         <div className="rf-section-head">
           <h2 id="investigations-title" className="rf-section-title">
@@ -166,6 +203,12 @@ export default function Home() {
         </div>
       </header>
 
+      <Suspense fallback={<div className="rf-signature-hold" />}>
+        <LeadCase />
+      </Suspense>
+
+      <HowItWorks />
+
       <Suspense
         fallback={
           // Holds the space the evidence will take, so what follows does not jump when it streams in.
@@ -176,25 +219,6 @@ export default function Home() {
       >
         <Evidence />
       </Suspense>
-
-      <section id="how" aria-labelledby="how-title" className="rf-how">
-        <h2 id="how-title" className="rf-section-title">
-          How it works
-        </h2>
-        <p className="rf-lead">
-          MOODY BLUES is an autonomous adversarial experimentation system. An AI Investigator designs
-          experiments, a sandbox contains them, and an independent Oracle checks the agent&apos;s claims
-          against authoritative state.
-        </p>
-        <ol>
-          {STEPS.map((step) => (
-            <li key={step.title}>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
 
       <StatusPanel />
     </main>

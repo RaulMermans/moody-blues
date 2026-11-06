@@ -1,64 +1,80 @@
 import Link from "next/link";
 
-import type { Authorship, TimelineEntry, TimelinePage } from "@/lib/evidence-types";
-import { AUTHOR_LABEL, AUTHOR_NOTE, AUTHOR_TONE, formatClock } from "@/lib/labels";
+import {
+  categoryOf,
+  eventTitle,
+  explainEvent,
+  holdsRun,
+  isMilestone,
+  timelineNodes,
+  traceLine,
+} from "@/design/journey";
+import type { InvestigationDetail, TimelineEntry, TimelinePage, Verdict } from "@/lib/evidence-types";
+import { AUTHOR_LABEL, AUTHOR_NOTE, FINDING_CLASS_LABEL, formatClock, humanize } from "@/lib/labels";
 
-import { Chevron, Code, Fact, Tag } from "./ui";
+import { Chevron, Fact, VerdictTag } from "./ui";
 
-const KEY_STAGES = new Set([
-  "investigation_created",
-  "hypothesis_created",
-  "hypothesis_revised",
-  "hypothesis_assessed",
-  "experiment_generated",
-  "experiment_rejected",
-  "fault_delivered",
-  "target_run_finished",
-  "oracle_verdict",
-  "observation",
-  "conclusion",
-  "investigation_finished",
-]);
-
+// The recorded detail is worth a line in these stages. Elsewhere it is empty or a repeat of the title.
 const PREVIEW_STAGES = new Set([
   "hypothesis_created",
   "hypothesis_revised",
   "hypothesis_assessed",
   "experiment_generated",
   "conclusion",
+  "investigation_finished",
 ]);
 
-const RAIL: Record<Authorship, string> = {
-  investigator_model: "bg-muted",
-  coordinator: "bg-faint",
-  sandbox: "bg-faint",
-  gateway: "bg-warn",
-  target_agent: "bg-agent",
-  oracle: "bg-truth",
-};
+type Focus = "exact" | "run" | null;
 
-function authorLabel(authorship: Authorship, fixture: boolean): string {
-  if (fixture && authorship === "investigator_model") return "Investigator fixture";
-  return AUTHOR_LABEL[authorship];
+function authorLabel(entry: TimelineEntry, fixture: boolean): string {
+  if (fixture && entry.authorship === "investigator_model") return "Investigator fixture";
+  return AUTHOR_LABEL[entry.authorship];
 }
 
-type Focus = "exact" | "run" | null;
+/** How trusted code classified the verdict's run: a recovery, a shortfall, a violation. */
+function verdictNote(entry: TimelineEntry, detail: InvestigationDetail): string | null {
+  const finding = detail.findings.find((f) => f.run_id === entry.evidence.run_id);
+  const label = finding ? (FINDING_CLASS_LABEL[finding.finding_class] ?? humanize(finding.finding_class)) : null;
+  const codes = Array.isArray(entry.facts.finding_codes)
+    ? entry.facts.finding_codes.map((c) => humanize(String(c)).toLowerCase())
+    : [];
+  if (entry.facts.verdict === "VIOLATION" && codes.length) return codes.join(", ");
+  return label;
+}
+
+function comparisonLabel(entry: TimelineEntry): string {
+  return entry.evidence.call_seq !== null
+    ? `Open call ${entry.evidence.call_seq} in the Reality Comparison`
+    : "Open this run in the Reality Comparison";
+}
 
 function Entry({
   id,
   entry,
+  detail,
   fixture,
   focus,
   anchor,
+  runId,
 }: {
   id: string;
   entry: TimelineEntry;
+  detail: InvestigationDetail;
   fixture: boolean;
   focus: Focus;
   anchor: boolean;
+  runId?: string;
 }) {
-  const verdict = entry.stage === "oracle_verdict" ? String(entry.facts.verdict) : null;
+  const verdict = entry.stage === "oracle_verdict" ? (entry.facts.verdict as Verdict) : null;
   const facts = Object.entries(entry.facts).filter(([, value]) => value !== null);
+  const line =
+    verdict !== null
+      ? verdictNote(entry, detail)
+      : entry.detail && PREVIEW_STAGES.has(entry.stage)
+        ? entry.detail
+        : null;
+  const run = runId ? `&run=${runId}` : "";
+  const hypothesis = entry.evidence.hypothesis_id;
   return (
     <li
       data-testid={`step-${entry.seq}`}
@@ -66,62 +82,91 @@ function Entry({
       data-authorship={entry.authorship}
       data-verdict={verdict ?? undefined}
       data-focus={focus ?? undefined}
+      data-tier={isMilestone(entry) ? "milestone" : "detail"}
       id={anchor ? "trace" : undefined}
-      className="rf-step relative pl-6"
+      className="rf-step"
     >
-      <span aria-hidden className={`absolute left-0 top-2 h-2 w-2 rounded-full ${RAIL[entry.authorship]}`} />
-      <details open={focus === "exact"} className="border border-transparent hover:border-line">
-        <summary className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1.5">
-          <Chevron />
-          <span className="font-mono text-xs text-faint">{formatClock(entry.at)}</span>
-          <span
-            className={`min-w-0 text-sm ${
-              verdict === "VIOLATION" ? "font-semibold text-bad" : "text-foreground"
-            }`}
-          >
-            {entry.title}
+      <span id={`event-${entry.seq}`} className="rf-anchor" />
+      <details open={focus === "exact"}>
+        <summary>
+          <span className="rf-step-meta">
+            <Chevron />
+            <span className="rf-step-category">{categoryOf(entry)}</span>
+            <time dateTime={entry.at}>{formatClock(entry.at)}</time>
           </span>
-          <Tag tone={AUTHOR_TONE[entry.authorship]} title={AUTHOR_NOTE[entry.authorship]}>
-            {authorLabel(entry.authorship, fixture)}
-          </Tag>
-          {entry.detail && PREVIEW_STAGES.has(entry.stage) ? (
-            <span className="w-full truncate pl-5 text-xs text-faint">{entry.detail}</span>
+          <span className="rf-step-main">
+            <span className="rf-step-title">
+              {verdict === "VIOLATION" ? (
+                <span aria-hidden className="rf-step-mark" data-testid="discrepancy-mark">
+                  ≠{" "}
+                </span>
+              ) : null}
+              {eventTitle(entry)}
+            </span>
+            {line ? <span className="rf-step-line">{line}</span> : null}
+          </span>
+          {verdict ? (
+            <span className="rf-step-tag">
+              <VerdictTag verdict={verdict} />
+            </span>
           ) : null}
         </summary>
-        <div className="flex flex-col gap-3 px-2 pb-3 pl-6">
-          {entry.detail ? <p className="max-w-3xl text-sm leading-6 text-muted">{entry.detail}</p> : null}
-          {facts.length ? <Code>{JSON.stringify(Object.fromEntries(facts), null, 2)}</Code> : null}
-          <dl className="grid gap-2 sm:grid-cols-2">
+        <div className="rf-step-detail">
+          <p className="rf-body">{explainEvent(entry, fixture)}</p>
+          {entry.detail ? <p className="rf-body rf-step-recorded">{entry.detail}</p> : null}
+          <dl className="rf-step-facts">
+            <Fact label="Recorded by">
+              <span title={AUTHOR_NOTE[entry.authorship]}>
+                {authorLabel(entry, fixture)}: {AUTHOR_NOTE[entry.authorship].toLowerCase()}
+              </span>
+            </Fact>
             <Fact label="Source record">
               {entry.evidence.journal} journal, seq {entry.evidence.journal_seq}
             </Fact>
-            {entry.evidence.experiment_id ? (
-              <Fact label="Experiment">{entry.evidence.experiment_id}</Fact>
-            ) : null}
-            <div className="sm:col-span-2">
-              <Fact label="Record hash">
-                <span className="break-all text-xs">{entry.evidence.record_sha256}</span>
+            {entry.evidence.experiment_id ? <Fact label="Experiment">{entry.evidence.experiment_id}</Fact> : null}
+            {facts.map(([key, value]) => (
+              <Fact key={key} label={humanize(key)}>
+                {typeof value === "string" ? value : JSON.stringify(value)}
               </Fact>
-            </div>
+            ))}
+            <Fact label="Record hash" className="rf-step-hash">
+              <span className="break-all text-xs">{entry.evidence.record_sha256}</span>
+            </Fact>
           </dl>
           {entry.at_precision === "run_report" ? (
-            <p className="text-xs text-faint">
+            <p className="rf-data">
               Tool calls are ordered by call number. The time shown is when the run report was recorded.
             </p>
           ) : null}
-          {entry.evidence.run_id ? (
+          <p className="rf-step-links">
+            {entry.evidence.run_id ? (
+              <Link
+                href={`/investigations/${id}?view=reality&run=${entry.evidence.run_id}${
+                  entry.evidence.call_seq !== null ? `#call-${entry.evidence.call_seq}` : ""
+                }`}
+                className="rf-link"
+                data-testid="open-comparison"
+              >
+                {comparisonLabel(entry)}
+              </Link>
+            ) : null}
+            {hypothesis ? (
+              <Link
+                href={`/investigations/${id}?view=investigator${run}&cycle=${hypothesis}#${hypothesis}`}
+                className="rf-link"
+                data-testid="open-hypothesis"
+              >
+                Open {hypothesis} in the Investigator
+              </Link>
+            ) : null}
             <Link
-              href={`/investigations/${id}?view=reality&run=${entry.evidence.run_id}${
-                entry.evidence.call_seq !== null ? `#call-${entry.evidence.call_seq}` : ""
-              }`}
-              className="rf-link text-sm"
-              data-testid="open-comparison"
+              href={`/investigations/${id}?view=timeline${run}&event=${entry.seq}#event-${entry.seq}`}
+              className="rf-link"
+              data-testid="event-link"
             >
-              {entry.evidence.call_seq !== null
-                ? `Open call ${entry.evidence.call_seq} in the Reality Comparison`
-                : "Open this run in the Reality Comparison"}
+              Link to this event
             </Link>
-          ) : null}
+          </p>
         </div>
       </details>
     </li>
@@ -131,51 +176,87 @@ function Entry({
 export function TimelineView({
   id,
   page,
+  detail,
   showAll,
   fixture,
   runId,
   call,
+  event,
 }: {
   id: string;
   page: TimelinePage;
+  detail: InvestigationDetail;
   showAll: boolean;
   fixture: boolean;
   runId?: string;
   call?: number | null;
+  event?: number | null;
 }) {
-  const entries = showAll ? page.entries : page.entries.filter((e) => KEY_STAGES.has(e.stage));
   const focusOf = (entry: TimelineEntry): Focus => {
+    if (event === entry.seq) return "exact";
     if (!runId || entry.evidence.run_id !== runId) return null;
     return call !== null && call !== undefined && entry.evidence.call_seq === call ? "exact" : "run";
   };
-  const anchor = entries.find((e) => focusOf(e) === "exact") ?? entries.find((e) => focusOf(e) === "run");
+  const anchor =
+    page.entries.find((e) => focusOf(e) === "exact") ?? page.entries.find((e) => focusOf(e) === "run");
   const run = runId ? `&run=${runId}` : "";
+  const step = (entry: TimelineEntry) => (
+    <Entry
+      key={entry.seq}
+      id={id}
+      entry={entry}
+      detail={detail}
+      fixture={fixture}
+      focus={focusOf(entry)}
+      anchor={entry === anchor}
+      runId={runId}
+    />
+  );
+  const milestones = page.entries.filter(isMilestone).length;
   return (
-    <div className="flex flex-col gap-4" data-testid="timeline-view">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
-          Each entry comes from one journal record of this investigation.{" "}
-          <span className="text-faint">Showing {entries.length} of {page.total}.</span>
-          {runId ? <span className="text-faint"> Steps of run {runId} are marked.</span> : null}
+    <div className="rf-timeline" data-testid="timeline-view">
+      {page.entries.length ? (
+      <div className="rf-timeline-head">
+        <p className="rf-body">
+          {showAll
+            ? `All ${page.total} records, in the order they were journaled.`
+            : `The ${milestones} milestones of ${page.total} records, in recorded order. Open one to see what it means and the record behind it.`}
         </p>
         <Link
           href={`/investigations/${id}?view=timeline${showAll ? "" : "&show=all"}${run}`}
-          className="inline-flex min-h-11 items-center border border-line px-3 text-sm text-muted hover:text-foreground"
+          className="rf-cta rf-cta-quiet"
+          data-testid="timeline-scope"
         >
-          {showAll ? "Key steps only" : `Show all ${page.total} records`}
+          {showAll ? "Milestones only" : `Show all ${page.total} records`}
         </Link>
       </div>
-      <ol aria-label="Investigation timeline" className="relative flex flex-col gap-0.5 before:absolute before:bottom-2 before:left-[3px] before:top-2 before:w-px before:bg-line">
-        {entries.map((entry) => (
-          <Entry
-            key={entry.seq}
-            id={id}
-            entry={entry}
-            fixture={fixture}
-            focus={focusOf(entry)}
-            anchor={entry === anchor}
-          />
-        ))}
+      ) : (
+        <p className="rf-body" data-testid="timeline-empty">
+          No event is on record for this investigation.
+        </p>
+      )}
+      <ol aria-label="Investigation timeline" className="rf-steps">
+        {showAll
+          ? page.entries.map(step)
+          : timelineNodes(page.entries).map((node) => {
+              if (node.kind === "step") return step(node.entry);
+              const focused = node.entries.some((e) => focusOf(e) !== null);
+              // Bookkeeping between milestones stays behind "Show all" unless a link points into it.
+              if (!holdsRun(node.entries) && !focused) return null;
+              return (
+                <li key={node.entries[0].seq} className="rf-trace-group" data-testid={`trace-${node.entries[0].seq}`}>
+                  <details open={focused}>
+                    <summary>
+                      <Chevron />
+                      <span>{traceLine(node.entries)}</span>
+                    </summary>
+                    <ol aria-label="Records of this run" className="rf-steps">
+                      {node.entries.map(step)}
+                    </ol>
+                  </details>
+                </li>
+              );
+            })}
       </ol>
     </div>
   );
