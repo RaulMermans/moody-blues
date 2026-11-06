@@ -128,7 +128,21 @@ The [submission pack](docs/submission/README.md) holds the copy, video script, c
 | Investigation Explorer: result, story, comparison, Investigator view, timeline and raw evidence | Implemented; **real recorded evidence**; verified with Playwright ([design](docs/architecture/product-experience.md)) |
 | Evidence API: read-only, validated, hash-pinned ([contracts](docs/architecture/evidence-api.md)) | Implemented and tested |
 | Operator missions: token-gated, one at a time, SSE progress, restart classification | Rehearsals verified on real Docker; **one live mission run** from the browser on `glm-5.3`. Refused by the ledger as shipped until the owner raises the limit |
+| External agents: `mb-agent/1` over stdio, Python SDK, one long-lived process in the sandbox per run | Implemented and **verified on real Docker with scripted agents**. Local only. The model path is tested on a labeled fixture and has **never been run live**, so no external AI agent has been evaluated ([quickstart](docs/external-agents/quickstart.md)) |
 | Spend ledger: worst-case reservation and a $5 sprint limit | Implemented. An estimate at assumed prices, **not** a provider billing limit ([policy](docs/deployment/live-budget.md)) |
+
+## Bring your own agent
+
+Write your agent against the [Python SDK](sdk/python), and MOODY BLUES runs it in the sandbox against
+the same worlds, faults and Oracle as everything else. Your agent decides; trusted code holds the
+tools, the limits and the verdict.
+
+```sh
+make external-demo   # two example scripts, real containers, free, no credentials
+```
+
+Start with the [quickstart](docs/external-agents/quickstart.md). The example agents are scripts, and
+prove the integration path. They say nothing about any LLM.
 
 ## Prerequisites
 
@@ -220,6 +234,7 @@ All settings come from `MOODY_*` environment variables or `.env`. See
 - [Sprint 6 report](docs/evaluations/sprint-06/report.md) · [Registered evaluation](docs/architecture/evaluation.md) · [ADR 0006](docs/adr/0006-registered-evaluation.md) · [Sprint 6 record](docs/sprints/sprint-06.md)
 - [Sprint 1](docs/sprints/sprint-01.md) · [Sprint 2](docs/sprints/sprint-02.md) · [Sprint 3](docs/sprints/sprint-03.md) · [Sprint 4](docs/sprints/sprint-04.md) · [Sprint 5](docs/sprints/sprint-05.md) · [Evaluation methodology](docs/evaluations/methodology.md) · [Validation](docs/testing/validation.md)
 - [Known issues](docs/troubleshooting/known-issues.md) · [Vultr preflight](docs/deployment/vultr-preflight.md) · [Live budget](docs/deployment/live-budget.md) · [Key rotation](docs/security/key-rotation.md) · [Sprint 8](docs/sprints/sprint-08.md) · [Sprint 9](docs/sprints/sprint-09.md) · [Sprint 10](docs/sprints/sprint-10.md) · [Design](docs/design/README.md)
+- [External agents: quickstart](docs/external-agents/quickstart.md) · [Protocol](docs/architecture/external-agent-protocol.md) · [ADR 0012](docs/adr/0012-external-agent-adapter.md) · [Sprint 15](docs/sprints/sprint-15.md)
 - Contributor rules: [AGENTS.md](AGENTS.md)
 
 ## License

@@ -35,6 +35,40 @@ that did not happen. Raw traces. The host.
 | A local report presented as hosted | Only the metadata service sets `vultr_hosted`; relabeling fails the hash | `test_containment.py` |
 | Sandbox reads the instance metadata service | No network; attempted in every containment report | `containment-report` |
 
+## External agents (Sprint 15)
+
+An external agent is untrusted code, written by someone else, which holds a live channel to trusted code
+for the whole of a run. Everything below is enforced on the host or by the sandbox. The SDK enforces nothing.
+
+| Threat | Control | Tested by |
+|---|---|---|
+| Agent reaches the CRM, the Oracle or the engine directly | Separate container; the engine, world files and database are simply not in it | `test_the_engine_is_not_in_the_sandbox`, `test_no_world_database_is_reachable` (real Docker) |
+| Agent reaches the host, a network or a credential | No mounts, socket, network or host environment; canary checked | `tests/security/test_external_agent_containment.py` (real Docker) |
+| Agent forges a tool result, a verdict or a commit | There is no such message: an unknown `type` ends the run | `test_a_forged_tool_result...`, `test_an_oracle_request_is_not_a_message` |
+| Agent claims success, with invented evidence | The claim is checked against committed state; unknown references are kept apart | `test_a_claim_is_checked_not_believed`, `test_forged_evidence_references...` |
+| Calls past its scope, allowlist or quota | Decided in the driver, before the gateway | `tests/external/test_boundaries.py` |
+| A retry becomes a duplicate | Nothing repeats a call; a reused `call_id` is refused | `test_one_call_id_never_runs_twice`, `test_a_timed_out_call_is_not_retried` |
+| Agent learns what its world will do | Opaque `scenario_ref`; the same mission as an internal target | `test_the_context_says_nothing_about_the_world` |
+| Agent passes as a model, or hides one | The label comes from model calls the host brokered | `test_saying_llm_does_not_make_a_run_an_llm_run` |
+| Spends money | No network, so a model only through the host: opt-in, ledger, caps | `tests/external/test_inference.py`, `test_commands.py` |
+| Floods output, fills memory, forks, hangs, or stops reading | Line and queue bounds, cgroup limits, a host deadline, a send timeout | `test_a_stdout_flood_is_bounded`, `test_memory_limit...`, `test_pid_limit_holds`, `test_a_process_that_stops_reading...` |
+| Agent output attacks whoever reads it | Rejected lines kept by hash; stderr labeled untrusted, never parsed; events hold ids and fixed codes; React escapes the rest | `test_a_rejected_line_is_recorded_by_hash_only`, `test_events_hold_no_agent_text_or_arguments` |
+| Coordinator dies mid-run | Journal first; `uncertain`; nothing replayed; the container stops at its own deadline | `test_coordinator_killed_mid_run...` (real Docker) |
+| Evidence is altered afterwards | Hashes on report, evidence and journal; a chain over every protocol line | `test_an_edited_external_record_fails_verification` |
+
+Residual risks specific to external agents:
+
+- **Containers share a kernel.** An external agent is the first sustained, attacker-writable process in that
+  sandbox on a machine with a Docker daemon. These controls were tested on Colima on a laptop, and **have
+  not been run on the Vultr VM**. Hosting this for strangers needs stronger isolation first.
+- **`scenario_ref` hides the name, not the behavior.** An agent that runs repeatedly can learn how faults
+  behave. That is what a resilient agent would do anyway, but do not read a result as a blind trial.
+- **A model call's content is the agent's.** With a model granted, the agent chooses the prompt, inside the
+  budget. It cannot see the key, but it can spend what was granted.
+- **A manifest's `name` is chosen by the agent's author** and shown to operators, as text.
+- **Scopes are all-or-nothing per manifest.** An operator cannot narrow them per run.
+- **A hash is not a signature**, as elsewhere. `bundle_sha256` says what ran, not who wrote it.
+
 ## Residual risks
 
 - **`POST /sandbox/smoke` needs no token.** It is not mounted in production, and the backend binds to

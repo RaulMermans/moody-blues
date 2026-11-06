@@ -20,7 +20,10 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
 | `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
+| `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver, `ExternalAgentTarget`, commands |
+| `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
+| `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-demo`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -29,11 +32,13 @@ covers Next.js API drift; these rules take precedence.)
 | `tests/investigator` | Investigator with a labeled scripted model and sandbox, real SQLite worlds; offline; part of `make test` |
 | `tests/evaluation` | Registered evaluation with a labeled scripted sandbox, reference targets and real SQLite worlds; offline; part of `make test` |
 | `tests/explorer` | Evidence API against the real recorded bundles, and the job worker with a labeled scripted model; offline; part of `make test` |
+| `tests/external` | The adapter over a real process boundary, with a labeled sandbox double and real SQLite worlds; offline; part of `make test` |
 | `tests/integration`, `tests/security` | Real Docker (`-m docker`) |
 | `frontend/src/design/` | Design system used by the product: tokens, primitives, typed visual state (`model.ts`), rule-written copy (`story.ts`, `journey.ts`, `outcome.ts`, `sequence.ts`) |
 | `frontend/src/app/design-lab/` | Local specimen page. `*.lab.tsx` routes exist only with `MOODY_DESIGN_LAB=1` |
 | `frontend/e2e` | Playwright against the real backend + production build |
 | `frontend/e2e-design` | Playwright for the investigation screens against the real recorded evidence: rules, truth, navigation, axe, WebKit |
+| `frontend/e2e-external` | Playwright for external runs on the real pages; seeds its own evidence; `make external-ui` |
 | `frontend/e2e-hosted` | Playwright against a running deployment; starts nothing itself |
 | `infra/vultr/` | Provisioning, host bootstrap, deploy, rollback, Caddy and systemd configuration |
 | `evidence/live/` | The exact bundle from the hosted live run. Not served publicly; never hand-edited |
@@ -119,6 +124,29 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - Every chargeable command goes through the spend ledger, and billable batches need explicit
   opt-in. The ledger is an estimate, never a provider limit. See
   `docs/deployment/live-budget.md`.
+
+**External agents**
+- An external agent is a target, and nothing else: it implements `TargetPort`. Never add a second engine,
+  Oracle or evidence format for one. See ADR 0012 and `docs/architecture/external-agent-protocol.md`.
+- External code is untrusted. It runs only in the sandbox, on a runner approved for generated code, with
+  no network. There is no uncontained mode. `local_process_test_double` is for agents in this repository,
+  in tests, and is never evidence of containment.
+- An agent proposes; the driver decides. Allowlist, scopes, arguments, quotas and deadlines are checked in
+  trusted code before the gateway, and each accepted call reaches the gateway exactly once. It holds a
+  `ToolPort`, nothing more. Never add a message that can reach the Oracle, state or a limit.
+- A line that is not a valid message ends the run; it is never repaired. Nothing an agent sends is read back
+  into a verdict: `final` is a claim, evidence references are checked and never believed, and stderr and
+  rejected lines are data. Keep rejected lines by hash.
+- The agent's process is stopped before the Oracle reads, and whatever ended the run, the Oracle still reads.
+- Never tell a target about its world: `scenario_ref` stays opaque, because scenario ids name their faults.
+- `target_type` is the agent's word and is only recorded. Only a model call the host brokered makes a run an
+  LLM run. Never label an `external_scripted` run a model, and never describe one as evidence about any LLM.
+- Never retry a target run or a tool call, in the host or the SDK. A reused `call_id` is refused, not repeated.
+- Model calls go through the host only, and paying for one needs the ledger and an explicit opt-in.
+  `external-run` refuses reserved and evaluation worlds.
+- The SDK stays standard library only and imports nothing from the backend. Change the two sides together:
+  `tests/external/test_contract.py` holds them to each other. A change an existing agent cannot ignore is a new
+  protocol version, and evidence stays at schema 1 unless it holds an external run.
 
 **Investigator**
 - One model inside a deterministic workflow. No extra agents, persistent memory or self-modifying
