@@ -75,7 +75,7 @@ external-test: ## External agent adapter tests over a real process boundary (off
 	$(PYTEST) tests/external
 
 external-containment: ## External agent tests in the real sandbox (needs a Docker daemon)
-	$(PYTEST) tests/integration/test_external_agent.py tests/security/test_external_agent_containment.py -m docker
+	$(PYTEST) tests/integration/test_external_agent.py tests/integration/test_external_investigator.py tests/security/test_external_agent_containment.py -m docker
 
 external-ui: ## External runs through the real pages, in a real browser. MOODY_E2E_EXTERNAL_DOCKER=1 uses real containers
 	cd $(FE) && $(PNPM) design:build && $(PNPM) exec playwright test --config playwright.external.config.ts

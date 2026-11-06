@@ -232,3 +232,46 @@ def test_coordinator_killed_mid_run_ends_uncertain_and_nothing_is_replayed(
         if process.poll() is None:
             process.kill()
         docker_runner.reap_orphans(now=time.time() + 3_600)
+
+
+def test_coordinator_killed_during_a_model_call_leaves_it_on_the_record(
+    settings: Settings, docker_runner: DockerSandboxRunner, tmp_path: Path
+) -> None:
+    """The call may have run and may be billed. Its answer is gone; the fact of it must not be."""
+    root = tmp_path / "experiments"
+    root.mkdir()
+    manifest = fixture_manifest(
+        tmp_path,
+        "CreatesThenAsks",
+        target_type="llm",
+        capabilities=("tools", "cancellation", "model"),
+    )
+    env = {k: v for k, v in os.environ.items() if not k.startswith("MOODY_VULTR")}
+    process = subprocess.Popen(  # noqa: S603 - fixed argv, test driver in this repository
+        [sys.executable, "-m", "tests.external.crash_driver", str(root), str(manifest), "model"],
+        cwd=REPO,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        deadline = time.monotonic() + 40
+        while time.monotonic() < deadline and not list(root.glob("*/worlds/*.model-calls.jsonl")):
+            time.sleep(0.05)
+        assert list(root.glob("*/worlds/*.model-calls.jsonl"))
+        process.send_signal(signal.SIGKILL)
+        process.wait(timeout=10)
+
+        [recovered] = recover_interrupted(root)
+        assert recovered.status is ExperimentState.UNCERTAIN
+        unresolved = recovered.unresolved_target_runs[0]
+        assert unresolved.model_calls_unresolved == 1
+        assert len(unresolved.committed_new_customer_ids or []) == 1
+        directory = next(p for p in root.iterdir() if p.is_dir())
+        assert verify_experiment(directory) == []
+        records, _ = read_journal(directory / JOURNAL)
+        assert [r.kind for r in records].count("target_run_intent") == 1  # never replayed
+        docker_runner.reap_orphans(now=time.time() + 3_600)
+    finally:
+        if process.poll() is None:
+            process.kill()
