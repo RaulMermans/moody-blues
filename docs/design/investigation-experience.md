@@ -178,3 +178,18 @@ case, ask these, and write down the answers and any misunderstanding verbatim:
 
 Question 4 is the risk. A correct answer says the model's stated reason came from earlier results, not that the
 results proved anything. A simulated reader is not evidence and must not be reported as one.
+
+## Sprint 13 refinements
+
+- **Overview:** who and when, then the case, the result and a primary next step, then how it got there. The run shown is the
+  ladder's emphasised row. About and limits fold here as on every view but the Comparison, and the recorded-mode note stays
+  on screen.
+- **Investigator:** titles clamp to two lines while a cycle is closed. Long model text clamps to three lines with a control.
+  The stated reason for the next step is never clamped, because it answers the question readers find hardest. Each hypothesis
+  that has a recorded reason links back to the Decision holding it, since the reason is stored with the step before.
+- **Stage sources** now say whose words follow: Observation is recorded evidence, Decision is the record then the model.
+- **Timeline:** unchanged by measurement. See [timeline-performance.md](timeline-performance.md).
+- **Landing:** order was already right. The list lost its box and its doubled tag, and System status became one quiet row of
+  plain words at the foot.
+- **Containment:** moved onto the shared width, headings and rules. Same content.
+

@@ -94,6 +94,35 @@ Sprint 11 removed all three of Sprint 10's entrance animations. The only motion 
 change on hover, and the disclosure chevron, both off under reduced motion. Nothing enters and nothing loops,
 so the static page is the whole page.
 
-Sprint 13 owns the motion system. A motion must only ever present what the static page already shows, and must
+Sprint 13 added one motion: a record or cycle settles 3 px over 140 ms as it opens, as a whole, off under reduced
+motion. It uses no opacity, so contrast is never mid-change when read. A motion must only ever present what the static page already shows, and must
 not suggest timing the evidence does not hold. Avoid continuous glitching, parallax, screen shake, and any motion
 on text being read.
+
+## Sprint 13 report
+
+| Check | Result | How |
+|---|---|---|
+| axe, 12 screens at 3 widths, disclosures open | PASS | `make test-design`, Chromium |
+| Keyboard: every Tab stop on screen with visible focus, on 4 screens | PASS | Real Tab presses, `final-polish.spec.ts` |
+| Disclosures open and close by keyboard | PASS | Enter on `summary`. Enter and Space on the clamp button, which keeps focus and reports `aria-expanded` |
+| Heading order: one `h1`, no skipped level, 7 screens | PASS | Automated |
+| Reduced motion | PASS | The record settle and the control transition are off under `prefers-reduced-motion`. Pages read the same without them |
+| Contrast, token pairs | PASS | WCAG AA check in the suite |
+| Touch targets | PASS | Existing 44 px check, plus the new text control at 320, 390 and 720 px |
+| Playwright WebKit | PASS | Engine emulation. It is not Safari |
+| Playwright Firefox | PASS | Playwright's Firefox 157 build, opt-in with `MOODY_E2E_FIREFOX=1`. It is not a stock install |
+| Real Safari | **NOT_RUN** | `safaridriver` refused: "Allow remote automation" is off. An owner setting, left unchanged |
+| VoiceOver | **NOT_RUN** | Needs a person listening. Announcements were checked only as attributes and roles |
+| Stock Firefox, NVDA, JAWS, a real phone | **NOT_RUN** | Not available |
+
+**Clamped text and screen readers.** `-webkit-line-clamp` hides lines visually only, so assistive technology reads the whole
+text with the control unused. Whether that reads well in VoiceOver is unverified.
+
+**Streamed content cannot take focus until it is revealed.** Three new keyboard tests failed on this at first. The element
+was still in React's hidden segment, so `focus()` did nothing. This is a property of tests that act immediately after load.
+A real Tab walk reached and opened the rows.
+
+**Status announcements.** The backend line is `role="status"` and polite. It polls every 15 s and announces only on a change.
+The Refresh button is gone: polling already covers it, and it was the panel's only control.
+

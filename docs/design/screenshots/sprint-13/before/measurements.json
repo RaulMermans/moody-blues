@@ -1,0 +1,176 @@
+{
+  "label": "before",
+  "lead": "inv_d0bc87de6010",
+  "results": [
+    {
+      "name": "landing",
+      "htmlBytes": 58998,
+      "htmlGzip": 10973,
+      "mobileHeight": 4366,
+      "mobileOverflow": 0,
+      "tabletHeight": 3134,
+      "tabletOverflow": 0,
+      "desktopHeight": 2912,
+      "desktopOverflow": 0,
+      "elements": 258
+    },
+    {
+      "name": "overview",
+      "htmlBytes": 56175,
+      "htmlGzip": 11008,
+      "mobileHeight": 3308,
+      "mobileOverflow": 0,
+      "tabletHeight": 2186,
+      "tabletOverflow": 0,
+      "desktopHeight": 1879,
+      "desktopOverflow": 0,
+      "elements": 247
+    },
+    {
+      "name": "reality",
+      "htmlBytes": 168464,
+      "htmlGzip": 21340,
+      "mobileHeight": 7139,
+      "mobileOverflow": 0,
+      "tabletHeight": 4618,
+      "tabletOverflow": 0,
+      "desktopHeight": 4162,
+      "desktopOverflow": 0,
+      "elements": 875
+    },
+    {
+      "name": "timeline",
+      "htmlBytes": 712333,
+      "htmlGzip": 39018,
+      "mobileHeight": 2986,
+      "mobileOverflow": 0,
+      "tabletHeight": 2398,
+      "tabletOverflow": 0,
+      "desktopHeight": 2303,
+      "desktopOverflow": 0,
+      "elements": 4051
+    },
+    {
+      "name": "timeline-all",
+      "htmlBytes": 849633,
+      "htmlGzip": 53421,
+      "mobileHeight": 8405,
+      "mobileOverflow": 0,
+      "tabletHeight": 6820,
+      "tabletOverflow": 0,
+      "desktopHeight": 6725,
+      "desktopOverflow": 0,
+      "elements": 4886
+    },
+    {
+      "name": "investigator",
+      "htmlBytes": 169606,
+      "htmlGzip": 23607,
+      "mobileHeight": 3826,
+      "mobileOverflow": 0,
+      "tabletHeight": 2869,
+      "tabletOverflow": 0,
+      "desktopHeight": 2616,
+      "desktopOverflow": 0,
+      "elements": 784
+    },
+    {
+      "name": "evidence",
+      "htmlBytes": 61576,
+      "htmlGzip": 11534,
+      "mobileHeight": 2786,
+      "mobileOverflow": 0,
+      "tabletHeight": 2240,
+      "tabletOverflow": 0,
+      "desktopHeight": 2046,
+      "desktopOverflow": 0,
+      "elements": 281
+    },
+    {
+      "name": "containment",
+      "htmlBytes": 48403,
+      "htmlGzip": 8495,
+      "mobileHeight": 4335,
+      "mobileOverflow": 0,
+      "tabletHeight": 2397,
+      "tabletOverflow": 0,
+      "desktopHeight": 2397,
+      "desktopOverflow": 0,
+      "elements": 181
+    }
+  ],
+  "perf": {
+    "timeline desktop": {
+      "dcl": 118.9,
+      "load": 126.3,
+      "fcp": 56,
+      "lcp": 380,
+      "longTasks": 0,
+      "toggle": 8.3,
+      "nodes": 8213,
+      "heapMB": 5.7,
+      "layoutMs": 17,
+      "scriptMs": 35.4
+    },
+    "timeline phone 4x CPU": {
+      "dcl": 301.8,
+      "load": 302.6,
+      "fcp": 120,
+      "lcp": 460,
+      "longTasks": 143,
+      "toggle": 19.9,
+      "nodes": 8213,
+      "heapMB": 5.6,
+      "layoutMs": 50.1,
+      "scriptMs": 142
+    },
+    "timeline-all desktop": {
+      "dcl": 90.6,
+      "load": 110.6,
+      "fcp": 32,
+      "lcp": 364,
+      "longTasks": 0,
+      "toggle": 12.7,
+      "nodes": 9704,
+      "heapMB": 6.5,
+      "layoutMs": 19.3,
+      "scriptMs": 38.4
+    },
+    "timeline-all phone 4x CPU": {
+      "dcl": 294.8,
+      "load": 295.6,
+      "fcp": 100,
+      "lcp": 472,
+      "longTasks": 179,
+      "toggle": 26.4,
+      "nodes": 9704,
+      "heapMB": 6.4,
+      "layoutMs": 60.3,
+      "scriptMs": 156.3
+    },
+    "investigator desktop": {
+      "dcl": 71.7,
+      "load": 75.2,
+      "fcp": 32,
+      "lcp": 380,
+      "longTasks": 0,
+      "toggle": null,
+      "nodes": 1740,
+      "heapMB": 3.9,
+      "layoutMs": 41.3,
+      "scriptMs": 23.5
+    },
+    "investigator phone 4x CPU": {
+      "dcl": 104.6,
+      "load": 201.9,
+      "fcp": 76,
+      "lcp": 488,
+      "longTasks": 243,
+      "toggle": null,
+      "nodes": 1740,
+      "heapMB": 3.8,
+      "layoutMs": 134.1,
+      "scriptMs": 90.3
+    }
+  }
+}
