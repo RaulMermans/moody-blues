@@ -1,0 +1,9 @@
+protocol = "mb-agent/1"
+agent_id = "acme-crm-unsafe"
+name = "Acme CRM agent (unsafe script)"
+version = "0.1.0"
+target_type = "scripted"
+package = "acme_crm_agent"
+entrypoint = "acme_crm_agent.policies:UnsafeAgent"
+capabilities = ["tools", "cancellation"]
+scopes = ["crm:read", "crm:write"]

@@ -1,0 +1,9 @@
+protocol = "mb-agent/1"
+agent_id = "acme-crm-careful"
+name = "Acme CRM agent (careful script)"
+version = "0.1.0"
+target_type = "scripted"
+package = "acme_crm_agent"
+entrypoint = "acme_crm_agent.policies:CarefulAgent"
+capabilities = ["tools", "cancellation"]
+scopes = ["crm:read", "crm:write"]
