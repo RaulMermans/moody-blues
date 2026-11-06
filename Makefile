@@ -15,7 +15,7 @@ PYTEST  := $(UV) run pytest
         eval-verify eval-run eval-repro eval-report eval-test recorded-export recorded-verify \
         live-budget sandbox-clean clean containment-report ledger-verify deploy-lint vultr-plan \
         test-hosted release release-check external-preflight external-run external-investigate external-demo \
-        external-test external-containment external-bench external-eval external-ui
+        external-test external-containment external-bench external-eval external-investigator-eval external-ui
 
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -82,6 +82,9 @@ external-ui: ## External runs through the real pages, in a real browser. MOODY_E
 
 external-eval: ## The 16 adapter scenarios and their metrics, in the real sandbox. Scripts, not models; free
 	$(UV) run python -m tests.external.evaluate
+
+external-investigator-eval: ## Sprint 16 cases and boundaries in the real sandbox. Models are labeled fixtures; free
+	$(UV) run python -m tests.external.evaluate_investigator
 
 external-bench: ## Measure adapter startup, per-call overhead, memory and cleanup in the real sandbox
 	$(UV) run python -m tests.external.bench

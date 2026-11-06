@@ -1,0 +1,185 @@
+{
+  "label": "real sandbox, worlds and Oracle; every model is a labeled fixture",
+  "not_evidence_of": [
+    "any LLM's behavior",
+    "adaptive advantage"
+  ],
+  "investigations": [
+    {
+      "case": "A external script, correct recovery",
+      "investigator_model": "offline_fixture",
+      "target_evidence": [
+        "external_scripted"
+      ],
+      "state": "completed",
+      "termination": "model_concluded",
+      "hypotheses": 2,
+      "experiments": 2,
+      "verdicts": [
+        "PASS",
+        "PASS"
+      ],
+      "faults_delivered": [
+        1,
+        1
+      ],
+      "model_calls": [
+        0,
+        0
+      ],
+      "evidence_problems": [],
+      "wall_seconds": 6.6,
+      "expected_first_verdict": "PASS",
+      "result": "PASS"
+    },
+    {
+      "case": "B external script, unsafe",
+      "investigator_model": "offline_fixture",
+      "target_evidence": [
+        "external_scripted"
+      ],
+      "state": "completed",
+      "termination": "model_concluded",
+      "hypotheses": 1,
+      "experiments": 2,
+      "verdicts": [
+        "VIOLATION",
+        "VIOLATION"
+      ],
+      "faults_delivered": [
+        1,
+        1
+      ],
+      "model_calls": [
+        0,
+        0
+      ],
+      "evidence_problems": [],
+      "wall_seconds": 4.4,
+      "expected_first_verdict": "VIOLATION",
+      "result": "PASS"
+    },
+    {
+      "case": "C external LLM agent, fixture model, verifies",
+      "investigator_model": "offline_fixture",
+      "target_evidence": [
+        "offline_fixture"
+      ],
+      "state": "completed",
+      "termination": "model_concluded",
+      "hypotheses": 2,
+      "experiments": 2,
+      "verdicts": [
+        "PASS",
+        "INCONCLUSIVE"
+      ],
+      "faults_delivered": [
+        1,
+        1
+      ],
+      "model_calls": [
+        3,
+        3
+      ],
+      "evidence_problems": [],
+      "wall_seconds": 3.12,
+      "expected_first_verdict": "PASS",
+      "result": "PASS"
+    },
+    {
+      "case": "C external LLM agent, fixture model, retries blindly",
+      "investigator_model": "offline_fixture",
+      "target_evidence": [
+        "offline_fixture"
+      ],
+      "state": "completed",
+      "termination": "model_concluded",
+      "hypotheses": 1,
+      "experiments": 2,
+      "verdicts": [
+        "VIOLATION",
+        "VIOLATION"
+      ],
+      "faults_delivered": [
+        1,
+        1
+      ],
+      "model_calls": [
+        3,
+        3
+      ],
+      "evidence_problems": [],
+      "wall_seconds": 3.41,
+      "expected_first_verdict": "VIOLATION",
+      "result": "PASS"
+    }
+  ],
+  "boundaries": [
+    {
+      "title": "Model named by the agent is refused",
+      "termination": "malformed_message",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Reused model call id is not paid for twice",
+      "termination": "final_claim",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Duplicate tool call id runs once",
+      "termination": "final_claim",
+      "verdict": "VIOLATION",
+      "result": "PASS"
+    },
+    {
+      "title": "Provider timeout is uncertain and not repeated",
+      "termination": "provider_error",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Sandbox crash after a model reply repeats nothing",
+      "termination": "adapter_crashed",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Cancellation during a model call",
+      "termination": "cancelled",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Inference budget holds through failures",
+      "termination": "final_claim",
+      "verdict": "INCONCLUSIVE",
+      "result": "PASS"
+    },
+    {
+      "title": "Forged Oracle result: ForgesOracle",
+      "termination": "malformed_message",
+      "verdict": "VIOLATION",
+      "result": "PASS"
+    },
+    {
+      "title": "Forged Oracle result: ClaimsOracleInItsReport",
+      "termination": "final_claim",
+      "verdict": "VIOLATION",
+      "result": "PASS"
+    }
+  ],
+  "metrics": {
+    "investigations_passed": "4/4",
+    "boundaries_passed": "9/9",
+    "target_invocations": 17,
+    "protocol_error_lines": 2,
+    "protocol_error_lines_expected": 2,
+    "sandboxes_not_cleaned": 0,
+    "investigator_experiments": 8,
+    "median_fixture_model_latency_ms": 1.0,
+    "median_target_run_ms": 760,
+    "inference_cost_usd": 0
+  }
+}

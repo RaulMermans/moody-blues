@@ -4,7 +4,7 @@ import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 
 const ROOT = path.resolve(__dirname, "../..");
-function ids(): { careful: string; unsafe: string } {
+function ids(): { careful: string; unsafe: string; llm: string } {
   return JSON.parse(readFileSync(path.join(ROOT, "frontend/.e2e-external/artifacts/external-ids.json"), "utf-8"));
 }
 const TOKEN = "external-ui-test-token-external-ui-test-token";
@@ -80,4 +80,31 @@ test("evidence keeps its links and its provenance", async ({ page }) => {
   await expect(body).toContainText("mb-agent/1");
   await expect(body).toContainText("bundle_sha256");
   await shot(page, "external-unsafe-evidence");
+});
+
+test("an LLM agent on a fixture is named as one, and never as a live model", async ({ page }) => {
+  await signIn(page);
+  await page.goto(`/investigations/${ids().llm}`);
+  await expect(page.getByTestId("target-evidence").first()).toContainText("external agent on an offline fixture, not a model");
+  const body = page.locator("main");
+  await expect(body).toContainText("No AI model ran here");
+  await expect(body).toContainText("labeled fixture answered");
+  await expect(body).not.toContainText("external script");
+  await expect(body).not.toContainText("live model");
+  await shot(page, "llm-fixture-overview");
+});
+
+test("an LLM agent on a fixture has every view, and its model calls are counted", async ({ page }) => {
+  await signIn(page);
+  const base = `/investigations/${ids().llm}`;
+  for (const view of ["reality", "investigator", "evidence"]) {
+    await page.goto(`${base}?view=${view}`);
+    await expect(page.locator("main")).not.toContainText(/refused|something went wrong/i);
+  }
+  await page.goto(`${base}?view=evidence`);
+  const body = page.locator("main");
+  await expect(body).toContainText("offline_fixture");
+  await expect(body).toContainText("model_calls_brokered");
+  await expect(body).not.toContainText("live_provider");
+  await shot(page, "llm-fixture-evidence");
 });

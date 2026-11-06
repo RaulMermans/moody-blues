@@ -362,6 +362,8 @@ class ExternalTargetView(_Public):
     execution_mode: str
     bundle_sha256: Sha256
     transcript_sha256: Sha256
+    model_calls: int = 0  # reached a provider, as the host recorded it
+    model_calls_uncertain: int = 0  # no answer to trust: may have run, may be billed
 
 
 class RealityRun(_Public):

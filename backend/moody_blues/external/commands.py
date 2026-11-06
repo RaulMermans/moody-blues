@@ -171,9 +171,10 @@ def external_workflow(
 def publish_run(report: InvestigationReport, artifacts: Path, settings: Settings) -> str:
     """Put a finished run where the existing pages look for it, as an operator job."""
     directory = artifacts / "investigations" / report.investigation_id
-    bundle = build_investigation_bundle(
-        directory, artifacts / "experiments", mode=ExecutionMode.REHEARSAL
-    )
+    # A real model choosing the tests is no rehearsal, whatever the target was.
+    live = report.model_evidence_source == "live_provider"
+    mode = ExecutionMode.LIVE if live else ExecutionMode.REHEARSAL
+    bundle = build_investigation_bundle(directory, artifacts / "experiments", mode=mode)
     text = render(bundle)
     key = settings.vultr_api_key.get_secret_value() if settings.vultr_api_key else ""
     require_clean(text, secrets=(key,) if key else ())
@@ -183,7 +184,7 @@ def publish_run(report: InvestigationReport, artifacts: Path, settings: Settings
     record = JobRecord(
         job_id=f"job_{uuid4().hex[:12]}",
         mission_id=report.request.target_model,
-        mode=ExecutionMode.REHEARSAL,
+        mode=mode,
         status=status,
         investigation_id=report.investigation_id,
         created_at=report.started_at,

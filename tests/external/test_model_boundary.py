@@ -1,7 +1,7 @@
 """The host's model broker, attacked from the agent's side and failed from the provider's.
 
 Every model here is a labeled test double. What these show is that the limits hold, that nothing
-is paid for twice, and that the record says what the host did. They say nothing about any real model.
+is paid for twice, and that the record says what the host did. They say nothing about real models.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from moody_blues.contracts.adapter import AdapterEventKind, ExternalAgentRecord,
 from moody_blues.contracts.agent import TerminationReason
 from moody_blues.contracts.common import ErrorCategory, MoodyBluesError
 from moody_blues.contracts.inference import InferenceRequest, InferenceResult, TokenUsage, ToolCall
-from moody_blues.contracts.oracle import Verdict
 from moody_blues.experiments.recovery import unresolved_model_calls
 from moody_blues.experiments.target import TargetResult
 from moody_blues.external import commands
@@ -29,7 +28,7 @@ from moody_blues.external.driver import InferenceBroker
 from moody_blues.external.target import LiveInference
 from tests.external.conftest import fixture_manifest, run_agent
 
-MODEL_AGENT = {"capabilities": ("tools", "cancellation", "model"), "target_type": "llm"}
+MODEL_CAPABILITIES = ("tools", "cancellation", "model")
 
 
 def _result(content: str | None = "fine", calls: list[ToolCall] | None = None) -> InferenceResult:
@@ -83,7 +82,9 @@ def _live(
 
 
 def _run(tmp_path: Path, entry: str, live: LiveInference | None, **options: Any) -> TargetResult:
-    bundle = build_bundle(fixture_manifest(tmp_path, entry, **MODEL_AGENT))
+    bundle = build_bundle(
+        fixture_manifest(tmp_path, entry, target_type="llm", capabilities=MODEL_CAPABILITIES)
+    )
     return run_agent(tmp_path, bundle, live=live, **options)
 
 
@@ -224,10 +225,9 @@ def test_a_provider_answer_that_fails_validation_is_not_delivered(tmp_path: Path
     class Shape(BaseModel):
         value: int
 
-    try:
+    with pytest.raises(ValidationError) as caught:
         Shape.model_validate({"value": "no"})
-    except ValidationError as exc:
-        broken = exc
+    broken = caught.value
     result = _run(tmp_path, "GivesUpOnModelFailure", _live(Provider(broken)))
     assert _record(result).model_requests[0].status is ModelCallStatus.MALFORMED
     assert result.termination == TerminationReason.PROVIDER_ERROR.value

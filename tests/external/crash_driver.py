@@ -11,9 +11,9 @@ import time
 from pathlib import Path
 
 from moody_blues.contracts.experiment_evidence import ExperimentLimits, ExperimentSpec
+from moody_blues.contracts.inference import InferenceRequest, InferenceResult
 from moody_blues.experiments.coordinator import ExperimentCoordinator
 from moody_blues.external.bundle import build_bundle
-from moody_blues.contracts.inference import InferenceRequest, InferenceResult
 from moody_blues.external.driver import InferenceBroker
 from moody_blues.external.target import ExternalAgentTarget, LiveInference
 from moody_blues.investigator.preflight import generated_code_runner
