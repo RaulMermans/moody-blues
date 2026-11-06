@@ -1,7 +1,7 @@
 # Sprint 11: Beautifully Wrong
 
 - **Date:** 2026-11-05
-- **Branch:** `sprint/11-beautifully-wrong`, from Sprint 10 HEAD `d2e4439`. Local only: not pushed, merged or deployed.
+- **Branch:** `sprint/11-beautifully-wrong`, from Sprint 10 HEAD `d2e4439`. Pushed to `origin` on the owner's instruction. Not merged or deployed.
 - **Outcome:** `ACCEPTED LOCALLY`, pending the owner's review of the renders.
 - **Inference spend this sprint:** $0. No model was called. No backend, Oracle, CRM, fault or evidence file changed.
 
