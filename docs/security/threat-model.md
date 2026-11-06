@@ -60,7 +60,8 @@ Residual risks specific to external agents:
 
 - **Containers share a kernel.** An external agent is the first sustained, attacker-writable process in that
   sandbox on a machine with a Docker daemon. These controls were tested on Colima on a laptop, and **have
-  not been run on the Vultr VM**. Hosting this for strangers needs stronger isolation first.
+  not been run on the Vultr VM**: see the [plan](hosted-containment-plan.md). Hosting this for strangers needs
+  stronger isolation first.
 - **`scenario_ref` hides the name, not the behavior.** An agent that runs repeatedly can learn how faults
   behave. That is what a resilient agent would do anyway, but do not read a result as a blind trial.
 - **A model call's content is the agent's.** With a model granted, the agent chooses the prompt, inside the

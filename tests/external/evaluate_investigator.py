@@ -1,8 +1,8 @@
 """``make external-investigator-eval``: Sprint 16's cases and boundaries, in the real sandbox.
 
 Free, and writes only to stdout and a disposable directory. Sandboxes, worlds, gateway and Oracle
-are real; every model is a labeled fixture. It measures integration and boundaries. It is not evidence
-about any LLM, and it compares nothing, so it says nothing about adaptive advantage.
+are real; every model is a labeled fixture. It measures integration and boundaries. It is not
+evidence about any LLM, and it compares nothing, so it says nothing about adaptive advantage.
 """
 
 from __future__ import annotations

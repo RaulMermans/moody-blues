@@ -20,10 +20,10 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
 | `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
-| `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver, `ExternalAgentTarget`, commands |
+| `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver and model broker, `ExternalAgentTarget`, validated target selection, the labeled agent model fixture, commands |
 | `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
 | `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-demo`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -142,8 +142,18 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - `target_type` is the agent's word and is only recorded. Only a model call the host brokered makes a run an
   LLM run. Never label an `external_scripted` run a model, and never describe one as evidence about any LLM.
 - Never retry a target run or a tool call, in the host or the SDK. A reused `call_id` is refused, not repeated.
-- Model calls go through the host only, and paying for one needs the ledger and an explicit opt-in.
-  `external-run` refuses reserved and evaluation worlds.
+- Model calls go through the host only, and paying for one needs the ledger, `--confirm-billable` and an
+  owner's `--approved-spend-usd`. `external-run` and `external-investigate` refuse reserved and evaluation worlds.
+- An agent never names a model or an endpoint: a line that tries is a schema violation. Only models on
+  `external_model_allowlist` can be lent. See `docs/security/model-call-policy.md`.
+- A broker's client never retries (`max_retries=0`). A call with no trusted answer is `uncertain`, keeps its
+  reservation and is never repeated by the host. Failed and uncertain calls count against the budget.
+- A request that reached a provider makes a run a model run, even if it failed. Write a model call's intent before
+  making it, and record what became of it before replying. Store hashes and sizes, never the conversation.
+- A target is selected by an operator, checked by `external/selection.py`, and recorded as `TargetProvenance`. The
+  selection is not the observation: what happened comes from the run. No API route can select a target.
+- Tell the Investigator's model about an external target only through `external_capability`: fixed strings and the
+  host's grant. Never its display name or anything else it wrote.
 - The SDK stays standard library only and imports nothing from the backend. Change the two sides together:
   `tests/external/test_contract.py` holds them to each other. A change an existing agent cannot ignore is a new
   protocol version, and evidence stays at schema 1 unless it holds an external run.

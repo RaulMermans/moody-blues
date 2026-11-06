@@ -120,3 +120,12 @@ Update this table when a sprint closes.
 - Approved by the owner: one `live-validation-adaptive` run at a $7.30 limit. The limit returned to $5 afterwards.
 - `inv_cbd07a262444` settled at $0.104022 on the ledger, which now shows $6.604204. That is an estimate.
 - The ledger is never reset. A limit above $7.30 needs the owner's approval.
+
+## External agents (Sprint 16)
+
+- A live external run needs `--confirm-billable` **and** `--approved-spend-usd`, which becomes the scope's cap. Each
+  run reserves its worst case first: $0.28 at 30,000 tokens and 4,096 per call. The Investigator's calls, if live,
+  share that scope.
+- These clients never retry (`max_retries=0`), so the note on SDK retries above does not apply to them.
+- A failed or uncertain call keeps the whole run's reservation.
+- Procedure: [live validation](../external-agents/live-validation-approval.md).

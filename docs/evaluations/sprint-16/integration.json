@@ -28,7 +28,7 @@
         0
       ],
       "evidence_problems": [],
-      "wall_seconds": 6.6,
+      "wall_seconds": 3.42,
       "expected_first_verdict": "PASS",
       "result": "PASS"
     },
@@ -55,7 +55,7 @@
         0
       ],
       "evidence_problems": [],
-      "wall_seconds": 4.4,
+      "wall_seconds": 3.58,
       "expected_first_verdict": "VIOLATION",
       "result": "PASS"
     },
@@ -82,7 +82,7 @@
         3
       ],
       "evidence_problems": [],
-      "wall_seconds": 3.12,
+      "wall_seconds": 3.05,
       "expected_first_verdict": "PASS",
       "result": "PASS"
     },
@@ -109,7 +109,7 @@
         3
       ],
       "evidence_problems": [],
-      "wall_seconds": 3.41,
+      "wall_seconds": 3.58,
       "expected_first_verdict": "VIOLATION",
       "result": "PASS"
     }
@@ -179,7 +179,7 @@
     "sandboxes_not_cleaned": 0,
     "investigator_experiments": 8,
     "median_fixture_model_latency_ms": 1.0,
-    "median_target_run_ms": 760,
+    "median_target_run_ms": 574,
     "inference_cost_usd": 0
   }
 }

@@ -477,9 +477,8 @@ class LiveRequest:
 def _print_summary(report: InvestigationReport) -> None:
     target = report.request.target
     print(f"  target selected:    {target.kind.value if target else 'unrecorded'}")
-    print(
-        f"  investigator model: {report.model_evidence_source} ({report.request.investigator_model})"
-    )
+    model = report.request.investigator_model
+    print(f"  investigator model: {report.model_evidence_source} ({model})")
     print(f"  hypotheses:         {len(report.hypotheses)}, experiments: {len(report.experiments)}")
     print(f"  state:              {report.state.value} ({report.termination})")
 
