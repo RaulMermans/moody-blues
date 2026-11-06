@@ -91,7 +91,10 @@ MENU_PROTOCOL = """\
 Experiments are listed in experiment_menu. Choose one by its candidate_id. Each is one target run \
 in the world named by world_ref with exactly the faults shown (an empty list means none); its \
 tool trace and final state are then inspected for you. already_run marks a candidate you have \
-already chosen. Running it again costs an experiment. You cannot write your own experiment."""
+already chosen. Running it again costs an experiment. You cannot write your own experiment. \
+motivating_observations and motivated_by hold observation ids such as obs_1, and nothing else: \
+never a candidate_id or a world_ref. Before your first experiment there are no observations, so \
+both are empty lists. Use next_hypothesis_id as hypothesis_id."""
 
 CRM_SUBJECT = "a synthetic CRM world"
 

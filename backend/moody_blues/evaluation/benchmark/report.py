@@ -25,7 +25,7 @@ _METRICS: tuple[tuple[str, str], ...] = (
     ("Investigations with a verified violation", "investigations_with_a_violation"),
     ("Runs with a verified violation", "verified_violation_runs"),
     ("Median position of first verified violation", "median_first_violation_position"),
-    ("Median sandbox ms to first verified violation", "median_first_violation_ms"),
+    ("Median model and sandbox ms to first verified violation", "median_first_violation_ms"),
     ("Invalid proposal rate", "invalid_rate"),
     ("Undelivered-fault rate", "undelivered_rate"),
     ("Repeated-candidate rate", "repeated_candidate_rate"),
@@ -82,9 +82,9 @@ def render(results: Results) -> str:
     lines += [
         "## Adaptive against each baseline, per unit",
         "",
-        "| Baseline | Units | Adaptive | Baseline | Difference | Wins | Losses | Ties | "
-        "95% exact CI, win share of non-ties |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Baseline | Units | Adaptive | Baseline | Difference | Difference per 10 attempted | "
+        "Wins | Losses | Ties | 95% exact CI, win share of non-ties |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for c in results.comparisons:
         interval = (
@@ -94,7 +94,8 @@ def render(results: Results) -> str:
         )
         lines.append(
             f"| {c.baseline} | {c.units} | {c.mean_adaptive:.2f} | {c.mean_baseline:.2f} | "
-            f"{c.mean_difference:+.2f} | {c.wins} | {c.losses} | {c.ties} | {interval} |"
+            f"{c.mean_difference:+.2f} | {c.attempted_difference:+.2f} | "
+            f"{c.wins} | {c.losses} | {c.ties} | {interval} |"
         )
     lines += [
         "",

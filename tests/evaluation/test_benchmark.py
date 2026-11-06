@@ -542,13 +542,16 @@ def test_no_eligible_experiment_means_no_rate_not_zero() -> None:
     assert row("a", StrategyName.FIXED, 0).primary == 0
 
 
-def comparison(baseline: str, difference: float, wins: int, losses: int) -> Comparison:
+def comparison(
+    baseline: str, difference: float, wins: int, losses: int, attempted: float | None = None
+) -> Comparison:
     return Comparison(
         baseline=baseline,
         units=14,
         mean_adaptive=5.0,
         mean_baseline=5.0 - difference,
         mean_difference=difference,
+        attempted_difference=difference if attempted is None else attempted,
         wins=wins,
         losses=losses,
         ties=14 - wins - losses,
@@ -566,6 +569,9 @@ GOOD = Gates(plan_complete=True, adaptive_eligible_share=0.9, incorrect_finding_
         (("fixed", 2.0, 11, 1), ("random", 0.4, 11, 1), GOOD, NO_ADVANTAGE),
         (("fixed", 2.0, 7, 5), ("random", 2.0, 11, 1), GOOD, NO_ADVANTAGE),
         (("fixed", -2.0, 1, 11), ("random", 0.0, 6, 6), GOOD, BASELINE_ADVANTAGE),
+        # A shrunken denominator alone cannot carry a claim, in either direction.
+        (("fixed", 2.0, 11, 1, 0.5), ("random", 2.0, 11, 1), GOOD, NO_ADVANTAGE),
+        (("fixed", -2.0, 1, 11, -0.5), ("random", 0.0, 6, 6), GOOD, NO_ADVANTAGE),
         (("fixed", 2.0, 5, 1), ("random", 2.0, 11, 1), GOOD, INCONCLUSIVE),
         (
             ("fixed", 2.0, 11, 1),
@@ -588,8 +594,8 @@ GOOD = Gates(plan_complete=True, adaptive_eligible_share=0.9, incorrect_finding_
     ],
 )
 def test_the_registered_rule(
-    first: tuple[str, float, int, int],
-    second: tuple[str, float, int, int],
+    first: tuple[Any, ...],
+    second: tuple[Any, ...],
     gates: Gates,
     expected: str,
 ) -> None:
@@ -598,6 +604,18 @@ def test_the_registered_rule(
     )
     assert conclusion == expected
     assert reasons
+
+
+def test_time_to_first_violation_includes_the_model(tmp_path: Path) -> None:
+    built = small_spec()
+    pilot(tmp_path, built, make_settings())
+    rows, _ = analysis.trial_rows(built, tmp_path, [Stage.PILOT])
+    adaptive = next(r for r in rows if r.strategy is StrategyName.ADAPTIVE)
+    assert adaptive.model_calls == 7
+    # The fixture reports 1 ms a call, so a first violation at position n carries n of them.
+    if adaptive.first_violation_position is not None:
+        assert adaptive.first_violation_ms is not None
+        assert adaptive.first_violation_ms >= adaptive.first_violation_position
 
 
 def test_the_exact_expectation_for_a_random_schedule() -> None:

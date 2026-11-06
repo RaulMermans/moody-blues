@@ -210,8 +210,9 @@ def _trial_row(
     violations = 0
     first_position: int | None = None
     first_ms: int | None = None
-    elapsed = 0
     tool_calls = 0
+    sandbox_ms = 0
+    proposals = {p.proposal_id: p for p in report.proposals}
     for position, ref in enumerate(report.experiments, start=1):
         directory = root / "experiments" / ref.experiment_id
         evidence = load_evidence(root, ref.experiment_id)
@@ -230,7 +231,9 @@ def _trial_row(
         found = signatures(unit.world_type, run) if run is not None else []
         if run is not None:
             tool_calls += len(run.target_observed.tool_trace)
-        elapsed += evidence.usage.sandbox_ms
+        sandbox_ms += evidence.usage.sandbox_ms
+        chosen_at = proposals[ref.proposal_id].model_call_seq or 0
+        elapsed = sandbox_ms + sum(c.latency_ms for c in report.model_calls if c.seq <= chosen_at)
         distinct_any.update(found)
         if why is None:
             distinct_eligible.update(found)
@@ -327,6 +330,15 @@ def _unit_means(rows: Sequence[TrialRow], strategy: StrategyName) -> dict[str, f
     return {unit: mean(values) for unit, values in grouped.items()}
 
 
+def _attempted_means(rows: Sequence[TrialRow], strategy: StrategyName) -> dict[str, float]:
+    grouped: dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        value = row.per_attempted()
+        if row.strategy is strategy and value is not None:
+            grouped[row.unit_id].append(value)
+    return {unit: mean(values) for unit, values in grouped.items()}
+
+
 class Comparison(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -335,6 +347,7 @@ class Comparison(BaseModel):
     mean_adaptive: float
     mean_baseline: float
     mean_difference: float
+    attempted_difference: float  # the same comparison per 10 attempted (revision 2)
     wins: int
     losses: int
     ties: int
@@ -348,12 +361,15 @@ def compare(rows: Sequence[TrialRow], baseline: StrategyName) -> Comparison:
     differences = [adaptive[u] - other[u] for u in shared]
     wins = sum(d > 1e-9 for d in differences)
     losses = sum(d < -1e-9 for d in differences)
+    mine, theirs = _attempted_means(rows, StrategyName.ADAPTIVE), _attempted_means(rows, baseline)
+    both = sorted(set(mine) & set(theirs))
     return Comparison(
         baseline=baseline.value,
         units=len(shared),
         mean_adaptive=round(mean(adaptive[u] for u in shared), 4) if shared else 0.0,
         mean_baseline=round(mean(other[u] for u in shared), 4) if shared else 0.0,
         mean_difference=round(mean(differences), 4) if shared else 0.0,
+        attempted_difference=round(mean(mine[u] - theirs[u] for u in both), 4) if both else 0.0,
         wins=wins,
         losses=losses,
         ties=len(shared) - wins - losses,
@@ -389,13 +405,26 @@ def decide(comparisons: Sequence[Comparison], gates: Gates, spec: Spec) -> tuple
     if reasons:
         return INCONCLUSIVE, reasons
 
+    margin = t.min_mean_difference_per_10
+
     def ahead(c: Comparison) -> bool:
+        """Eligibility shrinks a denominator, so the attempted rate has to agree (revision 2)."""
         i = c.win_share_interval
-        return c.mean_difference >= t.min_mean_difference_per_10 and i is not None and i[0] > 0.5
+        return (
+            c.mean_difference >= margin
+            and c.attempted_difference >= margin
+            and i is not None
+            and i[0] > 0.5
+        )
 
     def behind(c: Comparison) -> bool:
         i = c.win_share_interval
-        return c.mean_difference <= -t.min_mean_difference_per_10 and i is not None and i[1] < 0.5
+        return (
+            c.mean_difference <= -margin
+            and c.attempted_difference <= -margin
+            and i is not None
+            and i[1] < 0.5
+        )
 
     if all(ahead(c) for c in comparisons):
         rate = gates.incorrect_finding_rate

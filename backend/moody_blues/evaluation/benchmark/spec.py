@@ -283,7 +283,7 @@ def build_spec(*, revision: int, reason: str | None, model: str, digest: str) ->
         budget=BUDGET,
         limits=bench_limits(),
         main_seeds=[1901, 1902, 1903],
-        pilot_seeds=[1801],
+        pilot_seeds=[1801 + revision - 1],
         pilot_units=["crm/blind_retry", "queue/job_single_read"],
         model=model,
         model_digest=digest,
