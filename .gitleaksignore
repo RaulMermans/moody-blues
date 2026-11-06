@@ -2,3 +2,8 @@
 fb4ecc15461c0c79cbd7f969f25d94d6d1ca62ce:docs/deployment/live-budget.md:generic-api-key:48
 # False positive: a made-up key in the live-switch regression test.
 c0a136e30834996c130a46026fd3b02088c85758:tests/unit/test_live_switch.py:generic-api-key:21
+# False positive: the frozen benchmark's sha256 fingerprint of the scenario jq-keyed-request. Hash of a public scenario file, not a credential.
+1e3f9d67bd9f2c780c2c3125df1243271ca3d6ba:docs/evaluations/sprint-19/spec-r1.json:generic-api-key:421
+ec5f2ccdf81b21cb25f5bdbb57dbe5bb5a0c95eb:docs/evaluations/sprint-19/spec-r2.json:generic-api-key:421
+8bc449a7ac6c537dcf126413e88e2777875aa5bd:docs/evaluations/sprint-19/spec-r3.json:generic-api-key:421
+b92bf69cc80479293789a5c71b76cdf8838c4743:docs/evaluations/sprint-19/spec-r4.json:generic-api-key:421

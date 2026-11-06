@@ -20,7 +20,9 @@ async function signIn(page: Page) {
 }
 
 async function shot(page: Page, name: string) {
-  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
+  if (!SHOTS) return;
+  await page.waitForLoadState("networkidle");
+  await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
 }
 
 async function open(page: Page, id: string) {
