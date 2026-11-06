@@ -159,6 +159,28 @@ export const JOB_EVENT_LABEL: Record<string, string> = {
   outcome_uncertain: "Outcome uncertain",
 };
 
+const SCRIPT_WORDS: [string, string][] = [
+  ["Target agent", "Reference script"],
+  ["Agent run", "Script run"],
+  ["Agent reported", "Script reported"],
+  ["Investigator model", "Investigator fixture"],
+  ["Model call", "Fixture call"],
+  ["the agent", "the script"],
+  ["The agent", "The script"],
+  ["agent's", "script's"],
+  ["the model", "the fixture"],
+  ["The model", "The fixture"],
+  ["model's", "fixture's"],
+];
+
+/**
+ * Shared words as they read in a rehearsal, where a fixture stood in for the model and a reference
+ * script for the agent. A recorded protocol name such as `run_target_agent` is never passed through this.
+ */
+export function inRehearsal(text: string): string {
+  return SCRIPT_WORDS.reduce((copy, [from, to]) => copy.replaceAll(from, to), text);
+}
+
 export function humanize(code: string | null | undefined): string {
   if (!code) return "none";
   const text = code.replaceAll("_", " ");
