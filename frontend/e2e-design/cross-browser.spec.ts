@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 // stretch on a variable font, sticky tabs, and hash targets on streamed content.
 
 const VIOLATION = "inv_d0bc87de6010";
-const SHOTS = join(__dirname, "..", "..", "docs", "design", "screenshots", "sprint-11");
+const SHOTS = join(__dirname, "..", "..", "docs", "design", "screenshots", "sprint-12");
 
 for (const { width, height } of [
   { width: 390, height: 844 },
@@ -52,6 +52,31 @@ for (const { width, height } of [
     }
   });
 }
+
+for (const width of [390, 768, 1440]) {
+  test(`every view keeps its tabs and fits at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    for (const view of ["overview", "reality", "timeline", "investigator", "evidence"]) {
+      await page.goto(`/investigations/${VIOLATION}?view=${view}`);
+      await expect(page.getByText(/^Loading\b/)).toHaveCount(0);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, view).toBeLessThanOrEqual(0);
+      const box = await page.getByTestId("tab-evidence").boundingBox();
+      expect(box!.x + box!.width, view).toBeLessThanOrEqual(width);
+    }
+  });
+}
+
+test("a cycle and a trace open from a link in this engine", async ({ page }) => {
+  await page.goto(`/investigations/${VIOLATION}?view=investigator&cycle=h2#h2`);
+  await expect(page.getByTestId("hypothesis-h2")).toBeInViewport();
+  await expect(page.getByTestId("hypothesis-h2").locator("details").first()).toHaveJSProperty("open", true);
+  await page.goto(`/investigations/${VIOLATION}?view=timeline&event=98#event-98`);
+  await expect(page.getByTestId("step-98")).toBeInViewport();
+  await expect(page.getByTestId("step-98")).toHaveAttribute("data-focus", "exact");
+});
 
 test("a deep link lands on its row and opens it", async ({ page }) => {
   await page.goto(`/investigations/${VIOLATION}?view=reality&run=run_cc34d7a6e314#call-7`);
