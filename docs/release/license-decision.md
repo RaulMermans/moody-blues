@@ -1,7 +1,7 @@
 # License decision
 
-**Status: OPEN. An owner decision.** Nothing here applies a license. Until one is chosen, the repository is public with all
-rights reserved, and no public open-source release is authorized.
+**Status: DECIDED. MIT**, approved by the owner on 2026-11-07, copyright holder Raúl Mermans. The
+Archivo font stays under SIL OFL 1.1.
 
 ## What was reviewed
 
@@ -25,7 +25,14 @@ Reviewed on 2026-11-07, on `sprint/20-developer-alpha-release`.
 
 The hackathon rules are the owner's to check. They could not be read from here.
 
-## Once the owner decides
+## Applied, 2026-11-07
+
+All six steps below were done in the final polish pass. Step 4: the SDK already had `Development Status :: 3 - Alpha`.
+No `License ::` classifier was added, because the SPDX `license` field replaces it and hatchling rejects both together.
+Both wheels and the SDK sdist were built and carry `LICENSE` with `License-Expression: MIT`. Decision record:
+[ADR 0017](../adr/0017-mit-license.md).
+
+### The steps
 
 1. Add `LICENSE` at the root, with the owner's chosen copyright holder and year.
 2. Copy it to `sdk/python/LICENSE`, so the SDK and repository agree.

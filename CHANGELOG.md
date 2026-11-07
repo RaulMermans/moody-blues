@@ -20,6 +20,11 @@ First version intended for developers beyond the project's author. Release statu
 - Installation, quickstart, SDK reference, evidence, trust model, compatibility, platform and limitations pages. `SECURITY.md`,
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates.
 
+### Licensing
+
+- MIT, copyright Raúl Mermans, in `LICENSE` and `sdk/python/LICENSE`. The Archivo font stays under SIL OFL 1.1.
+  [ADR 0017](docs/adr/0017-mit-license.md).
+
 ### Changed
 
 - `make dev` reads the disposable `.moody-local`, with live runs off, instead of `.artifacts`. Set `MOODY_ARTIFACTS_DIR` to choose.

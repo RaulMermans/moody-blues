@@ -8,10 +8,10 @@
 | Video | `.artifacts/submission/video/moody-blues-demo.mp4`, 4:30, 1080p, 28.3 MB | Built from the public site |
 | Captions | `.artifacts/submission/video/moody-blues-demo.srt` | Done; also burned in |
 | Deck | `.artifacts/submission/deck/moody-blues-deck.pdf`, 9 pages | Built from the public site |
-| Cover image | `.artifacts/submission/deck/slide-title.png` | Candidate |
+| Cover image | `.artifacts/submission/deck/slide-title.png`, 1920×1080 | Chosen |
 | Screenshots | [screenshots/](screenshots/) | From the public site |
 
-`.artifacts/` is git-ignored, so the video and deck are on this machine only.
+`.artifacts/` is git-ignored, so the video and deck exist only in `~/dev/Moody-Blues/.artifacts/submission/`.
 
 ## Rebuilding
 

@@ -15,7 +15,8 @@ const archivo = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MOODY BLUES",
+  // Each page names itself, so tabs, history and screen readers can tell them apart.
+  title: { default: "MOODY BLUES", template: "%s · MOODY BLUES" },
   description: "Test what agents do. Verify what actually happened. Controlled faults, an independent Oracle and reproducible evidence.",
 };
 

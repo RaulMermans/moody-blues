@@ -1,6 +1,7 @@
-# Submission copy
+# Submission copy (superseded)
 
-Draft. The live form has not been inspected, so character limits and allowed tags are unconfirmed.
+**Do not paste from this page.** It is an early draft, kept for history. The copy to submit, checked against the form
+limits, is [FINAL-SUBMISSION.md](FINAL-SUBMISSION.md).
 
 **Title:** MOODY BLUES
 

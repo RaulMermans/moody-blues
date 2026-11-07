@@ -1,7 +1,7 @@
 # Final submission: Vultr Agent Rush 2026, Blast Radius Zero
 
-The single source of truth for the lablab entry. Copy each field exactly. Prepared 2026-11-07 on
-`release/submission-unblock`. **Not submitted.** Only the owner can submit, and the entry counts only once lablab confirms it.
+The single source of truth for the lablab entry. Copy each field exactly. Prepared 2026-11-07 and merged to `main`; rechecked
+in the final polish pass the same day. **Not submitted.** Only the owner can submit, and the entry counts only once lablab confirms it.
 
 ## Deadline
 
@@ -20,9 +20,9 @@ The live form needs a login, so the limits come from the guidelines. They say th
 | Requirement | Source wording | Our state |
 |---|---|---|
 | Enrolled on lablab, team of 1 to 6 people, aged 18 or over | "click the Enroll button" | **Owner to confirm** |
-| License | "Submissions must be original and MIT-compliant" | **Not met until the [MIT patch](../release/proposed-mit-license.patch) is applied** |
+| License | "Submissions must be original and MIT-compliant" | MIT, in [`LICENSE`](../../LICENSE). Copyright Raúl Mermans, approved by the owner on 2026-11-07. Met once merged to `main` and GitHub shows "MIT" |
 | Public GitHub repository | "Make it public" | Public |
-| README explains the Vultr services | "In your public GitHub README, explain the Vultr services and infrastructure used" | Added on this branch. **Not live until merged to `main`** |
+| README explains the Vultr services | "In your public GitHub README, explain the Vultr services and infrastructure used" | On `main`: [Vultr infrastructure](../../README.md#vultr-infrastructure-vultr-agent-rush-blast-radius-zero) |
 | Vultr VM backend; web app deployed on Vultr | Required | Vultr Cloud Compute VM |
 | Serverless Inference for agent LLM calls (Challenge 1) | Required | Hosted run `inv_cbd07a262444`, `glm-5.3` |
 | Isolated sandbox execution | Docker strongly recommended | Docker, no network, read-only, non-root, with limits |
@@ -122,8 +122,8 @@ the 128 MB cap, process limits, time limits, reading planted secrets (0 of 2 fou
 
 ## What the demo shows, and what it does not
 
-- The site runs current `main`. It was redeployed on 2026-11-07 at the owner's request, from `6405817` to `9a3f263`, and
-  `/api/status` reports the exact `revision`. Agents connect through the SDK and command line, not the website, so present
+- The site is redeployed from `main` by hand with `make ship` after each merge (owner decision, 2026-11-07). `/api/status`
+  reports the exact `revision`; check it before submitting. Agents connect through the SDK and command line, not the website, so present
   external agents as a repository feature, not a demo feature.
 - The site is read-only: five recorded investigations, Reality Comparison, Oracle verdicts, raw evidence and the containment
   report. Viewing it makes no paid model calls, and live mode is off.
@@ -144,7 +144,7 @@ Every number above traces to [claims.md](claims.md). Do not claim:
 
 ## Submitting
 
-1. Apply the MIT license, merge to `main`, and confirm GitHub shows "MIT" on the repository page.
+1. Confirm GitHub shows "MIT" on the repository page. The license is applied; it shows once the change is on `main`.
 2. Sign in at lablab, open the Vultr Agent Rush event, and confirm you are enrolled.
 3. Open the project submission, choose **Blast Radius Zero**, and fill in the fields above.
 4. Upload the video, the deck PDF and the cover image.

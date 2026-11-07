@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
 
@@ -442,6 +443,8 @@ async function Investigation({ params, searchParams }: PageProps<"/investigation
     </>
   );
 }
+
+export const metadata: Metadata = { title: "Investigation" };
 
 export default function Page(props: PageProps<"/investigations/[id]">) {
   return (

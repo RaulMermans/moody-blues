@@ -582,6 +582,7 @@ test.describe("containment evidence", () => {
 
   test("the page offers nothing that runs", async ({ page }) => {
     await page.goto("/containment");
+    await expect(page).toHaveTitle("Containment · MOODY BLUES");
     await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
     await expect(page.getByRole("main").locator("form, input, textarea")).toHaveCount(0);
   });

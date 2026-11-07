@@ -9,6 +9,11 @@ would have changed `~/dev/Moody-Blues/.env`, and step 5 would have removed the l
 console can confirm whether the old keys are revoked. Production does not expose inference: `/api/status` reports
 `vultr_inference: not_configured`, and gitleaks finds nothing in the git history or the submission assets.
 
+**Rechecked 2026-11-07, final polish pass: unchanged.** Both files still define both variable names and are still dated
+2026-11-05. Gitleaks v8.30.0 found no leaks in the 156 non-merge commits of `main` `2185db2` or in the submission assets.
+Scan from a clone outside iCloud: on the Desktop copy it read only 28 commits (KI-34) and still printed "no leaks found".
+A clean scan is not evidence of rotation.
+
 ## Where the keys are
 
 | Key | Used by | Locations on 2026-11-05 |

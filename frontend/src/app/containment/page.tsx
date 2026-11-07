@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { FailurePanel } from "@/components/failure-panel";
@@ -108,6 +109,8 @@ async function Loaded() {
   }
   return <FailurePanel failure={report} />;
 }
+
+export const metadata: Metadata = { title: "Containment" };
 
 export default function Page() {
   return (

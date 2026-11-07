@@ -56,7 +56,7 @@ do not predict hosted performance.
 ## What the brief had out of date
 
 - **The agent did not believe there was one record.** Its message names both. The left side shows what it
-  filed, and the disclosure stays visible: [details](../design/direction.md#an-evidence-finding-that-shaped-the-design).
+  filed, and the disclosure stays visible: [details](../design/direction.md#evidence-findings-that-shaped-the-design).
 - **`FAILED` and `UNVERIFIED` are not Oracle verdicts.** The contract has three. They render hollow, as
   absence of a verdict. `cancelled` and `budget_exhausted` keep their own labels.
 - **Every recorded PASS run has a discrepancy.** So "has a discrepancy" could not drive the fracture. A
@@ -100,4 +100,4 @@ Tests passed through several of these. Each now has a test where one can catch i
 - **12:** Investigator logic for non-engineers, using `FractureMarker` on the timeline by `call_seq`. A designed
   hero for clean cases. Add axe, and a Safari run.
 - **13:** The crack drawing in, the perceived-to-actual transition, and interrupted borders, within
-  [the motion rules](../design/accessibility-and-motion.md#motion-language). Automate the production CSS check.
+  [the motion rules](../design/accessibility-and-motion.md#motion). Automate the production CSS check.
