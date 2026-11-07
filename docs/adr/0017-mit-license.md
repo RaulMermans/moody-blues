@@ -13,7 +13,8 @@ one vendored asset, the Archivo font, under SIL OFL 1.1, and dependencies that a
 - **MIT**, copyright 2026 Raúl Mermans, the sole author of every commit. The owner chose the holder explicitly on 2026-11-07.
 - The same text is in `LICENSE` and `sdk/python/LICENSE`, so the SDK's sdist carries its own copy.
 - `license = "MIT"` and `license-files = ["LICENSE"]` in both `pyproject.toml` files, `"license": "MIT"` in `frontend/package.json`.
-- The Archivo font is named as an exception in `LICENSE` and stays under OFL, with `OFL.txt` beside it.
+- `LICENSE` holds only the canonical MIT text, so GitHub detects it. An appended font notice made GitHub report "Other".
+  The Archivo font stays under OFL, with `OFL.txt` beside it, and the README's License section names the exception.
 
 ## Consequences
 
