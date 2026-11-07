@@ -149,8 +149,8 @@ def doctor(settings: Settings) -> int:
     env_file = REPO_ROOT / ".env"
     check(
         "env-file",
-        OK if env_file.exists() else WARN,
-        ".env present" if env_file.exists() else "no .env (defaults used; see .env.example)",
+        OK,
+        ".env present" if env_file.exists() else "no .env, so defaults are used. That is fine",
     )
     if settings.vultr_configured:
         check(
@@ -160,7 +160,7 @@ def doctor(settings: Settings) -> int:
             "-- NOT live-verified; run `make vultr-smoke`",
         )
     else:
-        check("vultr-config", WARN, "BLOCKED_BY_CREDENTIALS: MOODY_VULTR_API_KEY not set")
+        check("vultr-config", OK, "no key set. Only paid commands need one")
 
     width = max(len(n) for _, n, _ in rows)
     for status, name, detail in rows:

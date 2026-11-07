@@ -75,7 +75,9 @@ def test_an_edited_evidence_file_is_caught(root: Path) -> None:
 
 def test_evidence_that_no_longer_parses_is_a_finding_and_not_a_crash(root: Path) -> None:
     path = _evidence_paths(root)[0]
-    path.write_text(path.read_text(encoding="utf-8").replace('"completed"', '"x"'), encoding="utf-8")
+    path.write_text(
+        path.read_text(encoding="utf-8").replace('"completed"', '"x"'), encoding="utf-8"
+    )
     audit = audit_artifacts(root)
     assert any("schema" in p for p in audit.problems["journal and hashes"])
 

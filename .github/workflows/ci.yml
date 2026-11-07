@@ -112,6 +112,9 @@ jobs:
         working-directory: frontend
         env:
           CI: "true"
+      # The documented first experience, as a developer runs it: a real PASS, a real VIOLATION, checked evidence.
+      - run: make quickstart
+      - run: make clean-local
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
