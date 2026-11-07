@@ -13,6 +13,7 @@ export function publicStatus(status: SystemStatus): PublicStatus {
     backend: "connected",
     checkedAt: status.checkedAt,
     version: status.health.version,
+    revision: status.health.revision ?? null,
     readiness: status.readiness.status,
     integrations: [...live, ...rest].map(({ name, state }: IntegrationStatus) => ({ name, state })),
   };

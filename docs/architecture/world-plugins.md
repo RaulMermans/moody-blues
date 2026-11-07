@@ -1,5 +1,7 @@
 # World plugins
 
+**`mb-world/1` is an alpha contract and may change.** It is not a stable plugin ABI. Worlds are trusted code, registered by hand.
+
 The single reference for what a world is, how one is verified, how to add one, and what a run records about it. The
 decision and its reasoning are in [ADR 0015](../adr/0015-world-plugins.md).
 

@@ -16,12 +16,15 @@ import { STRATEGY_LABEL } from "@/lib/labels";
 
 const FLOW = [
   ["Choose a test", "A scenario with a controlled fault."],
-  ["Run it", "In an isolated sandbox, against a synthetic CRM."],
+  ["Run it", "In an isolated sandbox, against a synthetic world."],
   ["See what happened", "What the target saw and what was really saved."],
   ["Explore the evidence", "Every call, record and hash behind the result."],
 ] as const;
 
-const METHODOLOGY = "https://github.com/RaulMermans/moody-blues/blob/main/docs/evaluations/methodology.md";
+const REPOSITORY = "https://github.com/RaulMermans/moody-blues/blob/main";
+const METHODOLOGY = `${REPOSITORY}/docs/evaluations/methodology.md`;
+const QUICKSTART = `${REPOSITORY}/docs/quickstart.md`;
+const LIMITATIONS = `${REPOSITORY}/docs/evaluation-and-limitations.md`;
 
 function HowItWorks() {
   return (
@@ -87,6 +90,14 @@ function SampleEntry() {
       <Link href="/operator" className="rf-cta rf-cta-quiet" data-testid="hero-sample">
         Choose a test <span aria-hidden>→</span>
       </Link>
+      <p className="rf-data" data-testid="own-agent-note">
+        No token? Clone the repository and run <code>make quickstart</code>. Your own Python agent connects through
+        the{" "}
+        <a href={QUICKSTART} className="rf-link">
+          SDK and command line
+        </a>
+        , not through this website.
+      </p>
     </section>
   );
 }
@@ -149,7 +160,10 @@ function StudyNote({ study }: { study: StudyContext }) {
       <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
         Adaptive investigation did not beat fixed tests in the registered comparison. MOODY BLUES
         can find and verify real failures; this benchmark does not show that adapting finds more of
-        them.
+        them. The Investigator stays experimental, and a later local benchmark was inconclusive.{" "}
+        <a href={LIMITATIONS} className="rf-link">
+          Evaluation and limitations
+        </a>
       </p>
       <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-muted">
         {rows.map((strategy) => (
@@ -191,8 +205,8 @@ export default function Home() {
         <h1 className="rf-label">MOODY BLUES</h1>
         <Headline as="h2" first="Test what agents do." second="Verify what actually happened." />
         <p className="rf-hero-lead">
-          Put AI agents through controlled failures and see whether they recover, make mistakes or report
-          incorrect outcomes.
+          Run agents against controlled failures, catch incorrect outcomes, and reproduce verified issues with
+          independent evidence.
         </p>
       </header>
 

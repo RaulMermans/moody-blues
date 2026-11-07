@@ -157,7 +157,10 @@ def verify_investigation(directory: Path, experiment_root: Path) -> list[str]:
         evidence_text = evidence_path.read_text(encoding="utf-8")
         if sha256_text(evidence_text) != ref.evidence_sha256:
             problems.append(f"{ref.experiment_id}: evidence differs from the linked hash")
-        evidence = ExperimentEvidence.model_validate_json(evidence_text)
+        try:
+            evidence = ExperimentEvidence.model_validate_json(evidence_text)
+        except ValidationError:
+            continue  # verify_experiment has reported it: damage is a finding, not a crash
         if evidence.parent_investigation_id != report.investigation_id:
             problems.append(f"{ref.experiment_id}: belongs to another investigation")
         proposal = known.get(ref.proposal_id)

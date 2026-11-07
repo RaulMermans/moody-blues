@@ -487,8 +487,8 @@ before its manifest is frozen, and `w-e*` and `w-r*` are already used.
 
 ### KI-78: `sdk_version` does not distinguish the SDK before and after `record_id`
 
-The change is additive and existing tests pin `0.1.0`, so the version stayed. `bundle_sha256` identifies exactly what ran. Bump the
-version with the next change an agent can notice.
+**Resolved in Sprint 20:** the SDK is `0.1.1`. A record with `0.1.0` may still be from either side of the change, so `bundle_sha256` remains
+what identifies exactly what ran.
 
 ### KI-79: A free command wrote into canonical artifacts by default
 
@@ -497,3 +497,24 @@ exist nowhere else. It happened in Sprint 18. Free, repeatable commands (`extern
 `experiment-demo`, `investigator-demo`, `world-demo`) now use `rehearsal_artifacts`: an explicit setting, or a fresh scratch directory. Paid
 commands keep `.artifacts/`, because a ledger has to stay in one place. To see a rehearsal on the pages, set `MOODY_ARTIFACTS_DIR` for both
 the run and the backend. `bench-*` refuses `.artifacts/` outright.
+
+### KI-80: `test_evidence_names_the_real_environment` failed once in CI, cause unknown
+
+**Status: not reproduced, not fixed.** It failed once, on the Sprint 18 branch run of 2026-11-06, and on no other run. The first run of that
+investigation has `environment=None` and no adapter events, and the second is normal, so `open_session` raised `SandboxError` and the run was
+recorded as `INCONCLUSIVE`. That part is correct behavior: a sandbox that did not start is not a verdict about the agent.
+
+The reason was lost. It was stored in the run's `error`, which the test did not show, and `_drive` logged nothing. 40 investigations idle and 48
+under six-way contention on Colima, about 176 runs, did not reproduce it. Sprint 20 did not add a sleep or a retry and did not weaken the
+assertion. `_drive` now logs `sandbox_session_failed` with the reason, and the assertion prints `run.error`, so the next occurrence names its
+cause. If it recurs, read that first.
+
+### KI-81: `evidence-verify` crashed on evidence that no longer parsed
+
+`verify_investigation` parsed linked evidence with no guard, so a damaged file raised instead of being reported. Found by running the tamper
+step in the quickstart. It is now a finding.
+
+### KI-82: `make doctor` passed where no agent could start
+
+It checked `sandbox_image`, the unpinned tag, while agents and generated code run only on `generated_code_image`, which is never pulled implicitly.
+`doctor` now checks the pinned image and fails if it is missing. `make sandbox-image` pulls it.

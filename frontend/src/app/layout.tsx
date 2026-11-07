@@ -16,7 +16,7 @@ const archivo = localFont({
 
 export const metadata: Metadata = {
   title: "MOODY BLUES",
-  description: "MOODY BLUES investigates the gap between an AI agent's reported outcome and what actually happened.",
+  description: "Test what agents do. Verify what actually happened. Controlled faults, an independent Oracle and reproducible evidence.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

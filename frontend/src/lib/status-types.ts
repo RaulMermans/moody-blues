@@ -18,6 +18,7 @@ export interface HealthResponse {
   status: "ok";
   service: string;
   version: string;
+  revision?: string | null;
   environment: string;
   uptime_seconds: number;
   integrations: IntegrationStatus[];
@@ -48,6 +49,7 @@ export type PublicStatus =
       backend: "connected";
       checkedAt: string;
       version: string;
+      revision?: string | null;
       readiness: ReadinessResponse["status"];
       integrations: { name: string; state: IntegrationState }[];
     }

@@ -360,7 +360,7 @@ test.describe("truth", () => {
       "Test what agents do. Verify what actually happened.",
     );
     await expect(page.getByTestId("hero")).toContainText(
-      "Put AI agents through controlled failures and see whether they recover, make mistakes or report incorrect outcomes.",
+      "Run agents against controlled failures, catch incorrect outcomes, and reproduce verified issues with independent evidence.",
     );
     await expect(page.getByText("not concealment").first()).toBeVisible();
     await page.getByTestId("open-signature").click();

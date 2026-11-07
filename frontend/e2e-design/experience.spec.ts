@@ -53,6 +53,8 @@ test.describe("entry", () => {
     const recorded = page.getByTestId("signature");
     await expect(recorded).toContainText("Explore a real AI investigation");
     await expect(recorded).toContainText("It is not running now");
+    // The website starts nothing for a visitor, and does not pretend an agent connects through it.
+    await expect(page.getByTestId("own-agent-note")).toContainText("not through this website");
   });
 
   test("both entry points are in the first viewport on a laptop, and start on a phone's second", async ({ page }) => {

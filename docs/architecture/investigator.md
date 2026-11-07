@@ -3,6 +3,9 @@
 _Sprint 5. Covers what is implemented. Decisions: [ADR 0005](../adr/0005-autonomous-investigator.md).
 Measurement: [methodology](../evaluations/methodology.md)._
 
+**Experimental.** Its effectiveness has not been shown to exceed simpler testing strategies. See
+[evaluation and limitations](../evaluation-and-limitations.md).
+
 One model inside a deterministic workflow. **Reasoning is agentic; execution authority is not.**
 
 ```text

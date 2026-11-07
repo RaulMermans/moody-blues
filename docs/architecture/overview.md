@@ -1,6 +1,7 @@
 # Architecture overview
 
-_Last updated: Sprint 7 (2026-11-05). Measurement is in [evaluation.md](evaluation.md), the product
+_Last updated: Sprint 7 (2026-11-05); product framing updated in Sprint 20. The core product is deterministic testing and independent
+verification. The Investigator described here is experimental: see [evaluation and limitations](../evaluation-and-limitations.md). Measurement is in [evaluation.md](evaluation.md), the product
 layer in [product-experience.md](product-experience.md). Covers only what is implemented._
 
 ## Shape
