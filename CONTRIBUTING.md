@@ -39,4 +39,4 @@ to discuss one. See [Adding a world](docs/extending-worlds.md).
 
 ## Licensing of contributions
 
-The project has no license yet, so please wait for one before contributing code.
+The project is licensed under [MIT](LICENSE). By contributing, you agree that your contribution is licensed under the same terms.

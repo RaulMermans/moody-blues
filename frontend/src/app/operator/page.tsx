@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import Link from "next/link";
@@ -40,6 +41,8 @@ async function Gate() {
   const token = await operatorToken();
   return token ? <OperatorConsole /> : <Public />;
 }
+
+export const metadata: Metadata = { title: "Run a test" };
 
 export default function Page() {
   return (

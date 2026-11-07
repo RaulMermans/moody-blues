@@ -166,13 +166,14 @@ the project as an experimental option. [Evaluation and limitations](docs/evaluat
 
 ## Vultr infrastructure (Vultr Agent Rush, Blast Radius Zero)
 
-The [hosted demo](https://45-63-119-197.sslip.io) runs entirely on Vultr. It is redeployed from `main` after each
-change, and `/api/status` reports the exact `revision` it serves.
+The [hosted demo](https://45-63-119-197.sslip.io) runs entirely on Vultr. A maintainer redeploys it from `main` with
+`make ship`, run by hand from the one laptop allowed to reach the VM, once CI has passed. It is not continuous deployment.
+`/api/status` reports the exact `revision` it serves.
 
 | Vultr service | What it does here |
 |---|---|
 | **Cloud Compute** | One VM, `vc2-4c-8gb` in Frankfurt, Ubuntu 24.04. Caddy terminates HTTPS and is the only public listener. Next.js and one FastAPI process sit behind it on loopback. The trusted coordinator, Truth Oracle, synthetic worlds, evidence ledger and Docker sandboxes all run on this VM. Only ports 80 and 443 are public, and SSH is open to one address, enforced by a Vultr firewall group and by ufw |
-| **Serverless Inference** | The OpenAI-compatible endpoint `https://api.vultrinference.com/v1`. On the hosted path it serves both the Investigator, which writes the Python experiments, and the target agent under test. The hosted live investigation `inv_cbd07a262444` used `glm-5.3` |
+| **Serverless Inference** | The OpenAI-compatible endpoint `https://api.vultrinference.com/v1`. On the hosted path it serves both the Investigator, which writes the Python experiments, and the target agent under test. The hosted live investigation `inv_cbd07a262444` used `glm-5.3`. It found no violation: the agent recovered in all three runs |
 | **Vultr API** | Used from the operator's laptop to provision the VM and firewall ([provisioning](infra/vultr/provision.sh)). Never called by the running site |
 
 Model-written code runs in a disposable Docker container on the VM, with no network, a read-only filesystem, no root, and
@@ -195,4 +196,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and the [Code
 
 ## License
 
-**Pending.** No license has been chosen yet, and until one is, all rights are reserved by the authors.
+[MIT](LICENSE). The Archivo font in `frontend/src/design/fonts/` is under the SIL Open Font License 1.1
+([OFL.txt](frontend/src/design/fonts/OFL.txt)). The license grants no rights to third-party names such as Vultr.

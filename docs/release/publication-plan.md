@@ -8,7 +8,7 @@ the time. A general instruction to work on the sprint is not approval.
 | # | Action | Blocked on |
 |---|---|---|
 | 0 | Confirm the hackathon submission | Owner. Deadline 2026-11-08 22:00 UTC. Independent of everything below |
-| 1 | Choose a license and apply it | Owner. [Decision](license-decision.md) |
+| 1 | ~~Choose a license and apply it~~ Done: MIT, 2026-11-07 | [Decision](license-decision.md) |
 | 2 | Confirm credential handling | Owner. See below |
 | 3 | Run the [independent developer test](../testing/independent-acceptance.md) | A participant |
 | 4 | Fix what it finds, then rerun the affected checks | 3 |

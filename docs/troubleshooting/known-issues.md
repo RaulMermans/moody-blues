@@ -530,3 +530,10 @@ A free command, missed by KI-79, overwrote `.artifacts/investigations/preflight.
 its own gate. Sprint 20's before-and-after hash of canonical state caught it, in the release matrix itself, so the local copy from before 2026-11-07
 was replaced. It was not evidence. The command now prints its report and writes nothing. The stale file stays, because nothing should delete from
 `.artifacts` without the owner.
+
+### KI-85: Gitleaks on the iCloud copy scanned part of history and still reported "no leaks found"
+
+Run against `~/Desktop/GitHub/Moody-Blues`, the CI's gitleaks command read 28 of 156 commits: `git log -p` inside the container crashed on
+evicted iCloud objects (KI-34), left a `core` file in the checkout, and gitleaks printed `no leaks found`. A path Docker Desktop does not share,
+such as `/private/tmp`, mounts empty and gives `0 commits scanned` the same way. Found in Sprint 20.5. Workaround: scan a clone outside iCloud
+under `/Users`, and check that the commit count matches `git rev-list --no-merges --count HEAD` before trusting the result. CI is not affected.
