@@ -286,6 +286,12 @@ release-check: ## Show what REF= would ship and what is live now (read-only; dep
 release: ## Deploy the commit REF= to the public site, after a typed confirmation, then check it
 	infra/vultr/release.sh "$(REF)"
 
+ship: ## Deploy the latest green origin/main to the public site (pushes local main first). Approved by the owner
+	infra/vultr/ship.sh
+
+ship-check: ## Show what make ship would do (read-only; deploys nothing)
+	infra/vultr/ship.sh --dry-run
+
 vultr-plan: ## Show the reviewed plan at live list prices (public API; no key; creates nothing)
 	infra/vultr/provision.sh plan
 
