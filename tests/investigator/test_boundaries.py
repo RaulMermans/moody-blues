@@ -352,8 +352,13 @@ def test_the_default_generated_code_image_is_pinned() -> None:
 
 def test_the_free_preflight_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """KI-84: it overwrote a file in the canonical directory on every run."""
-    report = SimpleNamespace(status="PASS", model_dump_json=lambda indent: "{}")
-    monkeypatch.setattr(commands, "run_preflight", lambda _settings: report)
+    def dump(indent: int) -> str:
+        return "{}"
+
+    def passes(_settings: Settings) -> SimpleNamespace:
+        return SimpleNamespace(status="PASS", model_dump_json=dump)
+
+    monkeypatch.setattr(commands, "run_preflight", passes)
     monkeypatch.setattr(commands, "INVESTIGATIONS", tmp_path / "investigations")
     assert commands.preflight(Settings(_env_file=None)) == 0  # type: ignore[call-arg]
     assert list(tmp_path.iterdir()) == []
