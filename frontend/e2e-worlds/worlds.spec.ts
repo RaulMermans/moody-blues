@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
 // Real records from both worlds, on the real pages. Nothing here is hand-written evidence.
 const ROOT = path.resolve(__dirname, "../..");
-type Ids = { careful: string; unsafe: string; not_exercised: string; crm: string };
+type Ids = { careful: string; unsafe: string; not_exercised: string; reasoning: string; crm: string };
 const ids = (): Ids =>
   JSON.parse(readFileSync(path.join(ROOT, "frontend/.e2e-worlds/artifacts/world-ids.json"), "utf-8"));
 const TOKEN = "worlds-ui-test-token-worlds-ui-test-token-xx";
@@ -19,7 +20,9 @@ async function signIn(page: Page) {
 }
 
 async function shot(page: Page, name: string) {
-  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
+  if (!SHOTS) return;
+  await page.waitForLoadState("networkidle");
+  await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
 }
 
 async function open(page: Page, id: string) {
@@ -141,4 +144,98 @@ test("a historical recorded bundle reads as it always did", async ({ page }) => 
 test("a visitor cannot see an operator's queue run", async ({ page }) => {
   await page.goto(`/investigations/${ids().unsafe}`);
   await expect(page.locator("main")).not.toContainText("report.nightly");
+});
+
+test("reasoning checks name each mistake and are not presented as a verdict", async ({ page }) => {
+  await signIn(page);
+  await page.goto(`/investigations/${ids().reasoning}?view=investigator`);
+  const panel = page.getByTestId("reasoning-checks");
+  await expect(panel).toContainText("not Oracle verdicts");
+  for (const [kind, text] of [
+    ["unsupported_finding", "does not match the verified findings"],
+    ["contradicts_oracle", "h1 was stated as supported"],
+    ["repeated_hypothesis", "h2 repeats h1"],
+    ["invalid_experiment", "refused before running"],
+  ]) {
+    await expect(panel.locator(`[data-kind="${kind}"]`)).toContainText(text);
+  }
+  await expect(panel.getByTestId("verdict")).toHaveCount(0);
+  await expect(panel).not.toContainText(/\b(VIOLATION|PASS|INCONCLUSIVE)\b/);
+  await shot(page, "queue-reasoning-checks");
+});
+
+test("an undelivered fault is its own check, and a clean run says so", async ({ page }) => {
+  await signIn(page);
+  await page.goto(`/investigations/${ids().not_exercised}?view=investigator`);
+  await expect(page.locator('[data-testid="reasoning-check"][data-kind="undelivered_fault"]').first()).toContainText(
+    "never fired",
+  );
+  await page.goto("/investigations/inv_d0bc87de6010?view=investigator");
+  await expect(page.getByTestId("investigator-view")).toBeVisible();
+  await expect(page.getByTestId("reasoning-checks")).toHaveCount(0);
+});
+
+const WIDTHS = [
+  ["phone", 390, 844],
+  ["tablet", 768, 1024],
+  ["desktop", 1440, 900],
+] as const;
+
+async function openFolds(page: Page) {
+  for (const fold of ["invariants-panel", "records-panel"]) {
+    await page.getByTestId(fold).locator("summary, button").first().click();
+  }
+}
+
+for (const [name, width, height] of WIDTHS) {
+  test.describe(`queue panels at ${width}px`, () => {
+    test.use({ viewport: { width, height } });
+
+    test(`nothing runs off the ${name} screen, and every panel can be read`, async ({ page }) => {
+      await open(page, ids().unsafe);
+      await openFolds(page);
+      for (const id of ["invariants-panel", "records-panel", "experiment-validity", "run-context"]) {
+        await expect(page.getByTestId(id)).toBeVisible();
+      }
+      const offenders = await page.evaluate(() => {
+        const limit = document.documentElement.clientWidth;
+        const clipped = (el: Element) => {
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            if (["auto", "scroll", "hidden"].includes(getComputedStyle(p).overflowX)) return true;
+          }
+          return false;
+        };
+        return [...document.querySelectorAll("main *")]
+          .filter((el) => el.getBoundingClientRect().right > limit + 1 && !clipped(el))
+          .map((el) => `${el.tagName} ${el.getAttribute("data-testid") ?? ""} ${el.className}`.slice(0, 90))
+          .slice(0, 6);
+      });
+      expect(offenders).toEqual([]);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+      await shot(page, `queue-panels-${width}`);
+    });
+
+    test(`axe finds nothing on the queue pages at ${name} width`, async ({ page }) => {
+      await open(page, ids().unsafe);
+      await openFolds(page);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.goto(`/investigations/${ids().reasoning}?view=investigator`);
+      await expect(page.getByTestId("reasoning-checks")).toBeVisible();
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+  });
+}
+
+test("the queue folds work from the keyboard, with names a screen reader can use", async ({ page }) => {
+  await open(page, ids().unsafe);
+  const toggle = page.getByTestId("records-panel").locator("summary, button").first();
+  await expect(toggle).toHaveAccessibleName(/.+/);
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("records-panel")).toContainText("report.nightly");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("records-panel").getByText("report.nightly").first()).toBeHidden();
 });

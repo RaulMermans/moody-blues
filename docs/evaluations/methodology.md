@@ -66,3 +66,7 @@ frozen [manifest](sprint-06/manifest.json) and [plan](sprint-06/plan.md). What c
 - **Units.** Tables state their unit. Repeats of one prompt and transitions inside one investigation
   are not independent. Intervals are exact, and no significance tests are run.
 
+## Sprint 19: strategy benchmark
+
+A separate local registration with one shared action space, scripted targets and metrics from raw evidence. See
+[the method](../architecture/benchmark.md) and [the report](sprint-19/report.md). It is never combined with the studies above.

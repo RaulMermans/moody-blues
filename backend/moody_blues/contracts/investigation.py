@@ -416,6 +416,9 @@ class ProposalRecord(BaseModel):
     status: ProposalStatus
     rejection: GenerationDiagnostic | None = None
     replaces_proposal_id: str | None = None
+    # Sprint 19: the menu entry a model chose. Its program is a trusted probe, so the authorship
+    # stays developer_script. Left out when absent, so earlier records stay byte-identical.
+    candidate_id: str | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class ExperimentRef(BaseModel):

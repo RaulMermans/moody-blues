@@ -324,3 +324,20 @@ def test_authorship_is_unchanged_by_the_target(tmp_path: Path) -> None:
     evidence = _experiment(tmp_path, _example(tmp_path, "careful"), [run_action(), finish_action()])
     assert evidence.authorship is ExperimentAuthorship.DEVELOPER_SCRIPT
     assert SANDBOX_LIMITS.network_enabled is False
+
+
+def test_the_reasoning_checks_reach_the_api(tmp_path: Path) -> None:
+    """Sprint 18 recorded them, but the detail route dropped them, so no page could show them."""
+    report, _ = _investigation(tmp_path, "unsafe")
+    publish_run(report, tmp_path, make_settings(artifacts_dir=tmp_path))
+    token = "t" * 40
+    with TestClient(explorer_app(tmp_path, operator_token=token)) as client:
+        response = client.get(
+            f"/investigations/{report.investigation_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert report.validity is not None
+    assert len(body["validity"]["experiments"]) == len(report.validity.experiments)
+    assert body["validity"]["conclusion_matches_findings"] is not None

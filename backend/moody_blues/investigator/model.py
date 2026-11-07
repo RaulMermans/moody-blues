@@ -32,9 +32,11 @@ from moody_blues.contracts.investigation import (
 )
 from moody_blues.experiments.budget import SpendPort
 from moody_blues.experiments.workspace import atomic_write, sha256_text
+from moody_blues.investigator.menu import ExperimentMenu
 from moody_blues.investigator.observations import HINTS
 
 PROPOSE_TOOL = "propose_experiment"
+SELECT_TOOL = "select_experiment"
 CONCLUDE_TOOL = "conclude_investigation"
 
 
@@ -107,6 +109,27 @@ class ProposeArgs(_FlatArgs):
         )
 
 
+class SelectArgs(_FlatArgs):
+    """The same hypothesis, and a listed candidate in place of a program."""
+
+    hypothesis_id: str = Field(description="New id: h1, h2, ...")
+    behavior: str = Field(description="The target behavior under investigation.")
+    suspected_mechanism: str = Field(description="How that behavior could fail.")
+    motivating_observations: list[str] = Field(description="Observation ids behind this.")
+    predicted_observation: str = Field(description="What you expect to see if you are right.")
+    failure_discriminator: str = Field(description="What separates failure from correct behavior.")
+    revises: str = Field(default="", description="Id of the hypothesis this replaces, or empty.")
+    rationale: str = Field(description="Why this is worth testing now, and how it tests it.")
+    motivated_by: list[str] = Field(description="Observation ids that led to this experiment.")
+    candidate_id: str = Field(description="The experiment_menu entry to run.")
+
+    def decision(self, program: str) -> ProposeExperiment:
+        """``program`` is the trusted probe for this candidate. The model never wrote it."""
+        fields = self.model_dump(exclude={"candidate_id"})
+        fields |= {"label": f"candidate-{self.candidate_id}", "python_code": program}
+        return ProposeArgs.model_validate_json(json.dumps(fields)).decision()
+
+
 class ConcludeArgs(_FlatArgs):
     conclusion: Literal["violation_found", "no_violation_found", "inconclusive"]
     reasoning: str = Field(description="Your assessment of the investigation.")
@@ -136,16 +159,22 @@ class ConcludeArgs(_FlatArgs):
         )
 
 
-_ARGUMENTS: dict[str, type[ProposeArgs] | type[ConcludeArgs]] = {
+_ARGUMENTS: dict[str, type[ProposeArgs] | type[SelectArgs] | type[ConcludeArgs]] = {
     PROPOSE_TOOL: ProposeArgs,
+    SELECT_TOOL: SelectArgs,
     CONCLUDE_TOOL: ConcludeArgs,
 }
 _DESCRIPTIONS = {
     PROPOSE_TOOL: "Assess the previous hypothesis, state a new one and submit its program.",
+    SELECT_TOOL: "Assess the previous hypothesis, state a new one and choose a listed experiment.",
     CONCLUDE_TOOL: "End the investigation with your assessment and any claimed findings.",
 }
 # Names a diagnostic may repeat. Anything else in a validation error came from the model.
-_KNOWN_FIELDS = frozenset(ProposeArgs.model_fields) | frozenset(ConcludeArgs.model_fields)
+_KNOWN_FIELDS = (
+    frozenset(ProposeArgs.model_fields)
+    | frozenset(SelectArgs.model_fields)
+    | frozenset(ConcludeArgs.model_fields)
+)
 _NESTED_TO_FLAT = {
     "cited_observations": "previous_cited_observations",
     "status": "previous_status",
@@ -175,7 +204,9 @@ def _bad_fields(exc: ValidationError) -> list[str]:
     return sorted({_NESTED_TO_FLAT.get(n, n) for n in names} & _KNOWN_FIELDS)
 
 
-def parse_decision(result: InferenceResult, offered: list[str]) -> Decision | GenerationDiagnostic:
+def parse_decision(
+    result: InferenceResult, offered: list[str], menu: ExperimentMenu | None = None
+) -> Decision | GenerationDiagnostic:
     """Exactly one offered tool call with valid arguments, or a diagnostic. Never repaired."""
     if result.finish_reason == "length":
         return invalid("truncated_response")
@@ -185,7 +216,13 @@ def parse_decision(result: InferenceResult, offered: list[str]) -> Decision | Ge
     if call.name not in offered:
         return invalid("invalid_decision")
     try:
-        return _ARGUMENTS[call.name].model_validate_json(call.arguments_json).decision()
+        arguments = _ARGUMENTS[call.name].model_validate_json(call.arguments_json)
+        if isinstance(arguments, SelectArgs):
+            program = menu.program(arguments.candidate_id) if menu is not None else None
+            if program is None:
+                return invalid("unknown_candidate", ["candidate_id"])
+            return arguments.decision(program)
+        return arguments.decision()
     except ValidationError as exc:
         return invalid("invalid_decision", _bad_fields(exc))
 

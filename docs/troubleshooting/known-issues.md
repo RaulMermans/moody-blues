@@ -489,3 +489,11 @@ before its manifest is frozen, and `w-e*` and `w-r*` are already used.
 
 The change is additive and existing tests pin `0.1.0`, so the version stayed. `bundle_sha256` identifies exactly what ran. Bump the
 version with the next change an agent can notice.
+
+### KI-79: A free command wrote into canonical artifacts by default
+
+`.artifacts/` was the default for every command, so a rehearsal with `MOODY_ARTIFACTS_DIR` unset landed beside the evidence and ledger that
+exist nowhere else. It happened in Sprint 18. Free, repeatable commands (`external-run`, `external-investigate`, `external-demo`,
+`experiment-demo`, `investigator-demo`, `world-demo`) now use `rehearsal_artifacts`: an explicit setting, or a fresh scratch directory. Paid
+commands keep `.artifacts/`, because a ledger has to stay in one place. To see a rehearsal on the pages, set `MOODY_ARTIFACTS_DIR` for both
+the run and the backend. `bench-*` refuses `.artifacts/` outright.

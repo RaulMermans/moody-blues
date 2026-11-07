@@ -57,6 +57,7 @@ def get_investigation(
         conclusion=bundle.conclusion,
         case_study=bundle.case_study,
         provenance=bundle.provenance,
+        validity=bundle.validity,
     )
 
 

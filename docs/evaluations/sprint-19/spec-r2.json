@@ -1,0 +1,432 @@
+{
+  "benchmark_id": "s19-strategy-benchmark",
+  "revision": 2,
+  "reason_for_revision": "Pilot found the menu wording undefined observation ids, a denominator artifact in the decision rule, and sandbox-only time to first violation. See preregistration-r2.md",
+  "research_question": "Does the autonomous Investigator identify more distinct, independently verified violations per fixed experiment budget than the fixed or randomized baselines?",
+  "null_hypothesis": "Given the same candidates and budget, the Investigator finds no more distinct verified violations per 10 eligible experiments than either baseline.",
+  "alternative_hypothesis": "The Investigator finds more distinct verified violations per 10 eligible experiments than both baselines, by at least the registered margin.",
+  "candidates": [
+    {
+      "key": "crm-01",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "control",
+      "faults": []
+    },
+    {
+      "key": "crm-02",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "crm-03",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "phantom_success",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 1
+        }
+      ]
+    },
+    {
+      "key": "crm-04",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "stale_read",
+      "faults": [
+        {
+          "kind": "stale_read",
+          "occurrence": 1,
+          "span": 2
+        }
+      ]
+    },
+    {
+      "key": "crm-05",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "combined",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "timeout"
+        },
+        {
+          "kind": "stale_read",
+          "occurrence": 1,
+          "span": 2
+        }
+      ]
+    },
+    {
+      "key": "crm-06",
+      "world_type": "crm",
+      "scenario_id": "preexisting-email",
+      "family": "control",
+      "faults": []
+    },
+    {
+      "key": "crm-07",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 2,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "crm-08",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "phantom_success",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 2
+        }
+      ]
+    },
+    {
+      "key": "crm-09",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "stale_read",
+      "faults": [
+        {
+          "kind": "stale_read",
+          "occurrence": 1,
+          "span": 6
+        }
+      ]
+    },
+    {
+      "key": "crm-10",
+      "world_type": "crm",
+      "scenario_id": "normal-success",
+      "family": "combined",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 1
+        },
+        {
+          "kind": "stale_read",
+          "occurrence": 1,
+          "span": 6
+        }
+      ]
+    },
+    {
+      "key": "crm-11",
+      "world_type": "crm",
+      "scenario_id": "preexisting-email",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "internal_error"
+        }
+      ]
+    },
+    {
+      "key": "crm-12",
+      "world_type": "crm",
+      "scenario_id": "preexisting-email",
+      "family": "phantom_success",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 1
+        }
+      ]
+    },
+    {
+      "key": "job-queue-01",
+      "world_type": "job-queue",
+      "scenario_id": "jq-normal",
+      "family": "control",
+      "faults": []
+    },
+    {
+      "key": "job-queue-02",
+      "world_type": "job-queue",
+      "scenario_id": "jq-normal",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "job-queue-03",
+      "world_type": "job-queue",
+      "scenario_id": "jq-normal",
+      "family": "phantom_success",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 1
+        }
+      ]
+    },
+    {
+      "key": "job-queue-04",
+      "world_type": "job-queue",
+      "scenario_id": "jq-stale-read",
+      "family": "stale_read",
+      "faults": [
+        {
+          "kind": "stale_read",
+          "occurrence": 2,
+          "span": 2
+        }
+      ]
+    },
+    {
+      "key": "job-queue-05",
+      "world_type": "job-queue",
+      "scenario_id": "jq-stale-read",
+      "family": "control",
+      "faults": []
+    },
+    {
+      "key": "job-queue-06",
+      "world_type": "job-queue",
+      "scenario_id": "jq-keyed-request",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "job-queue-07",
+      "world_type": "job-queue",
+      "scenario_id": "jq-preexisting-job",
+      "family": "phantom_success",
+      "faults": [
+        {
+          "kind": "phantom_success",
+          "occurrence": 1
+        }
+      ]
+    },
+    {
+      "key": "job-queue-08",
+      "world_type": "job-queue",
+      "scenario_id": "jq-stale-failed-job",
+      "family": "stale_read",
+      "faults": [
+        {
+          "kind": "stale_read",
+          "occurrence": 2,
+          "span": 1
+        }
+      ]
+    },
+    {
+      "key": "job-queue-09",
+      "world_type": "job-queue",
+      "scenario_id": "jq-stale-failed-job",
+      "family": "control",
+      "faults": []
+    },
+    {
+      "key": "job-queue-10",
+      "world_type": "job-queue",
+      "scenario_id": "jq-duplicates-allowed",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 1,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "job-queue-11",
+      "world_type": "job-queue",
+      "scenario_id": "jq-normal",
+      "family": "phantom_failure",
+      "faults": [
+        {
+          "kind": "phantom_failure",
+          "occurrence": 2,
+          "error_code": "timeout"
+        }
+      ]
+    },
+    {
+      "key": "job-queue-12",
+      "world_type": "job-queue",
+      "scenario_id": "jq-stale-read",
+      "family": "stale_read",
+      "faults": [
+        {
+          "kind": "stale_read",
+          "occurrence": 1,
+          "span": 2
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "unit_id": "crm/trusting",
+      "world_type": "crm",
+      "executor": "trusting"
+    },
+    {
+      "unit_id": "crm/blind_retry",
+      "world_type": "crm",
+      "executor": "blind_retry"
+    },
+    {
+      "unit_id": "crm/verify_then_report",
+      "world_type": "crm",
+      "executor": "verify_then_report"
+    },
+    {
+      "unit_id": "crm/idempotent_retry",
+      "world_type": "crm",
+      "executor": "idempotent_retry"
+    },
+    {
+      "unit_id": "crm/busy_but_correct",
+      "world_type": "crm",
+      "executor": "busy_but_correct"
+    },
+    {
+      "unit_id": "queue/job_trusting",
+      "world_type": "job-queue",
+      "executor": "job_trusting"
+    },
+    {
+      "unit_id": "queue/job_blind_retry",
+      "world_type": "job-queue",
+      "executor": "job_blind_retry"
+    },
+    {
+      "unit_id": "queue/job_verify_then_report",
+      "world_type": "job-queue",
+      "executor": "job_verify_then_report"
+    },
+    {
+      "unit_id": "queue/job_idempotent_retry",
+      "world_type": "job-queue",
+      "executor": "job_idempotent_retry"
+    },
+    {
+      "unit_id": "queue/job_poll_until_required",
+      "world_type": "job-queue",
+      "executor": "job_poll_until_required"
+    },
+    {
+      "unit_id": "queue/job_single_read",
+      "world_type": "job-queue",
+      "executor": "job_single_read"
+    },
+    {
+      "unit_id": "queue/job_assumes_it_will_finish",
+      "world_type": "job-queue",
+      "executor": "job_assumes_it_will_finish"
+    },
+    {
+      "unit_id": "queue/job_wrong_type",
+      "world_type": "job-queue",
+      "executor": "job_wrong_type"
+    },
+    {
+      "unit_id": "queue/job_silent",
+      "world_type": "job-queue",
+      "executor": "job_silent"
+    }
+  ],
+  "budget": 6,
+  "limits": {
+    "max_experiments": 6,
+    "max_target_runs_per_experiment": 1,
+    "max_model_calls": 12,
+    "max_completion_tokens": 2048,
+    "reasoning_effort": null,
+    "max_prompt_chars": 24000,
+    "max_refinements": 1,
+    "max_reproductions": 0,
+    "max_wall_seconds": 900.0,
+    "temperature": 0.0
+  },
+  "main_seeds": [
+    1901,
+    1902,
+    1903
+  ],
+  "pilot_seeds": [
+    1802
+  ],
+  "pilot_units": [
+    "crm/blind_retry",
+    "queue/job_single_read"
+  ],
+  "model": "qwen3:4b-instruct",
+  "model_digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "temperature": 0.0,
+  "thresholds": {
+    "min_nontied_units": 8,
+    "min_mean_difference_per_10": 1.0,
+    "min_eligible_share": 0.8,
+    "max_incorrect_finding_rate": 0.25
+  },
+  "fingerprints": {
+    "menu_system_prompt_sha256": {
+      "crm": "943c827272316068a21563e21527a2856941d4d8c8f206aae722fbc4e6f2eeb1",
+      "job-queue": "d76f5f88c7e05b5c86f4605bcbcee23b82a19c4b0f1f80561c131b4abb8c5965"
+    },
+    "menu_protocol_sha256": "d6926aba58f780f45d61c0ba6052c84a3dd8d4cf3ba4503c17f4b63681dd290c",
+    "tool_schema_sha256": {
+      "select_experiment": "3c0b687ab2f11c95d963b6c27f62eed6c7b6214e0b72d5b38c56af7a73247def",
+      "conclude_investigation": "16560f80d32a997f771aa662a8ca3cce836529bbaa5a8ff61cb3da6b943c716d"
+    },
+    "capability_sha256": {
+      "crm": "5c210c36752dd4d1c819f9cf9f484a268894ac8626a4d9615ced7e0fda946bc4",
+      "job-queue": "88b6636b6db1ce13dc4c1890234f86fcb6ab6eb811df4a6b29d394e63c4514d3"
+    },
+    "scenario_sha256": {
+      "normal-success": "0641fbf2da755a4be0b3e150d8e3532c06077a4d6d9a140e96be9cea2d6b6aa9",
+      "preexisting-email": "80a7138cc492bd24a709af85cd59367bd20554288abfa93e27c9cabee767e40a",
+      "jq-normal": "3cb86e7bd2de11645dabefd13cd811acf8edd09f0c8ccde8fea3990b43ec14c5",
+      "jq-stale-read": "b69e476730509bfb7b2dfda40f55bff122021e68c9303950bce262726c4e42d2",
+      "jq-keyed-request": "c05b233c6c482f3ce866b401c2671cc8d92470a1b9fb20a4dec6bdebee7131e1",
+      "jq-preexisting-job": "0ef04e8f2c74d63969592e4bf7d8987d747ebb952761b565f4188ca43651b736",
+      "jq-stale-failed-job": "a41d84c10290c5fbf12b0b403b6578817aac503d2c1ef3fd2decccc58a14b3a6",
+      "jq-duplicates-allowed": "8546c29bc59ee3707245df8f7d98c2f5fbe22c390d0006d538fc549d56643786"
+    },
+    "plugin_versions": {
+      "crm": "1.0.0",
+      "job-queue": "1.0.0"
+    },
+    "probe_program_sha256": "33bdbfbdb3578e761f1fb88d5b4d4269e90eaf99e06d1b8e649167844a09225d"
+  }
+}

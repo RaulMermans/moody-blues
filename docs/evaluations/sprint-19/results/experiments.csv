@@ -1,0 +1,576 @@
+trial_id,unit_id,strategy,seed,position,experiment_id,candidate,validity,eligible,excluded_because,verdict,signatures,repeated_candidate
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,1,exp_3133c981d92b,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,2,exp_2df9763f528f,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,3,exp_36a39ccd7c63,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,4,exp_96f9a8e80ff3,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,5,exp_697210254dc9,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-adaptive-1902,queue/job_assumes_it_will_finish,adaptive,1902,6,exp_d2a4b401aae4,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,1,exp_eaab39d48058,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,2,exp_96657b13ec3b,job-queue-08,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,3,exp_bffff1f4035d,job-queue-12,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,4,exp_7b8326a477a1,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,5,exp_4824b1e2c91a,job-queue-03,exercised,True,,INCONCLUSIVE,,True
+main-queue-job_poll_until_required-adaptive-1901,queue/job_poll_until_required,adaptive,1901,6,exp_4b80f1117481,job-queue-06,exercised,True,,INCONCLUSIVE,,True
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,1,exp_84c519df645b,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,2,exp_756c6d414bee,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,3,exp_2dd02ab7eb6d,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,4,exp_2188f30b6e86,job-queue-01,control,True,,PASS,,False
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,5,exp_ba91e612d5fc,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1902,queue/job_blind_retry,random,1902,6,exp_642011d5f0da,job-queue-02,exercised,True,,VIOLATION,job-queue:duplicate_side_effect job-queue:false_completion_claim,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,1,exp_4df81025faaa,job-queue-01,control,True,,PASS,,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,2,exp_05a986dbb564,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,3,exp_da7168fabcd1,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,4,exp_9cabe82ddc32,job-queue-04,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,5,exp_4b16707b21ab,job-queue-05,control,True,,PASS,,False
+main-queue-job_poll_until_required-fixed,queue/job_poll_until_required,fixed,,6,exp_718cecc1a6ee,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,1,exp_6e46af1a04af,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,2,exp_a962c1694f5d,crm-09,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,3,exp_45d69b953cc5,crm-11,exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,4,exp_d7ae0fbc9611,crm-04,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,5,exp_de2a325089ad,crm-04,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-busy_but_correct-adaptive-1901,crm/busy_but_correct,adaptive,1901,6,exp_a2ee105c7068,crm-04,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,1,exp_dd0690ea0d13,crm-01,control,True,,PASS,,False
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,2,exp_6268d136176d,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,3,exp_3e6a09a4c983,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,4,exp_33ce753fd953,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,5,exp_48982082d8ed,crm-05,partially_exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-fixed,crm/blind_retry,fixed,,6,exp_c8a8dad17c62,crm-06,control,True,,PASS,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,1,exp_c9c8d8ceb666,crm-01,control,True,,PASS,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,2,exp_48cebd9ab02b,crm-03,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,3,exp_d9a4d6469fb0,crm-02,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,4,exp_8a51ad7c850b,crm-06,control,True,,PASS,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,5,exp_be2142f11c82,crm-09,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-random-1902,crm/busy_but_correct,random,1902,6,exp_a7ae9d452572,crm-07,exercised,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,1,exp_6224ebb7e17f,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,2,exp_fb930ab7da4d,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,3,exp_c55f04ed3217,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,True
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,4,exp_08b059412c99,crm-11,exercised,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,5,exp_e825b636f6dc,crm-11,exercised,True,,PASS,,True
+main-crm-verify_then_report-adaptive-1903,crm/verify_then_report,adaptive,1903,6,exp_4e65b9621d78,crm-02,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,1,exp_76587def92b5,job-queue-01,control,True,,PASS,,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,2,exp_f87909e1ca1c,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,3,exp_0ff644a1e958,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,4,exp_0ca1eb9db704,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,5,exp_146dbf4fa65d,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-fixed,queue/job_idempotent_retry,fixed,,6,exp_901078e51a24,job-queue-06,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:request_key_mismatch,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,1,exp_5861fc09117b,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,2,exp_0b650b0c2408,job-queue-01,control,True,,PASS,,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,3,exp_51cb87819e30,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,4,exp_1992e4858d46,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,5,exp_19d71b011f49,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-random-1903,queue/job_trusting,random,1903,6,exp_e206161a9c4a,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,1,exp_61269ec45d54,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,2,exp_b4cf0ff1dda5,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,3,exp_430443e066ec,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,4,exp_84769c8b75cb,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,5,exp_aa35be18b3d1,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1903,queue/job_assumes_it_will_finish,random,1903,6,exp_1dcddbda690d,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,1,exp_1a1decb37c1d,crm-01,control,True,,PASS,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,2,exp_4ceff9783961,crm-02,exercised,True,,PASS,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,3,exp_3315594b5b6c,crm-03,exercised,True,,PASS,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,4,exp_39c081fe59d3,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,5,exp_29645c42452d,crm-05,partially_exercised,True,,PASS,,False
+main-crm-busy_but_correct-fixed,crm/busy_but_correct,fixed,,6,exp_65ac196899d5,crm-06,control,True,,PASS,,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,1,exp_52c0d79e28cd,crm-02,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,2,exp_4143436e3624,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,3,exp_e53adbeaa283,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,4,exp_9862861e420e,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,5,exp_f6b1bf54659e,crm-09,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-random-1903,crm/trusting,random,1903,6,exp_d71ca9bbb2a0,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,1,exp_7aac03b5b884,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,2,exp_d3196d95c200,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,3,exp_5a3ce9de3853,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,4,exp_f4ccfc30c07b,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,5,exp_bca8c2ac784d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1901,queue/job_assumes_it_will_finish,random,1901,6,exp_4b576b69d77c,job-queue-01,control,True,,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,1,exp_d7ba99e0e9c1,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,2,exp_2925c320f00d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,3,exp_cf6ed1e28370,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,4,exp_cf7ec6caa7c6,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,5,exp_dddbf25cbd6c,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1903,queue/job_idempotent_retry,adaptive,1903,6,exp_8c43495cf1b5,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_poll_until_required-adaptive-1903,queue/job_poll_until_required,adaptive,1903,1,exp_5f6ae61f8435,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_poll_until_required-adaptive-1903,queue/job_poll_until_required,adaptive,1903,2,exp_c8b5053268d6,job-queue-04,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-adaptive-1903,queue/job_poll_until_required,adaptive,1903,3,exp_f8adade4e91d,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1903,queue/job_poll_until_required,adaptive,1903,4,exp_b1e0d10b30f3,job-queue-01,control,True,,PASS,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,1,exp_0179ef090d35,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,2,exp_516ed2732f31,job-queue-12,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,3,exp_d133c408e5f4,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,4,exp_833f9aabd1b3,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,5,exp_a01c0b32c78f,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1901,queue/job_poll_until_required,random,1901,6,exp_58b047bc7bcf,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,1,exp_93b6e544a1af,crm-07,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,2,exp_960b25a9dc5b,crm-03,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,3,exp_98b141800bca,crm-02,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,4,exp_e8f81b4dcbef,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,5,exp_0748b62ae415,crm-10,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-random-1903,crm/busy_but_correct,random,1903,6,exp_dbba6041d988,crm-12,exercised,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,1,exp_513089a05681,crm-01,control,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,2,exp_c86f945124e5,crm-02,exercised,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,3,exp_635234303a8b,crm-03,exercised,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,4,exp_afa5bf4c37a1,crm-04,exercised,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,5,exp_62e1baf40c92,crm-05,exercised,True,,PASS,,False
+main-crm-idempotent_retry-fixed,crm/idempotent_retry,fixed,,6,exp_f871b333e96e,crm-06,control,True,,PASS,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,1,exp_e6431202b10a,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,2,exp_0db078a7c00c,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,3,exp_01398791c103,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,4,exp_4cdd2a8484af,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,5,exp_44b31b4feaf3,job-queue-12,,False,no_completed_run,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1902,queue/job_single_read,adaptive,1902,6,exp_e2ada9925750,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,1,exp_30c3dd8e944c,job-queue-01,control,True,,PASS,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,2,exp_c8673608abb5,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,3,exp_6f28b8f7d11e,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,4,exp_8ab8acd42c95,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,5,exp_3b4806669088,job-queue-05,control,True,,INCONCLUSIVE,,False
+main-queue-job_silent-fixed,queue/job_silent,fixed,,6,exp_df08facb1008,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_trusting-adaptive-1901,queue/job_trusting,adaptive,1901,1,exp_da94698866a4,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-adaptive-1901,queue/job_trusting,adaptive,1901,2,exp_8c596597cd24,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1901,queue/job_trusting,adaptive,1901,3,exp_146433429779,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_trusting-adaptive-1901,queue/job_trusting,adaptive,1901,4,exp_cf466e855ead,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,1,exp_ecaca7e86bbd,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,2,exp_91ed171959b4,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,3,exp_b1acd7692ef1,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,4,exp_b84c36386840,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,5,exp_7bf0560d89f4,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1901,queue/job_blind_retry,adaptive,1901,6,exp_72a6c647dc10,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,1,exp_f1732d7f29f0,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,2,exp_144ec5ef95ee,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,3,exp_0c39a6032305,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,4,exp_34e18d2e1fe1,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,True
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,5,exp_5099e42257de,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1903,queue/job_single_read,adaptive,1903,6,exp_4e177221097e,job-queue-01,control,True,,PASS,,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,1,exp_53867a5de137,job-queue-01,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,2,exp_12c04cf3ddaa,job-queue-10,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,3,exp_d27f3d28acc4,job-queue-06,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,4,exp_8f9e0b66aeb8,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,5,exp_8958f145d06f,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_wrong_type-random-1903,queue/job_wrong_type,random,1903,6,exp_70b3881dd1aa,job-queue-11,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,1,exp_ccc072243163,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,2,exp_33354cdc5ae9,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,3,exp_9350e68f3abb,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,True
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,4,exp_3f4de67b1192,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,5,exp_ce3382342129,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_silent-adaptive-1903,queue/job_silent,adaptive,1903,6,exp_46f12f0fa061,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,1,exp_161058d3d60b,crm-04,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,2,exp_710686d1ab14,crm-01,control,True,,PASS,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,3,exp_a4734b8170e6,crm-12,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,4,exp_6f610c85d84f,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,5,exp_1f09b1061ebc,crm-05,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1903,crm/idempotent_retry,random,1903,6,exp_531a79f8ff6b,crm-03,exercised,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,1,exp_f0b6ace86785,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,2,exp_191a7e4210ee,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,3,exp_1751c98d388b,crm-02,exercised,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,4,exp_57025e5591a1,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,True
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,5,exp_7f6ccac068eb,crm-06,control,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1902,crm/verify_then_report,adaptive,1902,6,exp_65c4d64cfbbb,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,True
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,1,exp_519d0fc67f9d,crm-12,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,2,exp_b4211abddeb5,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,3,exp_415e7994fd51,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,4,exp_3d9ad5c1a1e5,crm-06,control,True,,PASS,,False
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,5,exp_69c1f19b49be,crm-09,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-adaptive-1902,crm/blind_retry,adaptive,1902,6,exp_9f948d385129,crm-05,partially_exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,1,exp_076be4e500e3,crm-06,control,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,2,exp_929d66fd286d,crm-04,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,3,exp_0151a4d931d3,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,4,exp_9ec22ddf8428,crm-02,exercised,True,,PASS,,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,5,exp_4b423d29ce1c,crm-05,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-adaptive-1901,crm/verify_then_report,adaptive,1901,6,exp_8be67bbecd0b,crm-10,partially_exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,1,exp_8cdf6069a754,crm-03,exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,2,exp_9f1c788d7dc7,crm-09,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,3,exp_95ee3f91caa1,crm-02,exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,4,exp_fe64a83f15b9,crm-07,exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,5,exp_e47ea8389c6b,crm-05,partially_exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1902,crm/busy_but_correct,adaptive,1902,6,exp_69c07e9e3b23,crm-07,exercised,True,,PASS,,True
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,1,exp_adb7f7c4f250,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,2,exp_1423405c865b,crm-11,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,3,exp_9cfbfb2621a3,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,4,exp_df31be4ece1e,crm-04,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,5,exp_d4b4dc2ae90c,crm-09,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-adaptive-1901,crm/blind_retry,adaptive,1901,6,exp_e8c2cc3ac3d5,crm-09,not_exercised,False,undelivered_fault,PASS,,True
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,1,exp_5ed225e8e9d0,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,2,exp_00eea296284d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,3,exp_5bb6bf1232d2,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,4,exp_2cbcfffc67c8,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,5,exp_ee983172fe85,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1902,queue/job_verify_then_report,adaptive,1902,6,exp_fb17f968848b,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,1,exp_93e37cfcc80b,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,2,exp_1e6ce2eaab56,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,3,exp_284b82e39904,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,4,exp_776ecf2bfe34,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,5,exp_02795b5418e7,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1901,queue/job_assumes_it_will_finish,adaptive,1901,6,exp_981ba72ce34a,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,1,exp_0a02f2b86f63,job-queue-01,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,2,exp_c243c1b2c2c7,job-queue-02,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,3,exp_54daeaf3a0af,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,4,exp_6752ccd1ea1c,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,5,exp_d194292e5a69,job-queue-05,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-fixed,queue/job_wrong_type,fixed,,6,exp_0467f6e9701c,job-queue-06,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,1,exp_c2a0d1e5fab7,job-queue-01,control,True,,PASS,,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,2,exp_291b357200b8,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,3,exp_7a0d5ac67dc6,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,4,exp_f8ad3d369849,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,5,exp_bbaba0d66b99,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-fixed,queue/job_trusting,fixed,,6,exp_189139b95a1d,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,1,exp_15197dc453c8,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,2,exp_5fc47bf3dd22,crm-11,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,3,exp_e7af3ec82c42,crm-01,control,True,,PASS,,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,4,exp_a548803aa5ca,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,5,exp_ce938da64ba3,crm-02,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-random-1901,crm/trusting,random,1901,6,exp_a827ace5535a,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,1,exp_bcf71af31ecc,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,2,exp_25f2055e5258,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,3,exp_4f1fff4de9e3,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,4,exp_bfd10cd2b7fd,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,5,exp_dddf4c2452a2,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1901,queue/job_idempotent_retry,random,1901,6,exp_4ce96dd04644,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,1,exp_69a26c350faf,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,2,exp_2c6335ce6de5,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,3,exp_1d261277151d,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,4,exp_9bc2ff35a001,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,5,exp_a8f46cabc000,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-adaptive-1903,queue/job_assumes_it_will_finish,adaptive,1903,6,exp_4c77af7d3372,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,1,exp_cbb316ac9179,job-queue-01,control,True,,PASS,,False
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,2,exp_48f4eba5725b,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,3,exp_cf4cc10ce24e,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,4,exp_d6477b67e88c,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,5,exp_695df43c6a2c,job-queue-05,control,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-fixed,queue/job_single_read,fixed,,6,exp_b63f282b769b,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,1,exp_ebc5e1253d93,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,2,exp_7a55617f1dd6,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,3,exp_c20d2d27d45b,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,True
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,4,exp_441fa9bde0be,crm-06,control,True,,PASS,,False
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,5,exp_3d71e584f427,crm-06,control,True,,PASS,,True
+main-crm-blind_retry-adaptive-1903,crm/blind_retry,adaptive,1903,6,exp_83ffd2d8cbb5,crm-06,control,True,,PASS,,True
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,1,exp_53ae40183c01,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,2,exp_d4b12f5b44a0,crm-09,exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,3,exp_194ed39f3caf,crm-12,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,4,exp_00847f031cbf,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,5,exp_363be40a573f,crm-05,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1903,crm/idempotent_retry,adaptive,1903,6,exp_a3e70c800276,crm-10,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,1,exp_67ba10cdef72,crm-12,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,2,exp_ab854ede800c,crm-01,control,True,,PASS,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,3,exp_ca69d5460bb0,crm-11,exercised,True,,PASS,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,4,exp_5d5bc9ebde8f,crm-06,control,True,,PASS,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,5,exp_59241532a1ab,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-busy_but_correct-random-1901,crm/busy_but_correct,random,1901,6,exp_56027068baf4,crm-10,partially_exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,1,exp_35b2092cb001,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,2,exp_e946324d48d4,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,3,exp_4572a2c40213,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,4,exp_cb743aeebbb7,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,5,exp_8651e152b044,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_trusting-adaptive-1902,queue/job_trusting,adaptive,1902,6,exp_e05cebf124ea,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,1,exp_45c681d1e67a,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,2,exp_8636d2e3477f,job-queue-12,partially_exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,3,exp_bbd765ba8e6c,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,4,exp_fc47c4dd4f3c,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,5,exp_a547f6f69a6c,job-queue-05,control,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1901,queue/job_single_read,random,1901,6,exp_dc203b3acb87,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,1,exp_eaf55900c176,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,2,exp_cfebd4b8b101,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,3,exp_043fbd97cc5d,crm-06,control,True,,PASS,,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,4,exp_6bf1c7c292af,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,5,exp_e98c89bcf7d6,crm-01,control,True,,PASS,,False
+main-crm-blind_retry-random-1903,crm/blind_retry,random,1903,6,exp_a7de718de46b,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-queue-job_idempotent_retry-adaptive-1902,queue/job_idempotent_retry,adaptive,1902,1,exp_b2e4fcc8c44a,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1902,queue/job_idempotent_retry,adaptive,1902,2,exp_256ebf22456b,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_idempotent_retry-adaptive-1902,queue/job_idempotent_retry,adaptive,1902,3,exp_3a26618c9647,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1902,queue/job_idempotent_retry,adaptive,1902,4,exp_2dafdcebdf75,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_idempotent_retry-adaptive-1902,queue/job_idempotent_retry,adaptive,1902,5,exp_44e355ae8047,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,1,exp_8a0c4ae9ec56,job-queue-01,control,True,,PASS,,False
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,2,exp_53b16e593b0f,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,3,exp_3ad79037b7e6,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,4,exp_1b99db3bd21a,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,5,exp_581bdebd4935,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1902,queue/job_single_read,random,1902,6,exp_c83270d5a884,job-queue-12,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,1,exp_7319d4a577e7,crm-09,exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,2,exp_aa149f783448,crm-01,control,True,,PASS,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,3,exp_a1b1c74ff153,crm-11,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,4,exp_066dcc5b72c4,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,5,exp_fc4c32fbeaec,crm-04,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1901,crm/idempotent_retry,random,1901,6,exp_d48789a9be98,crm-02,exercised,True,,PASS,,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,1,exp_8ef973307044,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,2,exp_c825e3c8ed37,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,3,exp_b6271d85ce98,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,4,exp_7c7afa703372,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,5,exp_af2585f15456,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_blind_retry-random-1903,queue/job_blind_retry,random,1903,6,exp_d71fedfb2bda,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,1,exp_379841ea93b0,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,2,exp_ab5cce8581d7,job-queue-11,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,3,exp_731ec8b4f91e,job-queue-10,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,4,exp_c3a39ce7001f,job-queue-05,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,5,exp_fe7ed1bac24f,job-queue-06,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1901,queue/job_wrong_type,random,1901,6,exp_ee1c83baeb0a,job-queue-09,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,1,exp_45552b49b051,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,2,exp_cf1c758a0023,job-queue-12,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,3,exp_9a6d8e33194f,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,4,exp_36b948932e67,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,5,exp_b3665e1883f4,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_silent-adaptive-1901,queue/job_silent,adaptive,1901,6,exp_39a549987fb1,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,1,exp_5245d158c531,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,2,exp_0ca7894f7c7b,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,3,exp_6b36ef80c5b2,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,4,exp_46e1923c4ea5,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,5,exp_2e693bcfe146,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,True
+main-queue-job_wrong_type-adaptive-1902,queue/job_wrong_type,adaptive,1902,6,exp_57c47f3862b1,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,1,exp_4013b84e2e09,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,2,exp_bafd97aa23ab,crm-04,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,3,exp_c1cfbbc4707e,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,4,exp_a719ff08e535,crm-09,exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,5,exp_f1ecb7469b3a,crm-05,exercised,True,,PASS,,False
+main-crm-idempotent_retry-random-1902,crm/idempotent_retry,random,1902,6,exp_e2d85546b540,crm-03,exercised,True,,PASS,,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,1,exp_09141695526d,job-queue-01,control,True,,PASS,,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,2,exp_9bf1cc129a74,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,3,exp_9b8fb64a6935,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,4,exp_624f8a609c30,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,5,exp_9ef0b83c9553,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-adaptive-1903,queue/job_trusting,adaptive,1903,6,exp_a6a258890acd,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,1,exp_95cee6acaa1d,crm-06,control,True,,PASS,,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,2,exp_3c83cc921d0f,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,3,exp_bdaf90b94059,crm-05,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,4,exp_b7e11ec29d47,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,5,exp_37bc920850cd,crm-01,control,True,,PASS,,False
+main-crm-trusting-random-1902,crm/trusting,random,1902,6,exp_ad6a5bf39d95,crm-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,1,exp_e1e7ed802fcf,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,2,exp_2e66810f173f,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,3,exp_fbefa0be431d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,4,exp_742b0634553a,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,5,exp_803f3a6d5e19,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1903,queue/job_verify_then_report,random,1903,6,exp_5382fae8c81f,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,1,exp_4ac2cf2abc6e,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,2,exp_08b8674d611c,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,3,exp_13f3ed6b964e,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,4,exp_0e690746f61a,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,5,exp_062fed780be9,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-adaptive-1901,queue/job_idempotent_retry,adaptive,1901,6,exp_c16c5c40852c,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,1,exp_7a8341bb1724,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,2,exp_f72bac1acb5b,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,3,exp_d9dcad3434af,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,4,exp_8ddf0e004275,crm-01,control,True,,PASS,,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,5,exp_48d24050d601,crm-05,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-adaptive-1901,crm/trusting,adaptive,1901,6,exp_45a1dec048c2,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,True
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,1,exp_c60b06974935,job-queue-01,control,True,,PASS,,False
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,2,exp_b30bbfa6dadf,job-queue-02,exercised,True,,VIOLATION,job-queue:duplicate_side_effect job-queue:false_completion_claim,False
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,3,exp_090c6ce3af03,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,4,exp_e135c1d255f0,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,5,exp_e1a07cea10d3,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-fixed,queue/job_blind_retry,fixed,,6,exp_c980577366f3,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,1,exp_985d1945c828,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,2,exp_bf8ac35dcc3f,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,3,exp_5142356d74b6,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,True
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,4,exp_3ec41645fd02,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,5,exp_db22f9de58bf,job-queue-01,control,True,,PASS,,False
+main-queue-job_silent-adaptive-1902,queue/job_silent,adaptive,1902,6,exp_ba40419beccf,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,True
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,1,exp_7d420a8d8126,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,2,exp_2b6f9d09b451,job-queue-01,control,True,,PASS,,False
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,3,exp_60142cb7a55e,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,4,exp_cd75d0032ad1,job-queue-12,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,5,exp_d88883721b1b,job-queue-05,control,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1903,queue/job_silent,random,1903,6,exp_acda1820ec92,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,1,exp_ae6ec04482de,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,2,exp_8ee38199d227,job-queue-01,control,True,,PASS,,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,3,exp_d89b7b3523d3,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,4,exp_b1cd373a66a4,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,5,exp_1f18e09e5cc3,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-random-1901,queue/job_blind_retry,random,1901,6,exp_eed7a7f46ada,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,1,exp_b15ee4af75e8,job-queue-10,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,2,exp_295c7852d71f,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,3,exp_26c2f6821ba7,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,4,exp_e9ee2f7a898e,job-queue-11,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,5,exp_8906613de311,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1903,queue/job_wrong_type,adaptive,1903,6,exp_02926d3c4a8d,job-queue-02,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_verify_then_report-adaptive-1901,queue/job_verify_then_report,adaptive,1901,1,exp_4afda9efaf55,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-adaptive-1901,queue/job_verify_then_report,adaptive,1901,2,exp_ae0c478a686f,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1901,queue/job_verify_then_report,adaptive,1901,3,exp_966c1284170d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1901,queue/job_verify_then_report,adaptive,1901,4,exp_36bb25d85ea4,job-queue-01,control,True,,PASS,,False
+main-queue-job_verify_then_report-adaptive-1901,queue/job_verify_then_report,adaptive,1901,5,exp_18c3577b0797,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,1,exp_3667eb11f8d8,job-queue-05,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,2,exp_03ee1d6f58ec,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,3,exp_5ae7be0e7f57,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,True
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,4,exp_011e7fed11ad,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,5,exp_ca655426c912,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,True
+main-queue-job_wrong_type-adaptive-1901,queue/job_wrong_type,adaptive,1901,6,exp_18385e5bcc5b,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,True
+main-crm-trusting-adaptive-1902,crm/trusting,adaptive,1902,1,exp_6e5bab5e9cd4,crm-06,control,True,,PASS,,False
+main-crm-trusting-adaptive-1902,crm/trusting,adaptive,1902,2,exp_c3cce6d57fcf,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-adaptive-1902,crm/trusting,adaptive,1902,3,exp_845d69060e50,crm-05,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-adaptive-1902,crm/trusting,adaptive,1902,4,exp_5a1c6df42582,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-adaptive-1902,crm/trusting,adaptive,1902,5,exp_594f41cfe2a0,crm-11,exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,1,exp_a7f4016096d7,crm-03,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,2,exp_fc930c2219d4,crm-09,exercised,True,,INCONCLUSIVE,,False
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,3,exp_647f550176fc,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,4,exp_0ac64b1986a0,crm-09,exercised,True,,INCONCLUSIVE,,True
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,5,exp_91a8ab37c39d,crm-11,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1902,crm/idempotent_retry,adaptive,1902,6,exp_5eb72f235177,crm-02,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,1,exp_73ad2c9ad2a8,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,2,exp_2bbdb25aa8f7,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,3,exp_21daab268e55,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,4,exp_51f5615d467a,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,5,exp_9e61af5e48c0,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-random-1902,queue/job_idempotent_retry,random,1902,6,exp_7348d52d7548,job-queue-06,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:request_key_mismatch,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,1,exp_4aedff868b10,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,2,exp_41095d13dbc5,job-queue-05,control,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,3,exp_50ac52b7130d,job-queue-12,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,4,exp_f330092d532a,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,5,exp_a7cc736f4706,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1901,queue/job_silent,random,1901,6,exp_6b30ecfc8209,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,1,exp_d26a1f94c631,crm-07,exercised,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,2,exp_7448521becc7,crm-10,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,3,exp_1113ab92a05b,crm-09,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,4,exp_0f742c413344,crm-01,control,True,,PASS,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,5,exp_3e07ab4fe05f,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-busy_but_correct-adaptive-1903,crm/busy_but_correct,adaptive,1903,6,exp_5684b696c1a8,crm-05,partially_exercised,True,,PASS,,False
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,1,exp_bcfa5868d655,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,2,exp_9d8a214e1aec,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,3,exp_f87e15c97b26,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,4,exp_a31cbfd110ca,job-queue-02,exercised,True,,PASS,,True
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,5,exp_245ac98d458b,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_verify_then_report-adaptive-1903,queue/job_verify_then_report,adaptive,1903,6,exp_206e051f78c7,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,True
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,1,exp_e462faf0b1cb,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,2,exp_b8b804f9a14f,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,3,exp_971fa56b388f,job-queue-01,control,True,,PASS,,False
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,4,exp_b044820c5822,job-queue-04,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,5,exp_608fcfe25d77,job-queue-08,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1903,queue/job_poll_until_required,random,1903,6,exp_cc7a737df147,job-queue-12,exercised,True,,PASS,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,1,exp_735dce735924,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,2,exp_135967bc1ef5,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,3,exp_563edec52da4,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,4,exp_884caf839433,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,5,exp_1ea139a28757,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-random-1903,queue/job_single_read,random,1903,6,exp_ae2db7573f1c,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,1,exp_066eea64339a,job-queue-08,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,2,exp_832d87a01b2c,job-queue-04,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,3,exp_a81dcf58e933,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,4,exp_825822318b19,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,5,exp_35d25aac78c6,job-queue-12,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-random-1902,queue/job_poll_until_required,random,1902,6,exp_e7f4da50f546,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,1,exp_86b5780ea858,job-queue-06,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:request_key_mismatch,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,2,exp_0126fd025a99,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,3,exp_5dd0b6522a0f,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,4,exp_04d2763d5114,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,5,exp_5664853b3f47,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_idempotent_retry-random-1903,queue/job_idempotent_retry,random,1903,6,exp_701b9e7c4782,job-queue-01,control,True,,PASS,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,1,exp_15703a6b08b4,job-queue-12,exercised,True,,PASS,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,2,exp_62ed2d46d7e2,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,3,exp_d95246c3d541,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,4,exp_467eee847520,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,5,exp_30a4a1556576,job-queue-08,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_poll_until_required-adaptive-1902,queue/job_poll_until_required,adaptive,1902,6,exp_006a7a6c9cff,job-queue-07,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,1,exp_f1cd9ee3118c,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,2,exp_116c685040be,job-queue-01,control,True,,PASS,,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,3,exp_8ffd78a5e7c6,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,4,exp_bdeeae5da73c,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,5,exp_e1396e9ba090,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1902,queue/job_verify_then_report,random,1902,6,exp_2a64c7f988de,job-queue-06,exercised,True,,PASS,,False
+main-crm-trusting-fixed,crm/trusting,fixed,,1,exp_6d0234f96350,crm-01,control,True,,PASS,,False
+main-crm-trusting-fixed,crm/trusting,fixed,,2,exp_3d69abba0bac,crm-02,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-fixed,crm/trusting,fixed,,3,exp_84c8ea71a80c,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-fixed,crm/trusting,fixed,,4,exp_f9e737d43c7d,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-fixed,crm/trusting,fixed,,5,exp_7825bca656b9,crm-05,partially_exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-fixed,crm/trusting,fixed,,6,exp_2b505bb47d59,crm-06,control,True,,PASS,,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,1,exp_6a61f4973d17,job-queue-01,control,True,,PASS,,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,2,exp_2a49deba91ed,job-queue-02,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,3,exp_d6431eb08d6b,job-queue-03,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,4,exp_b5a431bbfa5f,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,5,exp_a8bd31aff58c,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-fixed,queue/job_verify_then_report,fixed,,6,exp_0c72649064f3,job-queue-06,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,1,exp_43836c9aa3fe,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,2,exp_bd725547f6e0,crm-04,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,3,exp_1a24e5d8fd20,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,4,exp_3bee3984d83b,crm-02,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,5,exp_7d1b8806fe42,crm-11,exercised,True,,PASS,,False
+main-crm-idempotent_retry-adaptive-1901,crm/idempotent_retry,adaptive,1901,6,exp_6ec3b345fd07,crm-04,exercised,True,,PASS,,True
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,1,exp_2e44e75faa34,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,2,exp_8df414c678b1,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,3,exp_bd32ffd6fe01,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,4,exp_ba056b5f0a67,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,5,exp_c745b8db541f,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-random-1901,queue/job_trusting,random,1901,6,exp_41a65d514b15,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,1,exp_69a4b5bf8f64,crm-12,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,2,exp_5287a308137f,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,3,exp_c36fc6766a61,crm-06,control,True,,PASS,,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,4,exp_47843fdb1e9c,crm-02,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,5,exp_486a239a23a2,crm-01,control,True,,PASS,,False
+main-crm-verify_then_report-random-1902,crm/verify_then_report,random,1902,6,exp_ace249305aff,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,1,exp_af866b16e3a1,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,2,exp_882ada0acd2e,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,3,exp_964f25002991,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,4,exp_5dacef91cc98,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,5,exp_13be349b6aae,job-queue-02,exercised,True,,VIOLATION,job-queue:duplicate_side_effect job-queue:false_completion_claim,False
+main-queue-job_blind_retry-adaptive-1902,queue/job_blind_retry,adaptive,1902,6,exp_c8afa218020a,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,1,exp_e0d63f2bef39,crm-12,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,2,exp_e58f5d2736b6,crm-03,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,3,exp_fa07393e21c2,crm-04,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,4,exp_549314003fe4,crm-11,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,5,exp_f49ce4d99165,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-random-1901,crm/verify_then_report,random,1901,6,exp_2d738231e252,crm-05,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,1,exp_9381f1c81652,crm-01,control,True,,PASS,,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,2,exp_67feac0e0845,crm-02,exercised,True,,PASS,,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,3,exp_bd023d69db65,crm-03,exercised,True,,PASS,,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,4,exp_3a5fc9fdf388,crm-04,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,5,exp_7f88988ca974,crm-05,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-fixed,crm/verify_then_report,fixed,,6,exp_e67ed7d8e7e1,crm-06,control,True,,PASS,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,1,exp_f991fadbab7e,job-queue-12,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,2,exp_045ef99b0fe9,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,3,exp_1e318eabd1a6,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,4,exp_4af778e6ec4e,job-queue-09,control,True,,INCONCLUSIVE,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,5,exp_216aa41e8f63,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_silent-random-1902,queue/job_silent,random,1902,6,exp_56cb110a0eae,job-queue-11,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,1,exp_537f452eb427,crm-03,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,2,exp_1859fcf30a98,crm-04,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,3,exp_92e46fb35848,crm-08,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,4,exp_859a7ee3d2f0,crm-09,exercised,True,,VIOLATION,crm:duplicate_side_effect,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,5,exp_fd785eb697a2,crm-11,exercised,True,,PASS,,False
+main-crm-verify_then_report-random-1903,crm/verify_then_report,random,1903,6,exp_959d2c19ea1f,crm-02,exercised,True,,PASS,,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,1,exp_abb533297f98,job-queue-05,control,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,2,exp_0b99d517d6cb,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,3,exp_c8560a72faaf,job-queue-02,exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,4,exp_3f66fd591e40,job-queue-12,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,5,exp_7981d5a4e6c5,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_wrong_type-random-1902,queue/job_wrong_type,random,1902,6,exp_700a944c7ee6,job-queue-11,not_exercised,False,undelivered_fault,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim job-queue:unintended_record,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,1,exp_624c346c4d3f,job-queue-01,control,True,,PASS,,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,2,exp_3215654ee021,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,3,exp_42074499e227,job-queue-03,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,4,exp_c01e4fdbbb5d,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,5,exp_7cc7cbe15e24,job-queue-05,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-fixed,queue/job_assumes_it_will_finish,fixed,,6,exp_4ce0be2d21d8,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,1,exp_ec550fb89e85,crm-12,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,2,exp_ba6793e3ad42,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,3,exp_86a9389d5212,crm-06,control,True,,PASS,,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,4,exp_b35729190bb8,crm-11,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,5,exp_a4ae6b90635b,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-random-1902,crm/blind_retry,random,1902,6,exp_6d6f6ba77ed4,crm-07,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,1,exp_cf95650d4403,job-queue-10,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,2,exp_d56b2413c591,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,3,exp_0bc314a8723f,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,4,exp_24bc5da26245,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,5,exp_5875f521e61c,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_trusting-random-1902,queue/job_trusting,random,1902,6,exp_78ef3f185142,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,1,exp_0407782c7dfe,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,2,exp_dc8ac1f96320,crm-09,not_exercised,False,undelivered_fault,PASS,,False
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,3,exp_55d9432b86fb,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,4,exp_3199de160a70,crm-09,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,5,exp_e2c07fe64689,crm-09,not_exercised,False,undelivered_fault,PASS,,True
+main-crm-trusting-adaptive-1903,crm/trusting,adaptive,1903,6,exp_3ea8e9ec9762,crm-09,not_exercised,False,undelivered_fault,PASS,,True
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,1,exp_b665feb6a0bb,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,2,exp_364a9716204d,job-queue-10,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,3,exp_69f171df912a,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,4,exp_2d72f9c20b1e,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_wrong_record job-queue:false_completion_claim,False
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,5,exp_928fea468d4d,job-queue-06,exercised,True,,PASS,,False
+main-queue-job_verify_then_report-random-1901,queue/job_verify_then_report,random,1901,6,exp_3509fc9a6fa4,job-queue-08,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,1,exp_90e1feb39c9c,crm-10,partially_exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,2,exp_0dfea97228ce,crm-01,control,True,,PASS,,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,3,exp_73bbf43bd9ff,crm-03,exercised,True,,VIOLATION,crm:claim_references_uncommitted_id crm:false_completion_claim,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,4,exp_e3a224c2b6b4,crm-02,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,5,exp_1e6ea6077930,crm-11,exercised,True,,VIOLATION,crm:duplicate_side_effect crm:false_completion_claim,False
+main-crm-blind_retry-random-1901,crm/blind_retry,random,1901,6,exp_ec73e463fb9b,crm-04,not_exercised,False,undelivered_fault,PASS,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,1,exp_5ac29253ada5,job-queue-03,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,2,exp_9e9accd73d1b,job-queue-12,partially_exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,3,exp_20d6020e9441,job-queue-08,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,4,exp_a9f439e8fb0c,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,5,exp_48657baa4ec1,job-queue-04,not_exercised,False,undelivered_fault,INCONCLUSIVE,,False
+main-queue-job_single_read-adaptive-1901,queue/job_single_read,adaptive,1901,6,exp_246881cd482c,job-queue-02,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,1,exp_de53df0c68be,job-queue-06,exercised,True,,INCONCLUSIVE,,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,2,exp_8a03a4947bdd,job-queue-12,partially_exercised,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,3,exp_3f1054b1066d,job-queue-01,control,True,,PASS,,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,4,exp_0c85f2c1b0ff,job-queue-04,not_exercised,False,undelivered_fault,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,5,exp_677b19fa09d2,job-queue-09,control,True,,VIOLATION,job-queue:false_completion_claim job-queue:job_status_mismatch,False
+main-queue-job_assumes_it_will_finish-random-1902,queue/job_assumes_it_will_finish,random,1902,6,exp_2b6ca6cce214,job-queue-07,exercised,True,,VIOLATION,job-queue:claim_references_uncommitted_id job-queue:false_completion_claim,False

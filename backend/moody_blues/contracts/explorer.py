@@ -612,6 +612,8 @@ class InvestigationDetail(_Public):
     conclusion: ConclusionView | None
     case_study: CaseStudy | None
     provenance: Provenance
+    # The reasoning checks. Left out when absent, so a historical detail reads as it always did.
+    validity: InvestigationValidity | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class TimelinePage(_Public):

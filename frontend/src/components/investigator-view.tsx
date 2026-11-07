@@ -12,7 +12,7 @@ import {
 } from "@/design/journey";
 import { sealFromRun, targetNoun } from "@/design/model";
 import { stateLine, storyFrom } from "@/design/story";
-import type { HypothesisView, InvestigationDetail, ProposalView } from "@/lib/evidence-types";
+import type { AssessmentCheck, HypothesisView, InvestigationDetail, ProposalView } from "@/lib/evidence-types";
 import {
   ADAPTATION_LABEL,
   FAULT_LABEL,
@@ -35,6 +35,108 @@ const STATUS_LABEL: Record<HypothesisView["status"], string> = {
 };
 
 const FLOW = ["Hypothesis", "Experiment", "Observation", "Decision"];
+
+const ASSESSMENT_LABEL: Record<Exclude<AssessmentCheck["outcome"], "accepted">, string> = {
+  not_exercised: "Undelivered fault",
+  contradicts_oracle: "Contradicts the Oracle",
+  conflicting: "Conflicting assessments",
+  no_target_run: "Cites no run",
+  unknown_evidence: "Cites unknown evidence",
+};
+
+type ReasoningRow = { key: string; kind: string; label: string; text: string };
+
+// Rows come from typed checks only. Nothing here reads what the model wrote.
+function reasoningRows(detail: InvestigationDetail, cycles: Cycle[], reader: string): ReasoningRow[] {
+  const validity = detail.validity;
+  if (!validity) return [];
+  const rows: ReasoningRow[] = [];
+  if (validity.conclusion_matches_findings === false) {
+    rows.push({
+      key: "conclusion",
+      kind: "unsupported_finding",
+      label: "Unsupported finding",
+      text: `The ${reader}'s conclusion does not match the verified findings. The findings stand.`,
+    });
+  }
+  validity.assessments.forEach((check, i) => {
+    if (check.outcome !== "accepted") {
+      rows.push({
+        key: `assessment-${i}`,
+        kind: check.outcome,
+        label: ASSESSMENT_LABEL[check.outcome],
+        text: `${check.hypothesis_id} was stated as ${check.claimed_status}. The records allow ${check.effective_status.replace("_", " ")}.`,
+      });
+    } else if (check.effective_status === "supported" && check.strength !== "paired_contrast_observed") {
+      rows.push({
+        key: `assessment-${i}`,
+        kind: "correlation_only",
+        label: "Correlation only",
+        text: `${check.hypothesis_id} stands as supported, with no paired run without the fault. That is not a cause.`,
+      });
+    }
+  });
+  validity.repeated_hypotheses.forEach((repeat) => {
+    rows.push({
+      key: `repeat-${repeat.hypothesis_id}`,
+      kind: "repeated_hypothesis",
+      label: "Repeated hypothesis",
+      text: `${repeat.hypothesis_id} repeats ${repeat.repeats}.`,
+    });
+  });
+  validity.experiments
+    .filter((e) => e.classification === "not_exercised")
+    .forEach((e) => {
+      rows.push({
+        key: `undelivered-${e.experiment_id}`,
+        kind: "undelivered_fault",
+        label: "Undelivered fault",
+        text: `The fault chosen for ${e.experiment_id} never fired, so that run tested nothing about it.`,
+      });
+    });
+  const refused = cycles.flatMap((c) => c.proposals).filter((p) => p.status === "rejected_before_execution");
+  if (refused.length) {
+    rows.push({
+      key: "invalid",
+      kind: "invalid_experiment",
+      label: "Invalid experiment",
+      text: `${refused.length} proposal${refused.length === 1 ? " was" : "s were"} refused before running.`,
+    });
+  }
+  return rows;
+}
+
+function ReasoningChecks({ detail, cycles, fixture }: { detail: InvestigationDetail; cycles: Cycle[]; fixture: boolean }) {
+  if (!detail.validity) return null;
+  const reader = fixture ? "fixture" : "model";
+  const rows = reasoningRows(detail, cycles, reader);
+  return (
+    <section aria-labelledby="reasoning-title" className="rf-stack" data-testid="reasoning-checks">
+      <h2 id="reasoning-title" className="rf-section-title">
+        Reasoning checks
+      </h2>
+      <p className="rf-body rf-measure">
+        These compare the {reader}&apos;s reading with the records. They are not Oracle verdicts and change none.
+      </p>
+      {rows.length ? (
+        <ul className="rf-checks">
+          {rows.map((row) => (
+            <li key={row.key} data-testid="reasoning-check" data-kind={row.kind}>
+              <p className="rf-stage-program">
+                <Tag tone="warn">{row.label}</Tag>
+              </p>
+              <p className="rf-body rf-measure">{row.text}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="rf-body" data-testid="reasoning-clean">
+          No check flagged anything in this investigation.
+        </p>
+      )}
+    </section>
+  );
+}
 
 export function cycleHref(id: string, key: string, runId?: string): string {
   return `/investigations/${id}?view=investigator${runId ? `&run=${runId}` : ""}&cycle=${key}#${key}`;
@@ -469,6 +571,8 @@ export function InvestigatorView({
           </div>
         </section>
       ) : null}
+
+      <ReasoningChecks detail={detail} cycles={cycles} fixture={fixture} />
 
       {detail.claim_checks.length ? (
         <section aria-labelledby="checks-title" className="rf-stack">

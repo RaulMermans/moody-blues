@@ -44,6 +44,15 @@ returned `PASS` for all three. The outcome is **no violation found**, a correct 
 exited non-zero (`sandbox_exit_nonzero`) after its target run was under way; that run still finished with a claim.
 The [exact bundle](evidence/live/README.md) is committed.
 
+## Sprint 19: three ways of choosing tests
+
+A controlled local benchmark compared a fixed plan, a seeded random plan and the autonomous Investigator (`qwen3:4b-instruct`) on the same
+candidates and budget, against 14 scripted targets in both worlds. The registered result is **`INCONCLUSIVE`**. The Investigator's headline rate
+was higher, but only because more of its budget was wasted on faults that never fired: it found fewer failures per investigation (1.24, against
+1.93 fixed and 1.69 random) at about 18 times the time. Fault injection, the Oracle and reproduction did the work, with 28 of 28 verified
+failures reproducing. One small model and scripted targets: this does not describe stronger models.
+[Full report](docs/evaluations/sprint-19/report.md).
+
 ## The benchmark result: `NO_DEMONSTRATED_ADVANTAGE`
 
 Adaptive investigation did **not** beat fixed testing. In the registered comparison, fixed testing found a
@@ -238,7 +247,7 @@ pnpm --dir frontend start --hostname 127.0.0.1 --port 3000
 | `make sandbox-clean` | Remove any leftover sandbox containers |
 | `make clean` | Remove caches and build output |
 
-`make world-demo` writes JSON run reports to `.artifacts/world-demo/`. To run a single case,
+`make world-demo` writes JSON run reports to `world-demo/` under `MOODY_ARTIFACTS_DIR`, or a printed scratch directory if that is unset. To run a single case,
 use `uv run moody-blues world-run --scenario phantom-failure --executor blind_retry [--json]`.
 Live smoke output is written to `.artifacts/` (git-ignored). Without a key, the live commands
 exit `2` with `BLOCKED_BY_CREDENTIALS`.

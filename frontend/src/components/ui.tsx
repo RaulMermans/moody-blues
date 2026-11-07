@@ -25,17 +25,19 @@ export function Tag({
   children,
   title,
   testId,
+  wrap = false,
 }: {
   tone?: Tone;
   children: ReactNode;
   title?: string;
   testId?: string;
+  wrap?: boolean; // for a sentence, which would run off a phone screen on one line
 }) {
   return (
     <span
       title={title}
       data-testid={testId}
-      className={`inline-flex items-center whitespace-nowrap border px-1.5 py-0.5 font-mono text-[11px] leading-4 ${TONE_TEXT[tone]}`}
+      className={`inline-flex items-center ${wrap ? "" : "whitespace-nowrap "}border px-1.5 py-0.5 font-mono text-[11px] leading-4 ${TONE_TEXT[tone]}`}
     >
       {children}
     </span>

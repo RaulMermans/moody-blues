@@ -18,6 +18,7 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/experiments/` | Experiment runtime: trusted coordinator, protocol validation, step harness, evidence journal, crash recovery, spend ledger |
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
+| `backend/moody_blues/evaluation/benchmark/` | Strategy benchmark: frozen spec and plan, runner over the existing workflow, analysis from raw evidence, reports |
 | `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
 | `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
@@ -25,7 +26,7 @@ covers Next.js API drift; these rules take precedence.)
 | `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
 | `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
 | `examples/job-queue-agent/` | The same for Job Queue World |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `bench-freeze`, `bench-verify`, `bench-run`, `bench-repro`, `bench-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -185,7 +186,8 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - Ollama is a provider behind `InferencePort`, and nothing more. See ADR 0014 and `docs/external-agents/local-models.md`. Open it
   only through `external/local.py`. Never point `MOODY_VULTR_BASE_URL` at it, and never mix local and paid in one run.
 - `local_ollama` is not `live_provider`, and neither is ever relabeled. Use `MODEL_EVIDENCE` to ask whether a model answered.
-  Registered evaluation and curated recorded cases stay `live_provider` only.
+  The Sprint 6 registered evaluation and curated recorded cases stay `live_provider` only. The Sprint 19 benchmark is its own registration,
+  labeled local, and the two are never combined.
 - The address is literal loopback. Redirects are not followed, proxies are ignored, and only allowlisted models can be selected.
 - A local run never touches the ledger. `LOCAL_POLICY` bounds it instead, and is recorded with the run. Identity comes from the
   running server, never from configuration.
@@ -203,6 +205,7 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
   remove a finding. Read `fault_attributable` and the trace before describing any violation.
 - Reject, never repair: no decoding of malformed tool arguments or editing of generated code. A
   replacement is a new proposal, within limits, and only if the failed one ran no target.
+- A menu choice is a trusted program the model selected, so it stays `developer_script`. One revision per slot, then the slot is forfeited.
 - Keep tool schemas flat. Reservation comes before every model call, and failed calls stay reserved.
 - Reserved evaluation worlds run only after their plan is committed. Their ids and titles stay
   neutral, and expected outcomes never enter a prompt. `offline_fixture` is never model behavior.
@@ -220,6 +223,16 @@ Before declaring a checkpoint: `make check` (all but live Vultr).
 - `w-e1`-`w-e3` are used up: their results are regression evidence. `w-r1`-`w-r3` are used once, by
   their registered test. Do not tune on them and report them as unseen.
 - `make eval-run` and `make eval-repro` are live and chargeable. Suites run one at a time, within the manifest's caps.
+
+**Strategy benchmark**
+- See ADR 0016 and `docs/architecture/benchmark.md`. Freeze and commit before a scored trial. A correction is a new revision with a stated
+  reason, and a frozen spec, plan, result or raw archive is never edited. Pilots are never counted.
+- Strategies share one candidate list, one budget and one probe, through the existing workflow. No second Investigator and no managing agent.
+  A menu shows neutral ids only; expected outcomes, target policies and scenario ids never reach the model. Records keep real ids.
+- Compute metrics from each run's evidence, never from what a model wrote. Decide eligibility without a verdict. Show the attempted rate too.
+- The target policy is the unit: seeds are replicates, averaged inside it. No significance tests. Report `INCONCLUSIVE` when the rule says so.
+- `bench-*` refuses `.artifacts`. Never run a Docker test during a benchmark: its orphan cleanup can remove a live sandbox.
+- Scripted targets say nothing about model-driven agents, and the Investigator's result describes the one model that ran.
 
 **Explorer**
 - Everything shown comes from a real execution or a labeled one. The UI never holds a result, and no
@@ -280,6 +293,8 @@ Purchasing or creating Vultr resources, redeeming credits, deploying, pushing to
 running adversarial experiments against anything but local synthetic environments.
 
 **Environment**
+- A free, repeatable command writes through `rehearsal_artifacts`: an explicit `MOODY_ARTIFACTS_DIR`, or a fresh scratch directory. Only paid
+  commands default to `.artifacts`. A new free command follows the same rule (KI-79).
 - Work from `~/dev/Moody-Blues`. The copy on the iCloud Desktop is the pre-migration original (KI-34):
   do not develop there, and do not delete it without the owner's approval.
 

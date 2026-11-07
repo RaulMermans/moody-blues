@@ -392,6 +392,15 @@ class CommitsThenHangs(_Fixture):
         return AgentResult.not_completed()
 
 
+class QueueCommitsThenHangs(_Fixture):
+    """The queue's version, so a crash can be tested in a second world."""
+
+    def run(self, context: ExecutionContext, tools: ToolClient) -> AgentResult:
+        tools.call("submit_job", **context.task.objective["job"])
+        time.sleep(300)
+        return AgentResult.not_completed()
+
+
 class Measures(_Fixture):
     """Reports its own view of resources, for the benchmark."""
 

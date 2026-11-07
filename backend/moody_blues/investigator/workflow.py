@@ -79,9 +79,11 @@ from moody_blues.investigator.findings import (
     run_finding,
     statement,
 )
+from moody_blues.investigator.menu import ExperimentMenu
 from moody_blues.investigator.model import (
     CONCLUDE_TOOL,
     PROPOSE_TOOL,
+    SELECT_TOOL,
     Decision,
     InvestigatorModel,
     invalid,
@@ -213,9 +215,12 @@ class InvestigationWorkflow:
         capability: TargetCapability | None = None,
         fixed_schedule: Sequence[tuple[str, str]] | None = None,
         repair_unrun_programs: bool = False,
+        menu: ExperimentMenu | None = None,
     ) -> None:
         if request.strategy is not Strategy.FIXED and model is None:
             raise ValueError("this strategy needs a model")
+        if menu is not None and request.strategy is not Strategy.ADAPTIVE:
+            raise ValueError("only the adaptive strategy chooses from a menu")
         if fixed_schedule is not None and request.strategy is not Strategy.FIXED:
             raise ValueError("only the fixed strategy follows a schedule")
         self.request = request
@@ -230,6 +235,7 @@ class InvestigationWorkflow:
         self._world = world_of(request.world_ids)
         self._fixed_schedule = fixed_schedule
         self._repair_unrun_programs = repair_unrun_programs
+        self._menu = menu
         self._limits = request.limits
         self._state = InvestigationState.CREATED
         self._termination: str | None = None
@@ -259,7 +265,7 @@ class InvestigationWorkflow:
             try:
                 match self.request.strategy:
                     case Strategy.ADAPTIVE:
-                        stop = self._adaptive()
+                        stop = self._adaptive() if self._menu is None else self._from_menu()
                     case Strategy.ONE_SHOT:
                         stop = self._one_shot()
                     case Strategy.FIXED:
@@ -369,6 +375,66 @@ class InvestigationWorkflow:
                 self._decide(DecisionKind.REFINE, result.value, proposal_id=proposal.proposal_id)
                 continue
             self._slots_used += 1
+
+    def _from_menu(self) -> _Stop:
+        """The model chooses from the shared list, and spends the whole budget before concluding.
+
+        Each slot allows one revision of a rejected choice, with fixed advice. A second rejection
+        forfeits the slot, so a bad answer costs what a wasted experiment would and stays on the
+        record, and the investigation carries on. There is no other way back to the model.
+        """
+        diagnostic: GenerationDiagnostic | None = None
+        replaces: str | None = None
+        while True:
+            stop = self._guard()
+            if stop is not None:
+                return stop
+            if len(self._calls) >= self._limits.max_model_calls:
+                return _Stop(InvestigationState.BUDGET_EXHAUSTED, "max_model_calls")
+            spent = self._slots_used >= self._limits.max_experiments
+            outcome = self._ask([CONCLUDE_TOOL if spent else SELECT_TOOL], "select", diagnostic)
+            if isinstance(outcome, _Stop):
+                return outcome
+            revision, diagnostic = diagnostic is not None, None
+            if isinstance(outcome, ConcludeInvestigation):
+                return self._accept_conclusion(outcome)
+            if isinstance(outcome, ProposeExperiment):
+                outcome = self._check_proposal(outcome, replaces)
+            if isinstance(outcome, GenerationDiagnostic):
+                proposal_id = self._record_rejected(outcome, replaces)
+                if revision:
+                    self._decide(DecisionKind.INVALID, outcome.problem, proposal_id=proposal_id)
+                    replaces = None
+                    if spent:
+                        return self._plan_finished()
+                    self._slots_used += 1
+                    continue
+                self._refinements_used += 1
+                self._decide(DecisionKind.REFINE, outcome.problem, proposal_id=proposal_id)
+                diagnostic, replaces = outcome, proposal_id
+                self._to_revising()
+                continue
+            self._apply_assessments(outcome.assessments)
+            self._hypotheses[outcome.hypothesis.hypothesis_id] = HypothesisRecord(
+                hypothesis=outcome.hypothesis
+            )
+            candidate = outcome.experiment.label.removeprefix("candidate-")
+            proposal = self._record_generated(
+                outcome.hypothesis, outcome.experiment, replaces, candidate_id=candidate
+            )
+            replaces = None
+            self._decide(
+                DecisionKind.PROPOSE,
+                "model_selected_experiment",
+                hypothesis_id=outcome.hypothesis.hypothesis_id,
+                proposal_id=proposal.proposal_id,
+                cited_observations=list(outcome.experiment.motivated_by),
+            )
+            _, observation = self._execute(proposal, outcome.experiment.python_code)
+            self._slots_used += 1
+            stop = self._stop_for(observation)
+            if stop is not None:
+                return stop
 
     def _one_shot(self) -> _Stop:
         """Every program is written first, then all run. Results reach no model at all."""
@@ -543,7 +609,10 @@ class InvestigationWorkflow:
             diagnostic=diagnostic,
             planning_without_results=planned is not None,
             subject=self._world.investigator_subject(),
+            menu=self._menu.shown(self._candidates_run()) if self._menu is not None else None,
         )
+        if self._menu is not None:
+            context = self._aliased(context, self._menu)
         try:
             messages = build_messages(context)
         except PromptTooLargeError:
@@ -561,7 +630,22 @@ class InvestigationWorkflow:
         self._workspace.journal("model_call_finished", call.record.model_dump(mode="json"))
         if call.result is None:
             return _Stop(InvestigationState.FAILED, "investigator_provider_error")
-        return parse_decision(call.result, offered)
+        return parse_decision(call.result, offered, self._menu)
+
+    def _candidates_run(self) -> list[str]:
+        return [p.candidate_id for p in self._proposals if p.candidate_id is not None]
+
+    def _aliased(self, context: InvestigationContext, menu: ExperimentMenu) -> InvestigationContext:
+        """What the model reads. The records themselves keep real ids."""
+        capability = context.capability.model_copy(
+            update={"worlds": menu.alias_cards(context.capability.worlds)}
+        )
+        return context.model_copy(
+            update={
+                "capability": capability,
+                "observations": [menu.alias_observation(o) for o in context.observations],
+            }
+        )
 
     def _known_observations(self) -> set[str]:
         return {o.observation_id for o in self._observations}
@@ -658,14 +742,21 @@ class InvestigationWorkflow:
         return proposal_id
 
     def _record_generated(
-        self, hypothesis: Hypothesis, experiment: ProposedExperiment, replaces: str | None
+        self,
+        hypothesis: Hypothesis,
+        experiment: ProposedExperiment,
+        replaces: str | None,
+        *,
+        candidate_id: str | None = None,
     ) -> ProposalRecord:
         proposal_id = self._next_proposal_id()
         code = experiment.python_code
         record = ProposalRecord(
             proposal_id=proposal_id,
             model_call_seq=self._calls[-1].seq if self._calls else None,
-            authorship=ExperimentAuthorship.MODEL_GENERATED,
+            authorship=ExperimentAuthorship.MODEL_GENERATED
+            if candidate_id is None
+            else ExperimentAuthorship.DEVELOPER_SCRIPT,
             hypothesis_id=hypothesis.hypothesis_id,
             label=experiment.label,
             rationale=experiment.rationale,
@@ -675,6 +766,7 @@ class InvestigationWorkflow:
             source_path=self._workspace.save_source(proposal_id, code),
             status=ProposalStatus.EXECUTED,
             replaces_proposal_id=replaces,
+            candidate_id=candidate_id,
         )
         self._proposals.append(record)
         return record
