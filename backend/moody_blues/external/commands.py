@@ -301,6 +301,12 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
                 f"    faults selected:  {faults}, delivered {run.target_observed.faults_delivered}"
             )
             print(f"    tool calls:       {len(run.target_observed.tool_trace)}")
+            for entry in run.target_observed.tool_trace:
+                said = "ok" if entry.delivered.ok else "error"
+                if entry.delivered.error is not None:
+                    said = f"error {entry.delivered.error.code}"
+                fault = f"  [fault: {entry.fault_effect}]" if entry.fault_injected else ""
+                print(f"      {entry.call_seq}. {entry.tool}: the tool said {said}{fault}")
             if record.model_requests:
                 states = ", ".join(r.status.value for r in record.model_requests)
                 print(f"    model calls:      {record.model_calls} brokered ({states})")
@@ -308,6 +314,8 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
             print(f"    agent reported:   {claim.status.value if claim else 'no valid report'}")
             print(f"    committed new:    {len(run.committed.new_ids)} record(s)")
             print(f"    Oracle verdict:   {run.oracle.verdict.value}")
+            for invariant in run.oracle.invariants_violated:
+                print(f"      broken:         {invariant}")
             print(f"    run outcome:      {run.run_outcome}")
             print(f"    evidence:         {artifacts / 'experiments' / evidence.experiment_id}")
     print(f"  investigation {report.investigation_id}: {report.statement}")
@@ -316,8 +324,8 @@ def _print_run(report: InvestigationReport, artifacts: Path, job_id: str | None)
     )
     print(f"  evidence verification: {problems or 'intact'}")
     if job_id is not None:
-        print(f"  published as {job_id}. With MOODY_ARTIFACTS_DIR={artifacts}, `make dev` and the")
-        print("  operator token, open:")
+        print(f"  published as {job_id}. To open it: `make dev` with this evidence directory,")
+        print("  sign in on http://127.0.0.1:3000/operator with `make local-token`, then open")
         print(f"  http://127.0.0.1:3000/investigations/{report.investigation_id}")
 
 
@@ -412,6 +420,10 @@ def run(
 ) -> int:
     if live_inference and local_inference:
         print(json.dumps({"status": "FAIL", "reason": _ONE_PROVIDER}, indent=2))
+        return 1
+    if fault is not None and not local_inference:
+        # Without a local model the rehearsal plan chooses the faults. Never ignore a request.
+        print(json.dumps({"status": "FAIL", "reason": "--fault needs --local-inference"}, indent=2))
         return 1
     if world not in runnable_worlds():
         # Evaluation and reserved worlds have registered meaning, and are never run from here.

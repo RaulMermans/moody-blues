@@ -1,6 +1,6 @@
 [project]
 name = "moody-blues-sdk"
-version = "0.1.0"
+version = "0.1.1"
 description = "Connect your own agent to a MOODY BLUES investigation over the mb-agent/1 protocol."
 readme = "README.md"
 requires-python = ">=3.12"

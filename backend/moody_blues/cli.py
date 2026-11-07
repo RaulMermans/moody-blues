@@ -2,6 +2,7 @@
 
 Commands:
   doctor        Check local prerequisites and configuration (no chargeable calls).
+  evidence-verify  Check a directory of evidence. Reads only.
   docker-smoke  Run the fixed smoke program in a real disposable container.
   vultr-smoke   LIVE: basic inference + tool calling against Vultr (chargeable).
   vultr-models  LIVE: list models visible to the configured key.
@@ -43,7 +44,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from moody_blues.config import Settings
 from moody_blues.contracts.sandbox import SandboxLimits, SandboxRequest
-from moody_blues.explorer.paths import default_artifacts, rehearsal_artifacts
+from moody_blues.explorer.paths import LOCAL_ARTIFACTS, default_artifacts, rehearsal_artifacts
 from moody_blues.inference import smoke as vultr_smoke
 from moody_blues.sandbox.base import SandboxError
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
@@ -75,6 +76,9 @@ def _version(cmd: Sequence[str]) -> str | None:
         return None
     text = (out.stdout or out.stderr).strip().splitlines()
     return text[0] if out.returncode == 0 and text else None
+
+
+MIN_DOCKER_MEMORY = 2_000 * 2**20  # 2 GB, in MiB as a VM reports it: a little under 2 GiB is fine
 
 
 def doctor(settings: Settings) -> int:
@@ -111,11 +115,19 @@ def doctor(settings: Settings) -> int:
             OK,
             f"reachable at {runner.docker_host} (via {runner.docker_host_source})",
         )
+        client = runner._docker()  # pyright: ignore[reportPrivateUsage]
         try:
-            runner._docker().images.get(settings.sandbox_image)  # pyright: ignore[reportPrivateUsage]
-            check("sandbox-image", OK, f"{settings.sandbox_image} present")
-        except Exception:  # noqa: BLE001 - diagnostic only, reported as WARN
-            check("sandbox-image", WARN, f"{settings.sandbox_image} not pulled (auto-pulled)")
+            client.images.get(settings.generated_code_image)
+            check("sandbox-image", OK, "pinned image present")
+        except Exception:  # noqa: BLE001 - diagnostic only, reported as a failed check
+            # Agents run only on this image, and it is never pulled implicitly.
+            check("sandbox-image", FAIL, "pinned image missing: run `make sandbox-image`")
+        memory = int(client.info().get("MemTotal", 0))
+        check(
+            "docker-memory",
+            OK if memory >= MIN_DOCKER_MEMORY else FAIL,
+            f"{memory / 2**30:.1f} GiB available to the daemon (2 GiB required)",
+        )
         leftovers = runner.list_sandbox_containers()
         check(
             "sandbox-cleanup",
@@ -525,6 +537,22 @@ def experiment_live(settings: Settings, args: argparse.Namespace) -> int:
     return 3 if evidence.status.value == "budget_exhausted" else 0
 
 
+def evidence_verify(settings: Settings, directory: Path | None) -> int:
+    """Reads a directory of evidence and writes nothing. Exit 0 only if something was checked."""
+    from moody_blues.explorer.integrity import audit_artifacts, print_audit
+
+    root = directory or settings.artifacts_dir or REPO_ROOT / LOCAL_ARTIFACTS
+    if not root.is_dir():
+        print(f"{root} does not exist. Run `make quickstart`, or pass --dir.")
+        return 2
+    audit = audit_artifacts(root)
+    print_audit(audit, root)
+    if audit.investigations == 0:
+        print("No investigations were found there, so nothing was verified.")
+        return 2
+    return 0 if audit.intact else 1
+
+
 def experiment_recover(settings: Settings) -> int:
     from moody_blues.experiments.recovery import recover_interrupted
     from moody_blues.investigator.workspace import recover_investigations
@@ -864,6 +892,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     lp.add_argument("--smoke", action="store_true", help="also generate once, on this machine")
     sub.add_parser("recorded-export")
     sub.add_parser("recorded-verify")
+    ev = sub.add_parser("evidence-verify")
+    ev.add_argument("--dir", type=Path, help="default: MOODY_ARTIFACTS_DIR, then .moody-local")
     sub.add_parser("containment-report")
     sub.add_parser("ledger-verify")
     sub.add_parser("investigator-preflight")
@@ -955,6 +985,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return recorded_export(settings)
         case "recorded-verify":
             return recorded_verify(settings)
+        case "evidence-verify":
+            return evidence_verify(settings, args.dir)
         case "containment-report":
             return containment_report(settings)
         case "ledger-verify":

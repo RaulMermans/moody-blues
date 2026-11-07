@@ -120,7 +120,8 @@ def test_evidence_names_the_real_environment(settings: Settings, tmp_path: Path)
     run = _runs(tmp_path / "a", report)[0]
     record = run.external
     assert record is not None
-    assert record.environment is not None
+    # When the sandbox did not start, the reason is in the run's error. Say it (KI-80).
+    assert record.environment is not None, f"the sandbox never started: {run.error}"
     assert record.exit is not None
     assert run.target_kind == "external_agent"
     assert run.evidence_source == "external_scripted"

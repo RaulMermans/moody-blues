@@ -10,6 +10,8 @@ from pathlib import Path
 from moody_blues.config import Settings
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+# Where `make quickstart` and `make dev` keep disposable local runs. Git-ignored, never canonical.
+LOCAL_ARTIFACTS = ".moody-local"
 
 
 def default_artifacts() -> Path:

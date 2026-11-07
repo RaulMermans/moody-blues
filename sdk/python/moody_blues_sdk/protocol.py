@@ -13,7 +13,7 @@ from collections.abc import Callable
 from typing import Any, BinaryIO
 
 PROTOCOL_VERSION = "mb-agent/1"
-SDK_VERSION = "0.1.0"
+SDK_VERSION = "0.1.1"
 MAX_MESSAGE_BYTES = 65_536
 
 Message = dict[str, Any]
