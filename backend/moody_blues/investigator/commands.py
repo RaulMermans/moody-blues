@@ -88,11 +88,8 @@ PAIR_SEED_WORLDS = {WorldTier.VALIDATION: "w-v1", WorldTier.EVALUATION: "w-e3"}
 
 
 def preflight(settings: Settings) -> int:
+    """Prints its report and writes nothing (KI-84). Every paid command checks again for itself."""
     report = run_preflight(settings)
-    INVESTIGATIONS.mkdir(parents=True, exist_ok=True)
-    (INVESTIGATIONS / "preflight.json").write_text(
-        report.model_dump_json(indent=2) + "\n", encoding="utf-8"
-    )
     print(report.model_dump_json(indent=2))
     return 0 if report.status == "PASS" else 1
 

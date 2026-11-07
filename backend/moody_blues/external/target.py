@@ -327,6 +327,11 @@ class ExternalAgentTarget:
                 max_line_bytes=MAX_AGENT_MESSAGE_BYTES,
             )
         except SandboxError as exc:
+            # Not an agent's doing, and otherwise visible only inside the evidence (KI-80).
+            log.warning(
+                "sandbox_session_failed",
+                extra={"run_id": context.run_id, "reason": exc.detail.message},
+            )
             never = DriverOutcome(
                 events=[
                     AdapterEvent(

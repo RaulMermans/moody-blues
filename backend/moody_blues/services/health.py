@@ -8,9 +8,11 @@ state stays ``configured_unverified`` until an explicit smoke test is run.
 
 from __future__ import annotations
 
+import re
 import time
 from datetime import UTC, datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
@@ -37,10 +39,25 @@ class IntegrationStatus(BaseModel):
     checked_at: datetime | None = None  # set only when a real check ran
 
 
+# Written into a release directory by infra/vultr/remote-install.sh, and absent from a checkout.
+REVISION_FILE = Path(__file__).resolve().parents[3] / "REVISION"
+_COMMIT = re.compile(r"[0-9a-f]{40}")
+
+
+def release_revision(path: Path = REVISION_FILE) -> str | None:
+    """The deployed commit. Only a commit id, and only from a file no request can reach."""
+    try:
+        text = path.read_text(encoding="ascii").strip()
+    except (OSError, UnicodeDecodeError):
+        return None
+    return text if _COMMIT.fullmatch(text) else None
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok"]
     service: Literal["moody-blues-backend"] = "moody-blues-backend"
     version: str
+    revision: str | None = None
     environment: str
     uptime_seconds: float
     integrations: list[IntegrationStatus]
@@ -70,6 +87,7 @@ def health(settings: Settings) -> HealthResponse:
     return HealthResponse(
         status="ok",
         version=__version__,
+        revision=release_revision(),
         environment=settings.environment,
         uptime_seconds=round(time.monotonic() - _STARTED, 3),
         integrations=[

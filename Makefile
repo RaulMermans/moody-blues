@@ -7,7 +7,8 @@ PNPM    ?= pnpm
 FE      := frontend
 PYTEST  := $(UV) run pytest
 
-.PHONY: design-lab test-design help setup dev dev-backend dev-frontend lint format typecheck test test-integration \
+.PHONY: design-lab test-design help prereqs setup setup-test sandbox-image quickstart clean-local local-token \
+        evidence-verify dev dev-backend dev-frontend lint format typecheck test test-integration \
         test-e2e build check doctor world-demo docker-smoke vultr-smoke vultr-models agent-run agent-eval \
         experiment-demo experiment-test experiment-containment experiment-live experiment-recover \
         investigator-preflight investigator-demo investigator-test investigator-containment \
@@ -22,18 +23,40 @@ PYTEST  := $(UV) run pytest
 help: ## List commands
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n",$$1,$$2}'
 
-setup: ## Install Python + Node deps (from lockfiles) and the Playwright browser
+prereqs: ## Check the platform, tools, disk and Docker. Needs nothing installed; changes nothing
+	@scripts/check-prereqs.sh
+
+setup: ## Install Python and Node dependencies from the lockfiles (run again at any time)
+	@scripts/check-prereqs.sh --no-docker
 	$(UV) sync --frozen
 	$(PNPM) --dir $(FE) install --frozen-lockfile
+
+setup-test: setup ## Also install the Playwright browser. Only the browser test suites need it
 	$(PNPM) --dir $(FE) exec playwright install chromium
 
-dev: ## Run backend (:8000) and frontend (:3000) together; Ctrl-C stops both
-	@trap 'kill 0' EXIT INT TERM; \
+sandbox-image: ## Pull the digest-pinned sandbox image. Nothing else ever pulls it
+	@image="$$($(UV) run python -c 'from moody_blues.config import Settings; print(Settings(_env_file=None).generated_code_image)')"; \
+	docker image inspect "$$image" >/dev/null 2>&1 && { echo "already present: $$image"; exit 0; }; \
+	docker pull "$$image"
+
+quickstart: ## First reliability test: two scripted agents, one fault, real sandboxes and Oracle. Free
+	@scripts/quickstart.sh
+
+clean-local: ## Remove .moody-local, and nothing else
+	@scripts/clean-local.sh
+
+local-token: ## Print the operator token that opens your local runs on /operator
+	@eval "$$(scripts/local-env.sh)"; echo "$${MOODY_OPERATOR_TOKEN:-set by you in .env}"
+
+dev: ## Run backend (:8000) and frontend (:3000) on .moody-local; Ctrl-C stops both
+	@trap 'trap - EXIT INT TERM; kill 0' EXIT INT TERM; \
 	$(MAKE) --no-print-directory dev-backend & \
 	$(MAKE) --no-print-directory dev-frontend & \
 	wait
 
-dev-backend: ## Run FastAPI with reload on :8000
+dev-backend: ## Run FastAPI with reload on :8000. MOODY_ARTIFACTS_DIR chooses another dataset
+	@eval "$$(scripts/local-env.sh)"; \
+	echo "Evidence directory: $${MOODY_ARTIFACTS_DIR:-from .env}. To open your own runs: make local-token"; \
 	$(UV) run uvicorn moody_blues.main:app --reload --reload-dir backend --host 127.0.0.1 --port 8000
 
 dev-frontend: ## Run Next.js dev server on :3000
@@ -61,13 +84,13 @@ test-integration: ## Docker sandbox integration + containment tests (needs a Doc
 external-preflight: ## Check an external agent's manifest and handshake in the real sandbox (MANIFEST=path)
 	$(UV) run moody-blues external-preflight --manifest $(MANIFEST)
 
-external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd. LOCAL=1 uses Ollama, FAULT=none|phantom_failure|phantom_success)
-	$(UV) run moody-blues external-run --manifest $(MANIFEST) $(if $(WORLD),--world $(WORLD)) \
+external-run: ## Run an external agent through a rehearsal investigation (MANIFEST=path; free unless LIVE=1 CONFIRM=1 SPEND=usd. LOCAL=1 uses Ollama, and FAULT=none|phantom_failure|phantom_success with it)
+	@$(if $(LIVE),,eval "$$(scripts/local-env.sh)";) $(UV) run moody-blues external-run --manifest $(MANIFEST) $(if $(WORLD),--world $(WORLD)) \
 		$(if $(LIVE),--live-inference) $(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND)) \
 		$(if $(LOCAL),--local-inference) $(if $(FAULT),--fault $(FAULT))
 
 external-investigate: ## The real Investigator workflow against one target (TARGET=external_scripted|external_llm|internal_llm MANIFEST=path WORLD=name). Free: models are labeled fixtures, or local with LOCAL=1 LOCAL_INVESTIGATOR=1
-	$(UV) run moody-blues external-investigate --target $(TARGET) $(if $(MANIFEST),--manifest $(MANIFEST)) \
+	@$(if $(LIVE)$(LIVE_INVESTIGATOR),,eval "$$(scripts/local-env.sh)";) $(UV) run moody-blues external-investigate --target $(TARGET) $(if $(MANIFEST),--manifest $(MANIFEST)) \
 		$(if $(WORLD),--world $(WORLD)) $(if $(LIVE),--live-inference) $(if $(LIVE_INVESTIGATOR),--live-investigator) \
 		$(if $(CONFIRM),--confirm-billable) $(if $(SPEND),--approved-spend-usd $(SPEND)) \
 		$(if $(LOCAL),--local-inference) $(if $(LOCAL_INVESTIGATOR),--local-investigator)
@@ -240,6 +263,9 @@ recorded-export: ## Rebuild the curated recorded investigations from local .arti
 
 recorded-verify: ## Verify recorded investigations against the manifest and, if present, source (free)
 	$(UV) run moody-blues recorded-verify
+
+evidence-verify: ## Check the evidence in DIR=path, or .moody-local. Reads only (free)
+	$(UV) run moody-blues evidence-verify $(if $(DIR),--dir $(DIR))
 
 live-budget: ## Show the application-side spend ledger (an estimate; makes no calls)
 	$(UV) run moody-blues live-budget

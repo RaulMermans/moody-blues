@@ -15,6 +15,7 @@ uv sync --frozen --no-dev
   pnpm install --frozen-lockfile
   NEXT_TELEMETRY_DISABLED=1 pnpm build
 )
+echo "$sha" > "$release/REVISION" # shown by /health, so what is live can be read from outside
 chown -R root:root "$release"
 chmod -R go-w "$release"
 chown -R moody-web:moody-web frontend/.next

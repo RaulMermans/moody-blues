@@ -33,6 +33,7 @@ playwright/.cache/
 
 # Local artifacts
 .artifacts/
+.moody-local/
 *.log
 
 # OS / editors

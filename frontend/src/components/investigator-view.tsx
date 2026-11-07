@@ -529,6 +529,10 @@ export function InvestigatorView({
           <h2 id="journey-title" className="rf-section-title">
             What the Investigator did
           </h2>
+          <p className="rf-data" data-testid="investigator-experimental">
+            Experimental AI-assisted investigation. Its effectiveness has not been shown to exceed simpler testing
+            strategies in the registered evaluation. Verdicts come from the Oracle, never from the Investigator.
+          </p>
           <ol aria-label="Each step runs in this order" className="rf-flow">
             {FLOW.map((stage) => (
               <li key={stage}>{stage}</li>

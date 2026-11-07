@@ -1,9 +1,13 @@
 [project]
 name = "moody-blues-sdk"
-version = "0.1.0"
+version = "0.1.1"
 description = "Connect your own agent to a MOODY BLUES investigation over the mb-agent/1 protocol."
 readme = "README.md"
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = []  # Standard library only: it has to run inside a bare, network-less sandbox.
 
 [build-system]

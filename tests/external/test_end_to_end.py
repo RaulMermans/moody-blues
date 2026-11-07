@@ -82,7 +82,7 @@ def test_evidence_is_complete(example_run: Run, name: str) -> None:
     assert record is not None
     assert record.agent_id == f"acme-crm-{name}"
     assert record.protocol == "mb-agent/1"
-    assert record.sdk_version == "0.1.0"
+    assert record.sdk_version == "0.1.1"
     assert record.environment is not None
     assert record.environment.execution_mode == "local_process_test_double"
     assert record.environment.network_enabled is False

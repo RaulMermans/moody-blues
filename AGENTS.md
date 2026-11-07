@@ -19,14 +19,15 @@ covers Next.js API drift; these rules take precedence.)
 | `backend/moody_blues/investigator/` | Investigator: deterministic workflow around one model, prompt building, observations, findings, generated-code preflight, evaluation |
 | `backend/moody_blues/evaluation/` | Registered evaluation: manifests and frozen plans, trial eligibility, attribution, adaptation scoring, hash-chained journals, reports, evidence audit |
 | `backend/moody_blues/evaluation/benchmark/` | Strategy benchmark: frozen spec and plan, runner over the existing workflow, analysis from raw evidence, reports |
-| `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker |
+| `backend/moody_blues/explorer/` | Investigation Explorer: evidence projection, sanitizing, recorded export, evidence store, mission catalog, operator job worker, the read-only evidence check (`integrity.py`) |
 | `evidence/recorded/` | Committed, hash-pinned recorded investigations. Rebuilt by `make recorded-export`, never hand-edited |
 | `backend/moody_blues/agents/` | Target Agent: bounded LLM tool loop (`target.py`), tool validation (`tooling.py`), baseline/hardened policies (`policies.py`) |
 | `backend/moody_blues/external/` | External agents: manifest and bundle, `mb-agent/1` parsing, the driver and model broker, `ExternalAgentTarget`, validated target selection, the labeled agent model fixture, commands |
 | `sdk/python/` | The SDK an external agent is written against. Standard library only; it runs inside the sandbox |
 | `examples/external-agent/` | A standalone example agent. Imports the SDK and nothing of the backend |
 | `examples/job-queue-agent/` | The same for Job Queue World |
-| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `bench-freeze`, `bench-verify`, `bench-run`, `bench-repro`, `bench-report`, `recorded-export`, `recorded-verify`, `containment-report`, `ledger-verify`, `live-budget` |
+| `scripts/` | Local setup: `check-prereqs.sh`, `local-env.sh`, `quickstart.sh`, `clean-local.sh`. Bash only, and free of side effects outside `.moody-local` |
+| `backend/moody_blues/cli.py` | `doctor`, `docker-smoke`, `vultr-smoke`, `vultr-models`, `world-demo`, `world-run`, `agent-run`, `agent-eval`, `experiment-demo`, `experiment-live`, `experiment-recover`, `external-preflight`, `external-run`, `external-investigate`, `external-demo`, `local-preflight`, `investigator-preflight`, `investigator-demo`, `investigator-live`, `investigator-eval`, `investigator-repro`, `evidence-audit`, `eval-freeze`, `eval-verify`, `eval-freeze-followup`, `eval-run`, `eval-repro`, `eval-report`, `bench-freeze`, `bench-verify`, `bench-run`, `bench-repro`, `bench-report`, `recorded-export`, `recorded-verify`, `evidence-verify`, `containment-report`, `ledger-verify`, `live-budget` |
 | `frontend/` | Next.js UI; talks to the backend only via server-side route handlers |
 | `tests/unit` | Offline, no Docker, no network |
 | `tests/world` | World Engine against real SQLite files; offline; part of `make test` |
@@ -295,10 +296,19 @@ running adversarial experiments against anything but local synthetic environment
 **Environment**
 - A free, repeatable command writes through `rehearsal_artifacts`: an explicit `MOODY_ARTIFACTS_DIR`, or a fresh scratch directory. Only paid
   commands default to `.artifacts`. A new free command follows the same rule (KI-79).
+- `make dev`, `make quickstart`, and free `make external-*` runs use the disposable `.moody-local` through `scripts/local-env.sh`, unless
+  `MOODY_ARTIFACTS_DIR` is set. A ledger belongs to its directory, so live runs stay off there. To work on real records, set the directory.
+- `evidence-verify` writes nothing, anywhere. Keep it that way: no `mkdir`, no lock, no `JobStore`, no `rehearsal_artifacts`.
 - Work from `~/dev/Moody-Blues`. The copy on the iCloud Desktop is the pre-migration original (KI-34):
   do not develop there, and do not delete it without the owner's approval.
 
+**Product claims**
+- Lead with testing, verification and evidence. The Investigator is experimental AI-assisted investigation, and every page says so. Never
+  drop or soften its benchmark results. `docs/evaluation-and-limitations.md` holds the current claims; `docs/submission/` and sprint records
+  are history and are not rewritten.
+
 **Docs**
+- `docs/installation.md` is the only authoritative install page. Link to it, and do not repeat it.
 - Keep README, this file and `docs/` in sync with the code in the same change.
 - Record recurring problems in `docs/troubleshooting/known-issues.md`.
 - Record significant decisions as ADRs in `docs/adr/`.

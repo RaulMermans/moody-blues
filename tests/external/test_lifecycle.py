@@ -47,7 +47,7 @@ def test_valid_handshake(fixture_run: Run) -> None:
     record = _record(result)
     assert AdapterEventKind.HANDSHAKE_ACCEPTED in _kinds(result)
     assert record.startup_ms is not None
-    assert record.sdk_version == "0.1.0"
+    assert record.sdk_version == "0.1.1"
     assert result.termination == T.FINAL_CLAIM.value
 
 
@@ -120,6 +120,29 @@ class _NoDocker:
 
     def ping(self) -> None:
         return None
+
+
+def test_a_sandbox_that_cannot_start_says_why_in_the_log(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """KI-80: this was silent, so a CI failure left only ``environment=None`` to go on."""
+    target = ExternalAgentTarget(
+        runner=_NoDocker(),
+        bundle=build_bundle(fixture_manifest(tmp_path, "Succeeds")),
+        sandbox_limits=LIMITS,
+    )
+    with caplog.at_level("WARNING", logger="moody_blues.external"):
+        target.run(
+            TargetRequest(
+                scenario=load_scenario("normal-success"),
+                config=AgentConfigName.BASELINE,
+                world_root=tmp_path,
+                max_wall_seconds=30,
+                cancel=Event(),
+            )
+        )
+    reasons = [getattr(r, "reason", "") for r in caplog.records]
+    assert "the daemon went away" in reasons
 
 
 def test_a_sandbox_that_cannot_start_is_recorded_not_raised(tmp_path: Path) -> None:

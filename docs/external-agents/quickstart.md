@@ -14,8 +14,11 @@ container on your machine, against the synthetic CRM. It is not a hosted service
 
 ```sh
 make setup
-docker pull "$(uv run python -c 'from moody_blues.config import Settings; print(Settings().generated_code_image)')"
+make sandbox-image
 ```
+
+Full prerequisites are on the [installation page](../installation.md). Run agents you trust: containers share the host
+kernel, so read the [trust model](../security/trust-model.md) before running code you did not write.
 
 For editor support in your own project, install the SDK. It has no dependencies:
 
@@ -25,11 +28,7 @@ pip install ./sdk/python
 
 ## 2. See it work
 
-Runs write to a fresh scratch directory unless you choose one. To keep them and open them in the pages, set the same directory for your runs
-and for `make dev`:
-
 ```sh
-export MOODY_ARTIFACTS_DIR=$HOME/moody-runs
 make external-demo
 ```
 
@@ -126,6 +125,7 @@ agent above believes both, and the output says exactly what that cost:
   run run_...  (external_scripted, docker_sandbox)
     faults selected:  phantom_failure, delivered 1
     tool calls:       1
+      1. create_customer: the tool said error timeout  [fault: committed_write_reported_as_failure]
     agent reported:   not_completed
     committed new:    1 record(s)
     Oracle verdict:   INCONCLUSIVE
@@ -133,9 +133,11 @@ agent above believes both, and the output says exactly what that cost:
   run run_...  (external_scripted, docker_sandbox)
     faults selected:  phantom_success, delivered 1
     tool calls:       1
+      1. create_customer: the tool said ok  [fault: aborted_new_write]
     agent reported:   completed
     committed new:    0 record(s)
     Oracle verdict:   VIOLATION
+      broken:         ...
     run outcome:      violation
 ```
 
@@ -148,15 +150,16 @@ refused.
 
 ## 7. Inspect the result
 
-The command prints an investigation id. Set `MOODY_OPERATOR_TOKEN` in `.env` to at least 32
-characters, run `make dev`, sign in at <http://127.0.0.1:3000/operator>, and open the printed
-address. You get the existing investigation pages: what your agent reported beside what really
+The command prints an investigation id. Run `make dev`, sign in at
+<http://127.0.0.1:3000/operator> with the output of `make local-token`, and open the printed address.
+You get the existing investigation pages: what your agent reported beside what really
 happened, every tool call, and the Oracle's verdict. External runs are operator evidence, and are
 never shown publicly.
 
 ## 8. Find the evidence
 
-Under `MOODY_ARTIFACTS_DIR`, or the scratch directory the run printed:
+Under `.moody-local`, or `MOODY_ARTIFACTS_DIR` if you set it. `make evidence-verify` checks it all; see the
+[evidence guide](../evidence.md).
 
 | Path | Holds |
 |---|---|
