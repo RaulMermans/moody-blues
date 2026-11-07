@@ -352,6 +352,7 @@ def test_the_default_generated_code_image_is_pinned() -> None:
 
 def test_the_free_preflight_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """KI-84: it overwrote a file in the canonical directory on every run."""
+
     def dump(indent: int) -> str:
         return "{}"
 
