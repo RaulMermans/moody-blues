@@ -35,3 +35,4 @@ First version intended for developers beyond the project's author. Release statu
 - `--fault` was silently ignored without `--local-inference`. It is now refused.
 - Verifying evidence that no longer parsed crashed instead of reporting it.
 - A sandbox that failed to start left no trace in the log (KI-80).
+- Stopping `make dev` segfaulted bash on Linux and left a `core` file (KI-83).

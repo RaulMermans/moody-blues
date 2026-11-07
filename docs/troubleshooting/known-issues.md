@@ -518,3 +518,8 @@ step in the quickstart. It is now a finding.
 
 It checked `sandbox_image`, the unpinned tag, while agents and generated code run only on `generated_code_image`, which is never pulled implicitly.
 `doctor` now checks the pinned image and fails if it is missing. `make sandbox-image` pulls it.
+
+### KI-83: Stopping `make dev` segfaulted bash and left a `core` file
+
+`trap 'kill 0' EXIT INT TERM` signals the shell too, which runs the trap again, until bash overflows its stack. Found by the Sprint 20 clean Linux
+run, as a 24 MB `core` in the checkout. The trap now clears itself first. Verified on Ubuntu 24.04 with `SIGINT` and `SIGTERM`: no core, nothing left running.

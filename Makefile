@@ -49,7 +49,7 @@ local-token: ## Print the operator token that opens your local runs on /operator
 	@eval "$$(scripts/local-env.sh)"; echo "$${MOODY_OPERATOR_TOKEN:-set by you in .env}"
 
 dev: ## Run backend (:8000) and frontend (:3000) on .moody-local; Ctrl-C stops both
-	@trap 'kill 0' EXIT INT TERM; \
+	@trap 'trap - EXIT INT TERM; kill 0' EXIT INT TERM; \
 	$(MAKE) --no-print-directory dev-backend & \
 	$(MAKE) --no-print-directory dev-frontend & \
 	wait
