@@ -2,7 +2,7 @@
 
 | Asset | Location | State |
 |---|---|---|
-| Copy | [copy.md](copy.md) | Draft; limits unconfirmed |
+| Copy | [FINAL-SUBMISSION.md](FINAL-SUBMISSION.md), which supersedes [copy.md](copy.md) | Final; limits from the official guidelines |
 | Claim sources | [claims.md](claims.md) | Done |
 | Video script and shot list | [video-script.md](video-script.md) | Done |
 | Video | `.artifacts/submission/video/moody-blues-demo.mp4`, 4:30, 1080p, 28.3 MB | Built from the public site |
@@ -28,8 +28,5 @@ python3 docs/submission/tools/build_video.py $S/shots $S/deck $S/video
 
 ## Remaining owner steps
 
-1. Make the repository public: `gh repo edit RaulMermans/moody-blues --visibility public --accept-visibility-change-consequences`.
-   Then open it in a private window. Until then the site's GitHub link and the deck's link return 404.
-2. Rotate the account key ([checklist](../security/key-rotation.md)).
-3. Sign in to lablab, check limits and tags against [copy.md](copy.md), attach the video and deck, and submit
-   before 2026-11-08 22:00 UTC.
+The authoritative entry, with the checked form limits, is [FINAL-SUBMISSION.md](FINAL-SUBMISSION.md). Its "Submitting"
+section lists the steps. The repository has been public since 2026-11-06.

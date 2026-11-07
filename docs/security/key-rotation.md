@@ -1,6 +1,13 @@
 # Key rotation and cleanup
 
-Owner actions. Nothing here has been done. Do not revoke a key until the step before it is confirmed.
+Owner actions. Do not revoke a key until the step before it is confirmed.
+
+**Status on 2026-11-07: `OWNER_CONFIRMATION_REQUIRED`, with no sign that rotation happened.** This was checked from variable
+names, lengths and an in-process equality test only. No value was displayed. Both `.env` files still set `VULTR_API_KEY` and
+`MOODY_VULTR_API_KEY`, the values are identical in the two files, and neither file has changed since 2026-11-05. Step 2 below
+would have changed `~/dev/Moody-Blues/.env`, and step 5 would have removed the lines from the iCloud copy. Only the Vultr
+console can confirm whether the old keys are revoked. Production does not expose inference: `/api/status` reports
+`vultr_inference: not_configured`, and gitleaks finds nothing in the git history or the submission assets.
 
 ## Where the keys are
 
