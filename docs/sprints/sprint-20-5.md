@@ -15,6 +15,8 @@
 - **Page titles.** Every page was titled "MOODY BLUES", so tabs, history and screen readers could not tell them apart
   (WCAG 2.4.2). Now: "Containment · MOODY BLUES", "Run a test · MOODY BLUES", "Investigation · MOODY BLUES"; the landing
   page is unchanged. One e2e assertion added.
+- **GitHub license detection.** With the font exception appended, GitHub reported the license as "Other". `LICENSE` now holds
+  only the MIT text; the README names the OFL exception. Fixed in a follow-up pull request.
 - **KI-85.** Gitleaks on the iCloud copy scanned 28 of 156 commits and still said "no leaks found". Recorded with the workaround.
 
 ## Checks
