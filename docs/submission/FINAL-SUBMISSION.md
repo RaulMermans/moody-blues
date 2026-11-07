@@ -122,14 +122,15 @@ the 128 MB cap, process limits, time limits, reading planted secrets (0 of 2 fou
 
 ## What the demo shows, and what it does not
 
-- The site runs revision `6405817`, from Sprint 13. Later work, including Job Queue World and the external agent SDK, is in
-  the repository only. Do not present it as part of the demo.
+- The site runs current `main`. It was redeployed on 2026-11-07 at the owner's request, from `6405817` to `9a3f263`, and
+  `/api/status` reports the exact `revision`. Agents connect through the SDK and command line, not the website, so present
+  external agents as a repository feature, not a demo feature.
 - The site is read-only: five recorded investigations, Reality Comparison, Oracle verdicts, raw evidence and the containment
   report. Viewing it makes no paid model calls, and live mode is off.
 - The hosted live run `inv_cbd07a262444` is operator-only on the site. It is shown in the video, and its exact bundle is
   public in `evidence/live/`.
-- The video and deck were captured on 2026-11-05 from the same host, before the Sprint 11 to 13 redesign. The
-  investigations, verdicts and numbers are the same, but the visual design differs from today's site.
+- The video and deck were captured on 2026-11-05 from the same host, before the later redesigns. The investigations,
+  verdicts and numbers are the same, but the visual design differs from today's site.
 
 ## Claims and their sources
 

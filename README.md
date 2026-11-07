@@ -166,8 +166,8 @@ the project as an experimental option. [Evaluation and limitations](docs/evaluat
 
 ## Vultr infrastructure (Vultr Agent Rush, Blast Radius Zero)
 
-The [hosted demo](https://45-63-119-197.sslip.io) runs entirely on Vultr. It serves revision `6405817`, from November 2026,
-so it does not show everything described above.
+The [hosted demo](https://45-63-119-197.sslip.io) runs entirely on Vultr. It is redeployed from `main` after each
+change, and `/api/status` reports the exact `revision` it serves.
 
 | Vultr service | What it does here |
 |---|---|
@@ -187,8 +187,7 @@ evidence, so viewing the demo costs nothing. [Deployment guide](docs/deployment/
 ## Documentation
 
 [Documentation index](docs/README.md). This project began at the Vultr Agent Rush hackathon; that history and its
-[hosted demo](https://45-63-119-197.sslip.io) are [recorded separately](docs/README.md#project-history). The demo runs an
-earlier revision, so it does not show everything described here.
+[hosted demo](https://45-63-119-197.sslip.io) are [recorded separately](docs/README.md#project-history).
 
 ## Contributing
 

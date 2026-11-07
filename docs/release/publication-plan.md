@@ -52,7 +52,8 @@ SDK, from a checkout of the tag: `uv build sdk/python`, or `pip install ./sdk/py
 
 ## Public demo: two options
 
-The site runs commit `6405817` (Sprint 13), read from the release symlink on the VM on 2026-11-07. `main` is well ahead of it.
+**Decided 2026-11-07: Option B, at the owner's request.** `9a3f263` was deployed with `make release`, replacing `6405817`.
+The hosted tests passed (14 passed, and 2 skipped: operator sign-in and the paid live run). Rollback: `infra/vultr/rollback.sh 45.63.119.197`.
 
 ### Option A: keep the hackathon deployment unchanged (recommended until judging ends)
 
