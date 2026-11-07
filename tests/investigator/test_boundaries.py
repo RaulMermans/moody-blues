@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -25,6 +26,7 @@ from moody_blues.contracts.oracle import Verdict
 from moody_blues.contracts.world import ClaimStatus, FinalClaim
 from moody_blues.experiments.coordinator import ExperimentCoordinator
 from moody_blues.experiments.target import ReferenceTarget, TargetRequest, TargetResult
+from moody_blues.investigator import commands
 from moody_blues.investigator.catalog import WORLD_TIERS, target_capability, tier_of
 from moody_blues.investigator.fixtures import conclude, propose
 from moody_blues.sandbox.docker_runner import DockerSandboxRunner
@@ -346,3 +348,12 @@ def test_only_a_pinned_never_pulled_image_is_approved(
 
 def test_the_default_generated_code_image_is_pinned() -> None:
     assert "@sha256:" in Settings(_env_file=None).generated_code_image  # type: ignore[call-arg]
+
+
+def test_the_free_preflight_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """KI-84: it overwrote a file in the canonical directory on every run."""
+    report = SimpleNamespace(status="PASS", model_dump_json=lambda indent: "{}")
+    monkeypatch.setattr(commands, "run_preflight", lambda _settings: report)
+    monkeypatch.setattr(commands, "INVESTIGATIONS", tmp_path / "investigations")
+    assert commands.preflight(Settings(_env_file=None)) == 0  # type: ignore[call-arg]
+    assert list(tmp_path.iterdir()) == []

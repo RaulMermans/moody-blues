@@ -81,6 +81,8 @@ recomputed. To test a result again, run it again.
 | Deployment state | `.artifacts/vultr-state.json` | Maintainers only. Git-ignored |
 | Logs | Your terminal; `*.log` is git-ignored | Never hold secrets |
 
-Free commands never write to `.artifacts/`, which is where a maintainer's paid runs and ledger live. `make dev` reads
+Free demonstration and test commands never write to `.artifacts/`, which is where a maintainer's paid runs and ledger live.
+Only paid commands and deliberate maintainer operations do: `experiment-recover`, `recorded-export` and the live smoke
+commands. You never need those for local work. `make dev` reads
 `.moody-local` unless you set `MOODY_ARTIFACTS_DIR`, and with that default, live runs are forced off, because a ledger
 belongs to its directory and an empty one must not become a fresh budget.

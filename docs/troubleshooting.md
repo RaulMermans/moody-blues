@@ -15,6 +15,6 @@ Start with `make prereqs`, then `make doctor`. Every recorded issue is in [known
 | Port 3000 or 8000 is in use | Another service | Stop that service. The ports are fixed |
 | `--fault needs --local-inference` | `FAULT=` only applies with `LOCAL=1` | Otherwise the rehearsal plan chooses the faults |
 | A run is `INCONCLUSIVE` with `not started` | The sandbox did not start | The reason is in the run's `error` in `evidence.json` and in the log. Check Docker, then rerun |
-| Leftover `moody-sbx-*` containers | A process was killed | `make experiment-recover`, or `make sandbox-clean` |
+| Leftover `moody-sbx-*` containers | A process was killed | `make sandbox-clean` |
 | `make evidence-verify` exits 2 | Nothing to check | Run `make quickstart`, or pass `DIR=` |
 | `make evidence-verify` reports `FAIL` | A record changed after it was written | Rerun the test. Do not edit evidence to make it pass |

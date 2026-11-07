@@ -523,3 +523,10 @@ It checked `sandbox_image`, the unpinned tag, while agents and generated code ru
 
 `trap 'kill 0' EXIT INT TERM` signals the shell too, which runs the trap again, until bash overflows its stack. Found by the Sprint 20 clean Linux
 run, as a 24 MB `core` in the checkout. The trap now clears itself first. Verified on Ubuntu 24.04 with `SIGINT` and `SIGTERM`: no core, nothing left running.
+
+### KI-84: `make investigator-preflight` wrote into `.artifacts`
+
+A free command, missed by KI-79, overwrote `.artifacts/investigations/preflight.json` on every run. Nothing read that file: each paid command runs
+its own gate. Sprint 20's before-and-after hash of canonical state caught it, in the release matrix itself, so the local copy from before 2026-11-07
+was replaced. It was not evidence. The command now prints its report and writes nothing. The stale file stays, because nothing should delete from
+`.artifacts` without the owner.
