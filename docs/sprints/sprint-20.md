@@ -1,6 +1,6 @@
 # Sprint 20: v0.1.0 developer alpha
 
-- **Branch:** `sprint/20-developer-alpha-release`, from `origin/main` at `53463b1` (PR #26). Local only: nothing pushed, merged, tagged, published or deployed.
+- **Branch:** `sprint/20-developer-alpha-release`, from `origin/main` at `53463b1` (PR #26). Pushed to `origin` at the owner's request. No pull request, and not merged, tagged, published or deployed.
 - **Worked in:** `~/dev/Moody-Blues`, as the brief says.
 - **Release candidate:** `c539f098b79f5e7f01d5d9005b7874b017ebda62`. This record is a docs-only commit on top of it.
 - **Decision: `RELEASE CANDIDATE — BLOCKED`.** Technically validated. A license, credential confirmation, an independent developer and owner approval are outstanding.
@@ -101,7 +101,7 @@ Full matrix on `ede021f`. After KI-84, the backend half was rerun on `12e14de` (
 | `external-eval`, `worlds-demo` (9 of 9), `external-investigator-eval`, `experiment-demo`, `investigator-demo`, `docker-smoke`, `investigator-preflight` | PASS |
 | `make deploy-lint` | PASS |
 | `make test-hosted`, `make local-ui`, `make local-eval` | `NOT_RUN`: nothing was deployed, and no local model is installed |
-| GitHub Actions on this branch | `NOT_RUN`: not pushed |
+| GitHub Actions on this branch | `NOT_RUN` when this was written: see the run on GitHub |
 
 ## Evidence verification
 
@@ -165,7 +165,7 @@ The archive's hash will change with this record's commit and any license commit.
 | C20-L Operational safety | **PASS** | See below |
 | C20-M Owner release approval | **BLOCKED** | Not given |
 
-**Operational safety.** No push, merge, tag, publish, deployment, spend, or change to any external account. Production was read only: public status pages, and one read of the release symlink over SSH, twice. Unrelated local containers were not touched. To be plain about the one slip: running `make investigator-preflight` in the matrix overwrote the local, non-evidence file `.artifacts/investigations/preflight.json` before KI-84 was fixed. Nothing read it.
+**Operational safety.** No merge, tag, publish, deployment, spend, or change to any external account. The branch was pushed only after the sprint, at the owner's request. Production was read only: public status pages, and one read of the release symlink over SSH, twice. Unrelated local containers were not touched. To be plain about the one slip: running `make investigator-preflight` in the matrix overwrote the local, non-evidence file `.artifacts/investigations/preflight.json` before KI-84 was fixed. Nothing read it.
 
 ## Go/no-go
 
