@@ -1,6 +1,6 @@
 # Sprint 19: reliability benchmark, Investigator quality and evidence-based validation
 
-- **Branch:** `sprint/19-reliability-benchmark`, from `origin/main` at `b5c63c6` (PR #25). Committed locally. Not pushed, merged or deployed.
+- **Branch:** `sprint/19-reliability-benchmark`, from `origin/main` at `b5c63c6` (PR #25). Pushed to `origin` at the owner's request. Not merged or deployed.
 - **Worked in:** `~/dev/Moody-Blues`, as the brief says.
 - **Research conclusion: `INCONCLUSIVE`,** from the registered rule. No sign of adaptive advantage, and for this model, several of disadvantage.
 - **Recommendation:** deterministic testing and verification as the primary product, with the Investigator as optional, labeled exploration.
@@ -44,7 +44,7 @@ removed, and were left stopped. To restart: `docker start geo-aeo-auditor-postgr
 | C19-I Evidence integrity | **PASS** | 98 of 98 main investigations verify. Archives hash-pinned, and no history changed |
 | C19-J Regression safety | **PASS** | Below. Golden CRM file, `eval-verify` and `recorded-verify` hold |
 | C19-K Sprint 20 readiness | **PASS** | [Prioritized blockers and claims](../evaluations/sprint-19/release-readiness.md) |
-| C19-L Operational safety | **PASS** | No push, merge, deploy, spend or production change. The three containers were stopped at the owner's explicit instruction |
+| C19-L Operational safety | **PASS** | No unauthorized push, and no merge, deploy, spend or production change. The three containers were stopped at the owner's explicit instruction |
 
 Infrastructure passing says nothing about the comparison, which is reported separately above.
 
