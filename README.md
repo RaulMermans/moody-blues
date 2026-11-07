@@ -164,6 +164,26 @@ The autonomous Investigator did **not** show an advantage. The registered compar
 Investigator finding fewer failures per investigation than fixed or random plans at about 18 times the time. It stays in
 the project as an experimental option. [Evaluation and limitations](docs/evaluation-and-limitations.md).
 
+## Vultr infrastructure (Vultr Agent Rush, Blast Radius Zero)
+
+The [hosted demo](https://45-63-119-197.sslip.io) runs entirely on Vultr. It serves revision `6405817`, from November 2026,
+so it does not show everything described above.
+
+| Vultr service | What it does here |
+|---|---|
+| **Cloud Compute** | One VM, `vc2-4c-8gb` in Frankfurt, Ubuntu 24.04. Caddy terminates HTTPS and is the only public listener. Next.js and one FastAPI process sit behind it on loopback. The trusted coordinator, Truth Oracle, synthetic worlds, evidence ledger and Docker sandboxes all run on this VM. Only ports 80 and 443 are public, and SSH is open to one address, enforced by a Vultr firewall group and by ufw |
+| **Serverless Inference** | The OpenAI-compatible endpoint `https://api.vultrinference.com/v1`. On the hosted path it serves both the Investigator, which writes the Python experiments, and the target agent under test. The hosted live investigation `inv_cbd07a262444` used `glm-5.3` |
+| **Vultr API** | Used from the operator's laptop to provision the VM and firewall ([provisioning](infra/vultr/provision.sh)). Never called by the running site |
+
+Model-written code runs in a disposable Docker container on the VM, with no network, a read-only filesystem, no root, and
+memory, process and time limits. No API key or credential enters the sandbox. Each container is removed after its run.
+Eight harmless escape attempts were made on the real VM, and all eight were blocked:
+[containment report](https://45-63-119-197.sslip.io/containment), [raw evidence](evidence/containment/vultr-report.json).
+Containers share the host kernel, so this is evidence about this host, not a guarantee.
+
+Live mode is off on the public site, and no inference key is stored on the VM. Anonymous visitors can only read recorded
+evidence, so viewing the demo costs nothing. [Deployment guide](docs/deployment/vultr-deployment.md).
+
 ## Documentation
 
 [Documentation index](docs/README.md). This project began at the Vultr Agent Rush hackathon; that history and its
