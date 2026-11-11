@@ -1,5 +1,7 @@
 # MOODY BLUES
 
+![Status: Developer alpha](https://img.shields.io/badge/status-developer_alpha-orange) ![Python SDK](https://img.shields.io/badge/SDK-Python-3776AB?logo=python&logoColor=white) [![License: MIT](https://img.shields.io/badge/license-MIT-16a34a)](LICENSE)
+
 **Test what agents do. Verify what actually happened.**
 
 Run agents against controlled failures, catch incorrect outcomes, and reproduce verified issues with independent
