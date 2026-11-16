@@ -1,18 +1,56 @@
+<div align="center">
+
 # MOODY BLUES
 
-![Status: Developer alpha](https://img.shields.io/badge/status-developer_alpha-orange) ![Python SDK](https://img.shields.io/badge/SDK-Python-3776AB?logo=python&logoColor=white) [![License: MIT](https://img.shields.io/badge/license-MIT-16a34a)](LICENSE)
+### Test what agents do. Verify what actually happened.
 
-**Test what agents do. Verify what actually happened.**
+Run agents against controlled failures, catch incorrect outcomes,<br>and reproduce verified issues with independent evidence.
 
-Run agents against controlled failures, catch incorrect outcomes, and reproduce verified issues with independent
-evidence.
+[![Status: Developer alpha](https://img.shields.io/badge/status-developer_alpha-orange?style=for-the-badge)](#security-and-limitations)
+[![Python SDK](https://img.shields.io/badge/SDK-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](sdk/python)
+[![Hosted on Vultr](https://img.shields.io/badge/hosted_on-Vultr-007BFC?style=for-the-badge&logo=vultr&logoColor=white)](#vultr-infrastructure-vultr-agent-rush-blast-radius-zero)
+[![Vultr Agent Rush](https://img.shields.io/badge/Vultr_Agent_Rush-certified-8b5cf6?style=for-the-badge)](#hackathon-certificate)
+[![License: MIT](https://img.shields.io/badge/license-MIT-16a34a?style=for-the-badge)](LICENSE)
 
-An agent's tools can mislead it: a write that committed reports a timeout, a read comes back stale. MOODY BLUES
-puts your agent in a synthetic world, makes a tool lie in a known way, then reads the world's committed state
-directly and tells you whether the agent ended up right, regardless of what it said.
+[**Live demo**](https://45-63-119-197.sslip.io) · [**Quickstart**](#quickstart) · [**Connect your agent**](#connect-your-own-agent) · [**Docs**](docs/README.md) · [**Evidence**](#verifying-evidence)
 
-**Status: v0.1.0 developer alpha, not yet released.** Not a production platform. See
-[limitations](#security-and-limitations).
+<br>
+
+<img src="docs/submission/screenshots/01-landing.png" alt="MOODY BLUES landing page" width="860">
+
+</div>
+
+<br>
+
+> **The problem.** An agent's tools can mislead it: a write that committed reports a timeout, a read comes back stale.
+> The agent says `completed`, and nothing in the tool's response tells you whether it was right.
+>
+> **The fix.** MOODY BLUES puts your agent in a synthetic world, makes a tool lie in a known way, then reads the world's
+> committed state directly and tells you whether the agent ended up right, regardless of what it said.
+
+> [!WARNING]
+> **v0.1.0 developer alpha, not yet released.** Not a production platform. See [limitations](#security-and-limitations).
+
+<details>
+<summary><b>Table of contents</b></summary>
+
+- [How it works](#how-it-works)
+- [What you get](#what-you-get)
+- [Quickstart](#quickstart)
+- [Your first reliability test](#your-first-reliability-test)
+- [Connect your own agent](#connect-your-own-agent)
+- [Worlds and faults](#worlds-and-faults)
+- [Verifying evidence](#verifying-evidence)
+- [Architecture](#architecture)
+- [Security and limitations](#security-and-limitations)
+- [Evaluation and benchmarks](#evaluation-and-benchmarks)
+- [Vultr infrastructure](#vultr-infrastructure-vultr-agent-rush-blast-radius-zero)
+- [Hackathon certificate](#hackathon-certificate)
+- [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+
+</details>
+
+---
 
 ## How it works
 
@@ -27,14 +65,14 @@ The Oracle never sees what the agent was told. The agent never touches state, th
 ## What you get
 
 | Capability | State |
-|---|---|
-| Controlled fault injection: phantom failure, phantom success, stale read | Supported |
-| Independent Oracle verdicts from committed state | Supported |
-| Hash-chained evidence, and a command that checks it | Supported |
-| CRM World and Job Queue World, both synthetic | Supported |
-| Python agents through the SDK, in a local Docker sandbox | Supported |
-| Local model inference through Ollama | Experimental |
-| AI-assisted investigation (the Investigator) | Experimental: [no advantage shown](docs/evaluation-and-limitations.md) |
+|:---|:---|
+| Controlled fault injection: phantom failure, phantom success, stale read | ✅ Supported |
+| Independent Oracle verdicts from committed state | ✅ Supported |
+| Hash-chained evidence, and a command that checks it | ✅ Supported |
+| CRM World and Job Queue World, both synthetic | ✅ Supported |
+| Python agents through the SDK, in a local Docker sandbox | ✅ Supported |
+| Local model inference through Ollama | 🧪 Experimental |
+| AI-assisted investigation (the Investigator) | 🧪 Experimental: [no advantage shown](docs/evaluation-and-limitations.md) |
 
 ## Quickstart
 
@@ -148,9 +186,10 @@ An agent proposes and trusted code decides. [Architecture overview](docs/archite
 
 ## Security and limitations
 
-**Read this before running an agent you did not write.** Agents run in containers that share the host kernel. Isolation
-is not equivalent to a microVM, and this project is not designed to run arbitrary hostile code from the public internet.
-Run agents you trust, on a machine you can afford to rebuild. [Trust model](docs/security/trust-model.md).
+> [!CAUTION]
+> **Read this before running an agent you did not write.** Agents run in containers that share the host kernel. Isolation
+> is not equivalent to a microVM, and this project is not designed to run arbitrary hostile code from the public internet.
+> Run agents you trust, on a machine you can afford to rebuild. [Trust model](docs/security/trust-model.md).
 
 - No compatibility with arbitrary agent frameworks. Python, through the SDK, only.
 - Synthetic worlds only. Never point this at a production environment.
@@ -189,13 +228,22 @@ evidence, so viewing the demo costs nothing. [Deployment guide](docs/deployment/
 
 ## Hackathon certificate
 
-MOODY BLUES was built for the **Vultr: Agent Rush Hackathon** (3 to 8 November 2026, run by LabLab.ai, part of
-NativelyAI), on Vultr, AgentOps and Cursor. The author received a certificate of completion for outstanding performance,
-attendance, and submitting a working solution.
+<table>
+<tr>
+<td width="360" align="center"><a href="https://45-63-119-197.sslip.io/certificate"><img src="docs/assets/vultr-agent-rush-certificate.jpg" alt="Certificate of completion, Vultr: Agent Rush Hackathon, awarded to Raul Mermans Garcia" width="340"></a></td>
+<td valign="top">
 
-<p align="center"><img src="docs/assets/vultr-agent-rush-certificate.jpg" alt="Certificate of completion, Vultr: Agent Rush Hackathon, awarded to Raul Mermans Garcia" width="360"></p>
+**Vultr: Agent Rush Hackathon**<br>
+3 to 8 November 2026 · LabLab.ai, part of NativelyAI
+
+Built on **Vultr**, **AgentOps** and **Cursor**. The author received a certificate of completion for outstanding
+performance, attendance, and successfully submitting a working solution.
 
 The hosted demo shows it at [/certificate](https://45-63-119-197.sslip.io/certificate) once redeployed.
+
+</td>
+</tr>
+</table>
 
 ## Documentation
 
