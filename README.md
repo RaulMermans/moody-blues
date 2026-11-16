@@ -1,8 +1,8 @@
 <div align="center">
 
-# MOODY BLUES
+<img src="docs/assets/banner.svg" alt="MOODY BLUES. Test what agents do. Verify what actually happened." width="100%">
 
-### Test what agents do. Verify what actually happened.
+<h1 hidden>MOODY BLUES</h1>
 
 Run agents against controlled failures, catch incorrect outcomes,<br>and reproduce verified issues with independent evidence.
 

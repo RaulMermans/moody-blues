@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" role="img" aria-label="MOODY BLUES. Test what agents do. Verify what actually happened.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0c14"/>
+      <stop offset="0.6" stop-color="#0d1430"/>
+      <stop offset="1" stop-color="#1b2f7a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3b6cff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#3b6cff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#9db4ff" stroke-opacity="0.07"/>
+    </pattern>
+    <clipPath id="left"><path d="M0 0H742L704 130L748 230L712 400H0Z"/></clipPath>
+    <clipPath id="right"><path d="M742 0H1280V400H712L748 230L704 130Z"/></clipPath>
+  </defs>
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+  <ellipse cx="1000" cy="200" rx="360" ry="260" fill="url(#glow)"/>
+
+  <!-- what the agent saw -->
+  <g clip-path="url(#left)" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15">
+    <text x="64" y="86" fill="#b6b1dc" letter-spacing="3" font-size="12">THE AGENT SAW</text>
+    <text x="64" y="120" fill="#e8ecff" opacity="0.5">create_customer(name="Ada")</text>
+    <text x="64" y="146" fill="#f0705a">error: timeout</text>
+    <text x="64" y="172" fill="#e8ecff" opacity="0.5">create_customer(name="Ada")</text>
+    <text x="64" y="198" fill="#9ccbb0">ok</text>
+    <text x="64" y="224" fill="#e8ecff" opacity="0.7">agent reported: completed</text>
+  </g>
+
+  <!-- what is true -->
+  <g clip-path="url(#right)" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15">
+    <text x="800" y="86" fill="#e2c9a0" letter-spacing="3" font-size="12">WHAT WAS TRUE</text>
+    <text x="800" y="120" fill="#e8ecff" opacity="0.5">committed new records</text>
+    <text x="800" y="150" fill="#ffffff" font-size="34" font-weight="700">2</text>
+    <text x="800" y="190" fill="#e8ecff" opacity="0.5">Truth Oracle verdict</text>
+    <rect x="800" y="204" width="150" height="34" rx="3" fill="#f0705a" fill-opacity="0.16" stroke="#f0705a"/>
+    <text x="875" y="227" fill="#f0705a" text-anchor="middle" font-weight="700" letter-spacing="2">VIOLATION</text>
+  </g>
+
+  <!-- the fracture -->
+  <path d="M742 0L704 130L748 230L712 400" fill="none" stroke="#f0705a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M742 0L704 130L748 230L712 400" fill="none" stroke="#f0705a" stroke-width="12" stroke-opacity="0.18" stroke-linejoin="round"/>
+
+  <!-- wordmark -->
+  <g font-family="'Archivo','Helvetica Neue',Arial,sans-serif" fill="#ffffff">
+    <text x="64" y="312" font-size="66" font-weight="800" letter-spacing="8">MOODY BLUES</text>
+    <text x="68" y="352" font-size="21" fill="#c9d4ff" letter-spacing="1.5">Test what agents do. Verify what actually happened.</text>
+  </g>
+</svg>
