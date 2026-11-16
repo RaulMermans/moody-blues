@@ -187,6 +187,16 @@ Containers share the host kernel, so this is evidence about this host, not a gua
 Live mode is off on the public site, and no inference key is stored on the VM. Anonymous visitors can only read recorded
 evidence, so viewing the demo costs nothing. [Deployment guide](docs/deployment/vultr-deployment.md).
 
+## Hackathon certificate
+
+MOODY BLUES was built for the **Vultr: Agent Rush Hackathon** (3 to 8 November 2026, run by LabLab.ai, part of
+NativelyAI), on Vultr, AgentOps and Cursor. The author received a certificate of completion for outstanding performance,
+attendance, and submitting a working solution.
+
+<p align="center"><img src="docs/assets/vultr-agent-rush-certificate.jpg" alt="Certificate of completion, Vultr: Agent Rush Hackathon, awarded to Raul Mermans Garcia" width="360"></p>
+
+The hosted demo shows it at [/certificate](https://45-63-119-197.sslip.io/certificate) once redeployed.
+
 ## Documentation
 
 [Documentation index](docs/README.md). This project began at the Vultr Agent Rush hackathon; that history and its

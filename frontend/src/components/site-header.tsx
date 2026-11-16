@@ -19,6 +19,9 @@ export function SiteHeader() {
           <Link href="/containment" className={NAV}>
             Containment
           </Link>
+          <Link href="/certificate" className={NAV}>
+            Certificate
+          </Link>
           <a href="https://github.com/RaulMermans/moody-blues" className={NAV}>
             GitHub
           </a>
